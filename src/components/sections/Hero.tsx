@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom"; // Ensure react-router-dom is installed and used
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Code, PenTool, Globe, ShoppingCart } from 'lucide-react';
 import {Button} from '../ui/Button';
-import {Card,  CardHeader, CardTitle, CardContent } from '../ui/Card';
+import {Card,  CardHeader, CardTitle, CardContent } from '../ui/card';
 
 const Services = () => {
   const [isVisible, setIsVisible] = useState(false);
