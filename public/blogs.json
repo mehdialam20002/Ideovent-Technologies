@@ -1,12 +1,16 @@
 [
   {
-    "title": "How to Start a Design Agency",
-    "image": "https://via.placeholder.com/300",
-    "description": "Starting a design agency can be both exciting and overwhelming. First, build a solid portfolio..."
+    "id": 1,
+    "title": "First Blog Title",
+    "image": "https://github.com/mehdialam20002/ideovent_blogs_images/blob/main/animeshprofile.jpeg?raw=true",
+    "description": "This is a short preview of the blog post.",
+    "content": "This is the full content of the first blog. It can contain as much text as needed."
   },
   {
-    "title": "Top 10 Web Design Trends 2025",
-    "image": "https://via.placeholder.com/300",
-    "description": "This year, minimalism meets interactivity. Learn what’s trending and how to apply these ideas to your next web project."
+    "id": 2,
+    "title": "Second Blog Title",
+    "image": "https://ideovent.netlify.app/blog-images/animeshprofile.jpeg",
+    "description": "Another short preview for a second blog post.",
+    "content": "Welcome to our detailed guide!\n\nWe used React with Tailwind and Framer Motion to build a fast, beautiful blog page. Here's what we did:\n\n- Used local JSON file for blog data\n- Added Framer Motion animations\n- Used Tailwind for modern styling\n\nThanks for reading!"
   }
 ]

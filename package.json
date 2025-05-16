@@ -47,6 +47,7 @@
     "date-fns": "^3.6.0",
     "emailjs-com": "^3.2.0",
     "embla-carousel-react": "^8.3.0",
+    "framer-motion": "^12.11.4",
     "input-otp": "^1.2.4",
     "install": "^0.13.0",
     "lucide-react": "^0.462.0",

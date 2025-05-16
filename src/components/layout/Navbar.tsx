@@ -22,6 +22,7 @@ const Navbar = () => {
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Services', path: '/services' },
+    { name: 'blog', path: '/blogs' },
     { name: 'Portfolio', path: '/portfolio' },
     { name: 'Contact', path: '/contact' },
   ];
@@ -171,7 +172,8 @@ const Navbar = () => {
       <header className={`custom-navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="custom-container">
           <Link to="/" className="custom-logo" onClick={closeMenu}>
-            <img src="ideovent.png" alt="Ideovent Logo" />
+            {/* <img src="ideovent.png" alt="Ideovent Logo" /> */}
+            <img src={`${import.meta.env.BASE_URL}ideovent.png`} />
           </Link>
 
           {/* Desktop Navigation */}
