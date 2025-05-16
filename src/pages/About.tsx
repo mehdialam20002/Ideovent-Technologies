@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import ParallaxSection from '../components/ui/ParallaxSection';
+import ParallaxSection from '../components/ui/parallaxSection';
 import AnimatedText from '../components/ui/AnimatedText';
 import  { CardHeader, CardContent } from '../components/ui/card';
-import { Card } from '../components/ui/Card';
+import { Card } from '../components/ui/card';
 // import * from '../components/ui/Card'
 const About = () => {
   const [isVisible, setIsVisible] = useState({
