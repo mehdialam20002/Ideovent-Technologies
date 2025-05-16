@@ -5,7 +5,7 @@ import Footer from '../components/layout/Footer';
 import ParallaxSection from '../components/ui/ParallaxSection';
 // import {Button} from '../components/ui/Button';
 
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/button';
 import { X } from 'lucide-react';
 
 const Portfolio = () => {
