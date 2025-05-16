@@ -4,7 +4,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import ParallaxSection from '../components/ui/ParallaxSection';
 import AnimatedText from '../components/ui/AnimatedText';
-import  { CardHeader, CardContent } from '../components/ui/Card';
+import  { CardHeader, CardContent } from '../components/ui/card';
 import { Card } from '../components/ui/Card';
 // import * from '../components/ui/Card'
 const About = () => {

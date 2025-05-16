@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import ParallaxSection from '../components/ui/ParallaxSection';
+import ParallaxSection from '../components/ui/parallaxSection';
 import {Button} from '../components/ui/button';
 import { Code, PenTool, Globe, ShoppingCart, Monitor, ArrowUpRight, Smartphone, Database, Server } from 'lucide-react';
 
