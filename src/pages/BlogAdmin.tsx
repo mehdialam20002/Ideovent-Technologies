@@ -1,15 +1,26 @@
-// AdminBlog.tsx - Add new blogs without backend
 import { useState } from "react";
 
 const AdminBlog = () => {
   const [blog, setBlog] = useState({
     title: "",
-    image: "",
+    image: "", // This will now hold base64 string
     description: ""
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setBlog({ ...blog, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setBlog({ ...blog, [name]: value });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBlog((prev) => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,7 +39,10 @@ const AdminBlog = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">Add New Blog</h1>
-      <form onSubmit={handleSubmit} className="max-w-lg mx-auto bg-white p-6 shadow-md rounded-lg">
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-lg mx-auto bg-white p-6 shadow-md rounded-lg"
+      >
         <label className="block mb-4">
           <span className="text-gray-700">Title</span>
           <input
@@ -40,17 +54,24 @@ const AdminBlog = () => {
             placeholder="Enter blog title"
           />
         </label>
+
         <label className="block mb-4">
-          <span className="text-gray-700">Image URL</span>
+          <span className="text-gray-700">Upload Image</span>
           <input
-            type="text"
-            name="image"
-            value={blog.image}
-            onChange={handleChange}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-            placeholder="Enter image URL"
           />
         </label>
+
+        {blog.image && (
+          <div className="mb-4">
+            <span className="text-gray-700 block mb-2">Preview:</span>
+            <img src={blog.image} alt="Preview" className="w-full max-h-64 object-contain rounded" />
+          </div>
+        )}
+
         <label className="block mb-4">
           <span className="text-gray-700">Description</span>
           <textarea
@@ -61,6 +82,7 @@ const AdminBlog = () => {
             placeholder="Enter blog description"
           ></textarea>
         </label>
+
         <button
           type="submit"
           className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"

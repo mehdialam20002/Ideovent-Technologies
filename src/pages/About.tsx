@@ -62,7 +62,7 @@ const About = () => {
       image: "animeshprofile.jpeg"
     },
     {
-      name: "Manu Kumari",
+      name: "Abhilasha Kumari",
       role: "Co-Founder & CTO",
       bio: "Full-stack developer specializing in React.js and modern web technologies.",
       image: "https://img.freepik.com/premium-vector/avatar-profile-icon-flat-style-female-user-profile-vector-illustration-isolated-background-women-profile-sign-business-concept_157943-38866.jpg?semt=ais_hybrid"
