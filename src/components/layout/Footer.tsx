@@ -9,9 +9,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           <div className="space-y-4">
             <Link to="/" className="text-2xl font-semibold flex items-center">
-              <div className="mr-2 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                I
-              </div>
+              {/* <div className="mr-2 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                
+              </div> */}
               <span>Ideovent</span>
             </Link>
             <p className="text-secondary-foreground/80 max-w-xs">
