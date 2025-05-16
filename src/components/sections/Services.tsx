@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Code, PenTool, Globe, ShoppingCart } from 'lucide-react';
-import {Button} from '../ui/Button';
+import {Button} from '../ui/button';
 import {Card,  CardHeader, CardTitle, CardContent } from '../ui/card';
 
 const Services = () => {
