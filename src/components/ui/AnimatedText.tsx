@@ -15,12 +15,12 @@ const AnimatedText = ({ text, className = '', once = false }: AnimatedTextProps)
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('animate-fade-in');
+            // entry.target.classList.add('animate-fade-in');
             if (once) {
               observer.unobserve(entry.target);
             }
           } else if (!once) {
-            entry.target.classList.remove('animate-fade-in');
+            // entry.target.classList.remove('animate-fade-in');
           }
         });
       },

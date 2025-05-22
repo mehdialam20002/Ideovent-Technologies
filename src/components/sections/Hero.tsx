@@ -114,7 +114,7 @@ const Hero = () => {
             <div className="relative w-full h-full">
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/5 rounded-3xl transform rotate-6 animate-pulse-soft" />
               <img
-                src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=80"
+                src="https://i.postimg.cc/nLvCH4X2/hero-Sectio.jpg"
                 alt="Digital Solutions"
                 className="rounded-3xl object-cover w-full h-full shadow-2xl"
               />

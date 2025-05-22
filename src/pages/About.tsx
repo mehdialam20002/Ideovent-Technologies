@@ -111,7 +111,7 @@ const About = () => {
       <main className="flex-grow">
         {/* Hero Section */}
         <ParallaxSection
-          bgImage="https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+          bgImage="https://i.postimg.cc/rwTpfdnt/vision.jpg"
           className="flex items-center justify-center text-white"
           height="min-h-[60vh]"
         >
@@ -156,7 +156,7 @@ const About = () => {
           <div className="relative">
             <div className="absolute -top-6 -left-6 w-40 h-40 bg-primary/10 rounded-2xl -z-10" />
             <img
-              src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+              src="https://i.postimg.cc/brbzT81T/digital-Reality.jpg"
               alt="Our team"
               className="rounded-xl shadow-xl transition-transform duration-1000 transform scale-90"
             />
