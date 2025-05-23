@@ -87,7 +87,7 @@ const ContactForm = () => {
                   </div>
                   <div>
                     <div className="font-medium">Phone</div>
-                    <a href="tel:+15551234567" className="text-primary hover:underline">+91 9410707967</a>
+                    <a href="tel:+919410707967" className="text-primary hover:underline">+91 9410707967</a>
                   </div>
                 </li>
                 <li className="flex items-start">

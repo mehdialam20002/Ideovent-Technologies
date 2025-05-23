@@ -45,19 +45,33 @@ const Portfolio = () => {
   }
   
   const projects: ProjectType[] = [
+    // {
+    //   id: 1,
+    //   title: "EcoStore E-Commerce Platform",
+    //   category: "e-commerce",
+    //   image: "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80",
+    //   description: "A comprehensive e-commerce platform for sustainable products with advanced filtering and payment integration.",
+    //   client: "EcoStore Inc.",
+    //   technologies: ["React.js", "Node.js", "MongoDB", "Stripe API"],
+    //   challenge: "Create a user-friendly e-commerce platform with advanced filtering options and secure payment processing.",
+    //   solution: "We developed a custom e-commerce solution with a React.js frontend and Node.js backend, integrating Stripe for secure payments and implementing a sophisticated filtering system.",
+    //   results: "The platform achieved a 45% increase in conversion rates and a 30% reduction in cart abandonment within the first three months.",
+    //   link: "#"
+    // },
     {
-      id: 1,
-      title: "EcoStore E-Commerce Platform",
-      category: "e-commerce",
-      image: "https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80",
-      description: "A comprehensive e-commerce platform for sustainable products with advanced filtering and payment integration.",
-      client: "EcoStore Inc.",
-      technologies: ["React.js", "Node.js", "MongoDB", "Stripe API"],
-      challenge: "Create a user-friendly e-commerce platform with advanced filtering options and secure payment processing.",
-      solution: "We developed a custom e-commerce solution with a React.js frontend and Node.js backend, integrating Stripe for secure payments and implementing a sophisticated filtering system.",
-      results: "The platform achieved a 45% increase in conversion rates and a 30% reduction in cart abandonment within the first three months.",
-      link: "#"
-    },
+  id: 1,
+  title: "High Q Classes Educational Website",
+  category: "education",
+  image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  description: "An intuitive and modern educational website built for High Q Classes to provide online/offline class info, inquiry forms, and easy navigation for students and parents.",
+  client: "High Q Classes",
+  technologies: ["HTML", "CSS", "JavaScript", "WordPress", "Elementor"],
+  challenge: "Design a clean, responsive educational site that showcases courses and handles inquiries effectively while maintaining fast performance.",
+  solution: "We built a fully responsive WordPress site using Elementor with custom sections for course details, contact forms, and trust-building testimonials. The design was optimized for both desktop and mobile users.",
+  results: "The website improved online inquiries by 60% and received positive feedback from both students and faculty within the first month.",
+  link: "https://highqclasses.ideovent.com"
+}
+,
     {
       id: 2,
       title: "HealthTrack Mobile App",

@@ -179,7 +179,7 @@ const ServicesPage = () => {
                 <Button to="/contact" size="lg" className="rounded-full shadow-lg shadow-primary/20">
                   Get a Free Consultation
                 </Button>
-                <Button href="tel:+15551234567" variant="outline" size="lg" className="rounded-full">
+                <Button href="tel:+919410707967" variant="outline" size="lg" className="rounded-full">
                   Call Us Now
                 </Button>
               </div>
