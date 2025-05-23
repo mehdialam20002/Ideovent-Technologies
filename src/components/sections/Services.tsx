@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Code, PenTool, Globe, ShoppingCart } from 'lucide-react';
 import {Button} from '../ui/button';
+import { Link, useLocation } from 'react-router-dom';
+
 import {Card,  CardHeader, CardTitle, CardContent } from '../ui/card';
 
 const Services = () => {
@@ -91,9 +93,9 @@ const Services = () => {
         </div>
 
         <div className="text-center mt-12">
-          <Button to="/services" variant="outline" className="rounded-full">
-            View All Services
-          </Button>
+          <Link to="/services" variant="outline" className="custom-get-started">
+             View All Services
+          </Link>
         </div>
       </div>
     </section>

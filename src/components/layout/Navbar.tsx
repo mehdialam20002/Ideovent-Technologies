@@ -188,7 +188,7 @@ const Navbar = () => {
               </Link>
             ))}
             <Link to="/contact" className="custom-get-started">
-              Get Started
+              Get Quotation
             </Link>
           </nav>
 
@@ -211,7 +211,7 @@ const Navbar = () => {
             </Link>
           ))}
           <Link to="/contact" className="custom-get-started" onClick={closeMenu}>
-            Get Started
+            Get Quatation
           </Link>
         </div>
       </header>

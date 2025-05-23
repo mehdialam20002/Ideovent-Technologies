@@ -50,11 +50,11 @@ const Contact = () => {
       <main className="flex-grow">
         {/* Hero Section */}
         <ParallaxSection
-          bgImage="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+          bgImage="https://i.postimg.cc/XqLPwWbZ/contact.jpg"
           className="flex items-center justify-center text-white"
           height="min-h-[60vh]"
         >
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-black/40" />
           <div className="container relative z-10 text-center py-20">
             <div className="inline-block bg-primary text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
               Get In Touch

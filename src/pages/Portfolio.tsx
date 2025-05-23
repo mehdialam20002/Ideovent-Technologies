@@ -60,16 +60,16 @@ const Portfolio = () => {
     // },
     {
   id: 1,
-  title: "High Q Classes Educational Website",
+  title: "HighQ Classes Educational Website",
   category: "education",
   image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-  description: "An intuitive and modern educational website built for High Q Classes to provide online/offline class info, inquiry forms, and easy navigation for students and parents.",
-  client: "High Q Classes",
-  technologies: ["HTML", "CSS", "JavaScript", "WordPress", "Elementor"],
+  description: "An intuitive and modern educational website built for HighQ Classes to provide online/offline class info, inquiry forms, and easy navigation for students and parents.",
+  client: "HighQ Classes",
+  technologies: ["HTML", "CSS", "Typescript", "ReactJS", "NodeJS"],
   challenge: "Design a clean, responsive educational site that showcases courses and handles inquiries effectively while maintaining fast performance.",
   solution: "We built a fully responsive WordPress site using Elementor with custom sections for course details, contact forms, and trust-building testimonials. The design was optimized for both desktop and mobile users.",
   results: "The website improved online inquiries by 60% and received positive feedback from both students and faculty within the first month.",
-  link: "https://highqclasses.ideovent.com"
+  link: "http://highqclasses.ideovent.com/"
 }
 ,
     {
