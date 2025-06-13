@@ -60,13 +60,12 @@ const BlogDetail = () => {
       </motion.h1>
 
       <motion.div
-        className="prose prose-lg max-w-none text-gray-800 leading-relaxed whitespace-pre-line"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.6 }}
-      >
-        {blog.content}
-      </motion.div>
+  className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.6, duration: 0.6 }}
+  dangerouslySetInnerHTML={{ __html: blog.content }}
+/>
     </motion.div>
     <Footer/>
     </>
