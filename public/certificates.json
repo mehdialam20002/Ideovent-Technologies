@@ -1,0 +1,16 @@
+[
+  {
+    "id": "CERT2025FIN001",
+    "name": "Rohit Sharma",
+    "designation": "Web Development Intern",
+    "duration": "Jan 2025 - April 2025",
+    "issuedBy": "Ideovent Technologies"
+  },
+  {
+    "id": "CERT2025FIN002",
+    "name": "Priya Yadav",
+    "designation": "AI/ML Intern",
+    "duration": "Feb 2025 - May 2025",
+    "issuedBy": "Ideovent Technologies"
+  }
+]

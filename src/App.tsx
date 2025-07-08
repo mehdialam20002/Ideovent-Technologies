@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,7 +12,7 @@ import NotFound from "./pages/NotFound";
 import Blog from "./pages/Blog";
 import AdminBlog from "./pages/BlogAdmin";
 import BlogDetail from "./pages/BlogDetail";
-
+import CertificateVerify from "./pages/CertificateVerify";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -27,11 +26,12 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/blogs" element={<Blog />} />
-        <Route path="/blogs/:id" element={<BlogDetail />} />
+          <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/admin" element={<AdminBlog />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/verify" element={<CertificateVerify />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
