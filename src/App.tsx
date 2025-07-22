@@ -11,6 +11,8 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Blog from "./pages/Blog";
 import AdminBlog from "./pages/BlogAdmin";
+import QRCodeList from "./pages/QRCodeList";
+
 import BlogDetail from "./pages/BlogDetail";
 import CertificateVerify from "./pages/CertificateVerify";
 const queryClient = new QueryClient();
@@ -31,7 +33,9 @@ const App = () => (
           <Route path="/admin" element={<AdminBlog />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
-          <Route path="/verify" element={<CertificateVerify />} />
+          <Route path="/verify/:certId" element={<CertificateVerify />} />
+
+          <Route path="/admin/qrcodes" element={<QRCodeList />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

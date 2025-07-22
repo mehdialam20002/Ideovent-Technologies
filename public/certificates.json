@@ -1,16 +1,18 @@
 [
   {
-    "id": "CERT2025FIN001",
-    "name": "Rohit Sharma",
-    "designation": "Web Development Intern",
-    "duration": "Jan 2025 - April 2025",
-    "issuedBy": "Ideovent Technologies"
+    "id": "INT2024A01",
+    "name": "Rahul Sharma",
+    "designation": "Frontend Developer Intern",
+    "duration": "June 2024 - August 2024",
+    "issuedBy": "Ideovent Technologies",
+    "image": "https://i.pravatar.cc/150?img=3"
   },
   {
-    "id": "CERT2025FIN002",
-    "name": "Priya Yadav",
-    "designation": "AI/ML Intern",
-    "duration": "Feb 2025 - May 2025",
-    "issuedBy": "Ideovent Technologies"
+    "id": "INT2024A02",
+    "name": "Anjali Verma",
+    "designation": "Backend Developer Intern",
+    "duration": "June 2024 - August 2024",
+    "issuedBy": "Ideovent Technologies",
+    "image": "https://i.pravatar.cc/150?img=5"
   }
 ]
