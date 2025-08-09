@@ -7,7 +7,7 @@ interface QRGeneratorProps {
 
 const QRGenerator: React.FC<QRGeneratorProps> = ({ id }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const url = `https://yourdomain.com/verify/${id}`;
+  const url = `https://ideovent.com/verify/${id}`;
 
   const handleDownload = () => {
     const canvas = canvasRef.current;

@@ -14,5 +14,23 @@
     "duration": "June 2024 - August 2024",
     "issuedBy": "Ideovent Technologies",
     "image": "https://i.pravatar.cc/150?img=5"
+  },
+   {
+    "id": "INT2025A73",
+    "name": "Ankit Kumar",
+    "designation": "Web Developer Intern",
+    "duration": "November 2024 - April 2025",
+    "issuedBy": "Ideovent Technologies",
+    "image": "https://i.pravatar.cc/150?img=5"
+  }, 
+  
+  {
+    "id": "INT2025A74",
+    "name": "Shreya",
+    "designation": "Content Writer Intern",
+    "duration": "June 2025 - August 2025",
+    "issuedBy": "Ideovent Technologies",
+    "image": "https://i.pravatar.cc/150?img=5"
   }
+
 ]
