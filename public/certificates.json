@@ -1,27 +1,12 @@
 [
-  {
-    "id": "INT2024A01",
-    "name": "Rahul Sharma",
-    "designation": "Frontend Developer Intern",
-    "duration": "June 2024 - August 2024",
-    "issuedBy": "Ideovent Technologies",
-    "image": "https://i.pravatar.cc/150?img=3"
-  },
-  {
-    "id": "INT2024A02",
-    "name": "Anjali Verma",
-    "designation": "Backend Developer Intern",
-    "duration": "June 2024 - August 2024",
-    "issuedBy": "Ideovent Technologies",
-    "image": "https://i.pravatar.cc/150?img=5"
-  },
+ 
    {
     "id": "INT2025A73",
     "name": "Ankit Kumar",
     "designation": "Web Developer Intern",
     "duration": "November 2024 - April 2025",
     "issuedBy": "Ideovent Technologies",
-    "image": "https://i.pravatar.cc/150?img=5"
+    "image": "https://i.postimg.cc/QCzWzzHd/Whats-App-Image-2025-08-09-at-16-54-19-0c2e7a90.jpg"
   }, 
   
   {
@@ -30,7 +15,7 @@
     "designation": "Content Writer Intern",
     "duration": "June 2025 - August 2025",
     "issuedBy": "Ideovent Technologies",
-    "image": "https://i.pravatar.cc/150?img=5"
+    "image": "https://i.postimg.cc/L551NS4W/Whats-App-Image-2025-08-09-at-16-53-35-b352e63a.jpg"
   }
 
 ]
