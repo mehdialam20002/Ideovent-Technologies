@@ -1,6 +1,8 @@
+import Footer from '@/components/layout/Footer';
+import Navbar from '@/components/layout/Navbar';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-
+<Navbar/>
 const CertificateVerify = () => {
   const { certId } = useParams();
   const [certData, setCertData] = useState<any>(null);
@@ -145,6 +147,7 @@ const CertificateVerify = () => {
 
         <div className="footer">© {new Date().getFullYear()} Ideovent Technologies</div>
       </div>
+      <Footer/>
     </>
   );
 };
