@@ -2,7 +2,7 @@ import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-<Navbar/>
+
 const CertificateVerify = () => {
   const { certId } = useParams();
   const [certData, setCertData] = useState<any>(null);
@@ -33,6 +33,7 @@ const CertificateVerify = () => {
 
   return (
     <>
+    <Navbar/>
       <style>{`
         .verify-container {
           min-height: 100vh;
@@ -145,7 +146,7 @@ const CertificateVerify = () => {
           </div>
         )}
 
-        <div className="footer">© {new Date().getFullYear()} Ideovent Technologies</div>
+        {/* <div className="footer">© {new Date().getFullYear()} Ideovent Technologies</div> */}
       </div>
       <Footer/>
     </>
