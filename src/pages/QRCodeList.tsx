@@ -21,7 +21,6 @@ const QRCodeList = () => {
 
   const categories = [
     "All",
-    "Web Developer Intern",
     "Content Writer Intern",
     "Software Development Interns",
     "Graphic Designer Interns",

@@ -8,6 +8,7 @@ const CertificateVerify = () => {
   const [certData, setCertData] = useState<any>(null);
   const [error, setError] = useState("");
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,30 +27,158 @@ const CertificateVerify = () => {
       }
     };
 
-    if (certId) {
-      fetchData();
-    }
+    if (certId) fetchData();
   }, [certId]);
+
+  const handleDownload = async () => {
+    try {
+      const res = await fetch(certData.certificateImage);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${certData.name}_Certificate.jpg`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Failed to download the certificate.");
+    }
+  };
+
+  const openPopup = () => setShowPopup(true);
+  const closePopup = () => setShowPopup(false);
 
   return (
     <>
       <Navbar />
       <style>{`
-        .verify-container {
+        .page-container {
+          margin-top: 90px;
           min-height: 100vh;
-          background: linear-gradient(to bottom, #f0f4f8, #dbeafe);
+          background: #fff;
+          font-family: 'Segoe UI', sans-serif;
+          padding: 40px 20px;
+        }
+        .certificate-wrapper {
+          display: flex;
+          flex-wrap: wrap;
+          max-width: 1200px;
+          margin: 0 auto;
+          gap: 20px;
+        }
+        .left-section {
+          flex: 1 1 40%;
+          background: #f9fafb;
+          padding: 24px;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .profile-img {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #2563eb;
+          margin-bottom: 15px;
+        }
+        .name {
+          font-size: 20px;
+          font-weight: bold;
+          color: #111827;
+          margin-bottom: 4px;
+        }
+        .designation {
+          font-size: 14px;
+          color: #374151;
+          margin-bottom: 10px;
+        }
+        .status-badge {
+          display: inline-block;
+          background: #d1fae5;
+          color: #065f46;
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          margin-bottom: 15px;
+        }
+        .info-list {
+          width: 100%;
+          font-size: 14px;
+          color: #374151;
+        }
+        .info-item {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+        .info-item strong {
+          color: #111827;
+        }
+        .project-desc {
+          margin-top: 15px;
+          padding: 12px;
+          background: #fff;
+          border-radius: 6px;
+          border-left: 4px solid #2563eb;
+          font-size: 14px;
+          color: #374151;
+          line-height: 1.4;
+        }
+        .right-section {
+          flex: 1 1 55%;
+          background: #fff;
+          padding: 24px;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 40px 20px;
-          font-family: 'Segoe UI', sans-serif;
         }
-        .verify-title {
-          font-size: 32px;
-          font-weight: 700;
-          color: #2563eb;
-          margin-bottom: 30px;
+        .certificate-image {
+          max-width: 100%;
+          border: 1px solid #d1d5db;
+          border-radius: 8px;
+        }
+        .btn-row {
+          display: flex;
+          gap: 10px;
+          margin-top: 16px;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        .btn {
+          background: #2563eb;
+          color: white;
+          padding: 10px 14px;
+          border-radius: 6px;
+          font-size: 14px;
+          border: none;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+        .btn:hover {
+          background: #1d4ed8;
+        }
+        .btn.secondary {
+          background: #e5e7eb;
+          color: #111827;
+        }
+        .btn.secondary:hover {
+          background: #d1d5db;
+        }
+        @media(max-width: 768px) {
+          .certificate-wrapper {
+            flex-direction: column;
+          }
+          .left-section, .right-section {
+            flex: 1 1 100%;
+          }
         }
         .error-box {
           color: #dc2626;
@@ -58,95 +187,94 @@ const CertificateVerify = () => {
           padding: 12px 20px;
           border-radius: 8px;
           box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          text-align: center;
         }
-        .card {
-          background: #fff;
-          border: 1px solid #bfdbfe;
-          border-radius: 16px;
-          padding: 24px;
-          max-width: 500px;
+        /* Popup Styles */
+        .popup-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
           width: 100%;
-          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-          animation: fadeIn 0.4s ease-in-out;
-        }
-        .card h2 {
-          font-size: 24px;
-          color: #16a34a;
-          margin-bottom: 16px;
-        }
-        .card p {
-          font-size: 16px;
-          margin-bottom: 10px;
-          color: #374151;
-        }
-        .verified-badge {
+          height: 100%;
+          background: rgba(0,0,0,0.7);
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 20px;
+          z-index: 1000;
         }
-        .verified-icon {
-          width: 28px;
-          height: 28px;
-          margin-right: 10px;
-          color: #16a34a;
+        .popup-content {
+          background: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          max-width: 90%;
+          max-height: 90%;
         }
-        .profile-img {
-          width: 80px;
-          height: 80px;
-          object-fit: cover;
-          border-radius: 50%;
-          border: 2px solid #3b82f6;
-          margin: 0 auto 20px auto;
-          display: block;
-        }
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(10px); }
-          100% { opacity: 1; transform: translateY(0); }
+        .popup-content img {
+          max-width: 100%;
+          max-height: 80vh;
+          border-radius: 6px;
         }
       `}</style>
 
-      <div className="verify-container">
-        <h1 className="verify-title">Internship Certificate Verification</h1>
-
+      <div className="page-container">
         {error && <p className="error-box">{error}</p>}
 
         {certData && (
-          <div className="card">
-            <div className="verified-badge">
-              <svg
-                className="verified-icon"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              <h2>Certificate Verified</h2>
-            </div>
-
-            {certData.image && (
+          <div className="certificate-wrapper">
+            {/* Left Section */}
+            <div className="left-section">
               <img
-                src={certData.image}
+                src={certData.profileImage}
                 alt={certData.name}
                 className="profile-img"
               />
-            )}
+              <div className="name">{certData.name}</div>
+              <div className="designation">{certData.designation}</div>
+              <span className="status-badge">✅ Verified</span>
 
-            <p><strong>👤 Name:</strong> {certData.name}</p>
-            <p><strong>🏷️ Designation:</strong> {certData.designation}</p>
-            <p><strong>🕒 Duration:</strong> {certData.duration}</p>
-            <p><strong>🏢 Issued By:</strong> {certData.issuedBy}</p>
-            <p><strong>🆔 Certificate ID:</strong> {certId}</p>
-            <p><strong>📅 Verified On:</strong> {verifiedAt}</p>
+              <div className="info-list">
+                <div className="info-item"><strong>Issued By:</strong> <span>{certData.issuedBy}</span></div>
+                <div className="info-item"><strong>Duration:</strong> <span>{certData.duration}</span></div>
+                <div className="info-item"><strong>Grade:</strong> <span>{certData.grade}%</span></div>
+                <div className="info-item"><strong>Location:</strong> <span>{certData.location}</span></div>
+                <div className="info-item"><strong>Certificate ID:</strong> <span>{certId}</span></div>
+                <div className="info-item"><strong>Verified On:</strong> <span>{verifiedAt}</span></div>
+              </div>
 
-            <div style={{ marginTop: "20px", fontSize: "14px", color: "#2563eb" }}>
-              ✅ This certificate is officially verified.
+              <div className="project-desc">
+                <strong>Project Work:</strong> {certData.project}
+              </div>
+            </div>
+
+            {/* Right Section */}
+            <div className="right-section">
+              <img
+                src={certData.certificateImage}
+                alt="Certificate"
+                className="certificate-image"
+              />
+              <div className="btn-row">
+                <button className="btn" onClick={openPopup}>
+                  View Certificate
+                </button>
+                <button className="btn secondary" onClick={handleDownload}>
+                  Download Certificate
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Popup */}
+      {showPopup && (
+        <div className="popup-overlay" onClick={closePopup}>
+          <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+            <img src={certData.certificateImage} alt="Certificate Preview" />
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );
