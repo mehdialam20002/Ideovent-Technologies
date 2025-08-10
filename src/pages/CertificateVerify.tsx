@@ -1,28 +1,28 @@
-import Footer from '@/components/layout/Footer';
-import Navbar from '@/components/layout/Navbar';
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 const CertificateVerify = () => {
   const { certId } = useParams();
   const [certData, setCertData] = useState<any>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/certificates.json');
+        const response = await fetch("/certificates.json");
         const data = await response.json();
         const match = data.find((cert: any) => cert.id === certId);
         if (match) {
           setCertData(match);
           setVerifiedAt(new Date().toLocaleDateString());
         } else {
-          setError('No certificate found with this ID.');
+          setError("No certificate found with this ID.");
         }
       } catch (err) {
-        setError('Failed to load certificate data.');
+        setError("Failed to load certificate data.");
       }
     };
 
@@ -33,7 +33,7 @@ const CertificateVerify = () => {
 
   return (
     <>
-    <Navbar/>
+      <Navbar />
       <style>{`
         .verify-container {
           min-height: 100vh;
@@ -100,11 +100,6 @@ const CertificateVerify = () => {
           margin: 0 auto 20px auto;
           display: block;
         }
-        .footer {
-          margin-top: 60px;
-          font-size: 14px;
-          color: #6b7280;
-        }
         @keyframes fadeIn {
           0% { opacity: 0; transform: translateY(10px); }
           100% { opacity: 1; transform: translateY(0); }
@@ -119,7 +114,13 @@ const CertificateVerify = () => {
         {certData && (
           <div className="card">
             <div className="verified-badge">
-              <svg className="verified-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                className="verified-icon"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               <h2>Certificate Verified</h2>
@@ -140,15 +141,13 @@ const CertificateVerify = () => {
             <p><strong>🆔 Certificate ID:</strong> {certId}</p>
             <p><strong>📅 Verified On:</strong> {verifiedAt}</p>
 
-            <div style={{ marginTop: '20px', fontSize: '14px', color: '#2563eb' }}>
+            <div style={{ marginTop: "20px", fontSize: "14px", color: "#2563eb" }}>
               ✅ This certificate is officially verified.
             </div>
           </div>
         )}
-
-        {/* <div className="footer">© {new Date().getFullYear()} Ideovent Technologies</div> */}
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 };
