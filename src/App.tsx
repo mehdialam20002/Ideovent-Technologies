@@ -15,6 +15,7 @@ import QRCodeList from "./pages/QRCodeList";
 
 import BlogDetail from "./pages/BlogDetail";
 import CertificateVerify from "./pages/CertificateVerify";
+import InternshipPage from "./pages/InternshipPage";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/verify/:certId" element={<CertificateVerify />} />
+          <Route path="/ii" element={<InternshipPage/>} />
 
           <Route path="/admin/qrcodes" element={<QRCodeList />} />
         </Routes>
