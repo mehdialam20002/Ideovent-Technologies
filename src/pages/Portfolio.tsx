@@ -62,7 +62,7 @@ const Portfolio = () => {
   id: 1,
   title: "HighQ Classes Educational Website",
   category: "education",
-  image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  image: "https://i.postimg.cc/cH4NV54g/pexels-fauxels-3184658.jpg",
   description: "An intuitive and modern educational website built for HighQ Classes to provide online/offline class info, inquiry forms, and easy navigation for students and parents.",
   client: "HighQ Classes",
   technologies: ["HTML", "CSS", "Typescript", "ReactJS", "NodeJS"],
