@@ -1,4 +1,6 @@
 // InternshipOnboardPage.tsx
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
 import React, { useRef, useState } from "react";
 
 type FormState = {
@@ -78,6 +80,8 @@ export default function InternshipOnboardPage(): JSX.Element {
   )}`;
 
   return (
+    <>
+    <Navbar/>
     <div className="ideovent-internship-root">
       <style>{`
         /* Reset & base */
@@ -103,6 +107,7 @@ export default function InternshipOnboardPage(): JSX.Element {
           width:100%;
           max-width:1100px;
           margin: 20px;
+          margin-top: 80px;
         }
 
         header.top {
@@ -544,10 +549,11 @@ export default function InternshipOnboardPage(): JSX.Element {
           </aside>
         </div>
 
-        <footer>
-          © {new Date().getFullYear()} Ideovent Technologies — All rights reserved · Built with ❤️
-        </footer>
+      
       </div>
+     
     </div>
+       <Footer/>
+       </>
   );
 }
