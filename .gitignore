@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Env (never commit real keys)
+.env
+.env.local
+.env.*.local
+
+# Local dev/screenshot helpers
+_shot.mjs
+/shots
+/test-results
+/playwright-report
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

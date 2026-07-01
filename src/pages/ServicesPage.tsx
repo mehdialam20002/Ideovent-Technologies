@@ -1,251 +1,243 @@
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowRight, ArrowUpRight, Check, Handshake, Rocket, ShieldCheck, Sparkles } from "lucide-react";
+import Layout from "@/components/layout/Layout";
+import { Seo } from "@/components/seo/Seo";
+import { useCollection, useSingleton } from "@/lib/cms/context";
+import { getIcon } from "@/lib/icons";
+import { Aurora } from "@/components/ui/aurora";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { CtaButton } from "@/components/ui/cta-button";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Reveal } from "@/components/motion/Reveal";
+import ProcessSection from "@/components/sections/ProcessSection";
+import FaqSection from "@/components/sections/FaqSection";
+import { staggerContainer, fadeUp } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
-import { useEffect, useState, useRef } from 'react';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-import ParallaxSection from '../components/ui/ParallaxSection';
-import {Button} from '../components/ui/button';
-import { Code, PenTool, Globe, ShoppingCart, Monitor, ArrowUpRight, Smartphone, Database, Server } from 'lucide-react';
+const WHY_POINTS = [
+  {
+    icon: Sparkles,
+    title: "Senior craft, no filler",
+    description: "Every project is led by experienced designers and engineers — no hand-offs to juniors halfway through.",
+  },
+  {
+    icon: Rocket,
+    title: "Built to ship fast",
+    description: "A momentum-driven process with weekly demos means you see real progress, not status reports.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Production-grade quality",
+    description: "Accessible, performant and maintainable code — the kind you can scale on without a rewrite.",
+  },
+  {
+    icon: Handshake,
+    title: "A true partner",
+    description: "We think about your business outcomes, not just deliverables, long after launch day.",
+  },
+];
 
-const ServicesPage = () => {
-  const [activeSection, setActiveSection] = useState('web');
-  const servicesRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    document.title = "Our Services - Ideovent Technologies";
-  }, []);
-
-  const services = {
-    web: [
-      {
-        icon: <Code className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "Website Development",
-        description: "Custom websites built with React.js, WordPress, or other technologies tailored to your needs. We focus on creating fast, responsive, and user-friendly websites that drive results.",
-        features: ["Responsive Web Design", "E-commerce Solutions", "Progressive Web Apps", "CMS Integration", "Performance Optimization"]
-      },
-      {
-        icon: <Server className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "Web Application Development",
-        description: "Powerful web applications that solve complex business problems and streamline operations. We use modern frameworks and technologies to build scalable solutions.",
-        features: ["Custom Dashboard Development", "Real-time Applications", "Enterprise Solutions", "Database Design & Integration", "API Development"]
-      },
-      {
-        icon: <Database className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "CMS Development",
-        description: "Custom content management systems that make it easy to update and manage your website. We build solutions that are tailored to your specific needs.",
-        features: ["WordPress Development", "Headless CMS Solutions", "Custom CMS Development", "CMS Migration", "Content Strategy"]
-      }
-    ],
-    design: [
-      {
-        icon: <PenTool className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "UI/UX Design",
-        description: "User-centered design that enhances user experience and engagement with your brand. We create intuitive interfaces that keep users coming back.",
-        features: ["User Research", "Wireframing & Prototyping", "Interface Design", "Usability Testing", "Design Systems"]
-      },
-      {
-        icon: <Monitor className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "Brand Identity",
-        description: "Comprehensive brand identity design that helps you stand out in the market. We create cohesive brand experiences across all customer touchpoints.",
-        features: ["Logo Design", "Visual Identity", "Brand Guidelines", "Marketing Collateral", "Brand Strategy"]
-      }
-    ],
-    marketing: [
-      {
-        icon: <Globe className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "SEO & Digital Marketing",
-        description: "Optimize your online presence and reach your target audience effectively. We help you get found by the right people at the right time.",
-        features: ["Search Engine Optimization", "Content Marketing", "Social Media Strategy", "Email Marketing", "Analytics & Reporting"]
-      },
-      {
-        icon: <ShoppingCart className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "E-Commerce Marketing",
-        description: "Specialized marketing strategies for online stores that drive traffic and increase conversions. We help you sell more products online.",
-        features: ["Conversion Rate Optimization", "Product Listing Optimization", "Shopping Feed Management", "Abandoned Cart Recovery", "Customer Retention"]
-      }
-    ],
-    mobile: [
-      {
-        icon: <Smartphone className="w-12 h-12 text-primary transition-all duration-300 group-hover:text-white" />,
-        title: "Mobile App Development",
-        description: "Native and cross-platform mobile applications that provide seamless experiences on iOS and Android devices. We build apps that users love.",
-        features: ["iOS & Android Development", "React Native Apps", "Mobile UI/UX Design", "App Store Optimization", "App Maintenance & Support"]
-      }
-    ]
-  };
+export default function ServicesPage() {
+  const services = useCollection("services");
+  const contact = useSingleton("contact");
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow">
-        {/* Hero Section */}
-        <ParallaxSection
-          bgImage="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-          className="flex items-center justify-center text-white"
-          height="min-h-[60vh]"
-        >
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="container relative z-10 text-center py-20">
-            <div className="inline-block bg-primary text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
-              Our Services
-            </div>
-            <h1 className="mb-4">What We Offer</h1>
-            <p className="max-w-3xl mx-auto text-lg">
-              Comprehensive digital solutions to help your business thrive in the digital world.
-            </p>
-          </div>
-        </ParallaxSection>
+    <Layout>
+      <Seo
+        title="Services"
+        description="From strategy to launch, Ideovent Technologies delivers web, design, marketing and mobile services that turn ideas into digital reality."
+        path="/services"
+      />
 
-        {/* Services Tabs */}
-        <section ref={servicesRef} className="section bg-white">
-          <div className="container">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-                Our Expertise
-              </div>
-              <h2>Elevate Your Business With Our <span className="text-primary">Services</span></h2>
-              <p className="text-lg text-muted-foreground mt-4">
-                We offer a wide range of digital solutions tailored to your specific needs.
+      {/* 1. Hero */}
+      <section className="relative overflow-hidden pt-36 pb-20 md:pt-44 md:pb-24">
+        <Aurora />
+        <div className="absolute inset-0 -z-10 bg-grid opacity-60" aria-hidden />
+
+        <div className="container-page relative">
+          <div className="mx-auto max-w-3xl text-center">
+            <Reveal>
+              <Eyebrow>Services</Eyebrow>
+            </Reveal>
+            <Reveal delay={0.05}>
+              <h1 className="mt-6 text-hero font-display font-semibold">
+                Services that turn ideas into{" "}
+                <span className="accent-italic text-gradient">digital reality</span>
+              </h1>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-pretty">
+                From first pixel to production, we cover the full stack of building a modern brand
+                online — strategy, design, engineering and growth, all under one roof.
               </p>
-            </div>
+            </Reveal>
+            <Reveal delay={0.15}>
+              <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+                <CtaButton cta={{ label: "Start a project", href: "/contact" }} />
+                <CtaButton cta={{ label: "See our work", href: "/portfolio", variant: "outline" }} />
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
 
-            {/* Service Categories */}
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
-              {[
-                { id: 'web', label: 'Web Development' },
-                { id: 'design', label: 'Design' },
-                { id: 'marketing', label: 'Marketing' },
-                { id: 'mobile', label: 'Mobile Apps' }
-              ].map((category) => (
-                <button
-                  key={category.id}
-                  className={`px-6 py-3 rounded-full transition-all ${
-                    activeSection === category.id
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                  onClick={() => setActiveSection(category.id)}
+      {/* 2. Full services grid */}
+      <section id="services" className="section relative">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="What we do"
+            title={
+              <>
+                Everything you need to <span className="accent-italic text-gradient">build & grow</span>
+              </>
+            }
+            subtitle="Explore the full range of what we offer. Each engagement is scoped to your goals and comes with clear deliverables."
+          />
+
+          <motion.div
+            variants={staggerContainer(0.08)}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.15 }}
+            className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {services.map((s) => {
+              const Icon = getIcon(s.icon);
+              return (
+                <motion.div key={s.id} variants={fadeUp}>
+                  <Link
+                    to={`/services/${s.slug}`}
+                    className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card/60 p-7 transition-all duration-300 hover:border-primary/40 hover:bg-card hover-lift"
+                  >
+                    <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+
+                    <div className="mb-5 flex items-center justify-between">
+                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      {s.category && (
+                        <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                          {s.category}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="font-display text-xl font-semibold">{s.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {s.longDescription || s.shortDescription}
+                    </p>
+
+                    {s.deliverables?.length > 0 && (
+                      <ul className="mt-5 space-y-2 border-t border-border/60 pt-5">
+                        {s.deliverables.slice(0, 4).map((d) => (
+                          <li key={d} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                            <span>{d}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <div className="mt-6 flex items-center gap-1 text-sm font-medium text-primary">
+                      Explore service
+                      <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 3. Process */}
+      <ProcessSection />
+
+      {/* 4. Why work with us */}
+      <section className="section relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-dots opacity-40" aria-hidden />
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="Why Ideovent"
+            title={
+              <>
+                Teams choose us for <span className="accent-italic text-gradient">the long run</span>
+              </>
+            }
+            subtitle="We combine the polish of a studio with the reliability of a partner you can build a roadmap around."
+          />
+
+          <motion.div
+            variants={staggerContainer(0.08)}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.15 }}
+            className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {WHY_POINTS.map((point) => {
+              const Icon = point.icon;
+              return (
+                <motion.div
+                  key={point.title}
+                  variants={fadeUp}
+                  className="card-surface p-7 hover-lift"
                 >
-                  {category.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Service Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {services[activeSection as keyof typeof services].map((service, index) => (
-                <div 
-                  key={index} 
-                  className="group bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
-                >
-                  <div className="p-8">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary transition-all duration-300">
-                      {service.icon}
-                    </div>
-                    <h3 className="text-2xl font-semibold mb-4">{service.title}</h3>
-                    <p className="text-muted-foreground mb-6">{service.description}</p>
-                    <div className="space-y-2 mb-6">
-                      {service.features.map((feature, i) => (
-                        <div key={i} className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          <span>{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="pt-4 border-t border-gray-100">
-                      <a href="#" className="inline-flex items-center text-primary font-medium">
-                        Learn More
-                        <ArrowUpRight className="ml-2 h-4 w-4" />
-                      </a>
-                    </div>
+                  <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-secondary">
+                    <Icon className="h-5 w-5" />
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-        
-        {/* CTA Section */}
-        <section className="bg-accent py-20">
-          <div className="container">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-semibold mb-6">Ready to Start Your Project?</h2>
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Get in touch with our team to discuss how we can help bring your vision to life.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Button to="/contact" size="lg" className="rounded-full shadow-lg shadow-primary/20">
-                  Get a Free Consultation
-                </Button>
-                <Button href="tel:+919410707967" variant="outline" size="lg" className="rounded-full">
-                  Call Us Now
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+                  <h3 className="font-display text-lg font-semibold">{point.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{point.description}</p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
 
-        {/* Process Section */}
-        <section className="section bg-white">
-          <div className="container">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-                Our Process
-              </div>
-              <h2>How We <span className="text-primary">Work</span></h2>
-              <p className="text-lg text-muted-foreground mt-4">
-                Our proven approach ensures we deliver high-quality solutions that meet your needs.
-              </p>
-            </div>
+      {/* 5. FAQ */}
+      <FaqSection category="services" />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                {
-                  step: "01",
-                  title: "Discovery",
-                  description: "We start by understanding your business, goals, and requirements in detail."
-                },
-                {
-                  step: "02",
-                  title: "Planning",
-                  description: "We create a comprehensive plan outlining the scope, timeline, and deliverables."
-                },
-                {
-                  step: "03",
-                  title: "Execution",
-                  description: "Our team works diligently to bring your project to life with regular updates."
-                },
-                {
-                  step: "04",
-                  title: "Delivery & Support",
-                  description: "We launch your project and provide ongoing support to ensure its success."
-                }
-              ].map((step, index) => (
-                <div key={index} className="relative group">
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 h-full group-hover:-translate-y-2 transition-transform duration-300">
-                    <div className="text-5xl font-bold text-primary/20 mb-4">{step.step}</div>
-                    <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                    <p className="text-muted-foreground">{step.description}</p>
-                  </div>
-                  {index < 3 && (
-                    <div className="hidden md:block absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 z-10">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary/40">
-                        <path d="m5 12h14"></path>
-                        <path d="m12 5 7 7-7 7"></path>
-                      </svg>
-                    </div>
+      {/* 6. Closing CTA */}
+      <section className="section">
+        <div className="container-page">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-3xl border border-border bg-card/60 px-6 py-16 text-center md:px-16 md:py-20">
+              <Aurora className="opacity-70" />
+              <div className="relative mx-auto max-w-2xl">
+                <h2 className="text-display font-display font-semibold">
+                  Have a project in{" "}
+                  <span className="accent-italic text-gradient">mind?</span>
+                </h2>
+                <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground text-pretty md:text-lg">
+                  Tell us where you want to go and we'll map the fastest, most confident route to get
+                  there. {contact.responseTimePromise ? contact.responseTimePromise : "We usually reply within one business day."}
+                </p>
+                <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+                  <CtaButton cta={{ label: "Start a project", href: "/contact" }} />
+                  {contact.emailHref && (
+                    <CtaButton
+                      cta={{ label: "Email us", href: contact.emailHref, variant: "outline" }}
+                    />
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      </main>
-      <Footer />
-    </div>
-  );
-};
 
-export default ServicesPage;
+                <div className="mt-8 flex items-center justify-center">
+                  <Link
+                    to="/portfolio"
+                    className={cn(
+                      "group inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    )}
+                  >
+                    Explore recent work
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    </Layout>
+  );
+}

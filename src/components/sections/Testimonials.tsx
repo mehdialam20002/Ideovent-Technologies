@@ -1,212 +1,96 @@
+import { useEffect, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
+import { useCollection } from "@/lib/cms/context";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { cn } from "@/lib/utils";
 
-import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+export default function Testimonials() {
+  const items = useCollection("testimonials").filter((t) => t.featured);
+  const [index, setIndex] = useState(0);
+  const [dir, setDir] = useState(1);
 
-const Testimonials = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  
-  const testimonials = [
-    {
-      text: "Ideovent transformed our online presence completely. Their team delivered a website that not only looks stunning but also performs exceptionally well. The attention to detail and user experience focus has resulted in a 40% increase in our conversion rate.",
-      name: "kavita Prem",
-      position: "CEO, TechStart Inc.",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4A8PhcI7V3miXTmY26npWgI2nFvNxDRs_bg&s"
+  const go = useCallback(
+    (d: number) => {
+      setDir(d);
+      setIndex((i) => (i + d + items.length) % items.length);
     },
-    {
-      text: "Working with Ideovent has been a game-changer for our e-commerce business. Their expertise in UI/UX design and development helped us create an intuitive shopping experience that our customers love. Our sales have increased by 65% since launch.",
-      name: "Ravi Raj",
-      position: "Founder, StyleMart",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwgT2eHovk83Kd0D870HAoiPDi4IQLN9jQjg&s"
-    },
-    {
-      text: "The SEO strategy developed by Ideovent has dramatically improved our online visibility. We're now ranking on the first page for our key terms, and the increased traffic has led to substantial growth in leads and sales. Highly recommended!",
-      name: "Ragini Sinha",
-      position: "Marketing Director, GrowthBiz",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4A8PhcI7V3miXTmY26npWgI2nFvNxDRs_bg&s"
-    },
-    {
-      text: "Ideovent exceeded our expectations in every way. Their team took the time to understand our unique needs and delivered a custom solution that perfectly aligned with our brand and business objectives. The ongoing support has been exceptional.",
-      name: "Arbaj Alam",
-      position: "COO, InnovateNow",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwgT2eHovk83Kd0D870HAoiPDi4IQLN9jQjg&s"
-    }
-  ];
+    [items.length]
+  );
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
+    if (items.length < 2) return;
+    const id = setInterval(() => {
+      setDir(1);
+      setIndex((i) => (i + 1) % items.length);
+    }, 6500);
+    return () => clearInterval(id);
+  }, [items.length]);
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
-    };
-  }, []);
-
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + testimonials.length) % testimonials.length);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-  };
-
-  // Touch event handlers for mobile swiping
-  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
-    setIsDragging(true);
-    if ('touches' in e) {
-      setStartX(e.touches[0].clientX);
-    } else {
-      setStartX(e.clientX);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!isDragging) return;
-    
-    let currentX;
-    if ('touches' in e) {
-      currentX = e.touches[0].clientX;
-    } else {
-      currentX = e.clientX;
-    }
-    
-    const diff = startX - currentX;
-    
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
-      }
-      setIsDragging(false);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  // For automatic sliding (optional)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 6000);
-    
-    return () => clearInterval(interval);
-  }, [currentIndex]);
+  if (!items.length) return null;
+  const t = items[index];
 
   return (
-    <section 
-      ref={sectionRef} 
-      className="section bg-background relative pb-24"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleTouchStart}
-      onMouseMove={handleTouchMove}
-      onMouseUp={handleTouchEnd}
-      onMouseLeave={handleTouchEnd}
-    >
-      <div className="container">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-            Testimonials
-          </div>
-          <h2>What Our <span className="text-primary">Clients Say</span></h2>
-          <p className="text-lg text-muted-foreground mt-4">
-            Don't just take our word for it. Here's what our clients have to say about our work.
-          </p>
-        </div>
+    <section className="section relative overflow-hidden">
+      <div className="container-page">
+        <SectionHeading eyebrow="Kind words" title={<>Loved by the teams <span className="accent-italic text-gradient">we build with</span></>} />
 
-        <div className="relative max-w-4xl mx-auto overflow-hidden">
-          <div 
-            className="transition-all duration-500 ease-in-out"
-            style={{ 
-              transform: `translateX(-${currentIndex * 100}%)`,
-              display: 'flex' 
-            }}
-          >
-            {testimonials.map((testimonial, index) => (
-              <div 
-                key={index} 
-                className="min-w-full px-4"
+        <div className="relative mx-auto mt-14 max-w-3xl">
+          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-card/50 p-8 md:p-12 bg-spotlight">
+            <Quote className="h-10 w-10 text-primary/40" />
+            <AnimatePresence mode="wait" custom={dir}>
+              <motion.blockquote
+                key={t.id}
+                custom={dir}
+                initial={{ opacity: 0, x: dir * 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: dir * -30 }}
+                transition={{ duration: 0.4 }}
+                className="mt-4"
               >
-                <div 
-                  className={`bg-white rounded-2xl shadow-lg p-8 transition-all duration-700 transform ${
-                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-                  }`}
-                >
-                  <div className="flex items-center mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-lg mb-6">{testimonial.text}</p>
-                  <div className="flex items-center">
-                    <img 
-                      src={testimonial.image} 
-                      alt={testimonial.name} 
-                      className="w-12 h-12 rounded-full object-cover mr-4"
-                    />
-                    <div>
-                      <div className="font-medium">{testimonial.name}</div>
-                      {/* <div className="text-sm text-muted-foreground">{testimonial.position}</div> */}
+                <div className="mb-4 flex gap-1 text-primary">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="font-display text-xl leading-relaxed md:text-2xl">"{t.quote}"</p>
+                <footer className="mt-6 flex items-center gap-3">
+                  <img src={t.authorPhoto.src} alt={t.authorPhoto.alt || t.authorName} className="h-12 w-12 rounded-full object-cover" loading="lazy" />
+                  <div>
+                    <div className="font-medium">{t.authorName}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {t.authorPosition}
+                      {t.authorCompany ? `, ${t.authorCompany}` : ""}
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </footer>
+              </motion.blockquote>
+            </AnimatePresence>
           </div>
 
-          {/* Navigation Arrows */}
-          <button 
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg text-primary hover:bg-primary hover:text-white transition-colors z-10"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button 
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg text-primary hover:bg-primary hover:text-white transition-colors z-10"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Indicators */}
-        <div className="flex justify-center mt-8 space-x-2">
-          {testimonials.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                index === currentIndex ? 'bg-primary w-6' : 'bg-gray-300'
-              }`}
-            />
-          ))}
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <button onClick={() => go(-1)} aria-label="Previous" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border hover:border-primary/50 hover:text-primary">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex gap-2">
+              {items.map((it, i) => (
+                <button
+                  key={it.id}
+                  aria-label={`Go to testimonial ${i + 1}`}
+                  onClick={() => {
+                    setDir(i > index ? 1 : -1);
+                    setIndex(i);
+                  }}
+                  className={cn("h-2 rounded-full transition-all", i === index ? "w-6 bg-primary" : "w-2 bg-border")}
+                />
+              ))}
+            </div>
+            <button onClick={() => go(1)} aria-label="Next" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border hover:border-primary/50 hover:text-primary">
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </section>
   );
-};
-
-export default Testimonials;
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "INT2025A73",
+    "name": "Ankit Kumar",
+    "designation": "Web Developer Intern",
+    "duration": "November 2024 - April 2025",
+    "issuedBy": "Ideovent Technologies",
+    "project": "Developed dynamic and responsive websites using React and Django, optimized for SEO and performance.",
+    "certificateImage": "https://i.postimg.cc/zvV4KHrL/CERINT2025-A73.png",
+    "grade": "77.5",
+    "location": "Uttar Pradesh, India",
+    "profileImage": "https://i.postimg.cc/QCzWzzHd/Whats-App-Image-2025-08-09-at-16-54-19-0c2e7a90.jpg"
+  },
+  {
+    "id": "INT2025A74",
+    "name": "Shreya",
+    "designation": "Web Developer Intern",
+    "duration": "June 2025 - August 2025",
+    "issuedBy": "Ideovent Technologies",
+    "project": "Worked on modern UI/UX designs and implemented responsive web components using React and Tailwind CSS.",
+    "certificateImage": "https://i.postimg.cc/7LNLQdT3/CERINT2025-A74.png",
+    "grade": "86.2",
+    "location": "Delhi, India",
+    "profileImage": "https://i.postimg.cc/kMWqGxDz/Whats-App-Image-2025-08-09-at-22-56-46-f85a9954.jpg"
+  }
+]

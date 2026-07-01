@@ -1,119 +1,99 @@
+import { Link } from "react-router-dom";
+import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
+import { useContent } from "@/lib/cms/context";
+import { getIcon } from "@/lib/icons";
+import { CtaButton } from "@/components/ui/cta-button";
 
-import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Instagram } from 'lucide-react';
+export default function Footer() {
+  const { navigation, contact, settings, socials } = useContent();
+  const year = new Date().getFullYear();
 
-const Footer = () => {
   return (
-    <footer className="bg-secondary text-secondary-foreground pt-16 pb-8">
-      <div className="container">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          <div className="space-y-4">
-            <Link to="/" className="text-2xl font-semibold flex items-center">
-              {/* <div className="mr-2 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                
-              </div> */}
-              <span>Ideovent</span>
+    <footer className="relative mt-10 border-t border-border bg-card/30">
+      <div className="container-page section !pb-10">
+        {/* CTA band */}
+        <div className="relative mb-16 overflow-hidden rounded-[2rem] border border-border bg-background p-8 md:p-14 bg-spotlight">
+          <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div className="max-w-xl">
+              <h3 className="text-display font-display font-semibold">
+                Let's build something <span className="accent-italic text-gradient">worth talking about.</span>
+              </h3>
+              <p className="mt-3 text-muted-foreground">{contact.responseTimePromise} Tell us about your project and we'll get back fast.</p>
+            </div>
+            <CtaButton cta={{ label: "Start a project", href: "/contact", variant: "primary" }} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <Link to="/" className="flex items-center gap-2.5">
+              <img src={settings.logo} alt="" className="h-9 w-9 rounded-lg object-contain" />
+              <span className="font-display text-xl font-semibold">{settings.siteName}</span>
             </Link>
-            <p className="text-secondary-foreground/80 max-w-xs">
-              Creating innovative digital solutions for businesses around the globe.
-            </p>
-            <div className="flex space-x-4">
-              <a  target='_blank' href="https://www.linkedin.com/in/ideovent-technologies-a16648356?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                <Linkedin size={20} />
-              </a>
-              <a href="https://x.com/Ideovent_" target="_blank" className="text-secondary-foreground/80 hover:text-primary transition-colors">
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M14.982 10.276L23.41 0h-2.137l-7.71 9.026L8.056 0H0l8.828 13.252L0 24h2.137l8.234-9.642L15.944 24H24M2.91 1.561h3.786L21.09 22.44h-3.786"/>
-  </svg>
-</a>
-              <a href="https://www.facebook.com/profile.php?id=61575994778106&deeplink_ref_surface=instagram_direct&direct_share_include_copy=1&fb_entity_type=unknown" target='_blank' className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                <Facebook size={20} />
-              </a>
-              <a href="https://www.instagram.com/ideovent_official?igsh=cTkzaGFibWRod3Ju&utm_source=qr"  target='_blank' className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                <Instagram size={20} />
-              </a>
+            <p className="mt-4 max-w-sm text-sm text-muted-foreground">{navigation.footer.tagline}</p>
+            <div className="mt-6 flex gap-2.5">
+              {socials.map((s) => {
+                const Icon = getIcon(s.icon);
+                return (
+                  <a
+                    key={s.id}
+                    href={s.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    aria-label={s.label}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                );
+              })}
             </div>
           </div>
 
-          <div>
-            <h3 className="text-lg font-medium mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/" className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/services" className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                  Our Services
-                </Link>
-              </li>
-              <li>
-                <Link to="/portfolio" className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                  Portfolio
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                  Contact Us
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {navigation.footer.columns.map((col) => (
+            <div key={col.heading}>
+              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-foreground">{col.heading}</h4>
+              <ul className="mt-4 space-y-3">
+                {col.links.map((l) => (
+                  <li key={l.href + l.label}>
+                    <Link to={l.href} className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      {l.label}
+                      <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           <div>
-            <h3 className="text-lg font-medium mb-4">Services</h3>
-            <ul className="space-y-2">
-              <li className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                Website Development
+            <h4 className="font-display text-sm font-semibold uppercase tracking-wider">Contact</h4>
+            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+              <li>
+                <a href={contact.phoneHref} className="inline-flex items-center gap-2 hover:text-foreground">
+                  <Phone className="h-4 w-4 text-primary" /> {contact.phoneDisplay}
+                </a>
               </li>
-              <li className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                UI/UX Design
+              <li>
+                <a href={contact.emailHref} className="inline-flex items-center gap-2 hover:text-foreground">
+                  <Mail className="h-4 w-4 text-primary" /> {contact.emailDisplay}
+                </a>
               </li>
-              <li className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                SEO & Digital Marketing
-              </li>
-              <li className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                E-Commerce Development
-              </li>
-              <li className="text-secondary-foreground/80 hover:text-primary transition-colors">
-                Mobile App Development
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium mb-4">Contact Info</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <MapPin size={20} className="mr-3 mt-1 text-primary" />
-                <span className="text-secondary-foreground/80">
-                 Salempur, Deoria, Uttar Pradesh, 274509
+              <li className="inline-flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+                <span>
+                  {contact.address.line1}, {contact.address.city}, {contact.address.state} {contact.address.postalCode}
                 </span>
-              </li>
-              <li className="flex items-center">
-                <Phone size={20} className="mr-3 text-primary" />
-                <span className="text-secondary-foreground/80">+91 9410707967</span>
-              </li>
-              <li className="flex items-center">
-                <Mail size={20} className="mr-3 text-primary" />
-                <span className="text-secondary-foreground/80">contact@ideovent.com</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-secondary-foreground/10 mt-12 pt-8 text-center text-secondary-foreground/70">
-          <p>© {new Date().getFullYear()} Ideovent Technologies. All rights reserved.</p>
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row">
+          <p>© {year} {settings.siteName}. All rights reserved.</p>
+          <p>Crafted with care in {contact.address.state}, {contact.address.country}.</p>
         </div>
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}

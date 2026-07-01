@@ -1,0 +1,12 @@
+{
+  "name": "Ideovent Technologies",
+  "short_name": "Ideovent",
+  "description": "Digital studio for websites, mobile apps, branding and digital marketing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090B",
+  "theme_color": "#09090B",
+  "icons": [
+    { "src": "/ideovent.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

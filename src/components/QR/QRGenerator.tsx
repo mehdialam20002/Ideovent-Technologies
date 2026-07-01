@@ -1,46 +1,44 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import { Download, ExternalLink } from "lucide-react";
+import { verifyUrl } from "@/lib/verify";
 
 interface QRGeneratorProps {
   id: string;
+  label?: string;
+  size?: number;
+  showUrl?: boolean;
 }
 
-const QRGenerator: React.FC<QRGeneratorProps> = ({ id }) => {
+/** Renders a QR code that points at the environment-correct /verify/:id URL, with PNG download. */
+export default function QRGenerator({ id, label, size = 148, showUrl = true }: QRGeneratorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const url = `https://ideovent.com/verify/${id}`;
+  const url = verifyUrl(id);
 
   const handleDownload = () => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const pngUrl = canvas
-        .toDataURL("image/png")
-        .replace("image/png", "image/octet-stream");
-
-      const downloadLink = document.createElement("a");
-      downloadLink.href = pngUrl;
-      downloadLink.download = `${id}_qr.png`;
-      downloadLink.click();
-    }
+    if (!canvas) return;
+    const pngUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = pngUrl;
+    link.download = `${id}_qr.png`;
+    link.click();
   };
 
   return (
-    <div className="m-4 p-4 border rounded text-center bg-white shadow">
-      <p className="mb-2 font-semibold">{id}</p>
-      <QRCodeCanvas
-        value={url}
-        size={128}
-        ref={canvasRef}
-        includeMargin={true}
-      />
-      <p className="text-sm text-gray-500 mt-2">{url}</p>
-      <button
-        onClick={handleDownload}
-        className="mt-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-      >
-        Download QR
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 text-center">
+      {label && <p className="text-sm font-medium">{label}</p>}
+      <div className="rounded-xl bg-white p-2.5">
+        <QRCodeCanvas value={url} size={size} ref={canvasRef} marginSize={2} level="M" />
+      </div>
+      {showUrl && (
+        <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary">
+          <ExternalLink className="h-3 w-3" /> {id}
+        </a>
+      )}
+      <button onClick={handleDownload} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90">
+        <Download className="h-3.5 w-3.5" /> Download QR
       </button>
     </div>
   );
-};
-
-export default QRGenerator;
+}
