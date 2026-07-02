@@ -31,15 +31,18 @@ export default function Navbar() {
         <nav
           className={cn(
             "flex items-center justify-between gap-4 rounded-full px-4 pl-5 transition-all duration-300",
-            scrolled ? "h-14 border border-border/70 bg-background/70 backdrop-blur-xl shadow-lg shadow-black/5" : "h-16 border border-transparent"
+            scrolled ? "h-16 border border-border/70 bg-background/70 backdrop-blur-xl shadow-lg shadow-black/5" : "h-20 border border-transparent"
           )}
         >
-          <Link to="/" className="flex items-center gap-2.5" aria-label={settings.siteName}>
-            <img src={settings.logo} alt="" className="h-8 w-8 rounded-lg object-contain" />
-            <span className="font-display text-lg font-semibold tracking-tight">
-              {settings.siteName.split(" ")[0]}
-              <span className="text-primary">.</span>
-            </span>
+          <Link to="/" className="flex items-center" aria-label={settings.siteName}>
+            <img
+              src={settings.logo}
+              alt={settings.siteName}
+              className={cn(
+                "w-auto object-contain transition-all duration-300 dark:brightness-0 dark:invert",
+                scrolled ? "h-11" : "h-14"
+              )}
+            />
           </Link>
 
           <ul className="hidden items-center gap-1 lg:flex">

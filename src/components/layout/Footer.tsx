@@ -27,7 +27,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2.5">
-              <img src={settings.logo} alt="" className="h-9 w-9 rounded-lg object-contain" />
+              <img src={settings.logo} alt="" className="h-11 w-auto object-contain dark:brightness-0 dark:invert" />
               <span className="font-display text-xl font-semibold">{settings.siteName}</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">{navigation.footer.tagline}</p>
