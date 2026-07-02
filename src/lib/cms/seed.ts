@@ -4,6 +4,9 @@ import type {
 import rawBlogs from "./data/blogs.seed.json";
 import rawCerts from "./data/certificates.seed.json";
 
+// Base path prefix so local /public assets resolve under a subpath deploy (e.g. GitHub Pages).
+const B = import.meta.env.BASE_URL; // "/" locally, "/Ideovent-Technologies/" on Pages
+
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 80);
 
@@ -13,7 +16,7 @@ const seedPosts: BlogPost[] = (rawBlogs as any[]).map((b, i) => ({
   title: b.title,
   slug: slugify(b.title),
   excerpt: (b.description || "").toString(),
-  coverImage: b.image || "/placeholder.svg",
+  coverImage: b.image || `${B}placeholder.svg`,
   body: b.content || `<p>${b.description || ""}</p>`,
   author: "Ideovent Team",
   publishDate: "2025-06-01",
@@ -44,15 +47,15 @@ const seedCerts: Certificate[] = (rawCerts as any[]).map((c, i) => ({
 export const seed: ContentData = {
   settings: {
     siteName: "Ideovent Technologies",
-    logo: "/ideovent.png",
-    favicon: "/favicon.ico",
+    logo: `${B}ideovent.png`,
+    favicon: `${B}favicon.ico`,
     tagline: "Digital studio for ambitious brands.",
     defaultSeo: {
       title: "Ideovent Technologies — Digital Studio for Websites, Apps & Brands",
       description:
         "Ideovent Technologies is a digital studio crafting high-performance websites, mobile apps, brands and marketing that help ambitious businesses grow.",
       keywords: ["web development", "app development", "UI UX design", "branding", "SEO", "digital agency", "Deoria", "Uttar Pradesh"],
-      ogImage: "/ideovent.png",
+      ogImage: `${B}ideovent.png`,
       twitterHandle: "@ideovent_tech",
       canonicalHost: "https://ideovent.com",
     },
@@ -242,11 +245,11 @@ export const seed: ContentData = {
     { id: "onyx", title: "Onyx — Real-Time Desktop AI Copilot", slug: "onyx-realtime-ai-copilot", category: "product", clientName: "Internal product", featured: true, order: 1,
       summary: "A cross-platform desktop AI copilot that overlays context-aware answers on any screen or call, fusing live screen + audio through Google Gemini with on-device voice detection.",
       technologies: ["Electron 33", "React 18", "Vite 5", "TypeScript", "Google Gemini", "ONNX Runtime", "Cloudflare Workers", "Razorpay"],
-      coverImage: "/work/onyx/cover.png",
+      coverImage: `${B}work/onyx/cover.png`,
       gallery: [
-        { src: "/work/onyx/tour-01-welcome.png", alt: "Onyx onboarding" },
-        { src: "/work/onyx/tour-03-open-settings.png", alt: "Onyx settings & providers" },
-        { src: "/work/onyx/tour-08-done.png", alt: "Onyx ready to run" },
+        { src: `${B}work/onyx/tour-01-welcome.png`, alt: "Onyx onboarding" },
+        { src: `${B}work/onyx/tour-03-open-settings.png`, alt: "Onyx settings & providers" },
+        { src: `${B}work/onyx/tour-08-done.png`, alt: "Onyx ready to run" },
       ],
       challenge: "Deliver sub-second, context-aware AI over any live screen or call, keep all audio on-device for privacy, stay invisible to screen capture, and wrap it in a real commercial product across Windows, macOS and Linux.",
       solution: "We fused live screen capture and system audio into a single streaming Gemini request, ran a fully on-device VAD pipeline (ONNX Runtime in an audio worklet), built a capture-invisible native overlay via FFI, and shipped a licensing + payments + auto-update stack on Cloudflare Workers.",
@@ -285,7 +288,7 @@ export const seed: ContentData = {
       socials: [{ platform: "LinkedIn", url: "#", icon: "Linkedin" }] },
     { id: "animesh", name: "Animesh Raturi", role: "Co-Founder & CEO", visible: true, order: 1,
       bio: "Over 5 years of experience in software development and business leadership, leading delivery at Ideovent.",
-      photo: { src: "/animeshprofile.jpeg", alt: "Animesh Raturi" },
+      photo: { src: `${B}animeshprofile.jpeg`, alt: "Animesh Raturi" },
       socials: [{ platform: "LinkedIn", url: "#", icon: "Linkedin" }] },
     { id: "abhilasha", name: "Abhilasha Kumari", role: "Co-Founder & CTO", visible: true, order: 2,
       bio: "Full-stack developer specializing in React and modern web technologies, owning Ideovent's engineering.",
