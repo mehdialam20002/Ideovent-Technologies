@@ -1,222 +1,120 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useSingleton } from "@/lib/cms/context";
+import { CtaButton } from "@/components/ui/cta-button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Navbar() {
+  const nav = useSingleton("navigation");
+  const settings = useSingleton("settings");
+  const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
-
-  const toggleMenu = () => setIsOpen(!isOpen);
-  const closeMenu = () => setIsOpen(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 16);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'About', path: '/about' },
-    { name: 'Services', path: '/services' },
-    { name: 'Blog', path: '/blogs' },
-    { name: 'Projects', path: '/projects' },
-    { name: 'Contact', path: '/contact' },
-  ];
+  useEffect(() => setOpen(false), [pathname]);
+
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
-    <>
-      <style>
-        {`
-          .custom-navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-            transition: all 0.3s ease-in-out;
-            padding: 12px 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: transparent;
-          }
-
-          .custom-navbar.scrolled {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.2);
-          }
-
-          .custom-container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          }
-
-          .custom-logo {
-            height: 55px;
-            display: flex;
-            align-items: center;
-          }
-
-          .custom-logo img {
-            height: 90px;
-            max-height: 100px;
-            object-fit: contain;
-          }
-
-          .custom-nav-links {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-          }
-
-          .custom-nav-link {
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            color: black;
-            transition: color 0.3s ease-in-out;
-          }
-
-          .custom-nav-link:hover,
-          .custom-nav-link.active {
-            color: #007bff;
-          }
-
-          .custom-get-started {
-            background: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: background 0.3s ease-in-out;
-          }
-
-          .custom-get-started:hover {
-            background: #0056b3;
-          }
-
-          /* Mobile Menu */
-          .custom-menu-button {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: black;
-            display: none;
-          }
-
-          .custom-mobile-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            text-align: center;
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            opacity: 0;
-            pointer-events: none;
-          }
-
-          .custom-mobile-menu.open {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-          }
-
-          .custom-mobile-menu a {
-            font-size: 18px;
-            font-weight: 500;
-            color: white;
-          }
-
-          .custom-mobile-menu a:hover {
-            color: #007bff;
-          }
-
-          /* Responsive */
-          @media (max-width: 768px) {
-            .custom-nav-links {
-              display: none;
-            }
-
-            .custom-menu-button {
-              display: block;
-            }
-
-            .custom-logo {
-              height: 50px;
-            }
-
-            .custom-logo img {
-              height: 80px;
-            }
-          }
-        `}
-      </style>
-
-      <header className={`custom-navbar ${scrolled ? 'scrolled' : ''}`}>
-        <div className="custom-container">
-          <Link to="/" className="custom-logo" onClick={closeMenu}>
-            {/* <img src="ideovent.png" alt="Ideovent Logo" /> */}
-            <img src={`${import.meta.env.BASE_URL}ideovent.png`} />
+    <header className={cn("fixed inset-x-0 top-0 z-50 transition-all duration-300", scrolled ? "py-2.5" : "py-4")}>
+      <div className="container-page">
+        <nav
+          className={cn(
+            "flex items-center justify-between gap-4 rounded-full px-4 pl-5 transition-all duration-300",
+            scrolled ? "h-16 border border-border/70 bg-background/70 backdrop-blur-xl shadow-lg shadow-black/5" : "h-20 border border-transparent"
+          )}
+        >
+          <Link to="/" className="flex items-center" aria-label={settings.siteName}>
+            <img
+              src={settings.logo}
+              alt={settings.siteName}
+              className={cn(
+                "w-auto object-contain transition-all duration-300 dark:brightness-0 dark:invert",
+                scrolled ? "h-11" : "h-14"
+              )}
+            />
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="custom-nav-links">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`custom-nav-link ${location.pathname === item.path ? 'active' : ''}`}
-              >
-                {item.name}
-              </Link>
+          <ul className="hidden items-center gap-1 lg:flex">
+            {nav.header.items.map((item) => (
+              <li key={item.href}>
+                <Link
+                  to={item.href}
+                  className={cn(
+                    "relative rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    isActive(item.href) ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {isActive(item.href) && (
+                    <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-muted" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+                  )}
+                  <span className="relative z-10">{item.label}</span>
+                </Link>
+              </li>
             ))}
-            <Link to="/contact" className="custom-get-started">
-              Get Quotation
-            </Link>
-          </nav>
+          </ul>
 
-          {/* Mobile Menu Button */}
-          <button className="custom-menu-button" onClick={toggleMenu}>
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-
-        {/* Mobile Navigation */}
-        <div className={`custom-mobile-menu ${isOpen ? 'open' : ''}`}>
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`custom-nav-link ${location.pathname === item.path ? 'active' : ''}`}
-              onClick={closeMenu}
+          <div className="flex items-center gap-2">
+            <ThemeToggle className="hidden sm:inline-flex" />
+            <div className="hidden lg:block">
+              <CtaButton cta={nav.header.cta} size="default" magnetic={false} />
+            </div>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/60 lg:hidden"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Toggle menu"
+              aria-expanded={open}
             >
-              {item.name}
-            </Link>
-          ))}
-          <Link to="/contact" className="custom-get-started" onClick={closeMenu}>
-            Get Quatation
-          </Link>
-        </div>
-      </header>
-    </>
-  );
-};
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+        </nav>
+      </div>
 
-export default Navbar;
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="container-page lg:hidden"
+          >
+            <div className="mt-2 rounded-3xl border border-border bg-background/95 p-4 backdrop-blur-xl shadow-xl">
+              <ul className="flex flex-col">
+                {nav.header.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        "block rounded-2xl px-4 py-3 text-base font-medium transition-colors",
+                        isActive(item.href) ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex items-center gap-3 px-1">
+                <CtaButton cta={nav.header.cta} size="lg" className="flex-1" magnetic={false} />
+                <ThemeToggle />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+}

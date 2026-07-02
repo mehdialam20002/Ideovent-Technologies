@@ -1,35 +1,23 @@
+import { Link } from "react-router-dom";
+import Layout from "@/components/layout/Layout";
+import { Seo } from "@/components/seo/Seo";
+import { Aurora } from "@/components/ui/aurora";
 
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-import {Button} from '../components/ui/button';
-
-const NotFound = () => {
-  useEffect(() => {
-    document.title = "Page Not Found - Ideovent Technologies";
-  }, []);
-//k
+export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow flex items-center justify-center py-20">
-        <div className="container">
-          <div className="max-w-lg mx-auto text-center">
-            <div className="text-primary text-9xl font-bold mb-6">404</div>
-            <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
-            <p className="text-lg text-muted-foreground mb-8">
-              The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
-            </p>
-            <Button to="/" className="rounded-full px-8">
-              Back to Home
-            </Button>
-          </div>
+    <Layout>
+      <Seo title="Page not found" noindex />
+      <section className="relative flex min-h-[80vh] items-center justify-center overflow-hidden">
+        <Aurora />
+        <div className="container-page relative text-center">
+          <p className="font-display text-[8rem] font-semibold leading-none text-gradient md:text-[12rem]">404</p>
+          <h1 className="mt-2 font-display text-2xl font-semibold">This page took a <span className="accent-italic">wrong turn.</span></h1>
+          <p className="mx-auto mt-3 max-w-md text-muted-foreground">The page you're looking for may have been moved, renamed, or never existed.</p>
+          <Link to="/" className="mt-8 inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground transition-transform hover:scale-105">
+            Back to home
+          </Link>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </section>
+    </Layout>
   );
-};
-
-export default NotFound;
+}

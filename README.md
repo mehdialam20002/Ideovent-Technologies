@@ -1,71 +1,43 @@
-# ideotech
-# Welcome to Ideovent Technologies
+# Ideovent Technologies
 
-## Project info
+A world-class, fully dynamic digital-agency website with a built-in content manager,
+QR-verifiable certificate system, and an internship LaunchPad — built with Vite, React,
+TypeScript, Tailwind CSS, shadcn/ui and Framer Motion.
 
-**URL**: https://ideovent.dev/projects/c5e08130-b1f2-4b68-bd64-6016b0896345
+## Highlights
 
-## How can I edit this code?
+- **Every word is editable** from `/admin` — no code needed. Hero, services, projects,
+  blog, team, testimonials, milestones, FAQs, stats, navigation, contact details, legal
+  pages and the internship program are all content-managed.
+- **Premium, animated UI** — dark-first design with a light theme, kinetic typography,
+  smooth scrolling (Lenis), scroll reveals and micro-interactions (Framer Motion), fully
+  responsive and `prefers-reduced-motion` aware.
+- **Certificate + QR system** — issue QR-verifiable intern certificates in seconds, with
+  auto-generated unique IDs, revoke support, and a hardened `/verify/:id` page.
+- **Works with zero backend** (local mode) and upgrades to a free **Supabase** backend for
+  live, global updates, admin auth and image uploads — see [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md).
+- **SEO-ready** — per-route titles/OG tags via `react-helmet-async`, structured data, and a
+  web manifest.
 
-There are several ways of editing your application.
-
-**Use Ideovent Technologies**
-
-Simply visit the [Ideovent Project](https://ideovent.dev/projects/c5e08130-b1f2-4b68-bd64-6016b0896345) and start prompting.
-
-Changes made via Ideovent Technologies will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Ideovent Technologies.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Getting started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+npm install
+npm run dev      # http://localhost:8080
+npm run build    # production build
 ```
 
-**Edit a file directly in GitHub**
+## The admin
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Visit **`/admin`**. In local mode the default passcode is `ideovent2026`
+(change it with `VITE_ADMIN_PASSCODE`). With Supabase configured, log in with your email
+and password instead.
 
-**Use GitHub Codespaces**
+From the admin you can manage all content, view contact leads and internship applications,
+issue/revoke certificates with live QR codes, and **Export/Import** the whole site content
+as JSON. See [`.env.example`](.env.example) for all configuration options.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Tech
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Ideovent Technologies](https://ideovent.dev/projects/c5e08130-b1f2-4b68-bd64-6016b0896345) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.ideovent.dev/tips-tricks/custom-domain/)
-
+Vite · React 18 · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion · Lenis ·
+react-router-dom · react-helmet-async · qrcode.react · Supabase (optional).

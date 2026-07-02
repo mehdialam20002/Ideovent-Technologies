@@ -1,147 +1,223 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Ideovent Technologies — Design System
+  Dark-first editorial "studio" language. Electric lime signature + violet pop,
+  warm off-white ink text, serif-italic accents reserved for emphasis.
+*/
+
 @layer base {
-  :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+  :root,
+  .dark {
+    /* ── Dark theme (default) ── */
+    --background: 240 10% 4%;      /* #09090B ink */
+    --foreground: 60 9% 98%;       /* #FAFAF9 warm white */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 240 6% 8%;             /* #131316 */
+    --card-foreground: 60 9% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 240 8% 6%;
+    --popover-foreground: 60 9% 98%;
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 78 92% 55%;         /* #C7F03A electric lime — signature */
+    --primary-foreground: 240 10% 4%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 268 83% 62%;      /* #8B5CF6 violet pop */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 220 60% 95%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 14 100% 63%;         /* #FF6B4A coral warm alt */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
+    --success: 142 71% 45%;
+    --warning: 38 92% 55%;
 
-    --radius: 0.75rem;
+    --border: 240 5% 16%;          /* subtle hairline */
+    --input: 240 5% 16%;
+    --ring: 78 92% 55%;
+
+    --radius: 1rem;
+
+    color-scheme: dark;
   }
 
-  html, body {
-    @apply font-sans scroll-smooth antialiased;
-    font-family: 'Inter', sans-serif;
+  .light {
+    /* ── Light theme (bone canvas, same accents) ── */
+    --background: 48 33% 97%;      /* #FBFAF7 bone */
+    --foreground: 240 10% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 4%;
+
+    --primary: 78 70% 42%;         /* deepened lime for contrast on light */
+    --primary-foreground: 240 10% 4%;
+
+    --secondary: 268 83% 58%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 40 20% 92%;
+    --muted-foreground: 240 5% 40%;
+
+    --accent: 14 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 85%;
+    --input: 40 15% 85%;
+    --ring: 78 70% 42%;
+
+    color-scheme: light;
   }
 
   * {
-    @apply border-border box-border;
-  }
-
-  body {
-    @apply bg-background text-foreground overflow-x-hidden;
-  }
-
-  ::-webkit-scrollbar {
-    display: none;
+    @apply border-border;
+    box-sizing: border-box;
   }
 
   html {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    scroll-behavior: auto; /* Lenis handles smooth scroll */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans overflow-x-hidden;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-medium tracking-tight;
+    @apply font-display font-medium tracking-tight text-balance;
   }
 
-  h1 { @apply text-4xl sm:text-5xl md:text-6xl; }
-  h2 { @apply text-3xl sm:text-4xl; }
-  h3 { @apply text-2xl sm:text-3xl; }
-  h4 { @apply text-xl sm:text-2xl; }
+  ::selection {
+    background: hsl(var(--primary) / 0.85);
+    color: hsl(var(--primary-foreground));
+  }
+
+  /* Thin, styled scrollbar (no longer globally hidden) */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--foreground) / 0.14);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--foreground) / 0.28); background-clip: content-box; }
+  html { scrollbar-width: thin; scrollbar-color: hsl(var(--foreground) / 0.16) transparent; }
 }
 
 @layer components {
-  .container {
-    @apply px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl;
+  .container-page {
+    @apply px-5 sm:px-8 lg:px-10 mx-auto w-full max-w-[88rem];
   }
 
   .section {
-    @apply py-16 md:py-24;
+    @apply py-20 md:py-28 lg:py-32;
+  }
+
+  /* Editorial serif-italic accent — reserved for emphasized words only */
+  .accent-italic {
+    @apply font-serif italic font-normal;
+  }
+
+  /* Eyebrow pill */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3.5 py-1.5
+           text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur;
   }
 
   .glass {
-    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-sm;
+    @apply bg-card/50 backdrop-blur-xl border border-border/60;
   }
 
-  .glass-dark {
-    @apply bg-black/30 backdrop-blur-lg border border-white/10 shadow-md;
+  .card-surface {
+    @apply rounded-3xl border border-border bg-card/70 backdrop-blur-sm;
+  }
+
+  /* Gradient text using brand accents */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(100deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 55%, hsl(var(--accent)) 100%);
   }
 
   .link-underline {
-    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+    @apply relative inline-block after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-full
+           after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300
+           hover:after:origin-bottom-left hover:after:scale-x-100;
   }
 
-  .hover-scale {
-    @apply transition-transform duration-300 hover:scale-[1.03];
-  }
-
-  .btn {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
-  }
-
-  .btn-primary {
-    @apply btn bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2;
-  }
-
-  .btn-secondary {
-    @apply btn bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2;
-  }
-
-  .btn-outline {
-    @apply btn border border-input hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2;
-  }
-
-  .btn-ghost {
-    @apply btn hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2;
-  }
+  /* Glow ring around focal elements */
+  .glow-primary { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.25), 0 0 60px -12px hsl(var(--primary) / 0.5); }
+  .glow-secondary { box-shadow: 0 0 0 1px hsl(var(--secondary) / 0.3), 0 0 70px -14px hsl(var(--secondary) / 0.55); }
 }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
-  
-  .parallax {
-    overflow: hidden;
-    position: relative;
-    width: 100%;
-    letter-spacing: -0.5px;
+  .text-pretty { text-wrap: pretty; }
+
+  /* Fluid hero type */
+  .text-hero { font-size: clamp(2.75rem, 8vw, 7rem); line-height: 0.95; letter-spacing: -0.03em; }
+  .text-display { font-size: clamp(2rem, 5vw, 4rem); line-height: 1.02; letter-spacing: -0.02em; }
+
+  /* Ambient radial spotlight background */
+  .bg-spotlight {
+    background:
+      radial-gradient(60% 55% at 50% 0%, hsl(var(--primary) / 0.10), transparent 60%),
+      radial-gradient(45% 45% at 85% 20%, hsl(var(--secondary) / 0.12), transparent 60%),
+      radial-gradient(40% 40% at 10% 30%, hsl(var(--accent) / 0.08), transparent 60%);
   }
 
-  .parallax-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transform: translateZ(-1px) scale(2);
-    z-index: -1;
+  /* Dotted / grid textures */
+  .bg-grid {
+    background-image: linear-gradient(hsl(var(--border) / 0.7) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.7) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
   }
+  .bg-dots {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.10) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* Film grain overlay */
+  .grain::after {
+    content: "";
+    position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .hover-lift { @apply transition-transform duration-300 ease-out hover:-translate-y-1.5; }
+  .clip-parallax { overflow: hidden; position: relative; }
 }
 
-/* Animations */
-.animate-delay-100 { animation-delay: 100ms; }
-.animate-delay-200 { animation-delay: 200ms; }
-.animate-delay-300 { animation-delay: 300ms; }
-.animate-delay-400 { animation-delay: 400ms; }
-.animate-delay-500 { animation-delay: 500ms; }
+/* Marquee (client logos / tech strip) */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.animate-marquee { animation: marquee var(--marquee-duration, 32s) linear infinite; }
+
+/* Shimmer for skeletons */
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+/* Respect reduced motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-marquee { animation: none !important; }
+}

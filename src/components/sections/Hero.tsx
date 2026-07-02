@@ -1,133 +1,94 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; // Ensure react-router-dom is installed and used
-import { Button } from "../ui/button";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowDown, Star } from "lucide-react";
+import { useSingleton, useCollection } from "@/lib/cms/context";
+import { Aurora } from "@/components/ui/aurora";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { CtaButton } from "@/components/ui/cta-button";
+import { staggerContainer, revealItem, fadeUp } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
-const Hero = () => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
+export default function Hero() {
+  const home = useSingleton("home");
+  const stats = useCollection("stats");
+  const reduce = useReducedMotion();
 
   return (
-    <section className="min-h-screen flex items-center pt-20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-accent to-background -z-10" />
+    <section className="relative overflow-hidden pt-36 pb-20 md:pt-44 md:pb-28">
+      <Aurora />
+      <div className="absolute inset-0 -z-10 bg-grid opacity-60" aria-hidden />
 
-      <div className="absolute inset-0 overflow-hidden -z-10">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-primary/10 animate-float"
-            style={{
-              width: `${Math.random() * 400 + 100}px`,
-              height: `${Math.random() * 400 + 100}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 10}s`,
-              animationDuration: `${Math.random() * 10 + 10}s`,
-              opacity: Math.random() * 0.3 + 0.1,
-            }}
-          />
-        ))}
-      </div>
+      <div className="container-page relative">
+        <div className="mx-auto max-w-4xl text-center">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <Eyebrow>{home.badge}</Eyebrow>
+          </motion.div>
 
-      <div className="container">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div className="space-y-2">
-              <div
-                className={`inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium transition-all duration-700 transform ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                }`}
-              >
-                Welcome to Ideovent Technologies
+          <motion.h1
+            variants={reduce ? undefined : staggerContainer(0.12, 0.1)}
+            initial={reduce ? undefined : "hidden"}
+            animate={reduce ? undefined : "show"}
+            className="mt-6 text-hero font-display font-semibold"
+          >
+            {home.headingLines.map((line, i) => (
+              <span key={i} className="block overflow-hidden pb-1">
+                <motion.span variants={reduce ? undefined : revealItem} className="inline-block">
+                  {line.highlighted ? <span className="accent-italic text-gradient">{line.text}</span> : line.text}{" "}
+                </motion.span>
+              </span>
+            ))}
+          </motion.h1>
+
+          <motion.p variants={fadeUp} initial="hidden" animate="show" transition={{ delay: 0.5 }} className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-pretty">
+            {home.subheading}
+          </motion.p>
+
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65, duration: 0.6 }} className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            {home.ctas.map((cta) => (
+              <CtaButton key={cta.label} cta={cta} />
+            ))}
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85, duration: 0.6 }} className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="flex -space-x-3">
+              {home.socialProof.avatars.map((a, i) => (
+                <img key={i} src={a.src} alt={a.alt || ""} className="h-9 w-9 rounded-full border-2 border-background object-cover" loading="lazy" />
+              ))}
+            </div>
+            <div className="text-left text-sm">
+              <div className="flex items-center gap-1 text-primary">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                ))}
               </div>
-              <h1
-                className={`transition-all duration-700 delay-100 transform ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                }`}
-              >
-                Digital Solutions <br />
-                <span className="text-primary">for Businesses</span>
-              </h1>
-              <p
-                className={`text-lg text-muted-foreground md:text-xl max-w-2xl transition-all duration-700 delay-200 transform ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                }`}
-              >
-                We craft innovative digital experiences that transform businesses
-                and drive growth through cutting-edge technology and design.
+              <p className="text-muted-foreground">
+                {home.socialProof.line1} <span className="text-foreground">{home.socialProof.line2}</span>
               </p>
             </div>
-
-            <div
-              className={`flex flex-wrap gap-4 transition-all duration-700 delay-300 transform ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              }`}
-            >
-              <Link to="/contact">
-                <Button size="lg" className="rounded-full shadow-lg shadow-primary/20">
-                  Get a Free Consultation
-                </Button>
-              </Link>
-              <Link to="/services">
-                <Button variant="outline" size="lg" className="rounded-full">
-                  View Our Services
-                </Button>
-              </Link>
-            </div>
-
-            <div
-              className={`flex items-center gap-6 transition-all duration-700 delay-400 transform ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              }`}
-            >
-              <div className="flex -space-x-4">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
-                  alt="Client"
-                  className="w-10 h-10 rounded-full border-2 border-white object-cover"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80"
-                  alt="Client"
-                  className="w-10 h-10 rounded-full border-2 border-white object-cover"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=100&q=80"
-                  alt="Client"
-                  className="w-10 h-10 rounded-full border-2 border-white object-cover"
-                />
-              </div>
-              <div>
-                <div className="font-medium">Your Trusted Partner</div>
-                <div className="text-sm text-muted-foreground">in Digital Innovation</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`aspect-square max-w-md mx-auto lg:max-w-none transition-all duration-1000 transform ${
-              isVisible ? "opacity-100 translate-y-0 rotate-0" : "opacity-0 translate-y-20 rotate-12"
-            }`}
-          >
-            <div className="relative w-full h-full">
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/5 rounded-3xl transform rotate-6 animate-pulse-soft" />
-              <img
-                src="https://i.postimg.cc/nLvCH4X2/hero-Sectio.jpg"
-                alt="Digital Solutions"
-                className="rounded-3xl object-cover w-full h-full shadow-2xl"
-              />
-              <div className="absolute -bottom-6 -right-6 bg-white rounded-xl p-4 shadow-xl">
-                <div className="text-sm font-medium">Client Satisfaction</div>
-                <div className="text-2xl font-bold text-primary">98%</div>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="mx-auto mt-16 grid max-w-4xl grid-cols-2 divide-x divide-border overflow-hidden rounded-3xl border border-border bg-card/40 backdrop-blur md:grid-cols-4"
+        >
+          {stats.map((s, i) => (
+            <div key={s.id} className={cn("flex flex-col items-center gap-1 px-4 py-6 text-center", i >= 2 && "border-t border-border md:border-t-0")}>
+              <span className="font-display text-3xl font-semibold md:text-4xl">
+                {s.value}
+                {s.suffix}
+              </span>
+              <span className="text-xs text-muted-foreground md:text-sm">{s.label}</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      <div aria-hidden className="pointer-events-none absolute bottom-6 left-1/2 hidden -translate-x-1/2 text-muted-foreground md:block">
+        <ArrowDown className="h-4 w-4 animate-bounce" />
       </div>
     </section>
   );
-};
-
-export default Hero;
+}
