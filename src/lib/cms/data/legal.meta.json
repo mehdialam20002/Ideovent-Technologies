@@ -1,0 +1,18 @@
+{
+  "privacy": {
+    "title": "Privacy Policy",
+    "updatedAt": "26 September 2026"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "updatedAt": ""
+  },
+  "refund": {
+    "title": "Refund and Cancellation Policy",
+    "updatedAt": ""
+  },
+  "disclaimer": {
+    "title": "Disclaimer",
+    "updatedAt": ""
+  }
+}

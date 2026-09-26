@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUpRight, CalendarDays, PenLine } from "lucide-react";
+import { ArrowUpRight, CalendarDays, PenLine, SearchX } from "lucide-react";
 
 import Layout from "@/components/layout/Layout";
 import { Seo } from "@/components/seo/Seo";
@@ -9,6 +9,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Aurora } from "@/components/ui/aurora";
 import { Reveal } from "@/components/motion/Reveal";
+import { EmptyState } from "@/components/ui/empty-state";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import { useCollection } from "@/lib/cms/context";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ export default function Blog() {
   const tags = useMemo(() => {
     const set = new Set<string>();
     posts.forEach((p) => p.tags?.forEach((t) => t && set.add(t)));
-    return [ALL, ...Array.from(set)];
+    return [ALL,...Array.from(set)];
   }, [posts]);
 
   const [activeTag, setActiveTag] = useState(ALL);
@@ -37,21 +38,33 @@ export default function Blog() {
   const featured: BlogPost | undefined = useMemo(
     () => posts.find((p) => p.featured) ?? posts[0],
     [posts]
-  );
+);
 
   const rest = useMemo(() => posts.filter((p) => p.id !== featured?.id), [posts, featured]);
 
   const filtered = useMemo(
-    () => (activeTag === ALL ? rest : rest.filter((p) => p.tags?.includes(activeTag))),
+    () => (activeTag === ALL ? rest: rest.filter((p) => p.tags?.includes(activeTag))),
     [rest, activeTag]
-  );
+);
 
   return (
     <Layout>
       <Seo
         title="Blog"
-        description="Ideas, guides, and insights from the Ideovent Technologies team on web, design, and building modern digital products."
+        description="Practical writing from the Ideovent team, websites that load fast, the mistakes small-business sites keep making, local SEO, and what working with a small studio in New Delhi is actually like."
         path="/blog"
+        keywords={[
+          "website tips for small business India",
+          "local SEO New Delhi",
+          "website performance guide India",
+          "choosing a web development partner Delhi",
+        ]}
+        breadcrumbs={[{ name: "Blog", path: "/blog" }]}
+        schema={{
+          "@type": "Blog",
+          name: "Ideovent Technologies Blog",
+          inLanguage: "en-IN",
+        }}
       />
 
       {/* Hero */}
@@ -78,20 +91,20 @@ export default function Blog() {
       </section>
 
       {posts.length === 0 ? (
-        <section className="section pt-0">
-          <div className="container-page">
-            <div className="card-surface mx-auto flex max-w-xl flex-col items-center gap-3 rounded-3xl border border-border bg-card/60 px-8 py-16 text-center">
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <PenLine className="h-5 w-5" />
-              </span>
-              <h2 className="font-display text-xl font-semibold">No posts yet.</h2>
-              <p className="text-sm text-muted-foreground">
-                We're busy writing. Check back soon for fresh insights.
-              </p>
-            </div>
-          </div>
-        </section>
-      ) : (
+        /* Nothing here promises a post that nobody has committed to writing:
+           "check back soon" is a claim about the future, and this page has no
+           way to keep it. It says what is true and offers the two pages that
+           carry the same information in a form that does exist. */
+        <EmptyState
+          className="pt-0"
+          eyebrow="Notes"
+          icon={<PenLine className="h-5 w-5" aria-hidden="true" />}
+          title={<>Nothing is <span className="accent-italic">published yet.</span></>}
+          body="When we write something worth reading it lands here. In the meantime the work and the price list say more about how we build than an article would."
+          action={{ label: "Selected work", href: "/work" }}
+          links={[{ label: "Prices", to: "/pricing" }, { label: "Talk to us", to: "/contact" }]}
+        />
+): (
         <>
           {/* Featured post */}
           {featured && (
@@ -100,14 +113,19 @@ export default function Blog() {
                 <Reveal>
                   <Link
                     to={`/blog/${featured.slug}`}
-                    className="group grid grid-cols-1 overflow-hidden rounded-3xl border border-border bg-card/60 transition-transform duration-500 hover:-translate-y-1 lg:grid-cols-2"
+                    className="group grid grid-cols-1 overflow-hidden rounded-3xl border border-border bg-card/60 transition-transform duration-200 hover:-translate-y-1 motion-reduce:hover:translate-y-0 lg:grid-cols-2"
                   >
                     <div className="relative aspect-[16/10] overflow-hidden lg:aspect-auto">
+                      {/* Decorative: the post title is the visible text of this same link,
+                          so a repeated alt makes a screen reader announce the card twice. */}
                       <img
                         src={featured.coverImage}
-                        alt={featured.title}
+                        alt=""
+                        width={800}
+                        height={500}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        decoding="async"
+                        className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent lg:bg-gradient-to-r" />
                       <span className="absolute left-4 top-4 rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium backdrop-blur">
@@ -120,7 +138,7 @@ export default function Blog() {
                           <span key={t} className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
                             {t}
                           </span>
-                        ))}
+))}
                       </div>
                       <h2 className="font-display text-2xl font-semibold text-balance md:text-3xl">
                         {featured.title}
@@ -131,8 +149,8 @@ export default function Blog() {
                           <span className="inline-flex items-center gap-1.5">
                             <PenLine className="h-3.5 w-3.5" /> {featured.author}
                           </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <CalendarDays className="h-3.5 w-3.5" /> {formatDate(featured.publishDate)}
+                          <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
+                            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(featured.publishDate)}
                           </span>
                         </div>
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
@@ -144,7 +162,7 @@ export default function Blog() {
                 </Reveal>
               </div>
             </section>
-          )}
+)}
 
           {/* Grid + tag filter */}
           <section className="section pt-0">
@@ -153,7 +171,7 @@ export default function Blog() {
                 align="left"
                 eyebrow="All articles"
                 title={<>From the <span className="accent-italic text-gradient">journal</span></>}
-                subtitle="Browse everything we've published, or filter by topic."
+                subtitle="Browse everything we’ve published, or filter by topic."
               />
 
               {tags.length > 2 && (
@@ -164,26 +182,55 @@ export default function Blog() {
                         key={t}
                         type="button"
                         onClick={() => setActiveTag(t)}
+                        aria-pressed={activeTag === t}
+                        /* Three states, not one. The selected pill had no hover
+                           at all and the unselected ones changed only their
+                           label colour, so on a phone (no hover) a tap on a
+                           filter was unacknowledged until the grid below it
+                           re-rendered. `active:` is the press. */
                         className={cn(
-                          "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                          "rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-200",
                           activeTag === t
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-card/40 text-muted-foreground hover:text-foreground"
-                        )}
+                            ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80"
+: "border-border bg-card/40 text-muted-foreground hover:border-primary/50 hover:text-foreground active:bg-muted"
+)}
                       >
                         {t}
                       </button>
-                    ))}
+))}
                   </div>
                 </Reveal>
-              )}
+)}
 
               {filtered.length === 0 ? (
-                <p className="mt-12 text-muted-foreground">No posts in this topic yet.</p>
-              ) : (
+                /* THE FILTERED-TO-NOTHING STATE. It was one grey sentence in the
+                   flow of the page, which reads as a rendering failure rather
+                   than as an answer, and it left the visitor holding a filter
+                   with no way back other than finding the "All" pill again. It
+                   now names the topic they chose and carries the reset. */
+                <div className="mt-10 rounded-3xl border border-dashed border-border px-8 py-14 text-center">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-muted text-muted-foreground">
+                    <SearchX className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <p className="mt-5 font-display text-lg font-medium">
+                    Nothing under {activeTag} yet.
+                  </p>
+                  <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground text-pretty">
+                    Every other topic still has something in it.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTag(ALL)}
+                    className="mt-6 inline-flex min-h-11 items-center rounded-full border border-border px-5 text-sm font-medium
+                               transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
+                  >
+                    Show every article
+                  </button>
+                </div>
+): (
                 <motion.div
                   key={activeTag}
-                  variants={staggerContainer(0.08)}
+                  variants={staggerContainer()}
                   initial="hidden"
                   whileInView="show"
                   viewport={{ once: true, amount: 0.15 }}
@@ -193,14 +240,17 @@ export default function Blog() {
                     <motion.article key={p.id} variants={fadeUp}>
                       <Link
                         to={`/blog/${p.slug}`}
-                        className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card/60 transition-transform duration-500 hover:-translate-y-1"
+                        className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card/60 transition-transform duration-200 hover:-translate-y-1 motion-reduce:hover:translate-y-0"
                       >
                         <div className="relative aspect-[16/10] overflow-hidden">
                           <img
                             src={p.coverImage}
-                            alt={p.title}
+                            alt=""
+                            width={800}
+                            height={500}
                             loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            decoding="async"
+                            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
                         </div>
@@ -210,7 +260,7 @@ export default function Blog() {
                               <span key={t} className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
                                 {t}
                               </span>
-                            ))}
+))}
                           </div>
                           <h3 className="font-display text-lg font-semibold leading-snug text-balance transition-colors group-hover:text-primary">
                             {p.title}
@@ -220,20 +270,20 @@ export default function Blog() {
                             <span className="inline-flex items-center gap-1.5">
                               <PenLine className="h-3.5 w-3.5" /> {p.author}
                             </span>
-                            <span className="inline-flex items-center gap-1.5">
-                              <CalendarDays className="h-3.5 w-3.5" /> {formatDate(p.publishDate)}
+                            <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
+                              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(p.publishDate)}
                             </span>
                           </div>
                         </div>
                       </Link>
                     </motion.article>
-                  ))}
+))}
                 </motion.div>
-              )}
+)}
             </div>
           </section>
         </>
-      )}
+)}
     </Layout>
-  );
+);
 }

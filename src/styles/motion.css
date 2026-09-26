@@ -1,0 +1,279 @@
+/*
+  motion.css: main-site styles for the 25 September 2026 redesign.
+
+  ONE OWNER. Three workflow agents work on the site at once, and a fourth
+  workflow is editing the demo-site block at the foot of src/index.css. So the
+  main-site CSS is split by owner rather than by topic:
+
+    src/styles/hero.css     the home hero and the product strip under it
+    src/styles/motion.css   keyframes, entrance and interaction motion
+    src/styles/system.css   shared primitives: eyebrow, buttons, cards, type
+
+  Each file is imported once from src/main.tsx, after index.css, so anything
+  here wins over the older utilities in index.css of equal specificity.
+  The prefers-reduced-motion block at the foot of index.css still applies to
+  everything declared here: do not add motion that escapes it.
+
+  NO @layer IN THIS FILE. It is imported from JS as its own stylesheet, and
+  Tailwind 3 refuses `@layer components` in a file that has no matching
+  `@tailwind components` directive. Plain rules, ordered after index.css, do
+  the same job.
+
+  ────────────────────────────────────────────────────────────────────────────
+  THE NUMBERS (mirrors src/lib/motion.ts; change both or neither)
+  ────────────────────────────────────────────────────────────────────────────
+  One curve: cubic-bezier(0.22, 1, 0.36, 1). It is EASE in motion.ts and
+  Tailwind's default transitionTimingFunction, so `transition-colors` and
+  friends already run on it. Only the hero's opacity breathe may use
+  ease-in-out (site:hero).
+
+  Interaction band: 150ms colour, border, opacity / 180ms transform (4px lift,
+  0.99 press) / 200ms arrow nudge / 400ms image scale inside a clipped frame.
+  Entrance band: 500ms for the process rail drawing. Nothing here loops.
+*/
+:root {
+  --m-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --m-t-color: 150ms;
+  --m-t-move: 180ms;
+  --m-t-nudge: 200ms;
+  --m-t-image: 400ms;
+  --m-t-draw: 500ms;
+}
+
+/* ── Browser frame (src/components/ui/project-cover.tsx) ───────────────────
+   Every screenshot on the site sits inside a slim window: an address bar
+   printing the project's real host. No window dots (the stock template
+   mock-up; removed 26 Sep 2026). A navbar inside a browser frame reads as "their website", which is true; the same navbar loose
+   under our own sticky nav read as two navbars stacked, which is what Mehdi
+   screenshotted.
+
+   The 1px ring is an inset shadow on ::after, over the picture, so a white
+   screenshot (Tamkuhi, Aura) still has an edge on the light theme and a black
+   one (WedArt) still has an edge on navy. It brightens on hover. */
+.bf {
+  container: bf / inline-size;
+}
+.bf::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px hsl(var(--foreground) / 0.1);
+  pointer-events: none;
+  transition: box-shadow var(--m-t-color) var(--m-ease);
+}
+/* The chrome: the address centred between two empty columns of equal width,
+   so it is centred on the WINDOW. 28px tall, 34px once the window is 640px
+   wide (a case study, the home deep dive), because a 28px bar over a 1184px picture reads as a hairline. */
+.bf-bar {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  background-color: hsl(var(--card));
+  /* Hairline between the chrome and the page it frames. */
+  box-shadow: 0 1px 0 hsl(var(--foreground) / 0.07);
+}
+.bf-addr {
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+}
+/* The host, in the site's body face. Muted on a 6% field: 7.1:1 on the dark
+   card, 7.2:1 on the white one, so it passes AA although it is chrome. */
+.bf-addr > span {
+  display: block;
+  max-width: 100%;
+  height: 18px;
+  padding: 0 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background-color: hsl(var(--foreground) / 0.06);
+  color: hsl(var(--muted-foreground));
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@container bf (min-width: 640px) {
+  .bf-bar {
+    height: 34px;
+    padding: 0 14px;
+    grid-template-columns: 56px minmax(0, 1fr) 56px;
+  }
+  .bf-addr > span {
+    height: 22px;
+    padding: 0 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 22px;
+  }
+}
+/* The viewport is a size container so the per-image crop in project-cover.tsx
+   can be written in cqw (a share of the frame's own width), which is what makes
+   one crop value right at 260px on a phone and at 1184px on a case study. */
+.bf-view {
+  container-type: inline-size;
+}
+
+/* The picture's scale on hover: 1.02 over 400ms, inside the clip, never the
+   frame. This rule loads after Tailwind's utilities, so at equal specificity
+   (0,3,0) it beats the `group-hover:scale-[1.04]` that older call sites still
+   pass to ProjectCover's className, and the whole site gets one value without
+   every caller being edited first. */
+.m-zoom {
+  transition: transform var(--m-t-image) var(--m-ease);
+  transform-origin: 50% 0;
+}
+
+/* Lift: 4px over 180ms (the brief's number, and /work's frames), fine
+   pointers only. A touch screen has no hover, and a sticky :hover after a
+   tap leaves a card hanging 4px up. */
+.m-lift {
+  transition: transform var(--m-t-move) var(--m-ease), box-shadow var(--m-t-color) var(--m-ease),
+    background-color var(--m-t-color) var(--m-ease), color var(--m-t-color) var(--m-ease);
+}
+/* The arrow after a link label: 2px toward where it goes, 200ms. */
+.m-nudge {
+  transition: transform var(--m-t-nudge) var(--m-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .m-lift:hover {
+    transform: translateY(-4px);
+  }
+  .group:hover .m-zoom,
+  .bf.group:hover .m-zoom {
+    transform: scale(1.02);
+  }
+  .group:hover .bf::after,
+  .bf.group:hover::after {
+    box-shadow: inset 0 0 0 1px hsl(var(--foreground) / 0.22);
+  }
+  .group:hover .m-nudge {
+    transform: translateX(2px);
+  }
+  .group:hover .m-nudge-up {
+    transform: translate(2px, -2px);
+  }
+  /* A panel with its own ground (ProductLines) gets its edge from its own
+     text colour, so the same rule reads on the navy panel and the cream one. */
+  .m-panel:hover {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+  }
+}
+.m-nudge-up {
+  transition: transform var(--m-t-nudge) var(--m-ease);
+}
+/* Press: 0.99, the same as the site's buttons. */
+.m-lift:active {
+  transform: scale(0.99);
+}
+
+/* ── The process rail (ProcessSection.tsx) ─────────────────────────────────
+   One line, drawn once when the list is 40% in view: left to right from lg,
+   where the four stages sit in one row, and top to bottom below it, where they
+   stack (a 2x2 grid at md would leave the second row off the line). Each stage numeral turns gold as the line reaches it.
+   Before `data-drawn` is set the line is at scale 0; ProcessSection sets it on
+   first render for a reduced-motion visitor, so for them the line is simply
+   there and nothing transitions. */
+.m-rail-line {
+  position: absolute;
+  background-color: hsl(var(--secondary) / 0.55);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+@media (max-width: 1023.98px) {
+  .m-rail-line {
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+  }
+  .m-rail:not([data-drawn]) .m-rail-line {
+    transform: scaleY(0);
+  }
+  .m-rail[data-drawn] .m-rail-line {
+    animation: m-rail-draw-y var(--m-t-draw) var(--m-ease) both;
+  }
+}
+@media (min-width: 1024px) {
+  .m-rail-line {
+    left: 0;
+    right: 0;
+    top: 9px;
+    height: 1px;
+  }
+  .m-rail:not([data-drawn]) .m-rail-line {
+    transform: scaleX(0);
+  }
+  .m-rail[data-drawn] .m-rail-line {
+    animation: m-rail-draw-x var(--m-t-draw) var(--m-ease) both;
+  }
+}
+@keyframes m-rail-draw-x {
+  from { transform: scaleX(0); }
+  to { transform: none; }
+}
+@keyframes m-rail-draw-y {
+  from { transform: scaleY(0); }
+  to { transform: none; }
+}
+.m-rail-num {
+  color: hsl(var(--muted-foreground));
+  transition: color var(--m-t-color) var(--m-ease);
+}
+.m-rail[data-drawn] .m-rail-num {
+  color: hsl(var(--secondary));
+  transition-delay: calc(60ms + var(--i, 0) * 110ms);
+}
+
+/* ── Section h2 measure (components/motion/SectionTitle.tsx) ──────────────
+   system.css sets `.text-display { max-width: 28ch }`. A `ch` is the width of
+   the CURRENT font's "0", so the box is 773px wide while the metric-matched
+   "Sora Fallback" is showing and 924px once Sora lands (measured at 1440,
+   44px): the heading re-wraps at the font swap, 3 lines to 2 on the home deep
+   dive, and pushes everything under it up 48px. In a tall viewport that is a
+   0.106 layout shift. 21em is Sora's 28ch at every size (924 / 44 = 21.0), so
+   the measure is the same and it no longer depends on which font is loaded.
+   Loaded after system.css, so this wins at equal specificity. */
+.m-h2 {
+  max-width: 21em;
+}
+
+/* ── FAQ panels at rest (FaqSection.tsx) ──────────────────────────────────
+   A closed Radix panel keeps `animate-accordion-up` on its class list, so all
+   five closed answers on the home page reported a (finished) animation-name at
+   rest: five of the brief's budget of ten, for panels nobody touched. Once a
+   panel is closed AND hidden (Radix sets `hidden` only after the close
+   animation has ended) it has nothing left to animate. The close itself still
+   plays: while it runs the panel is not yet hidden. */
+.m-faq [data-state="closed"][hidden] {
+  animation: none;
+}
+
+/* Reduced motion: the index.css block already takes every duration to 0.001ms.
+   These two are belt and braces for things that are not durations: a hover
+   transform that would otherwise still apply on a fine pointer, and the
+   numeral delay (the global block zeroes durations, not delays). */
+@media (prefers-reduced-motion: reduce) {
+  .m-lift:hover,
+  .m-lift:active,
+  .group:hover .m-nudge,
+  .group:hover .m-nudge-up,
+  .group:hover .m-zoom,
+  .bf.group:hover .m-zoom {
+    transform: none;
+  }
+  .m-rail[data-drawn] .m-rail-num {
+    transition-delay: 0s;
+  }
+}

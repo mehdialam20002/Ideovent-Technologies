@@ -1,15 +1,14 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseEnabled } from "./config";
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-
-/** True when the site has been wired to a Supabase project (live global mode). */
-export const supabaseEnabled = Boolean(url && anonKey);
+// Re-exported so existing callers keep working. Import it from "./config" instead if you
+// only need the flag, importing this module pulls in the whole Supabase SDK.
+export { supabaseEnabled };
 
 let _client: SupabaseClient | null = null;
 
 export function supabase(): SupabaseClient {
   if (!supabaseEnabled) throw new Error("Supabase is not configured.");
-  if (!_client) _client = createClient(url as string, anonKey as string);
+  if (!_client) _client = createClient(SUPABASE_URL as string, SUPABASE_ANON_KEY as string);
   return _client;
 }

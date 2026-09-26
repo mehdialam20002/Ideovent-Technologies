@@ -1,169 +1,160 @@
-import { useState, type FormEvent } from "react";
-import emailjs from "@emailjs/browser";
-import { Mail, Phone, MapPin, Clock, CheckCircle2, Loader2, ArrowRight } from "lucide-react";
-import { useSingleton, useCms } from "@/lib/cms/context";
+import { lazy, Suspense, type ComponentType } from "react";
+import { Mail, Phone, MapPin, Clock, ArrowRight, MessageCircle } from "lucide-react";
+import { useSingleton } from "@/lib/cms/context";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { Reveal } from "@/components/motion/Reveal";
-import { nextId } from "@/lib/cms/store";
-import { cn } from "@/lib/utils";
+import { unbreakable } from "@/lib/typography";
+import { whatsappToUs } from "@/components/lead/core";
 
-const EMAILJS = {
-  serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_xponvzu",
-  templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "template_v6zkm1n",
-  publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "zq5EixmXACyLZqpG7",
-};
+/*
+  THE CONTACT SECTION, 26 Sep 2026 (track site:leads).
+
+  This file is the SHELL: the heading, the contact rows and the WhatsApp link,
+  which render with the page. The form itself (fields, validation, delivery)
+  is src/components/lead/ContactFormBody.tsx, fetched as a separate chunk.
+
+  WHY. This section is on the home page, so everything this file imports is in
+  the entry chunk that gates the first paint on every route, and the
+  redesign's budget lets that chunk grow by 10 KB in total. The rebuilt form
+  and its pipeline came to about 20 KB minified, all of it for a form at the
+  foot of the page that nobody can reach in the first second. So the body is
+  requested once the page has finished loading (or at once, if this section
+  renders first, as it does on /contact) and the shell holds its place.
+
+  LAYOUT. The h2 runs across the top on the gutter and the two columns sit
+  under it, rather than the h2 sitting in the left column: the redesign's
+  checklist forbids a paragraph that starts to the right of its heading's right
+  edge, and every hint and error in the form column did.
+
+  NO ENTRANCE MOTION on the form or the contact rows. A form that fades in is a
+  form a fast scroller meets at opacity 0.4; below the fold only the section
+  heading reveals.
+*/
+
+/**
+ * If the chunk cannot be fetched (offline, or an old tab after a deploy has
+ * replaced the file), React.lazy would throw and take the page down with it.
+ * This is what renders instead: the two ways to reach us that need no form.
+ */
+function FormUnavailable() {
+  const contact = useSingleton("contact");
+  const wa = whatsappToUs(contact.whatsappNumber);
+  return (
+    <div role="status" className="max-w-xl rounded-[8px] bg-foreground/[0.05] p-5 text-[15px] leading-relaxed">
+      The form did not load, so please reach us directly:{" "}
+      {wa && (
+        <a href={wa} target="_blank" rel="noreferrer noopener" className="font-medium underline underline-offset-4">
+          WhatsApp
+        </a>
+      )}
+      {contact.phoneHref && (
+        <>
+          {" or "}
+          <a href={contact.phoneHref} className="font-medium underline underline-offset-4">
+            {unbreakable(contact.phoneDisplay)}
+          </a>
+        </>
+      )}
+      .
+    </div>
+  );
+}
+
+type BodyModule = { default: ComponentType };
+let bodyPromise: Promise<BodyModule> | null = null;
+const loadBody = () =>
+  (bodyPromise ??= import("@/components/lead/ContactFormBody").catch(() => ({ default: FormUnavailable })));
+const ContactFormBody = lazy(loadBody);
+
+// Fetch the body once the page has loaded, so it never competes with the
+// hero for bandwidth but is there long before anybody scrolls to it.
+if (typeof window !== "undefined") {
+  const start = () => window.setTimeout(loadBody, 0);
+  if (document.readyState === "complete") start();
+  else window.addEventListener("load", start, { once: true });
+}
+
+const linkClass =
+  "group inline-flex min-h-11 items-center gap-1.5 rounded-[4px] text-[15px] font-medium text-foreground underline-offset-4 " +
+  "transition-colors duration-150 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+  "focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export default function ContactForm({ sourcePage = "contact" }: { sourcePage?: string }) {
   const contact = useSingleton("contact");
-  const { actions } = useCms();
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const wa = whatsappToUs(contact.whatsappNumber);
 
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = "Name is required";
-    if (!form.email.trim()) e.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email";
-    if (!form.message.trim()) e.message = "Message is required";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const onSubmit = async (ev: FormEvent) => {
-    ev.preventDefault();
-    if (!validate()) return;
-    setStatus("sending");
-
-    // Always capture the lead in the CMS so nothing is lost.
-    try {
-      await actions.saveDoc("submissions", {
-        id: nextId("sub"),
-        ...form,
-        sourcePage,
-        status: "new",
-        receivedAt: new Date().toISOString(),
-      } as any);
-    } catch {
-      /* non-fatal */
-    }
-
-    try {
-      await emailjs.send(
-        EMAILJS.serviceId,
-        EMAILJS.templateId,
-        { from_name: form.name, from_email: form.email, phone: form.phone, message: form.message },
-        EMAILJS.publicKey
-      );
-    } catch {
-      /* email optional — lead already captured */
-    }
-    setStatus("done");
-    setForm({ name: "", email: "", phone: "", message: "" });
-  };
-
-  const field = (name: keyof typeof form, label: string, placeholder: string, type = "text", required = false) => (
-    <div>
-      <label htmlFor={name} className="mb-1.5 block text-sm font-medium">
-        {label} {required && <span className="text-primary">*</span>}
-      </label>
-      {name === "message" ? (
-        <textarea
-          id={name}
-          rows={4}
-          value={form[name]}
-          onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-          placeholder={placeholder}
-          className={cn("w-full rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary", errors[name] ? "border-destructive" : "border-input")}
-        />
-      ) : (
-        <input
-          id={name}
-          type={type}
-          value={form[name]}
-          onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-          placeholder={placeholder}
-          className={cn("w-full rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary", errors[name] ? "border-destructive" : "border-input")}
-        />
-      )}
-      {errors[name] && <p className="mt-1 text-xs text-destructive">{errors[name]}</p>}
-    </div>
-  );
+  const rows = [
+    { icon: Phone, label: "Call or WhatsApp", value: unbreakable(contact.phoneDisplay), href: contact.phoneHref },
+    { icon: Mail, label: "Email", value: contact.emailDisplay, href: contact.emailHref },
+    // Area only: FACTS.md has no confirmed street address or postal code.
+    { icon: MapPin, label: "Where", value: [contact.address.line1, contact.address.city].filter(Boolean).join(", ") },
+    { icon: Clock, label: "Hours", value: contact.businessHours },
+  ];
 
   return (
-    <section id="contact" className="section">
-      <div className="container-page grid gap-10 lg:grid-cols-2">
-        <div>
-          <SectionHeading
-            align="left"
-            eyebrow="Get in touch"
-            title={<>Ready to <span className="accent-italic text-gradient">start</span> your project?</>}
-            subtitle={`Fill out the form and our team will get back to you. ${contact.responseTimePromise}`}
-          />
-          <Reveal className="mt-10 space-y-4">
-            {[
-              { icon: Phone, label: "Call us", value: contact.phoneDisplay, href: contact.phoneHref },
-              { icon: Mail, label: "Email us", value: contact.emailDisplay, href: contact.emailHref },
-              { icon: MapPin, label: "Visit us", value: `${contact.address.line1}, ${contact.address.city}, ${contact.address.state} ${contact.address.postalCode}` },
-              { icon: Clock, label: "Hours", value: contact.businessHours },
-            ].map((row) => (
-              <div key={row.label} className="flex items-center gap-4 rounded-2xl border border-border bg-card/40 p-4">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <row.icon className="h-4 w-4" />
-                </span>
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">{row.label}</div>
-                  {row.href ? (
-                    <a href={row.href} className="font-medium hover:text-primary">{row.value}</a>
-                  ) : (
-                    <div className="font-medium">{row.value}</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </Reveal>
-        </div>
+    // `.section-loud`: the last section on the home page and on /contact, the
+    // one the whole page is pointed at.
+    <section id="contact" data-source={sourcePage} className="section-loud">
+      <div className="container-page">
+        <SectionHeading
+          align="left"
+          eyebrow="Free website check"
+          title={
+            <>
+              Send us your website address.{" "}
+              <span className="text-muted-foreground">We will tell you what a parent sees.</span>
+            </>
+          }
+          subtitle={contact.responseTimePromise}
+        />
+        {/* The only urgency on the page is the real admission calendar, as
+            arithmetic, not pressure (HOMEPAGE-COPY-DECK.md section 12). The
+            3 to 5 weeks is the school-website timeline in FAQ f2 and
+            Pricing.tsx; Mehdi to confirm it (deck decision 5). */}
+        <p className="mt-3 max-w-2xl text-sm text-muted-foreground text-pretty">
+          Admissions open in December. A school website takes 3 to 5 weeks once we have your
+          content, so count back from there.
+        </p>
 
-        <Reveal delay={0.1}>
-          <div className="card-surface p-6 md:p-8">
-            {status === "done" ? (
-              <div className="flex h-full min-h-[24rem] flex-col items-center justify-center text-center">
-                <CheckCircle2 className="h-14 w-14 text-primary" />
-                <h3 className="mt-4 font-display text-2xl font-semibold">Thank you!</h3>
-                <p className="mt-2 max-w-sm text-muted-foreground">Your message has been received. {contact.responseTimePromise}</p>
-                <button onClick={() => setStatus("idle")} className="mt-6 text-sm font-medium text-primary link-underline">
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={onSubmit} className="space-y-4" noValidate>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {field("name", "Name", "Your name", "text", true)}
-                  {field("email", "Email", "you@email.com", "email", true)}
-                </div>
-                {field("phone", "Phone", "Your phone number", "tel")}
-                {field("message", "Message", "How can we help you?", "text", true)}
-                <button
-                  type="submit"
-                  disabled={status === "sending"}
-                  className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 font-medium text-primary-foreground transition-transform hover:scale-[1.01] disabled:opacity-70"
-                >
-                  {status === "sending" ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Sending…
-                    </>
-                  ) : (
-                    <>
-                      Send message
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </>
-                  )}
-                </button>
-                {status === "error" && <p className="text-center text-sm text-destructive">Something went wrong. Please try again.</p>}
-              </form>
+        <div className="mt-12 grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
+          {/* Contact rows. Plain rows on the ground, not four cards. */}
+          <div>
+            <ul className="divide-y divide-border">
+              {rows.map((row) => (
+                <li key={row.label} className="flex items-center gap-4 py-4 first:pt-0">
+                  <row.icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <span className="block text-[13px] text-muted-foreground">{row.label}</span>
+                    {row.href ? (
+                      <a
+                        href={row.href}
+                        className="inline-flex min-h-6 items-center text-[15px] font-medium underline-offset-4 transition-colors duration-150 hover:underline"
+                      >
+                        {row.value}
+                      </a>
+                    ) : (
+                      <span className="block text-[15px] font-medium">{row.value}</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {wa && (
+              <a href={wa} target="_blank" rel="noreferrer noopener" className={`${linkClass} mt-6`}>
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                Rather send it on WhatsApp? Message us
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+              </a>
             )}
           </div>
-        </Reveal>
+
+          <div>
+            {/* The placeholder holds roughly the form's height, so the page
+                below does not jump when the body arrives. */}
+            <Suspense fallback={<div aria-hidden="true" className="min-h-[1060px] sm:min-h-[820px] lg:min-h-[745px]" />}>
+              <ContactFormBody />
+            </Suspense>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -1,0 +1,23 @@
+# What the Vercel CLI must NOT upload when deploying from this laptop.
+#
+# Added 26 Sep 2026 after finding src/.env inside the stored source of the live deployment
+# (dpl_AQyM6qXZnRy6ugM4cH5WhTFT8Ltz, 25 Sep 12:48). The CLI does not read .gitignore, so
+# every `vercel --prod` shipped the local .env to Vercel. Vercel keeps deployment source
+# private to the team, but a file of settings has no business being there: the build reads
+# its VITE_* values from Project Settings > Environment Variables instead (see
+# 07-website/GO-LIVE-IDEOVENT-IN.md step 4.1). Set those BEFORE the first deploy that
+# carries this file, or the admin passcode and the EmailJS ids fall back to defaults.
+.env
+.env.*
+!.env.example
+
+# Built output and dependencies are produced on Vercel's own machines.
+node_modules
+dist
+dist-ssr
+
+# Local-only material.
+_unpublished
+screenshots-src
+scripts/.tmp
+*.log

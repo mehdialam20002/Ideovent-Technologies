@@ -2,13 +2,34 @@ import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types"
 import { type Store, mergeWithSeed, clone } from "./store";
 import { supabase } from "./client";
 
-const SINGLETONS: SingletonKey[] = ["settings", "contact", "navigation", "home", "internship", "legal"];
+const SINGLETONS: SingletonKey[] = ["settings", "contact", "navigation", "home", "internship", "eduflow", "legal"];
 const TABLE = "content";
+
+/*
+  Collections the one-time Import leaves behind.
+
+  Import exists to carry CONTENT (pages, projects, pitch pages, certificates)
+  from the LocalStore browser into the live database. These three are not
+  content: they are form submissions, internship applications and demo-open
+  tracking, and in a LocalStore browser they are Mehdi's own test clicks. Copied
+  across they would sit in the live inbox and the open counts as if a real
+  visitor had written them, with nothing to tell them apart. The live site fills
+  them itself from the first real visitor on.
+*/
+const SKIP_ON_IMPORT: CollectionKey[] = ["demoSiteOpens", "submissions", "applications"];
+
+/*
+  Rows per request in load(). PostgREST caps every response at the project's
+  "Max rows" (Supabase API settings, 1000 by default) and says nothing when it
+  truncates, so load() pages until a short page. Keep this at or below that
+  setting: a larger value would make the first page look short and stop early.
+*/
+const PAGE = 1000;
 
 /**
  * Supabase store: all content lives in a single `content` table
  * (collection text, doc_id text, data jsonb, unique(collection, doc_id)).
- * Live and global — edits are visible to every visitor instantly.
+ * Live and global, edits are visible to every visitor instantly.
  * Falls back to seed for any collection/singleton that has no rows yet.
  */
 export class SupabaseStore implements Store {
@@ -17,11 +38,29 @@ export class SupabaseStore implements Store {
 
   async load(): Promise<ContentData> {
     try {
-      const { data, error } = await supabase().from(TABLE).select("collection, doc_id, data");
-      if (error) throw error;
+      /*
+        PAGED, NOT ONE SELECT. A bare select() came back with at most 1000 rows
+        and no error. demoSiteOpens writes one row per demo open, so the table
+        passes that quickly, and past it whichever rows the database happened
+        to return last (pitch pages, certificates) silently vanished from the
+        site. Ordering by the unique (collection, doc_id) pair makes the pages
+        stable, so no row is skipped or read twice between requests.
+      */
+      const data: unknown[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error } = await supabase()
+          .from(TABLE)
+          .select("collection, doc_id, data")
+          .order("collection")
+          .order("doc_id")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        data.push(...(page || []));
+        if (!page || page.length < PAGE) break;
+      }
       const partial: Partial<ContentData> = {};
       const grouped: Record<string, BaseDoc[]> = {};
-      for (const row of data || []) {
+      for (const row of data) {
         const col = (row as any).collection as string;
         const value = (row as any).data;
         if (SINGLETONS.includes(col as SingletonKey)) {
@@ -40,10 +79,10 @@ export class SupabaseStore implements Store {
   }
 
   async saveDoc(col: CollectionKey, doc: BaseDoc): Promise<ContentData> {
-    const stamped = { ...doc, updatedAt: new Date().toISOString() };
+    const stamped = {...doc, updatedAt: new Date().toISOString() };
     const { error } = await supabase()
-      .from(TABLE)
-      .upsert({ collection: col, doc_id: doc.id, data: stamped }, { onConflict: "collection,doc_id" });
+.from(TABLE)
+.upsert({ collection: col, doc_id: doc.id, data: stamped }, { onConflict: "collection, doc_id" });
     if (error) throw error;
     return this.load();
   }
@@ -58,13 +97,13 @@ export class SupabaseStore implements Store {
     const list = (this.cache[col] as BaseDoc[]) || [];
     const map = new Map(list.map((d) => [d.id, d]));
     const rows = orderedIds
-      .map((id, i) => {
+.map((id, i) => {
         const d = map.get(id);
-        return d ? { collection: col, doc_id: id, data: { ...d, order: i } } : null;
+        return d ? { collection: col, doc_id: id, data: {...d, order: i } }: null;
       })
-      .filter(Boolean) as any[];
+.filter(Boolean) as any[];
     if (rows.length) {
-      const { error } = await supabase().from(TABLE).upsert(rows, { onConflict: "collection,doc_id" });
+      const { error } = await supabase().from(TABLE).upsert(rows, { onConflict: "collection, doc_id" });
       if (error) throw error;
     }
     return this.load();
@@ -72,8 +111,8 @@ export class SupabaseStore implements Store {
 
   async saveSingleton<K extends SingletonKey>(key: K, value: ContentData[K]): Promise<ContentData> {
     const { error } = await supabase()
-      .from(TABLE)
-      .upsert({ collection: key, doc_id: "_", data: value }, { onConflict: "collection,doc_id" });
+.from(TABLE)
+.upsert({ collection: key, doc_id: "_", data: value }, { onConflict: "collection, doc_id" });
     if (error) throw error;
     return this.load();
   }
@@ -92,9 +131,10 @@ export class SupabaseStore implements Store {
     for (const key of SINGLETONS) if ((parsed as any)[key]) rows.push({ collection: key, doc_id: "_", data: (parsed as any)[key] });
     for (const [col, val] of Object.entries(parsed)) {
       if (SINGLETONS.includes(col as SingletonKey)) continue;
+      if (SKIP_ON_IMPORT.includes(col as CollectionKey)) continue;
       if (Array.isArray(val)) for (const d of val) rows.push({ collection: col, doc_id: (d as BaseDoc).id, data: d });
     }
-    const { error } = await supabase().from(TABLE).upsert(rows, { onConflict: "collection,doc_id" });
+    const { error } = await supabase().from(TABLE).upsert(rows, { onConflict: "collection, doc_id" });
     if (error) throw error;
     return this.load();
   }

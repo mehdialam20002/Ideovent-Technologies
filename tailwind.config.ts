@@ -19,11 +19,47 @@ export default {
 			}
 		},
 		extend: {
+			// Sora (display) + Inter (body) + Instrument Serif (the accent, italic only).
+			// Sora and Inter are the two families _assets/brand.css already prints with,
+			// so the website and the document set set type the same way.
+			//
+			// INSTRUMENT SERIF IS BACK, AND ONLY FOR `.accent-italic`. Space Grotesk, the
+			// old display face, stays gone. _assets/DESIGN-DIRECTION.md §1: one family
+			// added, used in one role, which is not the three-family sprawl the Phase 5
+			// pass cut. Only the italic face is fetched (`ital@1`), because the only
+			// selector that names this stack also sets `font-style: italic`.
+			//
+			// The webfonts load without blocking the first paint (see index.html), so every
+			// stack below has to be readable on its own for the first few hundred ms. These
+			// are full system stacks, not a bare `sans-serif`: a visitor on Windows gets
+			// Segoe UI, on macOS/iOS the San Francisco system face, on Android Roboto.
 			fontFamily: {
-				sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-				display: ['"Space Grotesk"', 'Inter', 'ui-sans-serif', 'sans-serif'],
-				serif: ['"Instrument Serif"', 'ui-serif', 'Georgia', 'serif'],
-				mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+				sans: [
+					'Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont',
+					'"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', '"Noto Sans"', 'sans-serif',
+					'"Apple Color Emoji"', '"Segoe UI Emoji"',
+				],
+				// "Sora Fallback" is a metric-matched local face declared in
+				// src/index.css: Arial, scaled and with its line box overridden so it
+				// occupies exactly the space Sora will. It sits second so it is only
+				// ever painted before the webfont lands. See the measured note there.
+				display: [
+					'Sora', '"Sora Fallback"', 'Inter', 'ui-sans-serif', 'system-ui', '-apple-system',
+					'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif',
+				],
+				// The accent face. `.accent-italic` in index.css is the ONLY consumer,
+				// and it sets `font-style: italic`, so every name in this stack is only
+				// ever asked for its italic. The fallbacks are device faces with real
+				// italics (Georgia and Times both ship one), so the accent word still
+				// reads as a serif italic in the frame before the webfont lands rather
+				// than as a slanted sans.
+				serif: [
+					'"Instrument Serif"', '"Instrument Serif Fallback"', 'ui-serif', 'Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif',
+				],
+				mono: [
+					'ui-monospace', 'SFMono-Regular', '"SF Mono"', 'Menlo', 'Consolas',
+					'"Liberation Mono"', '"Courier New"', 'monospace',
+				],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -126,17 +162,8 @@ export default {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.7' }
 				},
-				'marquee': {
-					from: { transform: 'translateX(0)' },
-					to: { transform: 'translateX(-50%)' }
-				},
 				'shimmer': {
 					'100%': { transform: 'translateX(100%)' }
-				},
-				'aurora': {
-					'0%, 100%': { transform: 'translate(0,0) scale(1)' },
-					'33%': { transform: 'translate(3%,-4%) scale(1.08)' },
-					'66%': { transform: 'translate(-3%,3%) scale(0.96)' }
 				},
 			},
 			animation: {
@@ -152,9 +179,37 @@ export default {
 				'slide-in-bottom': 'slide-in-bottom 0.5s ease-out',
 				'float': 'float 6s ease-in-out infinite',
 				'pulse-soft': 'pulse-soft 4s ease-in-out infinite',
-				'aurora': 'aurora 18s ease-in-out infinite',
 			},
 			transitionTimingFunction: {
+				/*
+				  ONE CURVE, INCLUDING THE CSS HALF OF THE SITE.
+
+				  src/lib/motion.ts exports EASE = [0.22, 1, 0.36, 1] and main.tsx
+				  hands it to every framer-motion animation through <MotionConfig>,
+				  so all the ENTRANCE motion already shared one curve. Every HOVER
+				  and PRESS on the site is a plain CSS transition, and a grep for
+				  `ease-` across src/ returns six results in total: everything else
+				  was running on Tailwind's stock DEFAULT, cubic-bezier(0.4, 0, 0.2,
+				  1). So the page had two curves, split by implementation rather than
+				  by intent, and the seam is visible where the two meet: a card that
+				  enters on one curve and then lifts under the pointer on another.
+
+				  DEFAULT is now the same cubic-bezier as EASE, which makes "one
+				  easing curve throughout" true by construction for the ~70
+				  `transition-*` classes in src/ that name no easing. It is a
+				  fast-out curve that spends most of its time settling, which is what
+				  keeps a 200ms hover from reading as a jump cut.
+
+				  IF YOU CHANGE THIS, CHANGE EASE IN src/lib/motion.ts TO MATCH.
+				  The two values are the same curve written in two syntaxes; there is
+				  no import that can keep them in step, so they are commented at both
+				  ends instead.
+				*/
+				DEFAULT: 'cubic-bezier(0.22, 1, 0.36, 1)',
+				/* Overshoot curves. Nothing in src/ uses either (grepped 25 Sep
+				   2026); kept because they are the documented escape hatch for a
+				   deliberate bounce, and a theme entry with no consumer emits no
+				   CSS. */
 				'bounce-in': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
 				'bounce-out': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
 			},

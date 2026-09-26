@@ -24,7 +24,7 @@ export default function AdminApplications() {
 
       {apps.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">No applications yet.</div>
-      ) : (
+): (
         <div className="grid gap-3">
           {apps.map((a) => (
             <div key={a.id} className="rounded-2xl border border-border bg-card/60 p-4">
@@ -44,25 +44,27 @@ export default function AdminApplications() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <select
+                    aria-label={`Payment status for ${a.fullName}`}
                     className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
                     value={a.paymentStatus}
-                    onChange={(e) => actions.saveDoc("applications", { ...a, paymentStatus: e.target.value as any })}
+                    onChange={(e) => actions.saveDoc("applications", {...a, paymentStatus: e.target.value as any })}
                   >
                     <option value="pending">pending</option>
                     <option value="verified">verified</option>
                     <option value="failed">failed</option>
                   </select>
-                  <button onClick={() => actions.saveDoc("applications", { ...a, seatConfirmed: !a.seatConfirmed })} className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs hover:border-primary/50">
-                    <Check className="h-3 w-3" /> {a.seatConfirmed ? "Unconfirm" : "Confirm seat"}
+                  <button type="button" onClick={() => actions.saveDoc("applications", {...a, seatConfirmed: !a.seatConfirmed })} className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs hover:border-primary/50">
+                    <Check className="h-3 w-3" aria-hidden="true" /> {a.seatConfirmed ? "Unconfirm": "Confirm seat"}
+                    <span className="sr-only">, {a.fullName}</span>
                   </button>
-                  <button onClick={() => confirm("Delete this application?") && actions.removeDoc("applications", a.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                  <button type="button" aria-label={`Delete application from ${a.fullName}`} onClick={() => confirm("Delete this application?") && actions.removeDoc("applications", a.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">{new Date(a.submittedAt).toLocaleString()}</p>
             </div>
-          ))}
+))}
         </div>
-      )}
+)}
     </div>
-  );
+);
 }

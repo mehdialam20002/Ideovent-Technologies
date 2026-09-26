@@ -1,1 +1,34 @@
-/*    /index.html   200
+# Netlify redirect rules. Copied verbatim into dist/ by Vite.
+# First match wins, so the SPA catch-all MUST stay last.
+#
+# The equivalent for Vercel lives in vercel.json at the repo root — change both.
+
+# ── Legacy URLs (301, so link equity transfers) ───────────────────────────────
+# App.tsx also has client-side <Navigate replace> for each of these. That is the
+# belt; this is the braces. A client-side redirect still serves HTTP 200 for the
+# old URL and only fires after the JS bundle has run, so a crawler sees a
+# duplicate page rather than a moved one.
+/portfolio        /work         301
+/projects         /work         301
+/blogs            /blog         301
+/ii               /internship   301
+# The programme is called Ideovent LaunchPad in 13-launchpad/, but /internship is
+# the canonical URL because it is the one already linked. This alias is a 301 for
+# the same reason as the four above, not a second indexable copy of the page.
+# Exact match only — /blogs/<slug> is a real route and falls through to the SPA.
+/launchpad        /internship   301
+
+# ── Policy paths ──────────────────────────────────────────────────────────────
+# 03-legal-docs/policies/POLICIES-README.md publishes the documents at these
+# paths; the site's routes are shorter. Both work.
+/privacy-policy   /privacy      301
+/refund-policy    /refund       301
+# The Cookie Policy is NOT published — this site sets no analytics or advertising
+# cookies and has no consent banner, so the policy would describe controls that
+# do not exist. Section 13 of the Privacy Policy covers what is actually stored.
+# See DEPLOY-GUIDE.md § "Legal pages".
+/cookie-policy    /privacy      301
+
+# ── SPA fallback — must be the last rule ──────────────────────────────────────
+# 200, not 301: the browser keeps the requested URL and React Router renders it.
+/*                /index.html   200

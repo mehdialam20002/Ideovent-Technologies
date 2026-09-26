@@ -1,8 +1,38 @@
-name: Deploy to GitHub Pages
+# ─────────────────────────────────────────────────────────────────────────────
+# GitHub Pages deploy — DISABLED ON PUSH. Do not re-enable without reading this.
+#
+# This workflow builds the site with DEPLOY_BASE=/Ideovent-Technologies/ and
+# publishes it to https://mehdialam20002.github.io/Ideovent-Technologies/.
+# That is incompatible with serving the site at www.ideovent.in:
+#
+#   1. SUB-PATH BASE. vite.config.ts reads DEPLOY_BASE into Vite's `base`, which
+#      feeds `import.meta.env.BASE_URL`. That value is the router basename in
+#      App.tsx, the `B` asset prefix in src/lib/cms/seed.ts, AND the fallback
+#      origin in src/lib/verify.ts. On a custom domain the base must be "/".
+#   2. CERTIFICATE QR CODES. publicOrigin() appends BASE_URL when
+#      VITE_PUBLIC_URL is unset, so a Pages build bakes
+#      ".../Ideovent-Technologies/verify/<ID>" into printed QR codes. A printed
+#      QR cannot be recalled — see 13-launchpad/CERTIFICATE-SYSTEM.md §7 Fault 3.
+#   3. NO SERVER REDIRECTS. Pages ignores public/_redirects, so the 301s for
+#      /portfolio, /projects, /blogs and /ii do not happen, and the SPA fallback
+#      has to be done by copying index.html to 404.html — which serves deep links
+#      with an HTTP 404 status code. Google treats that as a missing page.
+#   4. TWO LIVE COPIES. If Pages and Netlify both run from this repo, the same
+#      content is published at two URLs with canonicals pointing at a third.
+#
+# It is kept here, manual-only, purely as an emergency preview path. The real
+# deployment is described in 07-website/DEPLOY-GUIDE.md.
+#
+# TO DO (Mehdi): once www.ideovent.in is live on Netlify, check whether Pages
+# was ever switched on for this repo — GitHub → Settings → Pages. If a build is
+# published there, set Source to "None" and delete this file.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Deploy to GitHub Pages (manual only — see comment above)
 
 on:
-  push:
-    branches: [main]
+  # `push` trigger deliberately removed. Adding it back publishes a second,
+  # sub-path copy of the site on every commit to main.
   workflow_dispatch:
 
 permissions:
@@ -32,7 +62,15 @@ jobs:
         env:
           # Serve under the project subpath on GitHub Pages
           DEPLOY_BASE: /Ideovent-Technologies/
+          # Without this, publicOrigin() would bake the Pages sub-path into every
+          # certificate QR code generated from this build.
+          VITE_PUBLIC_URL: https://www.ideovent.in
         run: npm run build
+
+      - name: Block indexing of the Pages copy
+        # This build is a preview, not the canonical site. Without this it
+        # competes with www.ideovent.in in search results.
+        run: printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
 
       - name: SPA fallback (deep links)
         run: cp dist/index.html dist/404.html

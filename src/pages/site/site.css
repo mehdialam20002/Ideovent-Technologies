@@ -1,0 +1,142 @@
+/*
+  THE MULTI-PAGE DEMO SITE. Imported by SiteShell.tsx only, so Vite puts it in
+  the shell's lazy CSS chunk and not one byte reaches the marketing site's
+  entry stylesheet. Colours are --ds-* variables set by siteThemeStyle().
+
+  MOTION TOKENS. From the research (TSRS's curve, the best observed):
+  ease-out cubic-bezier(0.22,1,0.36,1), ease-in-out cubic-bezier(0.65,0,0.35,1),
+  durations 120/200/360/560/900ms. Under prefers-reduced-motion every duration
+  is 0 and the reveal classes do nothing. No @keyframes loops anywhere.
+*/
+
+.ds-site {
+  --ds-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ds-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --ds-d1: 120ms;
+  --ds-d2: 200ms;
+  --ds-d3: 360ms;
+  --ds-d4: 560ms;
+  --ds-d5: 900ms;
+  --ds-rv-y: 16px;
+  min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+}
+.ds-site[data-kind="coaching"] { --ds-rv-y: 12px; --ds-d4: 450ms; }
+
+.ds-display {
+  font-family: var(--ds-display);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+/* text-wrap: balance resets the wrap mode, so a one-line display name
+   (the condensed crest row) says so explicitly. */
+.ds-display.ds-nowrap { text-wrap: nowrap; white-space: nowrap; }
+.ds-site[data-face="sora"] .ds-display { font-weight: 600; letter-spacing: -0.025em; }
+.ds-site[data-face="serif"] .ds-display { font-weight: 400; }
+.ds-site[data-face="sans"] .ds-display { font-weight: 700; letter-spacing: -0.02em; }
+.ds-smallcaps { font-variant-caps: all-small-caps; letter-spacing: 0.08em; }
+.ds-num { font-variant-numeric: tabular-nums; }
+
+/* ── Reveal (kit/motion.tsx). JS adds these; without JS nothing is hidden. ── */
+.ds-rv-pending { opacity: 0; transform: translateY(var(--ds-rv-y)); }
+.ds-rv-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--ds-d4) var(--ds-ease-out), transform var(--ds-d4) var(--ds-ease-out);
+  transition-delay: var(--ds-rv-delay, 0ms);
+}
+
+/* ── Cards: the family's own hover. Only where hover exists. ── */
+.ds-card { border-radius: var(--ds-radius); }
+.ds-site[data-family="modern"] .ds-card {
+  background: hsl(var(--ds-surface));
+  border: 1px solid hsl(var(--ds-line));
+}
+.ds-site[data-family="warm"] .ds-card {
+  background: hsl(var(--ds-surface));
+  box-shadow: 0 1px 2px hsl(var(--ds-ink) / 0.06), 0 8px 24px -12px hsl(var(--ds-ink) / 0.18);
+}
+.ds-site[data-family="classic"] .ds-card {
+  border-top: 1px solid hsl(var(--ds-line));
+  border-radius: 0;
+}
+@media (hover: hover) {
+  .ds-site[data-family="modern"] .ds-card[data-interactive] {
+    transition: transform var(--ds-d2) var(--ds-ease-out), box-shadow var(--ds-d2) var(--ds-ease-out);
+  }
+  .ds-site[data-family="modern"] .ds-card[data-interactive]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px -14px hsl(var(--ds-ink) / 0.3);
+  }
+  .ds-site[data-family="warm"] .ds-card[data-interactive] { transition: transform var(--ds-d2) var(--ds-ease-out); }
+  .ds-site[data-family="warm"] .ds-card[data-interactive]:hover { transform: scale(1.01); }
+  .ds-site[data-family="classic"] .ds-card[data-interactive] { transition: background-color var(--ds-d1) linear; }
+  .ds-site[data-family="classic"] .ds-card[data-interactive]:hover { background: hsl(var(--ds-surface-2) / 0.6); }
+  .ds-card[data-interactive] .ds-card-img img { transition: transform var(--ds-d2) var(--ds-ease-out); }
+  .ds-card[data-interactive]:hover .ds-card-img img { transform: scale(1.03); }
+}
+.ds-card[data-interactive]:active { transform: scale(0.97); transition-duration: var(--ds-d1); }
+
+/* ── Buttons ── */
+.ds-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 48px; padding: 0 1.25rem; font-weight: 600; font-size: 0.95rem;
+  border-radius: var(--ds-radius);
+  transition: background-color var(--ds-d2) var(--ds-ease-out), color var(--ds-d2) var(--ds-ease-out);
+}
+.ds-site[data-family="warm"] .ds-btn { border-radius: 999px; min-height: 52px; }
+.ds-btn-cta { background: hsl(var(--ds-cta)); color: hsl(var(--ds-on-cta)); }
+.ds-btn-brand { background: hsl(var(--ds-brand)); color: hsl(var(--ds-on-brand)); }
+.ds-btn-ghost { border: 1px solid currentColor; }
+.ds-btn:focus-visible, .ds-site a:focus-visible, .ds-site button:focus-visible {
+  outline: 2px solid hsl(var(--ds-accent)); outline-offset: 2px;
+}
+
+/* ── Accordion (kit/Text.tsx): grid rows 0fr to 1fr, 280ms. ── */
+.ds-acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 280ms var(--ds-ease-out); }
+.ds-acc-body > div { overflow: hidden; }
+.ds-acc[data-open] .ds-acc-body { grid-template-rows: 1fr; }
+.ds-acc-chev { transition: transform 280ms var(--ds-ease-out); }
+.ds-acc[data-open] .ds-acc-chev { transform: rotate(180deg); }
+
+/* ── Header condense (shell/Header.tsx sets data-condensed). ── */
+.ds-header { transition: padding var(--ds-d2) var(--ds-ease-inout), background-color var(--ds-d2) var(--ds-ease-inout), transform 240ms var(--ds-ease-inout); }
+.ds-site[data-family="modern"] .ds-header[data-condensed] {
+  background: hsl(var(--ds-surface) / 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.ds-site[data-family="warm"] .ds-header[data-hidden] { transform: translateY(-110%); }
+.ds-bottombar { transition: transform 320ms var(--ds-ease-out); }
+.ds-bottombar[data-hidden] { transform: translateY(110%); }
+
+/* ── Page transitions: header and bars excluded from the cross-fade. ── */
+.ds-header { view-transition-name: ds-header; }
+.ds-bottombar { view-transition-name: ds-bottombar; }
+::view-transition-old(root) { animation-duration: 120ms; }
+::view-transition-new(root) { animation-duration: 240ms; }
+
+/* ── Reduced motion: every duration to zero, final states immediately. ── */
+@media (prefers-reduced-motion: reduce) {
+  .ds-site {
+    --ds-d1: 0ms; --ds-d2: 0ms; --ds-d3: 0ms; --ds-d4: 0ms; --ds-d5: 0ms;
+    scroll-behavior: auto;
+  }
+  .ds-site *, .ds-site *::before, .ds-site *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .ds-rv-pending { opacity: 1; transform: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+@media print {
+  .ds-header, .ds-bottombar, .ds-footer, .demo-marker { display: none !important; }
+}
+
+/* Devanagari: no tracking, no small caps, looser display leading. */
+.ds-site:lang(hi) [class*="tracking-"],
+.ds-site:lang(hi) .ds-smallcaps,
+.ds-site:lang(hi) .ds-display { letter-spacing: normal !important; font-variant-caps: normal; }
+.ds-site:lang(hi) .ds-display { line-height: 1.25; }

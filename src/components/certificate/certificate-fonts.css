@@ -1,0 +1,63 @@
+/*
+  Sora, self-hosted, for the certificate artwork.
+
+  WHY SELF-HOSTED AND WHY HERE
+  ----------------------------
+  The certificate is drawn on a canvas, and canvas text uses whatever the
+  document has loaded at the instant fillText runs. There is no font-display
+  swap and no reflow: if Sora has not arrived, the certificate is rendered in the
+  fallback stack, exported to PNG and PDF that way, and printed that way, with
+  nothing on screen to say so. Depending on fonts.googleapis.com for that is the
+  same class of mistake as the postimg.cc hotlinks this phase removed: a print
+  artefact that breaks when somebody else's server has a bad afternoon.
+
+  One variable woff2 covers weights 100-800 (25 KB latin + 12 KB latin-ext),
+  which is why there is a single @font-face per subset rather than one per
+  weight. Downloaded from Google Fonts' own gstatic URLs on 24 Sep 2026; Sora is
+  SIL Open Font License 1.1, so redistributing it in the repo is permitted.
+
+  WHAT ACTUALLY DOWNLOADS IT, measured 24 Sep 2026 in DevTools, not assumed.
+  Rollup puts this in the certificate chunk, so it is not on the homepage's load
+  path. But the certificate chunk has THREE entry points, not two: /verify,
+  /admin, and /internship, whose hero renders SpecimenCertificate. On
+  /internship the network panel shows five font requests: the
+  fonts.googleapis.com stylesheet, gstatic's Inter latin + latin-ext, gstatic's
+  Sora latin + latin-ext, plus this file's sora-latin.woff2 (24.7 KB). Sora
+  therefore arrives twice on that page. sora-latin-ext.woff2 does NOT download
+  there: the specimen's text is pure latin and the unicode-range keeps it off
+  the wire, which is the whole reason the two subsets are separate @font-face
+  rules rather than one.
+
+  That duplicate is the price of the guarantee above and it is paid knowingly:
+  25 KB on one marketing page, against a certificate that silently prints in
+  Segoe UI when fonts.googleapis.com has a bad afternoon. The way to remove it
+  is to stop asking Google for Sora in index.html and self-host it site-wide, 
+  a change to the global font strategy, not to this file.
+
+  Inter is NOT self-hosted here, so the guarantee covers the display face only.
+  The body face still depends on Google. That gap is visible rather than silent:
+  ensureCertificateFonts() reports every face it could not load and
+  /admin → Certificates prints "…Do not print this." above the export buttons.
+*/
+
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../../assets/fonts/sora-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../../assets/fonts/sora-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}

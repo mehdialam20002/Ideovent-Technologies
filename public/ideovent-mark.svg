@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.5 25.285 199 149.43" role="img" aria-labelledby="ivmT ivmD">
+  <title id="ivmT">Ideovent Technologies, iV mark</title>
+  <desc id="ivmD">The Ideovent iV monogram: two thick tapering navy strokes forming an open V, with a small letter i nested between them, a chevron above a short rounded stem.</desc>
+  <!--
+    Ideovent Technologies. Redrawn from 01-brand/logo/source/ideovent-official.png.
+    Geometry and colour: see 01-brand/logo/LOGO-USAGE.md. Rebuild the masters
+    with: python E:/myagency/_build/build_logo_assets.py
+
+    THIS FILE IS 01-brand/logo/ideovent-mark.svg WITH THE CANVAS REMOVED, AND
+    THAT IS THE ONLY DIFFERENCE.
+
+    The master is drawn on a 200 x 200 square because it has to drop into an
+    avatar or an app-icon slot, so it carries 25.285 units of transparent canvas
+    above and below the 199 x 149.43 artwork. In a CSS box that padding is not
+    free: `h-10 w-auto` on the master reserves 40px and paints a 29.9px mark
+    inside it, and the 10px of nothing at the top and bottom is measured by
+    flexbox as part of the lockup, so `items-center` centres the CANVAS against
+    the wordmark beside it rather than the MARK. The wordmark then sits low by
+    half the difference and nothing in the CSS says why.
+
+    The viewBox here is the artwork's own bounding box, so the element's box IS
+    the mark. `items-center` then aligns what a reader can see, and the optical
+    correction that remains is the one deliberate nudge at the call site.
+
+    Clear space (LOGO-USAGE §3) is X = 17.5% of the mark's width, so a 40px-wide
+    mark needs 7px kept clear on every side. Because the canvas is gone, that
+    space now has to come from the layout: it is the `gap` beside the wordmark
+    and the container gutter on the outside. Both clear 7px at every breakpoint.
+  -->
+  <path fill="#081738" d="M0.5 25.285 46.5 45.085 76.85 120.685 57.55 169.085Z M199.5 25.285 153.5 45.085 123.15 120.685 142.45 169.085Z"/>
+  <path fill="#081738" d="M79.9 60.085 100 68.185 120.1 60.085 100 110.985Z"/>
+  <path fill="#123068" d="M96.54 127.785H103.46Q104.46 127.785 104.46 128.785V173.715Q104.46 174.715 103.46 174.715H96.54Q95.54 174.715 95.54 173.715V128.785Q95.54 127.785 96.54 127.785Z"/>
+</svg>

@@ -1,0 +1,170 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/portfolio",
+      "destination": "/work",
+      "permanent": true
+    },
+    {
+      "source": "/projects",
+      "destination": "/work",
+      "permanent": true
+    },
+    {
+      "source": "/blogs",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/ii",
+      "destination": "/internship",
+      "permanent": true
+    },
+    {
+      "source": "/launchpad",
+      "destination": "/internship",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/refund-policy",
+      "destination": "/refund",
+      "permanent": true
+    },
+    {
+      "source": "/cookie-policy",
+      "destination": "/privacy",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/site/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebookcatalog|linkedinbot|twitterbot|slackbot|telegrambot|discordbot|skypeuripreview|redditbot|pinterest|vkshare|embedly|quora link preview|bitlybot|nuzzel|outbrain|applebot|google-inspectiontool).*"
+        }
+      ],
+      "destination": "/api/share?kind=site&slug=:slug"
+    },
+    {
+      "source": "/site/:slug/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebookcatalog|linkedinbot|twitterbot|slackbot|telegrambot|discordbot|skypeuripreview|redditbot|pinterest|vkshare|embedly|quora link preview|bitlybot|nuzzel|outbrain|applebot|google-inspectiontool).*"
+        }
+      ],
+      "destination": "/api/share?kind=site&slug=:slug&path=:path*"
+    },
+    {
+      "source": "/pitch/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebookcatalog|linkedinbot|twitterbot|slackbot|telegrambot|discordbot|skypeuripreview|redditbot|pinterest|vkshare|embedly|quora link preview|bitlybot|nuzzel|outbrain|applebot|google-inspectiontool).*"
+        }
+      ],
+      "destination": "/api/share?kind=pitch&slug=:slug"
+    },
+    {
+      "source": "/:slug((?!(?:about|admin|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|disclaimer|eduflow|faq|icons|ii|internship|launchpad|login|og|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|site|submissions|templates|terms|verify|work)/?$)[^/.]+)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebookcatalog|linkedinbot|twitterbot|slackbot|telegrambot|discordbot|skypeuripreview|redditbot|pinterest|vkshare|embedly|quora link preview|bitlybot|nuzzel|outbrain|applebot|google-inspectiontool).*"
+        }
+      ],
+      "destination": "/api/share?kind=pitch&slug=:slug"
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(), microphone=(), camera=(), payment=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/pitch/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/site/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/:pitchSlug((?!(?:about|admin|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|disclaimer|eduflow|faq|icons|ii|internship|launchpad|login|og|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|site|submissions|templates|terms|verify|work)/?$)[^/.]+)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
+  ]
+}

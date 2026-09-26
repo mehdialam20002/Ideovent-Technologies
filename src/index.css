@@ -3,82 +3,348 @@
 @tailwind utilities;
 
 /*
-  Ideovent Technologies — Design System
-  Dark-first editorial "studio" language. Electric lime signature + violet pop,
-  warm off-white ink text, serif-italic accents reserved for emphasis.
+  Ideovent Technologies. Design System
+  ══════════════════════════════════════════════════════════════════════════════
+  NAVY AND GOLD. Confirmed by Mehdi, 24 Sep 2026 (_assets/PHASE5-SPEC.md §A).
+
+  The electric-lime / violet / coral palette this file used to carry is retired.
+  It is gone, not commented out: a hex that survives a repalette looks correct in
+  one theme and wrong in the other, and nobody finds it until a client does.
+
+  The anchor is the logo. #081738 is sampled from
+  01-brand/logo/source/ideovent-official.png and is the same navy that 697
+  documents in this repo already print, via _assets/brand.css. The site now uses
+  the same ramp, so the website and the proposal a prospect receives are visibly
+  one company.
+
+    navy   900 #081738   800 #0D2050   700 #123068   600 #1E4091   500 #2B55B8
+           200 #C3D2F2   100 #E8EEFB
+    gold   700 #8C6F22   600 #A8862F   500 #C8A951   300 #E4CE8E
+    slate  900 #0F172A   600 #475569   200 #E2E8F0   100 #F1F5F9    50 #F8FAFC
+
+  ── How the two themes differ, and why ───────────────────────────────────────
+  Gold #C8A951 measures 2.27:1 on white. That is a hard WCAG AA failure for text
+  and it also fails the 3:1 floor WCAG 1.4.11 sets for a focus ring or a
+  meaningful icon. So gold cannot be the light theme's brand colour, and navy
+  #123068 cannot be the dark theme's. It measures 1.2:1 on the navy ground it
+  would be sitting on, i.e. invisible.
+
+  The printed brand system already solved this: brand.css prints.eyebrow in
+  gold-600 on a white page and gold-500 on a dark cover, and.stat__v in navy-700
+  on white and gold-500 on navy. The site now behaves the same way.
+
+    --primary  LIGHT = navy-700 #123068   DARK = gold-500 #C8A951
+
+  One token does both jobs in each theme, measured:
+
+    light  white on #123068 (button)      12.74:1
+           #123068 as text on #F8FAFC     12.18:1   on a white card 12.74:1
+    dark   #081738 on #C8A951 (button)     7.77:1
+           #C8A951 as text on #081738      7.77:1   on a #0D2050 card 6.91:1
+
+  Because one value clears both bars in both themes, the --primary-text escape
+  hatch this file used to carry for the light-theme lime is deleted, along with
+  the six [class~="text-primary"] overrides that implemented it. There is now
+  nothing to keep in sync.
+
+  Gold stays sparing in the light theme by construction: it appears there only as
+  --secondary (gold-700, the one gold that clears AA on white at 4.55:1), as the
+  focus ring, as the gradient's closing stop, and as rules and hairlines.
+  ══════════════════════════════════════════════════════════════════════════════
 */
+
+/*
+  METRIC-MATCHED FALLBACK FACES, SO THE FONT SWAP DOES NOT MOVE THE PAGE.
+  ══════════════════════════════════════════════════════════════════════════════
+  MEASURED FIRST. Lighthouse 13 on the production build, home page, headless
+  Chrome: Cumulative Layout Shift 0.140, against a 0.1 "good" threshold. It
+  reported exactly two shifts and named the cause of both:
+
+    0.13958  "Web font loaded"  sora/v17/xMQbuFFYT72XzQUpDqW1KX4.woff2
+                                instrumentserif/v5/...Motmp5g.woff2
+    0.00001  "Web font loaded"  inter/v20/...nw.woff2
+
+  index.html loads the stylesheet non-render-blocking (media="print", flipped on
+  load) with display=swap, which is the right trade: text is readable in the
+  first frame instead of the page being blank until a third-party request
+  resolves. The cost is that the first frame is set in the fallback, and when
+  Sora arrives the hero re-sets. At clamp(2.5rem, 7vw, 6rem) that is a 96px
+  headline changing width and height, which drags the whole first screen with
+  it, and the element Lighthouse actually blamed is the Aurora blob 499px down
+  the page, because everything above it moved.
+
+  THE FIX IS NOT TO BLOCK RENDERING. It is to make the fallback occupy the same
+  space as the webfont, so the swap is invisible. Each face below is a real
+  local font with four descriptors overriding its metrics:
+
+    size-adjust        scales every glyph so the fallback's average advance
+                       width matches the webfont's
+    ascent-override        descent-override    > fix the line box, so leading does not change either
+    line-gap-override  /
+
+  ALL FOUR NUMBERS ARE MEASURED, NOT COPIED FROM A GENERATOR.
+
+  The widths come from Chrome's own TextMetrics on the live page after
+  document.fonts.ready, measuring one 114-character string at 100px in each
+  face:
+
+    Sora 400  5994.00     Arial 400  5312.21    ratio 1.1283
+    Sora 600  6089.90     Arial 600  5682.96    ratio 1.0716
+    Sora 700  6138.50     Arial 700  5682.96    ratio 1.0802
+    Instrument Serif italic 4132.00   Georgia italic 5356.01   ratio 0.7715
+
+  The ascent and descent come from the fonts' own hhea tables, read off the TTFs
+  in scripts/fonts/ (both files also carry identical OS/2 typo metrics, so there
+  is no hhea-versus-typo ambiguity to resolve per platform):
+
+    Sora              unitsPerEm 1000   ascender 970   descender -290   lineGap 0
+    Instrument Serif  unitsPerEm 1000   ascender 990   descender -310   lineGap 0
+
+  Each override is that metric divided by its own size-adjust, because
+  size-adjust scales the em the overrides are expressed against.
+
+  TWO FACES FOR SORA, BECAUSE ARIAL HAS TWO. Arial ships Regular and Bold and
+  nothing between, so Chrome answers 400 and 500 with the same file and 600 and
+  700 with the same file: the measured ratio is 1.128 below 600 and 1.072 above
+  it. One face keyed to either number would leave the other wrong by five per
+  cent, and the site's hero is font-semibold while its section headings are
+  font-medium, so both ranges are load-bearing. The bold face uses the mean of
+  the 600 and 700 ratios, 1.0759.
+
+  WHY local() AND WHY Arial. A fallback that downloads is not a fallback. Arial
+  is present on Windows and macOS, and on Linux fontconfig substitutes the
+  metric-compatible Liberation Sans for it, so this resolves nearly everywhere;
+  where it does not, the @font-face simply fails and the next family in the
+  stack in tailwind.config.ts applies, which is the behaviour the page had
+  before this block existed. Nothing here can make the page worse.
+
+  ONCE THE WEBFONT LANDS, NONE OF THIS RENDERS. These faces sit AFTER the real
+  family in every stack (see fontFamily in tailwind.config.ts), so they are only
+  ever painted in the frames before the swap, or permanently for a visitor whose
+  network blocks fonts.gstatic.com, which is the case they also improve.
+
+  Re-measure after any change to the font URL, and do it on the production build:
+      npx vite preview --port 5197
+      node lh.mjs http://localhost:5197/
+*/
+@font-face {
+  font-family: "Sora Fallback";
+  font-style: normal;
+  font-weight: 100 500;
+  src: local("Arial"), local("Helvetica"), local("Liberation Sans");
+  size-adjust: 112.83%;
+  ascent-override: 85.97%;
+  descent-override: 25.7%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Sora Fallback";
+  font-style: normal;
+  font-weight: 501 900;
+  src: local("Arial Bold"), local("Arial"), local("Liberation Sans Bold");
+  size-adjust: 107.59%;
+  ascent-override: 90.16%;
+  descent-override: 26.95%;
+  line-gap-override: 0%;
+}
+/* The accent face is only ever asked for its italic (.accent-italic sets
+   font-style: italic and is its only consumer), so the fallback is declared
+   italic and targets Georgia's real italic rather than a synthesised oblique. */
+@font-face {
+  font-family: "Instrument Serif Fallback";
+  font-style: italic;
+  font-weight: 400;
+  src: local("Georgia Italic"), local("Georgia"), local("Times New Roman Italic");
+  size-adjust: 77.15%;
+  ascent-override: 128.33%;
+  descent-override: 40.18%;
+  line-gap-override: 0%;
+}
 
 @layer base {
   :root,
   .dark {
-    /* ── Dark theme (default) ── */
-    --background: 240 10% 4%;      /* #09090B ink */
-    --foreground: 60 9% 98%;       /* #FAFAF9 warm white */
+    /* ── Dark theme (default), built on the logo navy, not on neutral black ──
+       #081738 IS the logo. The previous dark theme was #09090B, a neutral
+       near-black that belongs to no part of this brand. */
+    --background: 221 75% 12.5%;    /* #081738 logo navy */
+    --foreground: 221 70% 95%;      /* #E8EEFB navy-100-15.17:1 on the ground */
 
-    --card: 240 6% 8%;             /* #131316 */
-    --card-foreground: 60 9% 98%;
+    --card: 223 72% 18%;            /* #0D2050 navy-800 */
+    --card-foreground: 221 70% 95%;
 
-    --popover: 240 8% 6%;
-    --popover-foreground: 60 9% 98%;
+    --popover: 222 72% 15.5%;       /* #0B1C44, between ground and card */
+    --popover-foreground: 221 70% 95%;
 
-    --primary: 78 92% 55%;         /* #C7F03A electric lime — signature */
-    --primary-foreground: 240 10% 4%;
+    /* Brand colour on a navy ground is gold. Fill AND text, both measured above. */
+    --primary: 44 52% 55%;          /* #C8A951 gold-500 */
+    --primary-foreground: 221 75% 12.5%;   /* #081738-7.77:1 on the fill */
 
-    --secondary: 268 83% 62%;      /* #8B5CF6 violet pop */
-    --secondary-foreground: 0 0% 100%;
+    /* Distinct from --primary so a secondary badge is not the same chip as a
+       primary one. #E4CE8E is 11.36:1 on the ground. */
+    --secondary: 45 61% 72.5%;      /* #E4CE8E gold-300 */
+    --secondary-foreground: 221 75% 12.5%;
 
-    --muted: 240 5% 12%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 222 66% 23%;           /* #142C63 */
+    --muted-foreground: 219 33% 73%; /* #A3B3D1-8.34:1 ground, 7.41:1 card */
 
-    --accent: 14 100% 63%;         /* #FF6B4A coral warm alt */
-    --accent-foreground: 0 0% 100%;
+    /* --accent is shadcn's hover/highlight SURFACE (ghost buttons, dropdown and
+       select items, command rows). It is deliberately a lifted navy and not the
+       gold: making it gold turns every menu hover into a gold block. The three
+       places that were using --accent as a brand colour now name what they mean
+       (CertificateVerify → warning, AdminDashboard → secondary). */
+    --accent: 221 62% 27%;          /* #1A356F */
+    --accent-foreground: 221 70% 95%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 91% 71%;       /* #F87171-6.38:1 on the navy ground */
+    --destructive-foreground: 221 75% 12.5%;
 
-    --success: 142 71% 45%;
-    --warning: 38 92% 55%;
+    --success: 158 64% 52%;         /* #34D399-9.18:1 */
+    --warning: 38 95% 65%;          /* #FBBF4E, 10.64:1 */
 
-    --border: 240 5% 16%;          /* subtle hairline */
-    --input: 240 5% 16%;
-    --ring: 78 92% 55%;
+    /* PHASE5-SPEC asks for rgba(232,238,251,.14). A shadcn HSL triplet cannot
+       carry alpha (every consumer writes hsl(var(--border) / x) itself), so this
+       is that colour composited onto the navy ground: #273553. */
+    --border: 221 36% 24%;
+
+    /* --input IS NOT --border, and this is the reason they separated.
+       --border draws decorative edges: card rims, dividers, hairlines. Nothing
+       in WCAG asks a decorative rule to meet a ratio, so #273553 stays.
+       --input draws the boundary that tells a sighted user "this is a field you
+       type into", on a text input, a textarea, a select, an OTP box, the
+       outline button and the toggle. That is a user-interface component
+       boundary, so WCAG 2.1 SC 1.4.11 wants 3:1 against every adjacent colour,
+       and #273553 measured 1.45:1 against the input's own #081738 fill and
+       1.26:1 against the #0D2050 card it sits on. The fill carries none of the
+       load either (#081738 on #0D2050 is 1.12:1) so the border was the only
+       thing marking the control, at half the required ratio. On a contact form,
+       the field a visitor cannot find is a lead that never arrives.
+       #526FAD measures 3.56:1 on the input fill and 3.17:1 on the card. Same
+       hue as the old value, lifted until it clears. */
+    --input: 221 36% 50%;           /* #526FAD */
+
+    /* Focus ring in gold reads deliberate. And on navy it is also the most
+       visible thing available: 7.77:1 on the ground, 6.91:1 on a card, against
+       a 3:1 requirement. */
+    --ring: 44 52% 55%;             /* #C8A951 */
 
     --radius: 1rem;
+
+    /* Headline gradient stops. Kept as tokens so.text-gradient has one
+       definition and the two themes differ only in these three values.
+
+       BOTH RAMPS STAY IN ONE HUE FAMILY. The first attempt ran navy → gold, and
+       screenshotting it showed why that cannot work: blue and yellow sit on
+       opposite ends of the same opponent axis, so every interpolation between
+       them (sRGB, oklab, any of them) passes through neutral grey. On the
+       light hero the word "software." literally went navy → mud → olive. Here
+       the ramp is ink → gold-300 → gold-500, which passes through cream, and in
+       the light theme it is navy-700 → navy-500, which passes through navy.
+
+       Worst stop across the whole sweep: 7.77:1 on the navy ground. */
+    --grad-1: 221 70% 95%;          /* #E8EEFB navy-100 (the foreground) */
+    --grad-2: 45 61% 72.5%;         /* #E4CE8E gold-300 */
+    --grad-3: 44 52% 55%;           /* #C8A951 gold-500 */
 
     color-scheme: dark;
   }
 
-  .light {
-    /* ── Light theme (bone canvas, same accents) ── */
-    --background: 48 33% 97%;      /* #FBFAF7 bone */
-    --foreground: 240 10% 4%;
+.light {
+    /* ── Light theme, slate ground, navy ink, navy brand ── */
+    --background: 210 40% 98%;      /* #F8FAFC slate-50 */
+    --foreground: 222 47% 11%;      /* #0F172A slate-900-17.06:1 */
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 78 70% 42%;         /* deepened lime for contrast on light */
-    --primary-foreground: 240 10% 4%;
+    --primary: 219 70% 24%;         /* #123068 navy-700 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 268 83% 58%;
+    /* THE ONLY GOLD THAT CLEARS AA AS TEXT ON A LIGHT GROUND.
+       gold-500 #C8A951 is 2.27:1 here and gold-600 #A8862F is 3.28:1. Both
+       fail 4.5:1. gold-700 #8C6F22 measures 4.55:1 on the page and 4.76:1 on a
+       white card, and white on it is 4.76:1 for the filled variant. Do not
+       lighten this value to match the dark theme's gold; they are different
+       colours because they are doing the same job against opposite grounds. */
+    --secondary: 44 61% 34%;        /* #8C6F22 gold-700 */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 20% 92%;
-    --muted-foreground: 240 5% 40%;
+    --muted: 210 40% 96%;           /* #F1F5F9 slate-100 */
+    --muted-foreground: 215 19% 35%; /* #475569-7.24:1 page, 7.58:1 card, 6.92:1 chip */
 
-    --accent: 14 90% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 221 70% 95%;          /* #E8EEFB navy-100: the hover surface */
+    --accent-foreground: 219 70% 24%;
 
-    --destructive: 0 84% 55%;
+    --destructive: 0 75% 42%;       /* #BB1B1B, 6.11:1 page, 6.39:1 card */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 15% 85%;
-    --input: 40 15% 85%;
-    --ring: 78 70% 42%;
+    /* Deepened from 28% (#157A3A). The old value cleared AA as plain text on the
+       page (5.18:1) but the only places --success is actually used are the chips
+       in /admin, which set `bg-success/15 text-success`: the token's own 15%
+       tint. On that tint #157A3A measured 4.22:1 on the page and 4.39:1 on a
+       card, i.e. the one context it is used in was the one context it failed,
+       and only in the light theme (the dark #34D399 chip is 6.90:1). At 25% the
+       chip reads 4.93:1 on the page and 5.14:1 on a card, and as plain text
+       6.15:1 / 6.44:1. Same hue and saturation, so it is still the same green. */
+    --success: 142 71% 25%;         /* #126D34 */
+    --warning: 38 85% 30%;          /* #8E5E0B, 5.34:1 */
+
+    --border: 214 32% 91%;          /* #E2E8F0 slate-200 */
+
+    /* Same split as the dark theme, same reason, see the note on --input there.
+       slate-200 #E2E8F0 measured 1.19:1 against the input's #F8FAFC fill and
+       1.16:1 against the white card, where SC 1.4.11 wants 3:1, and the fill
+       contributes nothing (#F8FAFC on #FFFFFF is 1.05:1). A field marked only
+       by a rule a tenth of the required strength is, on a white card, very
+       nearly an invisible field.
+       #8091A8 measures 3.07:1 on the fill and 3.21:1 on the card. It is the
+       --muted-foreground hue (215 19%) taken to a mid value, so it belongs to
+       the same slate ramp the rest of the light theme is built from. */
+    --input: 215 19% 58%;           /* #8091A8 */
+
+    /* Gold ring, deepened for the same reason --secondary is: gold-500 measures
+       2.17:1 against #F8FAFC and WCAG 1.4.11 wants 3:1 for a focus indicator.
+       gold-700 is 4.55:1 and still unmistakably gold. */
+    --ring: 44 61% 34%;             /* #8C6F22 */
+
+    --radius: 1rem;
+
+    /* Navy-700 → navy-600 → navy-500: a sheen that brightens, entirely inside
+       the navy ramp. Gold is deliberately NOT a stop here, see the note on the
+       dark tokens. And the light theme takes its gold from the eyebrow
+       hairline, the section rules, --secondary and the focus ring instead, which
+       is exactly the "rules, borders, icons, small caps" role the spec reserves
+       for it. Worst stop 6.49:1 on the page, 6.79:1 on a white card. */
+    --grad-1: 219 70% 24%;          /* #123068 navy-700 */
+    --grad-2: 222 66% 34%;          /* #1E4091 navy-600 */
+    --grad-3: 222 62% 44.5%;        /* #2B55B8 navy-500 */
 
     color-scheme: light;
+  }
+
+  /* ── Brand constants ──────────────────────────────────────────────────────
+     The logo navy itself, for the places where the brand MARK stands in for an
+     image: the team initials discs (nobody on the team is photographed) and the
+     cover panel for a project with no usable screenshot.
+
+     These are deliberately the same in both themes: a card that reads as
+     "Ideovent" in dark mode must read the same in light. What changes per theme
+     is how.brand-navy-surface arranges them, because the dark ground is now
+     itself navy and a navy disc on a navy page would disappear. See the
+.brand-navy-surface rule near the foot of this file.
+     ────────────────────────────────────────────────────────────────────────── */
+  :root,
+  .dark,
+  .light {
+    --brand-navy: 221 75% 12.5%;    /* #081738, logo navy */
+    --brand-navy-800: 223 72% 18%;  /* #0D2050 */
+    --brand-navy-700: 219 70% 24%;  /* #123068: the logo's lighter stroke */
+    --brand-navy-600: 222 66% 34%;  /* #1E4091 */
+    --brand-navy-ink: 221 70% 95%;  /* #E8EEFB, reads on every navy above */
+    --brand-gold: 44 52% 55%;       /* #C8A951: the accent, both themes */
   }
 
   * {
@@ -90,6 +356,29 @@
     scroll-behavior: auto; /* Lenis handles smooth scroll */
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+
+    /*
+      THE HEADER IS FIXED, SO EVERY SCROLL THE BROWSER PERFORMS HAS TO LEAVE
+      ROOM FOR IT.
+
+      Found by tabbing the whole site with the keyboard and recording, at each
+      stop, the focused element's rectangle against the header's. On /internship
+      at 1440px, stop 31 of 55 is the first field of the application form, and
+      the browser's own "scroll the newly focused element into view" put it at
+      top: 0, bottom: 46, with the header's bottom edge at 84. The field a
+      candidate had just tabbed into was entirely behind the navigation bar, and
+      they would have typed into something they could not see. The same thing
+      happened to every in-page anchor: /work's "See the client work" jumps to
+      #client-projects and landed that heading under the bar.
+
+      scroll-padding-top is the scroll container's own answer to this. It applies
+      to focus scrolling, to fragment navigation and to scrollIntoView, without a
+      single call site knowing the header exists. 7rem is the header at its
+      tallest (py-4 around an h-20 bar = 112px); once the page has scrolled the
+      bar shrinks to 84px and the extra 28px reads as breathing room rather than
+      as a gap.
+    */
+    scroll-padding-top: 7rem;
   }
 
   body {
@@ -106,6 +395,56 @@
     color: hsl(var(--primary-foreground));
   }
 
+  /*
+    Baseline focus ring for every interactive element.
+
+    Written with: where() so its specificity is zero: components that style their own
+    focus state (Button, the contact inputs, the skip link) still win, and anything that
+    does not, plain links in the footer and nav, the mobile menu toggle, the work filter
+    pills, the certificate lightbox, gets a clearly visible 2px ring instead of whatever
+    the browser's default happens to be on that background.: focus-visible rather than
+: focus, so it appears for keyboard users and not on mouse click.
+
+    --ring is gold in both themes: #C8A951 at 7.77:1 on the dark ground, #8C6F22
+    at 4.55:1 on the light one. Both clear the 3:1 WCAG 1.4.11 floor.
+  */
+  :where(a, button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /*
+    AN IFRAME CANNOT BE COVERED BY THE RULE ABOVE, AND IT IS A TAB STOP.
+
+    /contact embeds a map. Tabbing the page at 375px and at 1440px, it is a real
+    stop (24 of 34, and 30 of 44), and the focused element had outline-style
+    "none" and box-shadow "none": no indicator at all, on the last control before
+    focus crosses into a document we do not control.
+
+    Adding `iframe` to the selector above does not fix it. Chrome does not match
+    :focus-visible on an iframe element, because focus moves into the child
+    browsing context rather than resting on the frame: tested directly, an iframe
+    that IS document.activeElement reports `matches(":focus-visible")` false and
+    `matches(":focus")` false. The parent-side state that does hold is
+    :focus-within on an ANCESTOR, so the ring is drawn by the wrapper in
+    Contact.tsx rather than here. Same --ring, same 2px, same offset.
+  */
+
+  /*
+    WCAG 2.5.8 target size. Inline text links in the footer and nav measured 20px tall,
+    under the 24px minimum. Giving every link a 24px minimum box costs nothing visually
+    (the text is unchanged) and clears the criterion.
+
+    Scoped to the two landmarks rather than applied to every <a>: a global min-height
+    would also win against the explicit `h-2` on things like the carousel dots, which
+    are buttons that are meant to be 8px. Links elsewhere on the page that needed the
+    same treatment carry `leading-6` at the call site.
+  */
+  :where(nav, footer) a,
+  :where(nav, footer) button {
+    min-height: 1.5rem;
+  }
+
   /* Thin, styled scrollbar (no longer globally hidden) */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -120,75 +459,285 @@
 }
 
 @layer components {
-  .container-page {
-    @apply px-5 sm:px-8 lg:px-10 mx-auto w-full max-w-[88rem];
+/*
+    The one gutter in the site. Every page section goes through this.
+
+    max-width is 80rem (1280px), not 88rem. At 88rem the container never
+    actually centred on the laptop sizes people really use: a 1366 or 1440
+    screen sat below the cap, so content ran edge to edge on a 40px pad and
+    the page felt cramped at both margins. At 80rem a 1366 screen gets a real
+    43px margin on top of the padding, and a 1920 screen gets 320px.
+
+    The padding ladder never drops below 16px, so nothing touches the edge of
+    a phone. min() keeps the widest steps from eating the content on a screen
+    that is wide but short.
+  */
+.container-page {
+    @apply mx-auto w-full max-w-[80rem]
+           px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12;
   }
 
-  .section {
+  /* Full-bleed band (a coloured stripe, a marquee) that still aligns its
+     inner content to the same gutter. */
+.container-bleed > * {
+    @apply mx-auto w-full max-w-[80rem]
+           px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12;
+  }
+
+  /*
+    SECTION RHYTHM. Three steps, not one.
+
+    _assets/DESIGN-DIRECTION.md: "Equal spacing between every section means no
+    section is more important than any other, which is exactly how a generated
+    page feels." So there are now three bands and the page picks between them,
+    and no two consecutive sections on a redesigned page carry the same one.
+
+.section        the default, unchanged, so the 40-odd call sites that were
+                      never re-judged keep the spacing they were measured at
+.section-tight  a section that belongs to the one above it (a proof band
+                      under the work it is vouching for, a note under a table)
+.section-loud   the one section on the page that is allowed to breathe
+
+    These are paddings, not margins, so they still collapse correctly against a
+    coloured band and `pt-0` / `pb-0` still work as overrides at the call site.
+  */
+.section {
     @apply py-20 md:py-28 lg:py-32;
   }
-
-  /* Editorial serif-italic accent — reserved for emphasized words only */
-  .accent-italic {
-    @apply font-serif italic font-normal;
+.section-tight {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+.section-loud {
+    @apply py-24 md:py-36 lg:py-44;
   }
 
-  /* Eyebrow pill */
-  .eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3.5 py-1.5
+  /*
+    THE SERIF ACCENT. One or two words per page, never a whole line, never body
+    copy.
+
+    This is Instrument Serif italic, restored. The Phase 5 consolidation cut it
+    to `font-display font-semibold` while reducing the font count, and
+    _assets/DESIGN-DIRECTION.md names that as the single biggest reason the site
+    started reading as machine-made: "The serif accent inside a sans headline is
+    the single strongest 'a person designed this' signal, and I removed it while
+    cutting the font count."
+
+    It is a real italic file, not a synthesised oblique. Sora ships no italic, so
+    `font-style: italic` on the display face would render as a slanted geometric
+    sans and look like a rendering fault at 96px, which is exactly why the
+    previous pass refused to do it. Instrument Serif's Google Fonts entry is
+    requested as `ital@1`: the italic face only, one extra woff2 on the critical
+    path (see the measured table in index.html).
+
+    Three corrections the face needs when it is set inline inside Sora:
+
+      font-size   1.04em. Instrument Serif's cap height is shorter than Sora's
+                  at the same em, so at 1em the accent word sits visibly small
+                  inside the headline instead of reading as part of the line.
+      letter-spacing  0. The hero carries -0.035em tracking, which is right for
+                  a geometric sans at 96px and closes a serif italic's joins up
+                  into a smear. Reset, not inherited.
+      padding-right  the italic leans right, and `.text-gradient` paints through
+                  `background-clip: text`, which clips at the inline box. Without
+                  the pad the final letter's overhang is sliced off. The negative
+                  margin puts the advance width back so the following word does
+                  not drift.
+
+    Declared BEFORE `.text-gradient` on purpose: the two are used together, both
+    are single-class selectors in this layer, so source order decides, and
+    `.text-gradient`'s `color: transparent` has to win. Standalone uses get
+    --primary, which is navy #123068 at 12.18:1 in light and gold #C8A951 at
+    7.77:1 in dark.
+  */
+.accent-italic {
+    @apply font-serif font-normal;
+    font-style: italic;
+    font-size: 1.04em;
+    letter-spacing: 0;
+    padding-right: 0.06em;
+    margin-right: -0.04em;
+    color: hsl(var(--primary));
+  }
+
+  /* Eyebrow pill. The hairline and the leading dot are gold: an eyebrow is
+     small caps inside a rule, which is exactly the job the spec reserves for
+     gold. The TEXT stays muted-foreground (7.44:1 light, 7.82:1 dark); gold
+     small caps on the light ground would be 2.27:1 and is not an option.
+
+     Two rules because the two golds are different colours: gold-500 on navy,
+     and --secondary (gold-700) on white, which is the only gold that stays
+     legible there.
+
+     THE OVERRIDE IS A DESCENDANT SELECTOR, NOT A COMPOUND ONE. next-themes is
+     configured `attribute="class"`, so it writes `light` / `dark` onto <html>.
+     `.light.eyebrow` (no space) asks for ONE element carrying both classes,
+     which would be <html> itself carrying `.eyebrow`, and that never happens:
+     measured across eight routes the compound form matched 0 elements while the
+     descendant form matched 53. For however long it was written that way the
+     light theme drew this border in the DARK theme's gold-500 at 45%, the wash
+     the note above says is not an option here. */
+.eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full bg-card/60 px-3.5 py-1.5
            text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur;
+    border: 1px solid hsl(var(--brand-gold) / 0.45);
+  }
+.light .eyebrow {
+    border-color: hsl(var(--secondary) / 0.55);
   }
 
-  .glass {
+.glass {
     @apply bg-card/50 backdrop-blur-xl border border-border/60;
   }
 
-  .card-surface {
+.card-surface {
     @apply rounded-3xl border border-border bg-card/70 backdrop-blur-sm;
   }
 
-  /* Gradient text using brand accents */
-  .text-gradient {
+  /*
+    Headline gradient. The old one ran primary → secondary → accent, i.e.
+    lime → violet → coral, and --accent is now a near-neutral hover surface, so
+    it cannot be a gradient stop any more. The three stops are their own tokens
+    (--grad-1/2/3) declared per theme, which is what lets the dark theme run
+    navy-100 → gold-300 → gold-500 and the light theme stay entirely inside the
+    navy ramp, without a second selector. The light gradient deliberately does
+    NOT end on gold: gold as headline text on #F8FAFC is the one thing §A of
+    PHASE5-SPEC rules out. See the note beside the light --grad tokens.
+
+    Re-measured 24 Sep 2026 from the tokens as they stand (an earlier version of
+    this note quoted 4.55:1 / 4.76:1, which were the figures for a light
+    gradient that ended on gold-700 and no longer exists):
+      light  worst stop #2B55B8-6.48:1 on the page, 6.79:1 on a white card
+      dark   worst stop #C8A951-7.71:1 on the navy ground
+    Every consumer is a heading, so the applicable bar is 3:1 large-text; both
+    themes clear 4.5:1 anyway.
+  */
+.text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(100deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 55%, hsl(var(--accent)) 100%);
+    background-image: linear-gradient(
+      100deg,
+      hsl(var(--grad-1)) 0%,
+      hsl(var(--grad-2)) 50%,
+      hsl(var(--grad-3)) 100%
+);
   }
 
-  .link-underline {
+.link-underline {
     @apply relative inline-block after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-full
            after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300
            hover:after:origin-bottom-left hover:after:scale-x-100;
   }
 
-  /* Glow ring around focal elements */
-  .glow-primary { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.25), 0 0 60px -12px hsl(var(--primary) / 0.5); }
-  .glow-secondary { box-shadow: 0 0 0 1px hsl(var(--secondary) / 0.3), 0 0 70px -14px hsl(var(--secondary) / 0.55); }
+  /* Glow ring around focal elements. Both follow --primary/--secondary, so they
+     are a gold bloom on the navy ground and a navy one on the light ground
+     without a second rule. The light-theme spreads are tightened because a 60px
+     navy bloom on #F8FAFC reads as a grey smudge rather than as light. */
+.glow-primary { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.25), 0 0 60px -12px hsl(var(--primary) / 0.5); }
+.glow-secondary { box-shadow: 0 0 0 1px hsl(var(--secondary) / 0.3), 0 0 70px -14px hsl(var(--secondary) / 0.55); }
+/* Descendant, not compound: `light` is on <html>. See the note on .eyebrow. */
+.light .glow-primary { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.22), 0 18px 40px -22px hsl(var(--primary) / 0.45); }
+.light .glow-secondary { box-shadow: 0 0 0 1px hsl(var(--secondary) / 0.3), 0 18px 44px -24px hsl(var(--secondary) / 0.4); }
 }
 
 @layer utilities {
-  .text-balance { text-wrap: balance; }
-  .text-pretty { text-wrap: pretty; }
+.text-balance { text-wrap: balance; }
+.text-pretty { text-wrap: pretty; }
 
-  /* Fluid hero type */
-  .text-hero { font-size: clamp(2.75rem, 8vw, 7rem); line-height: 0.95; letter-spacing: -0.03em; }
-  .text-display { font-size: clamp(2rem, 5vw, 4rem); line-height: 1.02; letter-spacing: -0.02em; }
+  /*
+    Fluid hero type. THE HERO COMMITS TO ITS SCALE.
 
-  /* Ambient radial spotlight background */
-  .bg-spotlight {
+    _assets/DESIGN-DIRECTION.md §2: "A 64px hero is the safe default every
+    template ships. A designed page commits: 21st.dev's runs past 96px on
+    desktop." The 4rem ceiling this file carried was that safe default, and it
+    was justified by a layout constraint rather than by a design decision: the
+    home hero used to put the price block in the same ROW as the headline from
+    lg up, so the headline column was ~740px at 1440 and anything above 64px
+    wrapped to three lines inside it.
+
+    That constraint is gone, not overridden. The home hero now gives the h1 the
+    full container width and the price block the row beneath it, so the headline
+    has ~1330px to set in at 1440 rather than 740. Re-measured after that change,
+    at 6rem / 96px, with the h1 broken by hand into two authored lines:
+      1440   "We build websites, portals" 792px, "and custom software." 631px
+             two lines, h1 height 197px, first line starts on the 128px gutter
+      1024   88px per the 7vw term, still two lines
+       768   54px, two lines
+       375   40px (the 2.5rem floor), four lines, h1 height 158px
+    The 375px wrap was checked by hand, which §2 asks for explicitly: the breaks
+    fall after "websites," and after "and", never mid-noun.
+
+    line-height 0.95 and -0.035em tracking are what make large type read as SET
+    rather than stretched. 0.95 clips descenders on a lowercase-heavy line below
+    about 36px, so `.text-hero` pairs with `pb-1` on each authored line span (see
+    Hero.tsx), which is what the old 1.0 leading was really buying.
+
+    .text-display is the section-heading size. It stays below the hero on purpose:
+    if every h2 is as large as the h1 then nothing on the page is the h1.
+  */
+.text-hero { font-size: clamp(2.5rem, 7vw, 6rem); line-height: 0.95; letter-spacing: -0.035em; }
+.text-display { font-size: clamp(1.875rem, 4.4vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; }
+
+  /*
+    The two weights the headline contrast is made of. DESIGN-DIRECTION §3: "Set
+    display headings at 300 with a single 800 word, or the reverse. The jump is
+    the design." 300 and 800 are both inside the Sora variable range the page
+    now loads (wght@300..800, see index.html); 400 vs 600 is the range that
+    "looks like nobody chose".
+
+    Named rather than written as `font-[300]` at the call site so the pair stays
+    a pair: if the loaded range ever narrows, these two rules are the only place
+    that has to move.
+  */
+.font-thin-display { font-weight: 300; }
+.font-loud-display { font-weight: 800; }
+
+  /*
+    Gold hairline over a section heading. Gold is 2.27:1 on white and can never
+    carry text, but a 2px rule is not text: WCAG sets no ratio for decoration,
+    and this is the "rules, small caps, a dot" role the palette reserves for it.
+    --secondary is the per-theme gold (gold-300 on navy, gold-700 on white).
+  */
+.rule-gold {
+    border-top: 2px solid hsl(var(--secondary) / 0.75);
+  }
+
+  /*
+    Ambient radial spotlight behind the six large CTA panels.
+
+    Retuned, not inherited. The old version washed the panel in lime, violet and
+    coral via --primary/--secondary/--accent; --accent is now a near-neutral
+    hover surface, so that third stop would have rendered as grey fog.
+
+    This is the printed cover treatment from _assets/brand.css (.cover: before
+    is a navy-500 bloom top-right,.cover: after a gold one bottom-left), turned
+    on its side for a wide panel. Named brand tokens rather than the semantic
+    ones, so the wash is the same navy-and-gold in both themes and only the
+    ground underneath changes.
+  */
+.bg-spotlight {
     background:
-      radial-gradient(60% 55% at 50% 0%, hsl(var(--primary) / 0.10), transparent 60%),
-      radial-gradient(45% 45% at 85% 20%, hsl(var(--secondary) / 0.12), transparent 60%),
-      radial-gradient(40% 40% at 10% 30%, hsl(var(--accent) / 0.08), transparent 60%);
+      radial-gradient(62% 58% at 50% 0%, hsl(var(--brand-gold) / 0.11), transparent 62%),
+      radial-gradient(50% 50% at 88% 16%, hsl(var(--brand-navy-600) / 0.20), transparent 64%),
+      radial-gradient(44% 44% at 8% 84%, hsl(var(--brand-gold) / 0.07), transparent 66%);
+  }
+  /* Same geometry, softer, because these alphas sit on #F8FAFC rather than on
+     navy and a 20% navy bloom on a near-white panel reads as a dirty mark.
+     Descendant, not compound: `light` is on <html>. See the note on .eyebrow. */
+.light .bg-spotlight {
+    background:
+      radial-gradient(62% 58% at 50% 0%, hsl(var(--brand-gold) / 0.10), transparent 62%),
+      radial-gradient(50% 50% at 88% 16%, hsl(var(--brand-navy-600) / 0.10), transparent 64%),
+      radial-gradient(44% 44% at 8% 84%, hsl(var(--brand-gold) / 0.06), transparent 66%);
   }
 
   /* Dotted / grid textures */
-  .bg-grid {
+.bg-grid {
     background-image: linear-gradient(hsl(var(--border) / 0.7) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--border) / 0.7) 1px, transparent 1px);
     background-size: 56px 56px;
     -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
     mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
   }
-  .bg-dots {
+.bg-dots {
     background-image: radial-gradient(hsl(var(--foreground) / 0.10) 1px, transparent 1px);
     background-size: 22px 22px;
   }
@@ -200,13 +749,45 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  .hover-lift { @apply transition-transform duration-300 ease-out hover:-translate-y-1.5; }
-  .clip-parallax { overflow: hidden; position: relative; }
-}
+  /*
+    A card that rises under the cursor.
 
-/* Marquee (client logos / tech strip) */
-@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.animate-marquee { animation: marquee var(--marquee-duration, 32s) linear infinite; }
+    TWO THINGS CHANGED HERE, AND THE SECOND ONE IS NOT ABOUT MOTION.
+
+    Timing: 300ms and 6px became 180ms and 4px. A hover state is feedback, and
+    feedback that takes a third of a second to arrive is read as lag rather than
+    as response. The site's one entrance curve is 220ms; a hover has to be
+    quicker than an entrance or the page feels like it is dragging behind the
+    pointer. The travel comes down with it for the same reason a shorter fadeUp
+    travels less (see src/lib/motion.ts): the same distance in half the time is
+    a jump, not a lift.
+
+    Scope: this class was on twelve elements and exactly ONE of them was
+    clickable. The other eleven were inert cards, a value, a team member, a
+    problem statement, a week of the internship timeline, that rose towards the
+    cursor and then did nothing when it was clicked. A lift is an affordance: it
+    is the page saying "this is a thing you can press". Putting it on a
+    paragraph in a box is a promise the card cannot keep, and a visitor who
+    clicks one and gets nothing has learned something about how carefully the
+    rest of the site was made. It is now only on /services' service cards, which
+    are <Link>s.
+
+    Cards that are not links keep their border and background hover, which says
+    "you are here" without saying "press me".
+  */
+/* 180ms is written as plain CSS, not as `duration-[180ms]` inside the @apply.
+   Tailwind resolves an @apply argument against the utilities it has already
+   generated, and an arbitrary-value class only exists there if some file in the
+   `content` glob literally contains that string. No .tsx does, so the @apply
+   threw "The `duration-[180ms]` class does not exist" and index.css 500'd for
+   the whole dev server. The duration is deliberate (see the note above), so it
+   is declared rather than rounded to the nearest stock `duration-200`. */
+.hover-lift {
+  @apply transition-transform ease-out hover:-translate-y-1;
+  transition-duration: 180ms;
+}
+.clip-parallax { overflow: hidden; position: relative; }
+}
 
 /* Shimmer for skeletons */
 @keyframes shimmer { 100% { transform: translateX(100%); } }
@@ -219,5 +800,568 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .animate-marquee { animation: none !important; }
+}
+
+/* ── Legal pages (/privacy, /terms, /refund, /disclaimer) ──────────────────────
+   The bodies are generated from 03-legal-docs/policies/*.md by
+   scripts/build-legal.mjs, so they contain tables, blockquotes and <mark> chips
+   that the rest of the site never uses. Styled here rather than as arbitrary
+   variants on Legal.tsx, because the injected HTML is not authored in JSX. */
+/* Descendant, not compound: build-legal.mjs emits
+   <div class="legal-prose …"><div class="legal-table"><table>…  so the wrapper
+   is a CHILD of .legal-prose, never the same element. Written as
+   `.legal-prose.legal-table` this rule matched nothing, overflow-x never
+   applied, and `min-width: 34rem` below pushed the four legal routes to a
+   564px document at a 375px viewport. */
+.legal-prose .legal-table {
+  /* A wide table scrolls inside its own box; the page never scrolls sideways. */
+  overflow-x: auto;
+  margin-bottom: 1.75rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+}
+.legal-prose table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.legal-prose thead th {
+  text-align: left;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.5);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.legal-prose tbody td {
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+.legal-prose tbody tr:last-child td { border-bottom: 0; }
+
+.legal-prose blockquote {
+  margin: 0 0 1.75rem;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid hsl(var(--primary));
+  background: hsl(var(--muted) / 0.4);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+.legal-prose blockquote p:last-child { margin-bottom: 0; }
+
+.legal-prose code {
+  font-size: 0.875em;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  background: hsl(var(--muted) / 0.7);
+}
+
+/* An unresolved [[BLANK]] carried over from the source document. It must be
+   impossible to mistake for finished copy, see the draft banner in Legal.tsx. */
+.legal-prose mark {
+  /* Was a hard-coded amber (38 92% 50%). It is now --warning, so the flag
+     tracks the theme instead of being one fixed colour that was tuned against
+     a near-black page and now sits on navy. */
+  background: hsl(var(--warning) / 0.22);
+  color: hsl(var(--foreground));
+  border: 1px dashed hsl(var(--warning) / 0.65);
+  border-radius: 0.25rem;
+  padding: 0.05em 0.4em;
+  font-size: 0.875em;
+  font-weight: 600;
+  /* NOT nowrap: [[POST_CANCELLATION_FILE_RETENTION_MONTHS]] is 42 characters and
+     pushed the whole /refund page 59px wide at 375px until this was fixed. */
+  overflow-wrap: anywhere;
+}
+
+/* ── Brand navy surfaces ───────────────────────────────────────────────────────
+   Two places stand in for an image that does not exist: the team initials disc
+   (nobody on the team is photographed, see About.tsx) and the cover panel for a
+   project with no usable screenshot. Both must read as a deliberate brand mark
+   rather than as a failed image load, so both use the logo navy with the
+   angular lift of the mark's lighter stroke, and both are defined here so the
+   two stay in step.
+
+   RETUNED FOR THE NAVY DARK THEME. The old rule ran navy-700 → navy-900 in
+   both themes, which worked when the dark background was neutral #09090B. The
+   dark background is now #081738: the identical navy. So that gradient would
+   have made the disc and the cover panel disappear into the page entirely.
+
+   Dark now lifts the whole surface a full two steps (navy-600 → navy-800) so it
+   sits ABOVE its ground, and carries a gold hairline instead of a white one:
+   #1E4091 measures 2.6:1 against #081738 on its own, and the 1px gold ring is
+   what actually draws the edge. Light keeps the deep navy, which is already a
+   17:1 shape against #F8FAFC and needs no help.
+
+   The initials and the monogram are --brand-navy-ink #E8EEFB: 8.9:1 on the
+   lightest point of the dark gradient and 15.2:1 on the deepest point of the
+   light one. Both are load-bearing, not decoration. */
+.brand-navy-surface {
+  background:
+    radial-gradient(120% 120% at 18% 12%, hsl(var(--brand-navy-600)) 0%, hsl(var(--brand-navy-800)) 68%);
+  color: hsl(var(--brand-navy-ink));
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--brand-gold) / 0.35),
+    0 1px 2px hsl(var(--brand-navy) / 0.5);
+}
+/* Descendant, not compound: `light` is on <html>. See the note on .eyebrow.
+   While this was written `.light.brand-navy-surface` it never matched, so the
+   light theme drew the initials discs and the no-screenshot cover panels with
+   the DARK theme's lifted navy-600 gradient. The ink stayed legible either way
+   (measured 15.1:1 on the discs), so nothing was unreadable, but the treatment
+   was not the one the note above describes. */
+.light .brand-navy-surface {
+  background:
+    radial-gradient(120% 120% at 18% 12%, hsl(var(--brand-navy-700)) 0%, hsl(var(--brand-navy)) 62%);
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--brand-gold) / 0.30),
+    0 2px 10px -4px hsl(var(--brand-navy) / 0.5);
+}
+
+/* The mark's own geometry, reduced to a texture: two diagonals meeting at the
+   centre, the way the iV strokes do. Keeps a large empty navy panel from
+   reading as a flat placeholder. */
+.brand-navy-etch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(135deg, hsl(0 0% 100% / 0.055) 0 1px, transparent 1px 100%),
+    linear-gradient(-135deg, hsl(0 0% 100% / 0.055) 0 1px, transparent 1px 100%);
+  background-size: 28px 28px, 28px 28px;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   DEMO SITES: THE INSTITUTE'S PALETTE, NOT OURS
+
+   A demo site at /demo/<slug> is the institute's own website, built for them,
+   with their name on the masthead. The single fastest way to prove it is not
+   their site is to paint it in Ideovent's navy and gold, so `.demo-scope`
+   rebuilds the whole shadcn token ladder for its subtree. Every component
+   inside it, `bg-background`, `text-foreground`, `border-border`,
+   `bg-primary`, the focus ring, keeps working and comes out in the
+   institute's colours instead of the firm's.
+
+   ── HOW A PALETTE IS DEFINED ───────────────────────────────────────────────
+   A preset sets exactly TWO values, a main hue and an accent hue:
+
+       .demo-palette-crimson { --dh: 348; --dh2: 28; }
+
+   Everything else is the ladder below, written once for the dark theme (the
+   base rule, which is also this file's convention: `:root, .dark` is dark) and
+   once for light (`.light .demo-scope`, a descendant selector because
+   next-themes writes the class onto <html>; see the note on `.eyebrow` for
+   what happens when that is written as a compound selector).
+
+   That shape is the reason a palette cannot be half-finished. There is no way
+   to add a preset that styles the buttons and forgets the inputs, and no way
+   to add one that passes contrast in dark and fails in light, because no
+   preset chooses a lightness. scripts/check-demo-palettes.mjs walks all six
+   presets against both ladders and eighteen measured pairs, and the build
+   runs it. The tightest pair across all twelve combinations is 3.14:1 on a
+   3:1 requirement (indigo, dark, --input against the card) and the tightest
+   text pair is 4.55:1 on 4.5 (brick, light, --input, which is a boundary and
+   not text, so its real floor is 3).
+
+   The hues are separated by template on purpose. See DEMO_PALETTES in
+   src/lib/demo/record.ts: the coaching demo and the school demo are sent in
+   the same week and the seam a director looks for is the second page being
+   the first one recoloured.
+
+   ── WHY var() INSIDE THE TRIPLET IS SAFE ───────────────────────────────────
+   Tailwind emits `hsl(var(--primary))` and, for an opacity modifier,
+   `hsl(var(--primary) / 0.5)`. With `--primary: var(--dh) 74% 71%` those
+   substitute to `hsl(348 74% 71%)` and `hsl(348 74% 71% / 0.5)`, which are
+   CSS Color 4 space-separated syntax. Every browser that runs this site
+   supports it. Do NOT rewrite these with commas: `hsl(348, 74%, 71% / 0.5)`
+   is invalid and the colour would silently drop to unset.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.demo-palette-crimson { --dh: 348; --dh2: 28; }
+.demo-palette-indigo  { --dh: 256; --dh2: 190; }
+.demo-palette-teal    { --dh: 184; --dh2: 35; }
+.demo-palette-forest  { --dh: 152; --dh2: 42; }
+.demo-palette-plum    { --dh: 288; --dh2: 340; }
+.demo-palette-brick   { --dh: 14;  --dh2: 200; }
+
+/* Dark ladder (the base, matching this file's `:root, .dark` convention). */
+.demo-scope {
+  --background: var(--dh) 40% 8%;
+  --foreground: var(--dh) 22% 95%;
+
+  --card: var(--dh) 36% 13%;
+  --card-foreground: var(--dh) 22% 95%;
+  --popover: var(--dh) 38% 11%;
+  --popover-foreground: var(--dh) 22% 95%;
+
+  --muted: var(--dh) 30% 17%;
+  --muted-foreground: var(--dh) 16% 73%;
+
+  --primary: var(--dh) 74% 71%;
+  --primary-foreground: var(--dh) 45% 9%;
+
+  --secondary: var(--dh2) 70% 72%;
+  --secondary-foreground: var(--dh) 45% 9%;
+
+  /* The hover SURFACE, as everywhere else in this file. Not a brand colour. */
+  --accent: var(--dh) 34% 20%;
+  --accent-foreground: var(--dh) 20% 94%;
+
+  --border: var(--dh) 24% 24%;
+  /* Separate from --border for the reason given on the site's own tokens: this
+     one draws the boundary of a control and WCAG 1.4.11 wants 3:1 for it. */
+  --input: var(--dh) 22% 48%;
+  --ring: var(--dh) 74% 71%;
+
+  /* The headline gradient, inside the institute's own hue rather than ours.
+     Main hue → accent hue → main hue again, so it never passes through grey.
+     See the note on --grad-1 at the top of this file for why a ramp that
+     crosses the opponent axis turns to mud. */
+  --grad-1: var(--dh) 22% 95%;
+  --grad-2: var(--dh2) 70% 72%;
+  --grad-3: var(--dh) 74% 71%;
+
+  --radius: 0.75rem;
+
+  color-scheme: dark;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Light ladder. */
+.light .demo-scope {
+  --background: var(--dh) 44% 97.5%;
+  --foreground: var(--dh) 38% 11%;
+
+  --card: 0 0% 100%;
+  --card-foreground: var(--dh) 38% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--dh) 38% 11%;
+
+  --muted: var(--dh) 36% 95%;
+  --muted-foreground: var(--dh) 16% 32%;
+
+  --primary: var(--dh) 68% 28%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: var(--dh2) 62% 28%;
+  --secondary-foreground: 0 0% 100%;
+
+  --accent: var(--dh) 40% 93%;
+  --accent-foreground: var(--dh) 60% 22%;
+
+  --border: var(--dh) 26% 87%;
+  --input: var(--dh) 16% 46%;
+  --ring: var(--dh) 68% 28%;
+
+  --grad-1: var(--dh) 68% 28%;
+  --grad-2: var(--dh2) 62% 28%;
+  --grad-3: var(--dh) 60% 38%;
+
+  color-scheme: light;
+}
+
+/*
+  The accent italic inside a demo takes the INSTITUTE's accent hue, not the
+  firm's gold. `.accent-italic` sets `color: hsl(var(--primary))` and that is
+  right on the marketing site, where --primary is the brand. Inside a demo the
+  brand is theirs, and the serif accent is the one place the second hue does
+  visible work in a headline.
+*/
+.demo-scope .accent-italic {
+  color: hsl(var(--secondary));
+}
+
+/*
+  A PLACEHOLDER, WHICH IS A DESIGNED STATE AND NOT A MISSING ONE.
+
+  Mehdi sends most demos with a name, a city and nothing else, so every
+  section has to read as finished while it is empty. The answer is not filler
+  text that pretends to be content: a fabricated fee or an invented rank is
+  the one thing a demo may never carry. It is a visibly reserved slot, ruled
+  rather than filled, that says what goes there.
+
+  A dashed rule and muted text, so it reads as "your content lands here" at a
+  glance and never as a broken component. It carries no icon and no colour
+  fill, because a coloured warning block repeated down a page turns the demo
+  into a to-do list, and the director is supposed to see their website.
+*/
+.demo-blank {
+  border: 1px dashed hsl(var(--input) / 0.55);
+  border-radius: var(--radius);
+  background: hsl(var(--muted) / 0.35);
+  color: hsl(var(--muted-foreground));
+}
+
+/*
+  The demo marker bar. Deliberately NOT in the institute's palette: it is the
+  one element on the page that is Ideovent speaking, so it keeps the firm's
+  navy in both themes and reads as a separate object sitting on top of their
+  site rather than as part of it. --brand-navy and --brand-navy-ink are
+  theme-independent by design (see the block near the top of this file).
+*/
+.demo-marker {
+  background: hsl(var(--brand-navy));
+  color: hsl(var(--brand-navy-ink));
+  border-bottom: 1px solid hsl(var(--brand-gold) / 0.4);
+}
+.demo-marker a {
+  color: hsl(var(--brand-gold));
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   THE COACHING DEMO'S SCOPE
+
+   Five themes, each with its own colours, live in src/lib/demo/coachingThemes.ts
+   and are measured by scripts/check-demo-contrast.mjs. The template reads
+   `--dc-*`. The theme hands us TWO tables as inline custom properties, --dcl-*
+   for light and --dcd-* for dark, and the two rules below pick one.
+
+   WHY THE PICK CANNOT BE INLINE. An inline custom property beats a stylesheet
+   rule in the cascade, so an inline `--dc-bg` could never be overridden by
+   `.light`. Handing over both tables under names nothing reads, and choosing
+   here, is what makes the theme switch work at all.
+
+   DARK IS THE BASE, matching `:root, .dark` at the top of this file, and it is
+   also what a director actually sees: main.tsx sets defaultTheme="dark" with
+   enableSystem false, so the first rendering of a link pasted into WhatsApp is
+   the dark one. The school template pins itself to light and is right to; this
+   one carries both and is measured in both.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.demo-coaching {
+  --dc-bg: var(--dcd-bg);
+  --dc-surface: var(--dcd-surface);
+  --dc-surface-2: var(--dcd-surface-2);
+  --dc-ink: var(--dcd-ink);
+  --dc-ink-soft: var(--dcd-ink-soft);
+  --dc-brand: var(--dcd-brand);
+  --dc-on-brand: var(--dcd-on-brand);
+  --dc-brand-ink: var(--dcd-brand-ink);
+  --dc-accent: var(--dcd-accent);
+  --dc-line: var(--dcd-line);
+  --dc-hero-bg: var(--dcd-hero-bg);
+  --dc-hero-ink: var(--dcd-hero-ink);
+  --dc-hero-soft: var(--dcd-hero-soft);
+  --dc-hero-accent: var(--dcd-hero-accent);
+
+  color-scheme: only dark;
+  background: hsl(var(--dc-bg));
+  color: hsl(var(--dc-ink));
+  font-family: var(--dc-body);
+}
+
+.light .demo-coaching {
+  --dc-bg: var(--dcl-bg);
+  --dc-surface: var(--dcl-surface);
+  --dc-surface-2: var(--dcl-surface-2);
+  --dc-ink: var(--dcl-ink);
+  --dc-ink-soft: var(--dcl-ink-soft);
+  --dc-brand: var(--dcl-brand);
+  --dc-on-brand: var(--dcl-on-brand);
+  --dc-brand-ink: var(--dcl-brand-ink);
+  --dc-accent: var(--dcl-accent);
+  --dc-line: var(--dcl-line);
+  --dc-hero-bg: var(--dcl-hero-bg);
+  --dc-hero-ink: var(--dcl-hero-ink);
+  --dc-hero-soft: var(--dcl-hero-soft);
+  --dc-hero-accent: var(--dcl-hero-accent);
+
+  color-scheme: only light;
+}
+
+/*
+  THE SERIF ACCENT, STEPPED UP 8%.
+
+  Measured on 21st.dev: General Sans 500 at 64px with Averia Serif Libre italic
+  at 69.12px inside the same line, which is 1.08x. A serif at the same nominal
+  size as a geometric sans reads smaller, so the step is what makes the two
+  x-heights match optically. The site's own `.accent-italic` uses 1.04 against
+  Sora, which is the right number there; inside a demo the surrounding weight
+  and tracking are different and 1.08 is.
+
+  It takes the theme's SECOND colour, never the first: the accent is the one
+  place the second hue does visible work in a headline. It is used exactly
+  twice on the whole page, once in the hero and once in one section head.
+*/
+.demo-coaching .accent-italic {
+  font-size: 1.08em;
+  color: hsl(var(--dc-accent));
+}
+
+/*
+  A BLANK, WHICH IS A DESIGNED STATE AND NOT A MISSING ONE.
+
+  One style, used everywhere on this page, and it replaces the dashed box and
+  the dotted underline the earlier build used. Underlined italic is what a
+  browser renders when a stylesheet fails, so it read as damage rather than as
+  an invitation; a dashed rectangle sized to the element it stands in for is a
+  hole with a label in it.
+
+  This is a 2px rule in the theme's accent colour with 12px of padding, text at
+  the soft ink, normal weight and normal style. It reads as a margin note,
+  which is exactly what it is: a line addressed to the director saying what
+  they would send us. It occupies the space its SENTENCE needs and never the
+  space its content would need.
+*/
+.demo-coaching .dc-blank {
+  border-left: 2px solid hsl(var(--dc-accent) / 0.55);
+  padding-left: 12px;
+  color: hsl(var(--dc-ink-soft));
+  font-style: normal;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+/*
+  ENTRANCE MOTION, ONCE, AND NOWHERE ELSE.
+
+  Taken from 21st.dev's measured `lp-hero-in`: iteration count 1, a
+  decelerating curve with a long tail, opacity plus a small translate on Y and
+  nothing else. No scale, no blur, no rotation, no slide from the side, and
+  nothing on this page loops at the reader.
+
+  At most three groups animate on the whole page and the stagger is capped at
+  four children, so the fifth child onward runs with the fourth. The cap is
+  enforced in the template, which never writes a delay above 180ms.
+*/
+@keyframes dc-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.demo-coaching .dc-in {
+  animation: dc-in 560ms cubic-bezier(0.2, 0.6, 0.2, 1) both 1;
+}
+
+/* The one scroll-triggered reveal below the fold, and it is the numbers. */
+.demo-coaching .dc-reveal {
+  animation: dc-in 620ms cubic-bezier(0.2, 0.6, 0.2, 1) both 1;
+  animation-timeline: view();
+  animation-range: entry 8% cover 26%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-coaching .dc-in,
+  .demo-coaching .dc-reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PITCH PAGES IN PRINT
+
+   A pitch page is not only read on a phone. A director screenshots it, or
+   prints it and puts it in front of a trustee, or saves it to PDF and forwards
+   it. That second reader is often the one who signs, and they meet the page on
+   paper with no way to scroll, tap or open a link.
+
+   Three things have to change for that reader.
+
+   1. THE THEME. The site defaults to dark, and dark means a near-black
+      #081738 ground. Printed, that is either a sheet of solid navy or, far
+      more likely, a browser that drops the background and leaves pale text on
+      white: unreadable, and it looks like a fault in our work. The block below
+      redefines the theme tokens on.pitch-doc itself, so every descendant that
+      reads hsl(var(--background)) and friends picks up the LIGHT values
+      without a single component knowing it is being printed.
+
+   2. THE GOLD. --brand-gold #C8A951 measures 2.27:1 on white. It is the right
+      accent on navy and the wrong one on paper, so it is remapped to gold-700
+      #8C6F22 (4.55:1), which is the same colour the light theme already uses
+      wherever gold has to carry text. The price, the tick marks and the
+      section accents stay gold and stay legible.
+
+   3. THE LINKS. On screen the proof cards say "Khud dekh lijiye" and the
+      address lives in the href. On paper that is a dead end, so every external
+      link prints its own URL after it. The trustee can type it in.
+
+   The sticky bar goes, because a bar fixed to the bottom of the viewport
+   prints on top of the content of the first page.
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+.pitch-doc {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 219 70% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 44 61% 34%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 19% 35%;
+    --accent: 221 70% 95%;
+    --accent-foreground: 219 70% 24%;
+    --border: 214 32% 82%;
+    --brand-gold: 44 61% 34%;
+    background: #fff;
+    padding-bottom: 0;
+
+    /*
+      SET `color`, NOT ONLY THE TOKENS. This line is the whole fix for a bug
+      that made the printed page look broken.
+
+      Redefining --foreground on.pitch-doc changes what
+      hsl(var(--foreground)) resolves to, which is enough for any element
+      carrying `text-foreground` or `text-muted-foreground`. It is NOT enough
+      for an element that sets no colour at all, and that is most of the
+      headings on the page: they simply INHERIT `color` from <body>, which is
+      outside.pitch-doc and is still the dark theme's near-white #E8EEFB.
+
+      Printed, that produced a page where the body copy was black and every
+      heading, every price and every card title was a pale ghost on white.
+      Declaring `color` here gives.pitch-doc its own inherited value, so the
+      headings come down with everything else.
+    */
+    color: hsl(var(--foreground));
+  }
+
+  /*
+    The logo is inverted to white for the dark theme (`dark:brightness-0
+    dark:invert` on the <img>). White on white paper is nothing at all, and
+    the mark is the one thing on the sheet that says who sent it.
+  */
+.pitch-doc img { filter: none !important; }
+
+  /* Fixed to the viewport, so it would sit on top of page one. */
+.pitch-sticky { display: none !important; }
+
+  /* Decoration only. The radial glow behind the hero is a large pale wash that
+     costs ink and adds nothing on paper. */
+.pitch-doc [aria-hidden="true"].pointer-events-none { display: none !important; }
+
+  /* Keep a card, a benefit or a person whole rather than split across a fold. */
+.pitch-doc article,
+.pitch-doc li,
+.pitch-doc dl > div { break-inside: avoid; page-break-inside: avoid; }
+.pitch-doc h1,
+.pitch-doc h2,
+.pitch-doc h3 { break-after: avoid; page-break-after: avoid; }
+.pitch-doc section { break-before: auto; }
+
+  /* The address, for the reader who cannot click. Internal links are left
+     alone: "/work" printed after the word "here" is noise, not help. */
+.pitch-doc a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.75em;
+    font-weight: 400;
+    color: #475569;
+    word-break: break-all;
+  }
+  /* wa.me and mailto carry an encoded message body that runs to three lines of
+     percent signs. Nobody is typing that in. */
+.pitch-doc a[href^="https://wa.me"]::after,
+.pitch-doc a[href^="mailto:"]::after { content: none; }
+
+  /* Backgrounds we DO want on paper: the gold call to action and the navy
+     initials discs are how the page is recognisably ours. */
+.pitch-doc { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

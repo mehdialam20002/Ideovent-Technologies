@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Loader2 } from "lucide-react";
 import { useAdminAuth } from "@/admin/auth";
 import { Aurora } from "@/components/ui/aurora";
 import { Seo } from "@/components/seo/Seo";
+
+const fieldCls =
+  "w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-colors " +
+  "focus:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export default function AdminLogin() {
   const { login, mode, authed } = useAdminAuth();
@@ -13,7 +17,16 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (authed) navigate("/admin", { replace: true });
+  /*
+    In an effect, not in the render body. Calling navigate() during render made
+    the router set state while this component was still rendering, which React
+    reports as "Cannot update a component (BrowserRouter) while rendering a
+    different component (AdminLogin)": the only console error left anywhere on
+    the site, and a real re-entrancy bug rather than a lint nit.
+  */
+  useEffect(() => {
+    if (authed) navigate("/admin", { replace: true });
+  }, [authed, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,27 +45,84 @@ export default function AdminLogin() {
       <form onSubmit={submit} className="relative w-full max-w-sm rounded-3xl border border-border bg-card/70 p-8 backdrop-blur-xl">
         <div className="mb-6 flex flex-col items-center text-center">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-            <Lock className="h-5 w-5" />
+            <Lock className="h-5 w-5" aria-hidden="true" />
           </span>
           <h1 className="mt-4 font-display text-2xl font-semibold">Admin access</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{mode === "supabase" ? "Sign in with your email and password." : "Enter your admin passcode."}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{mode === "supabase" ? "Sign in with your email and password.": "Enter your admin passcode."}</p>
         </div>
 
+        {/*
+          Every control here used to be labelled by its placeholder alone: no id,
+          no <label>, so a screen reader announced three unlabelled edit boxes and
+          the placeholder vanished the moment you typed. `outline-none` also beat
+          the baseline focus ring in index.css, leaving a border-colour change as
+          the only focus cue. Both fixed below, with autoComplete so password
+          managers can fill the form.
+        */}
         {mode === "supabase" ? (
           <div className="space-y-3">
-            <input type="email" value={a} onChange={(e) => setA(e.target.value)} placeholder="Email" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:border-primary" />
-            <input type="password" value={b} onChange={(e) => setB(e.target.value)} placeholder="Password" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:border-primary" />
+            <div>
+              <label htmlFor="admin-email" className="mb-1.5 block text-sm font-medium">Email</label>
+              <input
+                id="admin-email"
+                type="email"
+                autoComplete="username"
+                required
+                aria-required="true"
+                aria-describedby={error ? "admin-error": undefined}
+                value={a}
+                onChange={(e) => setA(e.target.value)}
+                placeholder="you@ideovent.in"
+                className={fieldCls}
+              />
+            </div>
+            <div>
+              <label htmlFor="admin-password" className="mb-1.5 block text-sm font-medium">Password</label>
+              <input
+                id="admin-password"
+                type="password"
+                autoComplete="current-password"
+                required
+                aria-required="true"
+                aria-describedby={error ? "admin-error": undefined}
+                value={b}
+                onChange={(e) => setB(e.target.value)}
+                placeholder="Your password"
+                className={fieldCls}
+              />
+            </div>
           </div>
-        ) : (
-          <input type="password" value={a} onChange={(e) => setA(e.target.value)} placeholder="Passcode" autoFocus className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:border-primary" />
-        )}
+): (
+          <div>
+            <label htmlFor="admin-passcode" className="mb-1.5 block text-sm font-medium">Passcode</label>
+            <input
+              id="admin-passcode"
+              type="password"
+              autoComplete="current-password"
+              required
+              aria-required="true"
+              aria-describedby={error ? "admin-error": undefined}
+              value={a}
+              onChange={(e) => setA(e.target.value)}
+              placeholder="Your admin passcode"
+              autoFocus
+              className={fieldCls}
+            />
+          </div>
+)}
 
-        {error && <p className="mt-3 text-center text-sm text-destructive">{error}</p>}
+        {/* role="alert" so a failed sign-in is announced, not only reddened. */}
+        {error && (
+          <p id="admin-error" role="alert" className="mt-3 text-center text-sm text-destructive">
+            {error}
+          </p>
+)}
 
         <button type="submit" disabled={busy} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Sign in
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />: null} Sign in
         </button>
+        <p aria-live="polite" className="sr-only">{busy ? "Signing in.": ""}</p>
       </form>
     </div>
-  );
+);
 }

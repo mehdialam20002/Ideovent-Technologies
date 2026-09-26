@@ -1,0 +1,78 @@
+/*
+ * COACHING PAGE PARTS. Imported by the shared coaching components, so it
+ * ships only in the lazy demo chunks. Colours only from --ds-* tokens;
+ * durations only from the tokens in src/pages/site/site.css, which are zero
+ * under reduced motion. No keyframes, no loops.
+ */
+
+/* ── Filter chips ── */
+.dsc-chips-scroll { contain: inline-size; width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; margin-bottom: 1.5rem; }
+.dsc-chips-scroll::-webkit-scrollbar { display: none; }
+.dsc-chips { position: relative; display: inline-flex; gap: 0.25rem; white-space: nowrap; }
+.dsc-chip {
+  position: relative; z-index: 1; min-height: 44px; padding: 0 1rem; font-weight: 600; font-size: 0.925rem;
+  color: hsl(var(--ds-ink-soft));
+  transition: color var(--ds-d2) var(--ds-ease-out);
+}
+.dsc-chip[aria-pressed="true"] { color: hsl(var(--ds-ink)); }
+.dsc-ind {
+  position: absolute; left: 0; pointer-events: none;
+  transition: transform var(--ds-d2) var(--ds-ease-inout), width var(--ds-d2) var(--ds-ease-inout);
+}
+/* classic: ruled text tabs, a 2px underline slides */
+.dsc-chips[data-fam="classic"] { gap: 0; border-bottom: 1px solid hsl(var(--ds-line)); }
+.dsc-chips[data-fam="classic"] .dsc-chip { padding: 0 0.9rem; font-variant-caps: all-small-caps; letter-spacing: 0.06em; font-size: 1rem; }
+.dsc-chips[data-fam="classic"] .dsc-ind { bottom: -1px; height: 2px; background: hsl(var(--ds-accent)); }
+/* modern: segmented track, a filled pill slides */
+.dsc-chips[data-fam="modern"] { padding: 4px; border: 1px solid hsl(var(--ds-line)); border-radius: calc(var(--ds-radius) + 4px); background: hsl(var(--ds-surface)); }
+.dsc-chips[data-fam="modern"] .dsc-ind { top: 4px; bottom: 4px; border-radius: var(--ds-radius); background: hsl(var(--ds-brand)); }
+.dsc-chips[data-fam="modern"] .dsc-chip { border-radius: var(--ds-radius); }
+.dsc-chips[data-fam="modern"] .dsc-chip[aria-pressed="true"] { color: hsl(var(--ds-on-brand)); }
+/* warm: soft pills on a tint, the active one lifts white */
+.dsc-chips[data-fam="warm"] { padding: 6px; border-radius: 999px; background: hsl(var(--ds-surface-2)); }
+.dsc-chips[data-fam="warm"] .dsc-ind { top: 6px; bottom: 6px; border-radius: 999px; background: hsl(var(--ds-surface)); box-shadow: 0 2px 8px -2px hsl(var(--ds-ink) / 0.2); }
+.dsc-chips[data-fam="warm"] .dsc-chip { border-radius: 999px; }
+
+/* ── Tables: scroll inside their own box on phones, never the page ── */
+.dsc-table-wrap { contain: inline-size; width: 100%; max-width: 100%; overflow-x: auto; }
+.dsc-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.dsc-table th { text-align: left; font-weight: 600; font-size: 0.875rem; color: hsl(var(--ds-ink-soft)); padding: 0.6rem 0.75rem; border-bottom: 2px solid hsl(var(--ds-rule)); white-space: nowrap; }
+.dsc-table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid hsl(var(--ds-line)); vertical-align: top; }
+.ds-site[data-family="modern"] .dsc-table thead { background: hsl(var(--ds-surface-2)); }
+@media (max-width: 480px) { .dsc-table th, .dsc-table td { padding: 0.55rem 0.45rem; font-size: 0.875rem; } .dsc-table th:first-child, .dsc-table td:first-child { padding-left: 0; } }
+
+/* ── Portrait frames per family ── */
+.dsc-portrait { overflow: hidden; background: hsl(var(--ds-surface-2)); }
+.ds-site[data-family="classic"] .dsc-portrait { border-radius: 0; }
+.ds-site[data-family="modern"] .dsc-portrait { border-radius: var(--ds-radius); }
+.ds-site[data-family="warm"] .dsc-portrait { border-radius: 999px; }
+@media (hover: hover) {
+  .ds-site[data-family="modern"] [data-interactive] .dsc-portrait img { filter: saturate(0.2); transition: filter var(--ds-d3) var(--ds-ease-out); }
+  .ds-site[data-family="modern"] [data-interactive]:hover .dsc-portrait img { filter: none; }
+}
+
+/* ── Warm speech card tail ── */
+.ds-site[data-family="warm"] .dsc-speech { position: relative; }
+.ds-site[data-family="warm"] .dsc-speech::after {
+  content: ""; position: absolute; left: 28px; bottom: -10px; width: 20px; height: 20px;
+  background: hsl(var(--ds-surface)); transform: rotate(45deg); border-radius: 0 0 4px 0;
+}
+
+/* ── Dark results band (modern home, results page) ── */
+.dsc-band-dark { background: hsl(var(--ds-hero-bg)); color: hsl(var(--ds-hero-ink)); }
+.dsc-band-dark .dsc-soft { color: hsl(var(--ds-hero-soft)); }
+
+/* ── Lightbox ── */
+.dsc-lb { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: rgb(0 0 0 / 0.88); padding: 16px; }
+.dsc-lb figure { max-width: min(1100px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 0.75rem; }
+.dsc-lb img { max-height: 78vh; width: auto; max-width: 100%; object-fit: contain; margin: 0 auto; }
+.dsc-lb figcaption { color: #fff; text-align: center; }
+.dsc-lb button { color: #fff; min-width: 48px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* ── Success check on the demo form: stroke draws once, 320ms ── */
+.dsc-check path { stroke-dasharray: 30; stroke-dashoffset: 0; }
+.dsc-check[data-draw] path { stroke-dashoffset: 30; transition: stroke-dashoffset 320ms var(--ds-ease-out); }
+.dsc-check[data-draw="done"] path { stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .dsc-check[data-draw] path { transition: none; stroke-dashoffset: 0; }
+}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="ivfaT ivfaD">
+  <title id="ivfaT">Ideovent Technologies - favicon</title>
+  <desc id="ivfaD">The Ideovent iV monogram reversed out of a deep navy rounded square, thickened so it stays legible at 16 pixels.</desc>
+  <!-- Ideovent Technologies. Redrawn from 01-brand/logo/source/ideovent-official.png.
+       Geometry and colour: see 01-brand/logo/LOGO-USAGE.md.
+       Rebuild: python _build/build_logo_assets.py -->
+  <!-- OPTICAL-SIZE VARIANT. At 16 px the chevron notch, the gap between
+       the V strokes and the i stem all fall below one device pixel, so
+       each is corrected: the notch is closed, the chevron is 8% larger,
+       the stem is widened to 23 units (from 8.92) and each V stroke
+       gains 3 units on its inner edge. Use ideovent-mark.svg at 24 px
+       and above; this file only below that. -->
+  <rect width="64" height="64" rx="13" ry="13" fill="#081738"/>
+  <g transform="translate(4 10.975) scale(0.281)" fill="#FFFFFF">
+    <path d="M0 0 49 19.8 79.35 95.4 57.05 143.8Z M199 0 150 19.8 119.65 95.4 141.95 143.8Z"/>
+    <path d="M77.79 34.8 121.21 34.8 99.5 89.77Z"/>
+    <path d="M88 100H111V149.43H88Z"/>
+  </g>
+</svg>
