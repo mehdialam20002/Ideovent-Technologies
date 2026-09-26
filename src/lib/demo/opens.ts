@@ -31,7 +31,8 @@
  * closes, so a genuine second visit tomorrow counts again.
  */
 
-import type { DemoSiteOpen } from "@/lib/cms/types";
+import type { DemoSite, DemoSiteOpen } from "@/lib/cms/types";
+import type { DemoOpenedAlert } from "@/lib/leads";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseEnabled } from "@/lib/cms/config";
 
 /** sessionStorage key prefix. One entry per demo id. */
@@ -108,9 +109,12 @@ async function insertOpenRow(demoId: string): Promise<void> {
  * sequence its own work, not to find out whether it worked, because whether it
  * worked is not a question the public page is allowed to care about.
  */
-export async function recordDemoOpen(demoId: string): Promise<void> {
+export async function recordDemoOpen(demoId: string, alert?: DemoOpenAlertContext): Promise<void> {
   if (!demoId) return;
   if (typeof window === "undefined") return;
+  // The alert has its own guards (per day, not per tab) and never waits on,
+  // or is stopped by, the row below.
+  if (alert) void maybeAlertDemoOpen(alert);
   if (!firstInThisSession(demoId)) return;
 
   try {
@@ -139,5 +143,143 @@ export async function recordDemoOpen(demoId: string): Promise<void> {
       firm's work. A red line in the console of a director who knows how to
       open the console is a worse outcome than a missing tally mark.
     */
+  }
+}
+
+/* ───────────────────────────── The e-mail alert ───────────────────────────── */
+
+/*
+ * "Director ne demo khola toh turant alert." An open row tells Mehdi when he
+ * next looks at /admin; this tells him NOW, while the director still has the
+ * page in front of them, which is the best moment to follow up.
+ *
+ * WHEN IT FIRES. All of these, or nothing:
+ *   - the CMS setting `settings.demoOpenAlerts` is not false (default on). It
+ *     lives in the public settings singleton, not in outreach_settings,
+ *     because this page runs as `anon` and cannot read the admin tables. It
+ *     is an on/off flag and nothing else, so it is safe to be public;
+ *   - the record is `sent`. The route already 404s everything else; this
+ *     checks again so a draft can never alert even if that changes;
+ *   - the viewer is not Mehdi. See `viewerIsAdmin`;
+ *   - this browser has not alerted for this demo today (localStorage, local
+ *     date). If localStorage cannot be used there is no way to keep the
+ *     "at most once a day" promise, so no alert is sent; the open row is
+ *     still recorded and the admin still shows it.
+ *
+ * HOW. EmailJS through src/lib/leads.ts, imported dynamically AFTER the page
+ * has rendered, so the public chunk does not carry it. Fire and forget: every
+ * error is swallowed and the page never awaits it.
+ */
+
+export interface DemoOpenAlertContext {
+  site: Pick<DemoSite, "id" | "slug" | "status" | "instituteName"> & { city?: string };
+  /** `settings.demoOpenAlerts` from the CMS. Undefined means on. */
+  enabled?: boolean;
+}
+
+export type DemoAlertOutcome =
+  | "sent"
+  | "failed"
+  | "off"
+  | "not-sent-demo"
+  | "admin"
+  | "already-today"
+  | "no-storage"
+  | "no-window";
+
+/** localStorage key prefix; the value is the local date (YYYY-MM-DD) of the last alert. */
+export const ALERT_PREFIX = "ideovent_demo_alert_";
+/**
+ * Optional marker an admin screen may set in localStorage to say "this device
+ * is Mehdi's", so opening his own demo from a fresh tab never alerts him.
+ */
+export const ADMIN_DEVICE_KEY = "ideovent_admin_device";
+/** The local-mode admin session flag written by src/admin/auth.tsx. */
+const ADMIN_SESSION_KEY = "ideovent_admin_session";
+
+/** In-memory guard, so two calls in the same page load can never both send. */
+const inFlight = new Set<string>();
+
+function localDay(now: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
+/**
+ * True when this browser has an admin session. Cheap, no SDK: the local-mode
+ * sessionStorage flag, the marker above, or a stored Supabase auth token
+ * (supabase-js keeps it in localStorage under `sb-<project>-auth-token` and
+ * removes it on sign-out).
+ */
+export function viewerIsAdmin(): boolean {
+  try {
+    if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "1") return true;
+  } catch {
+    /* unreadable: not evidence either way */
+  }
+  try {
+    if (localStorage.getItem(ADMIN_DEVICE_KEY) === "1") return true;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) || "";
+      if (/^sb-.+-auth-token$/.test(k) && localStorage.getItem(k)) return true;
+    }
+  } catch {
+    /* unreadable */
+  }
+  return false;
+}
+
+/**
+ * Decide and, when every condition holds, send. Resolves with what happened
+ * (for the test); never rejects. `send` is injectable for the same reason.
+ */
+export async function maybeAlertDemoOpen(
+  ctx: DemoOpenAlertContext,
+  now: Date = new Date(),
+  send?: (a: DemoOpenedAlert) => Promise<boolean>,
+): Promise<DemoAlertOutcome> {
+  try {
+    if (typeof window === "undefined") return "no-window";
+    const { site } = ctx;
+    if (ctx.enabled === false) return "off";
+    if (!site || !site.id || site.status !== "sent") return "not-sent-demo";
+    if (viewerIsAdmin()) return "admin";
+
+    const key = ALERT_PREFIX + site.id;
+    const today = localDay(now);
+    const memo = `${key}@${today}`;
+    if (inFlight.has(memo)) return "already-today";
+    try {
+      if (localStorage.getItem(key) === today) return "already-today";
+      localStorage.setItem(key, today);
+      if (localStorage.getItem(key) !== today) return "no-storage";
+    } catch {
+      return "no-storage";
+    }
+    inFlight.add(memo);
+
+    const alert: DemoOpenedAlert = {
+      instituteName: site.instituteName || site.slug,
+      slug: site.slug,
+      demoId: site.id,
+      city: site.city,
+      page: window.location.pathname || `/site/${site.slug}`,
+      link: `${window.location.origin}/site/${site.slug}`,
+      at: now.toISOString(),
+    };
+    const sender = send || (await import("@/lib/leads")).sendDemoOpenedAlert;
+    const ok = await sender(alert);
+    if (!ok) {
+      // A failed send does not use up the day: a later open may try again.
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* nothing to do */
+      }
+      inFlight.delete(memo);
+    }
+    return ok ? "sent" : "failed";
+  } catch {
+    return "failed";
   }
 }

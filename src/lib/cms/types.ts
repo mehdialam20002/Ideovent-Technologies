@@ -59,6 +59,14 @@ export interface SiteSettings {
     heading?: string;
     subheading?: string;
   };
+  /**
+   * E-mail Mehdi when somebody opens a SENT demo on /site/<slug>. Default on
+   * (undefined means on). Public on purpose: the demo page runs as `anon` and
+   * cannot read outreach_settings, and an on/off flag reveals nothing. The
+   * Outreach settings tab writes this and `alertOnDemoOpen` together. See
+   * src/lib/demo/opens.ts.
+   */
+  demoOpenAlerts?: boolean;
 }
 
 export interface ContactInfo {

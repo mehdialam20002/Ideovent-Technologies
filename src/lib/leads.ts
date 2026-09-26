@@ -542,3 +542,93 @@ function applicationParams(doc: Application, whatsappDigits: string): Record<str
     follow_up_of: "",
   };
 }
+
+/* ───────────────────────────── Demo-open alert ───────────────────────────── */
+
+/*
+ * "A director just opened the demo." Sent from the PUBLIC /site/<slug> route
+ * by src/lib/demo/opens.ts, which decides WHETHER to send (the setting, sent
+ * demos only, never an admin, once per demo per browser per day). This
+ * function only decides WHAT the e-mail says.
+ *
+ * Same EmailJS template as the enquiries, whose subject is
+ * "{{need}}: {{website}}", so need = "Demo opened" and website = the
+ * institute's name make the subject read "Demo opened: <institute>". The
+ * body is `message`, plain text: which demo, which page, when, the link, and
+ * the one thing to do about it.
+ */
+
+export const DEMO_OPENED_NEED = "Demo opened";
+
+export interface DemoOpenedAlert {
+  instituteName: string;
+  slug: string;
+  demoId: string;
+  city?: string;
+  /** The path that was opened, for example /site/sunrise-public/admissions. */
+  page: string;
+  /** The full link, as the director opened it. */
+  link: string;
+  /** ISO time of the open. */
+  at: string;
+}
+
+/** The EmailJS variables for a demo-open alert. Exported for the test. */
+export function demoOpenedParams(a: DemoOpenedAlert): Record<string, string> {
+  const when = (() => {
+    try {
+      return new Date(a.at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }) + " IST";
+    } catch {
+      return a.at;
+    }
+  })();
+  const name = a.instituteName || a.slug;
+  const lines: [string, string | undefined][] = [
+    ["Demo", `${name}${a.city ? `, ${a.city}` : ""}`],
+    ["Page opened", a.page],
+    ["When", when],
+    ["Demo link", a.link],
+    ["Demo id", a.demoId],
+  ];
+  const details = lines.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
+  const message =
+    `Somebody just opened the demo site made for ${name}.\n\n${details}\n\n` +
+    "Follow up now, while it is fresh: open Admin, Outreach, find this lead and send the next message. " +
+    "One open in this browser per day is reported, so a refresh does not send a second alert.";
+  return {
+    name,
+    email: "",
+    title: `${DEMO_OPENED_NEED}: ${name}`,
+    from_name: "Ideovent demo alert",
+    from_email: "",
+    reply_to: "",
+    phone: "",
+    message,
+    visitor_message: message,
+    need: DEMO_OPENED_NEED,
+    website: name,
+    organisation: name,
+    city: a.city || "",
+    timeline: "",
+    budget: "",
+    source: "Demo site",
+    page: a.page,
+    whatsapp_link: "",
+    received_at: a.at,
+    submission_id: a.demoId,
+    follow_up_of: "",
+  };
+}
+
+/**
+ * Send the alert. Resolves true when EmailJS said yes, false otherwise. Never
+ * rejects: the caller is a stranger's phone and must not find out.
+ */
+export async function sendDemoOpenedAlert(a: DemoOpenedAlert): Promise<boolean> {
+  try {
+    await sendEmail(demoOpenedParams(a));
+    return true;
+  } catch {
+    return false;
+  }
+}

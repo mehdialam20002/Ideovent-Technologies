@@ -9,17 +9,19 @@ import type { DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
  * version. Enter submits (it is a form).
  */
 export function DuplicateTemplateDialog({
-  templateLabel, busy, error, onCancel, onSubmit,
+  templateLabel, busy, error, onCancel, onSubmit, initial,
 }: {
   templateLabel: string;
   busy: boolean;
   error: string | null;
   onCancel: () => void;
   onSubmit: (who: DuplicateIdentity) => void;
+  /** Prefill, from the poster import's "Fill manually instead": whatever it already knew. */
+  initial?: Partial<DuplicateIdentity>;
 }) {
-  const [name, setName] = useState("");
-  const [city, setCity] = useState("");
-  const [hiName, setHiName] = useState("");
+  const [name, setName] = useState(initial?.name || "");
+  const [city, setCity] = useState(initial?.city || "");
+  const [hiName, setHiName] = useState(initial?.hiName || "");
   const [tried, setTried] = useState(false);
   const missing = !name.trim();
 

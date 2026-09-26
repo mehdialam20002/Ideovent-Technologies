@@ -62,7 +62,10 @@ function Way({ icon, title, value, href }: { icon: ReactNode; title: string; val
       <span aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--ds-surface-2))] text-[hsl(var(--ds-brand-ink))]">{icon}</span>
       <span className="min-w-0">
         <span className="block font-semibold">{title}</span>
-        <span className="ds-num mt-0.5 block break-words text-[hsl(var(--ds-ink-soft))]">{value}</span>
+        {/* overflow-wrap:anywhere, not break-words: break-word does not lower the
+            min-content width, so a long address such as principal.bdconvent@...
+            still pushed the card to 440 px and scrolled the page sideways at 390. */}
+        <span className="ds-num mt-0.5 block [overflow-wrap:anywhere] text-[hsl(var(--ds-ink-soft))]">{value}</span>
       </span>
     </Card>
   );

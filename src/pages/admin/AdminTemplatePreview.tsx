@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { AlertTriangle, ArrowLeft, Files, Lock } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Files, Lock, ScanText } from "lucide-react";
 import {
   DESIGN_FAMILIES,
   THEME_PALETTE_NAME,
@@ -11,6 +11,7 @@ import {
   type LoadedTemplate,
 } from "@/lib/demo/templates";
 import { useDuplicateTemplate } from "@/admin/useDuplicateTemplate";
+import { usePosterImport } from "@/admin/poster/usePosterImport";
 import DemoSiteView from "@/pages/site/DemoSiteView";
 
 /**
@@ -41,6 +42,7 @@ export default function AdminTemplatePreview() {
   const [loaded, setLoaded] = useState<LoadedTemplate | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const { request, busy, error, dialog } = useDuplicateTemplate();
+  const poster = usePosterImport();
 
   useEffect(() => {
     let alive = true;
@@ -96,9 +98,17 @@ export default function AdminTemplatePreview() {
         </span>
         <button
           type="button"
+          onClick={() => poster.open(meta.id)}
+          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium hover:border-primary/50"
+        >
+          <ScanText className="h-3.5 w-3.5" aria-hidden="true" />
+          Create from poster
+        </button>
+        <button
+          type="button"
           onClick={() => request(meta.id)}
           disabled={busy !== null}
-          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/5 px-3 text-xs font-medium text-primary hover:bg-primary/10 disabled:cursor-wait disabled:opacity-60"
+          className=" inline-flex h-8 items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/5 px-3 text-xs font-medium text-primary hover:bg-primary/10 disabled:cursor-wait disabled:opacity-60"
         >
           <Files className="h-3.5 w-3.5" aria-hidden="true" />
           {busy ? "Duplicating…" : "Duplicate into a draft"}
@@ -106,6 +116,7 @@ export default function AdminTemplatePreview() {
       </div>
 
       {dialog}
+      {poster.dialog}
 
       {((error && !dialog) || failed) && (
         <div role="alert" className="flex gap-2 border-b border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm">

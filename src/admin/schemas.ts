@@ -536,6 +536,7 @@ export const singletonSchemas: Record<SingletonKey, SingletonSchema> = {
         { name: "heading", label: "Heading", type: "text", full: true, help: "A question the visitor can answer with one tap. No exclamation marks, no em dashes." },
         { name: "subheading", label: "Line under the heading", type: "textarea", full: true, help: "Say what happens next and who replies. Nothing you cannot keep." },
       ] },
+      { name: "demoOpenAlerts", label: "E-mail me when a sent demo is opened", type: "boolean", full: true, help: "On by default. When somebody opens a sent demo at /site/<slug>, an e-mail titled \"Demo opened: <institute>\" reaches the enquiry inbox. At most once per demo per browser per day, never for drafts, never while you are signed in to the admin in that browser. The Outreach settings tab changes this same switch." },
     ],
   },
   contact: {

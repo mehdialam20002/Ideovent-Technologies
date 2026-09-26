@@ -1,0 +1,80 @@
+<!-- Ideovent lead e-mail for EmailJS (template_v6zkm1n). Paste into Content > Edit Content > code view.
+     Subject: {{need}}: {{website}}    From Name: {{from_name}}    Reply To: {{reply_to}}
+     {{#field}}...{{/field}} prints only when the field has a value (EmailJS conditional sections). -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#0f1b3d;padding:22px 28px;">
+            <div style="font-size:11px;letter-spacing:2px;color:#9fb0d9;text-transform:uppercase;font-weight:bold;">Ideovent &middot; New lead</div>
+            <div style="font-size:22px;line-height:1.3;color:#ffffff;font-weight:bold;margin-top:8px;">{{need}}</div>
+            <div style="font-size:15px;line-height:1.4;color:#dbe3f5;margin-top:4px;">{{website}}</div>
+          </td>
+        </tr>
+
+        <!-- Where it came from -->
+        <tr>
+          <td style="padding:14px 28px 0 28px;">
+            <span style="display:inline-block;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:bold;padding:5px 10px;border-radius:999px;">{{source}} &middot; {{page}}</span>
+          </td>
+        </tr>
+
+        <!-- One-tap actions -->
+        <tr>
+          <td style="padding:18px 28px 6px 28px;">
+            <a href="{{whatsapp_link}}" style="display:inline-block;background:#25D366;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 20px;border-radius:10px;margin:0 8px 10px 0;">Reply on WhatsApp</a>
+            <a href="tel:{{phone}}" style="display:inline-block;background:#ffffff;color:#0f1b3d;font-size:15px;font-weight:bold;text-decoration:none;padding:11px 18px;border-radius:10px;border:1px solid #cbd2e1;margin:0 8px 10px 0;">Call {{phone}}</a>
+            {{#from_email}}<a href="mailto:{{from_email}}" style="display:inline-block;background:#ffffff;color:#0f1b3d;font-size:15px;font-weight:bold;text-decoration:none;padding:11px 18px;border-radius:10px;border:1px solid #cbd2e1;margin:0 8px 10px 0;">Email</a>{{/from_email}}
+          </td>
+        </tr>
+
+        <!-- Details -->
+        <tr>
+          <td style="padding:8px 28px 4px 28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;line-height:1.45;color:#111827;border-top:1px solid #eef0f3;">
+              <tr><td style="padding:10px 0;color:#6b7280;font-size:13px;width:130px;vertical-align:top;border-bottom:1px solid #eef0f3;">Name</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{from_name}}</td></tr>
+              <tr><td style="padding:10px 0;color:#6b7280;font-size:13px;vertical-align:top;border-bottom:1px solid #eef0f3;">Phone</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{phone}}</td></tr>
+              <tr><td style="padding:10px 0;color:#6b7280;font-size:13px;vertical-align:top;border-bottom:1px solid #eef0f3;">Website</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{website}}</td></tr>
+              {{#organisation}}<tr><td style="padding:10px 0;color:#6b7280;font-size:13px;vertical-align:top;border-bottom:1px solid #eef0f3;">Business</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{organisation}}</td></tr>{{/organisation}}
+              {{#city}}<tr><td style="padding:10px 0;color:#6b7280;font-size:13px;vertical-align:top;border-bottom:1px solid #eef0f3;">City</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{city}}</td></tr>{{/city}}
+              {{#timeline}}<tr><td style="padding:10px 0;color:#6b7280;font-size:13px;vertical-align:top;border-bottom:1px solid #eef0f3;">Wants to start</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{timeline}}</td></tr>{{/timeline}}
+              {{#budget}}<tr><td style="padding:10px 0;color:#6b7280;font-size:13px;vertical-align:top;border-bottom:1px solid #eef0f3;">Budget</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{budget}}</td></tr>{{/budget}}
+              {{#from_email}}<tr><td style="padding:10px 0;color:#6b7280;font-size:13px;vertical-align:top;border-bottom:1px solid #eef0f3;">Email</td><td style="padding:10px 0;border-bottom:1px solid #eef0f3;">{{from_email}}</td></tr>{{/from_email}}
+            </table>
+          </td>
+        </tr>
+
+        <!-- Their message -->
+        {{#visitor_message}}
+        <tr>
+          <td style="padding:14px 28px 4px 28px;">
+            <div style="font-size:13px;color:#6b7280;margin-bottom:6px;">In their words</div>
+            <div style="background:#f8fafc;border-left:4px solid #25D366;border-radius:8px;padding:14px 16px;font-size:15px;line-height:1.55;color:#111827;white-space:pre-wrap;">{{visitor_message}}</div>
+          </td>
+        </tr>
+        {{/visitor_message}}
+
+        <!-- Second step of a pop-up enquiry -->
+        {{#follow_up_of}}
+        <tr>
+          <td style="padding:12px 28px 0 28px;">
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:13px;color:#92400e;">This adds details to enquiry {{follow_up_of}}, sent a moment earlier.</div>
+          </td>
+        </tr>
+        {{/follow_up_of}}
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:22px 28px 24px 28px;">
+            <a href="https://ideovent.vercel.app/admin/submissions" style="font-size:13px;color:#3730a3;font-weight:bold;text-decoration:none;">Open all leads in admin &rarr;</a>
+            <div style="font-size:12px;color:#9ca3af;margin-top:10px;line-height:1.5;">Received {{received_at}} &middot; record {{submission_id}}<br>Sent automatically by the Ideovent website form.</div>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

@@ -1,7 +1,7 @@
 -- ════════════════════════════════════════════════════════════════════════
 -- IDEOVENT: THE WHOLE DATABASE IN ONE PASTE
 -- Supabase > SQL Editor > New query > paste all of this > Run.
--- It is migrations 0001 to 0005 in order. Every statement is safe to run
+-- It is migrations 0001 to 0007 in order. Every statement is safe to run
 -- again, so if anything errors halfway, fix it and run the whole file again.
 -- Before running: check the admin email in the 0005 section (search for
 -- 'your /admin login email').
@@ -472,3 +472,242 @@ drop policy if exists "admin delete media" on storage.objects;
 create policy "admin delete media" on storage.objects
   for delete to authenticated
   using (bucket_id = 'media' and public.is_admin());
+
+
+-- ┌──────────────────────────── 0006_ai_keys.sql ────────────────────────────┐
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 0006: AI provider keys for "poster to demo", and a log of every attempt.
+-- Written 27 September 2026. Needs 0005 (public.is_admin()). Safe to run more
+-- than once, and safe to run ON ITS OWN on the live project: paste only this
+-- file into Supabase > SQL Editor > New query > Run.
+-- ════════════════════════════════════════════════════════════════════════════
+--
+-- WHAT THIS IS FOR
+-- Mehdi uploads a school or coaching poster in /admin, /api/poster sends it to
+-- an AI model, and the facts on the poster fill a demo template. The API keys
+-- for those models are typed into /admin, not into code or Vercel settings, so
+-- they have to live somewhere only the admin can read. That is this table.
+--
+-- WHY A TABLE OF ITS OWN AND NOT A ROW IN public.content
+-- public.content is the site's CMS. Parts of it are world-readable by design,
+-- the admin Export downloads all of it as a JSON file, and a snapshot of it is
+-- committed to the repository. A secret must be in none of those places. Here
+-- it sits behind its own RLS, which says one thing: only an admin.
+--
+-- HOW /api/poster READS IT
+-- With the CALLER'S token, through PostgREST. There is no service_role key in
+-- the function, so the function can read a key only when the person calling
+-- it is an admin: these policies are the whole of the access check, not a
+-- second copy of one.
+--
+-- ONE KEY PER PROVIDER
+-- provider is the primary key. That is deliberate: making several free
+-- accounts to multiply a free limit is against each provider's terms, and can
+-- get the account (and the Google account behind it) banned. When one key is
+-- out of quota, the function moves on to the NEXT PROVIDER in priority order,
+-- and when all are out, Mehdi fills the template by hand.
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ── The keys ────────────────────────────────────────────────────────────────
+create table if not exists public.ai_provider_keys (
+  provider      text primary key
+                check (provider in ('gemini', 'openai', 'xai', 'anthropic')),
+  api_key       text not null,
+  model         text not null,
+  -- Lower is tried first.
+  priority      int  not null default 100,
+  enabled       boolean not null default true,
+  -- Written by /api/poster after each attempt. A value starting "limit:" with
+  -- last_error_at earlier today (India time) makes the function skip this
+  -- provider until tomorrow, so a key that is out of quota is not hammered.
+  last_error    text,
+  last_error_at timestamptz,
+  updated_at    timestamptz default now()
+);
+
+alter table public.ai_provider_keys enable row level security;
+
+-- Nobody signed out gets anywhere near this table, not even an empty select.
+revoke all on table public.ai_provider_keys from anon;
+grant select, insert, update, delete on table public.ai_provider_keys to authenticated;
+
+drop policy if exists "ai keys select admin" on public.ai_provider_keys;
+create policy "ai keys select admin" on public.ai_provider_keys
+  for select to authenticated
+  using (public.is_admin());
+
+drop policy if exists "ai keys insert admin" on public.ai_provider_keys;
+create policy "ai keys insert admin" on public.ai_provider_keys
+  for insert to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "ai keys update admin" on public.ai_provider_keys;
+create policy "ai keys update admin" on public.ai_provider_keys
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "ai keys delete admin" on public.ai_provider_keys;
+create policy "ai keys delete admin" on public.ai_provider_keys
+  for delete to authenticated
+  using (public.is_admin());
+
+-- ── The attempt log ─────────────────────────────────────────────────────────
+-- One row per provider tried, written by /api/poster with the admin's own
+-- token. It never holds a key, a poster, or what the model read: only which
+-- provider, how it went, and a short error text. It is how the admin can see
+-- "Gemini ran out at 4 pm" without opening Vercel logs.
+create table if not exists public.ai_poster_runs (
+  id         bigserial primary key,
+  provider   text,
+  status     text check (status in ('ok', 'limit', 'error')),
+  detail     text,
+  created_at timestamptz default now()
+);
+
+alter table public.ai_poster_runs enable row level security;
+
+revoke all on table public.ai_poster_runs from anon;
+grant select, insert on table public.ai_poster_runs to authenticated;
+grant usage, select on sequence public.ai_poster_runs_id_seq to authenticated;
+
+drop policy if exists "ai runs select admin" on public.ai_poster_runs;
+create policy "ai runs select admin" on public.ai_poster_runs
+  for select to authenticated
+  using (public.is_admin());
+
+drop policy if exists "ai runs insert admin" on public.ai_poster_runs;
+create policy "ai runs insert admin" on public.ai_poster_runs
+  for insert to authenticated
+  with check (public.is_admin());
+
+create index if not exists ai_poster_runs_created_idx
+  on public.ai_poster_runs (created_at desc);
+
+-- Verification, as a signed-out visitor. Both should fail with
+-- "permission denied", which is the point.
+--
+--   set role anon;
+--   select count(*) from public.ai_provider_keys;
+--   select count(*) from public.ai_poster_runs;
+--   reset role;
+
+
+-- ┌──────────────────────────── 0007_outreach.sql ────────────────────────────┐
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 0007: Outreach. Leads, their history, and the outreach settings.
+-- Written 27 September 2026. Needs 0005 (public.is_admin()). Safe to run more
+-- than once, and safe to run ON ITS OWN on the live project: paste only this
+-- file into Supabase > SQL Editor > New query > Run.
+-- ════════════════════════════════════════════════════════════════════════════
+--
+-- WHAT THIS IS FOR
+-- /admin > Outreach. Mehdi types a school's or coaching institute's phone and
+-- email, picks a demo and a ready message, and the site opens Gmail or
+-- WhatsApp with it typed. Each lead, each message sent, each reply and each
+-- demo open is a row here, so follow-ups and the WhatsApp daily cap work.
+--
+-- WHY TABLES OF THEIR OWN AND NOT ROWS IN public.content
+-- A lead is a stranger's phone number and email. public.content is the CMS:
+-- parts of it are world-readable by design, the admin Export downloads all of
+-- it, and a snapshot of it is committed to the repository. Leads must be in
+-- none of those. Here they sit behind RLS that says one thing: only an admin.
+--
+-- SHAPE
+-- The app (src/lib/outreach/store.ts) keeps the whole record in `data`
+-- (src/lib/outreach/types.ts), so a new field needs no migration. The columns
+-- beside it exist only to sort, page and filter.
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ── Leads ───────────────────────────────────────────────────────────────────
+create table if not exists public.outreach_leads (
+  id         text primary key,
+  data       jsonb not null,
+  updated_at timestamptz default now()
+);
+
+create index if not exists outreach_leads_updated_idx
+  on public.outreach_leads (updated_at desc);
+
+-- ── Events: sent, replied, status change, note, demo opened, call ──────────
+create table if not exists public.outreach_events (
+  id         text primary key,
+  lead_id    text not null,
+  data       jsonb not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists outreach_events_lead_idx
+  on public.outreach_events (lead_id, created_at desc);
+create index if not exists outreach_events_created_idx
+  on public.outreach_events (created_at desc);
+
+-- ── Settings: one row, id 'default' ─────────────────────────────────────────
+create table if not exists public.outreach_settings (
+  id   text primary key,
+  data jsonb not null
+);
+
+-- ── Access: the admin, and nobody else ──────────────────────────────────────
+alter table public.outreach_leads    enable row level security;
+alter table public.outreach_events   enable row level security;
+alter table public.outreach_settings enable row level security;
+
+revoke all on table public.outreach_leads    from anon;
+revoke all on table public.outreach_events   from anon;
+revoke all on table public.outreach_settings from anon;
+grant select, insert, update, delete on table public.outreach_leads    to authenticated;
+grant select, insert, update, delete on table public.outreach_events   to authenticated;
+grant select, insert, update, delete on table public.outreach_settings to authenticated;
+
+-- Same four policies on each table, written out rather than generated so the
+-- file reads plainly in the SQL editor.
+drop policy if exists "outreach leads select admin" on public.outreach_leads;
+create policy "outreach leads select admin" on public.outreach_leads
+  for select to authenticated using (public.is_admin());
+drop policy if exists "outreach leads insert admin" on public.outreach_leads;
+create policy "outreach leads insert admin" on public.outreach_leads
+  for insert to authenticated with check (public.is_admin());
+drop policy if exists "outreach leads update admin" on public.outreach_leads;
+create policy "outreach leads update admin" on public.outreach_leads
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "outreach leads delete admin" on public.outreach_leads;
+create policy "outreach leads delete admin" on public.outreach_leads
+  for delete to authenticated using (public.is_admin());
+
+drop policy if exists "outreach events select admin" on public.outreach_events;
+create policy "outreach events select admin" on public.outreach_events
+  for select to authenticated using (public.is_admin());
+drop policy if exists "outreach events insert admin" on public.outreach_events;
+create policy "outreach events insert admin" on public.outreach_events
+  for insert to authenticated with check (public.is_admin());
+drop policy if exists "outreach events update admin" on public.outreach_events;
+create policy "outreach events update admin" on public.outreach_events
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "outreach events delete admin" on public.outreach_events;
+create policy "outreach events delete admin" on public.outreach_events
+  for delete to authenticated using (public.is_admin());
+
+drop policy if exists "outreach settings select admin" on public.outreach_settings;
+create policy "outreach settings select admin" on public.outreach_settings
+  for select to authenticated using (public.is_admin());
+drop policy if exists "outreach settings insert admin" on public.outreach_settings;
+create policy "outreach settings insert admin" on public.outreach_settings
+  for insert to authenticated with check (public.is_admin());
+drop policy if exists "outreach settings update admin" on public.outreach_settings;
+create policy "outreach settings update admin" on public.outreach_settings
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "outreach settings delete admin" on public.outreach_settings;
+create policy "outreach settings delete admin" on public.outreach_settings
+  for delete to authenticated using (public.is_admin());
+
+-- Verification, as a signed-out visitor. All three should fail with
+-- "permission denied", which is the point.
+--
+--   set role anon;
+--   select count(*) from public.outreach_leads;
+--   select count(*) from public.outreach_events;
+--   select count(*) from public.outreach_settings;
+--   reset role;

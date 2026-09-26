@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, Eye, Files, LayoutGrid, Lock } from "lucide-react";
+import { AlertTriangle, Eye, Files, LayoutGrid, Lock, ScanText } from "lucide-react";
 import type { DemoKind } from "@/lib/cms/types";
 import {
   DESIGN_FAMILIES,
@@ -16,6 +16,7 @@ import {
 import { displayFamily, displayStyle, schoolTheme } from "@/lib/demo/schoolThemes";
 import { coachingDisplayFamily, coachingDisplayStyle, coachingTheme } from "@/lib/demo/coachingThemes";
 import { useDuplicateTemplate } from "@/admin/useDuplicateTemplate";
+import { usePosterImport } from "@/admin/poster/usePosterImport";
 import { cn } from "@/lib/utils";
 
 /**
@@ -51,6 +52,8 @@ export default function AdminTemplates() {
   const [segment, setSegment] = useState<Filter<TemplateSegment>>("all");
   const [family, setFamily] = useState<Filter<DesignFamily>>("all");
   const { request, busy, error, dialog } = useDuplicateTemplate();
+  /* A poster photo in, a filled draft out: see src/admin/PosterImportDialog.tsx. */
+  const poster = usePosterImport();
 
   const visible = useMemo(
     () =>
@@ -74,6 +77,13 @@ export default function AdminTemplates() {
             </p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => poster.open()}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+          <ScanText className="h-4 w-4" aria-hidden="true" /> Create from poster
+        </button>
       </div>
 
       <div className="mb-6 grid gap-3 rounded-2xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground lg:grid-cols-[1fr_1fr]">
@@ -133,6 +143,7 @@ export default function AdminTemplates() {
       </div>
 
       {dialog}
+      {poster.dialog}
 
       {error && !dialog && (
         <div role="alert" className="mb-6 flex gap-3 rounded-2xl border border-destructive/50 bg-destructive/10 p-4 text-sm">
