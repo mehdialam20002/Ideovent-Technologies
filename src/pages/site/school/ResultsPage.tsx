@@ -20,34 +20,35 @@ import { isCbseSchool } from "@/lib/demo/site/disclosure";
 import { FilterChips, SlideTabs, useFlipList } from "@/lib/demo/ui/school/filter";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
+import { SampleNote } from "../kit/SampleNote";
 import { Figure, Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
 const COPY = {
-  title: { en: "Results", hi: "परिणाम" },
+  title: { en: "Results", hi: "रिज़ल्ट" },
   glance: { en: "{year} at a glance", hi: "{year} एक नज़र में" },
   years: { en: "Choose a year", hi: "साल चुनें" },
-  classes: { en: "Choose a class", hi: "Class चुनें" },
-  allClasses: { en: "All classes", hi: "सभी classes" },
-  classLabel: { en: "Class {c}", hi: "Class {c}" },
-  passLabel: { en: "Class {c} pass percentage", hi: "Class {c} pass प्रतिशत" },
-  passLabelNamed: { en: "{c} pass percentage", hi: "{c} pass प्रतिशत" },
-  basis: { en: "Board result {year}: {passed} of {registered} candidates passed", hi: "Board result {year}: {registered} में से {passed} pass" },
-  board: { en: "Board examination results", hi: "Board परीक्षा परिणाम" },
-  boardLead: { en: "Set out as the CBSE disclosure asks: candidates registered, passed and the pass percentage.", hi: "जैसे CBSE disclosure माँगता है: registered, pass और pass प्रतिशत।" },
+  classes: { en: "Choose a class", hi: "क्लास चुनें" },
+  allClasses: { en: "All classes", hi: "सभी क्लास" },
+  classLabel: { en: "Class {c}", hi: "क्लास {c}" },
+  passLabel: { en: "Class {c} pass percentage", hi: "क्लास {c} पास प्रतिशत" },
+  passLabelNamed: { en: "{c} pass percentage", hi: "{c} पास प्रतिशत" },
+  basis: { en: "Board result {year}: {passed} of {registered} candidates passed", hi: "बोर्ड रिज़ल्ट {year}: {registered} में से {passed} पास" },
+  board: { en: "Board examination results", hi: "बोर्ड परीक्षा का रिज़ल्ट" },
+  boardLead: { en: "Set out as the CBSE disclosure asks: candidates registered, passed and the pass percentage.", hi: "जैसे CBSE डिस्क्लोज़र माँगता है: रजिस्टर्ड, पास और पास प्रतिशत।" },
   /* Only a CBSE school may say the table follows the CBSE disclosure; an ICSE,
      IB or state-board school gets the same columns without the claim. */
-  boardLeadOther: { en: "Set out in full: candidates registered, candidates passed and the pass percentage, year by year.", hi: "पूरा हिसाब: हर साल कितने बच्चे बैठे, कितने pass हुए और pass प्रतिशत।" },
-  colClass: { en: "Class", hi: "Class" },
+  boardLeadOther: { en: "Set out in full: candidates registered, candidates passed and the pass percentage, year by year.", hi: "पूरा हिसाब: हर साल कितने बच्चे बैठे, कितने पास हुए और पास प्रतिशत।" },
+  colClass: { en: "Class", hi: "क्लास" },
   colYear: { en: "Year", hi: "साल" },
-  colReg: { en: "Registered", hi: "Registered" },
-  colPassed: { en: "Passed", hi: "Pass" },
-  colPct: { en: "Pass %", hi: "Pass %" },
+  colReg: { en: "Registered", hi: "रजिस्टर्ड" },
+  colPassed: { en: "Passed", hi: "पास" },
+  colPct: { en: "Pass %", hi: "पास %" },
   colNote: { en: "Remarks", hi: "टिप्पणी" },
-  highlights: { en: "Highlights", hi: "खास परिणाम" },
+  highlights: { en: "Highlights", hi: "खास रिज़ल्ट" },
   destinations: { en: "Where students went next", hi: "आगे की पढ़ाई कहाँ" },
-  note: { en: "About these results", hi: "इन परिणामों के बारे में" },
-  admissions: { en: "Admissions", hi: "Admission" },
+  note: { en: "About these results", hi: "इस रिज़ल्ट के बारे में" },
+  admissions: { en: "Admissions", hi: "एडमिशन" },
 } satisfies Record<string, Bilingual>;
 
 const yearsOf = (board: DemoBoardResult[], results: DemoResult[]) =>
@@ -100,6 +101,7 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
     <>
       <PageHead title={bi(site, "resultsHeading", lang) || tr(COPY.title, lang)}
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.title, lang) }]}>
+        <SampleNote block="results" className="mt-4" />
         {years.length > 1 && <div className="mt-6 text-left"><SlideTabs label={tr(COPY.years, lang)} options={years.map((y) => ({ id: y, label: y }))} value={year} onChange={pickYear} /></div>}
       </PageHead>
 

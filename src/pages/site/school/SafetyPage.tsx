@@ -17,7 +17,7 @@ import { Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Safety and care", hi: "सुरक्षा और देखभाल" },
-  lead: { en: "How children are looked after from the gate in the morning to pickup.", hi: "सुबह gate से लेकर pickup तक बच्चों की देखभाल कैसे होती है।" },
+  lead: { en: "How children are looked after from the gate in the morning to pickup.", hi: "सुबह गेट से लेकर पिकअप तक बच्चों की देखभाल कैसे होती है।" },
   group: { en: "Every day", hi: "रोज़" },
   apps: { en: "Stay in touch during the day", hi: "दिन में जुड़े रहें" },
   ask: { en: "Ask us anything about safety", hi: "सुरक्षा के बारे में कुछ भी पूछें" },

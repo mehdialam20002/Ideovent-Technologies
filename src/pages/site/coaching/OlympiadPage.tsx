@@ -20,14 +20,14 @@ import { Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Olympiad preparation", hi: "ओलंपियाड की तैयारी" },
-  lead: { en: "After-school practice for the Olympiads, alongside the school syllabus.", hi: "School syllabus के साथ, school के बाद ओलंपियाड की practice।" },
+  lead: { en: "After-school practice for the Olympiads, alongside the school syllabus.", hi: "स्कूल सिलेबस के साथ, स्कूल के बाद ओलंपियाड की प्रैक्टिस।" },
   exams: { en: "Olympiads we prepare for", hi: "किन ओलंपियाड की तैयारी" },
-  schedule: { en: "Practice schedule", hi: "Practice schedule" },
-  batch: { en: "Batch", hi: "Batch" },
+  schedule: { en: "Practice schedule", hi: "प्रैक्टिस का शेड्यूल" },
+  batch: { en: "Batch", hi: "बैच" },
   days: { en: "Days", hi: "दिन" },
   time: { en: "Time", hi: "समय" },
   subject: { en: "Subject", hi: "विषय" },
-  medals: { en: "Medals", hi: "Medals" },
+  medals: { en: "Medals", hi: "मेडल" },
   independent: { en: "The Olympiads are conducted by their own organisers. This is independent preparation and is not affiliated with them.", hi: "ओलंपियाड उनके अपने आयोजक करवाते हैं। यह स्वतंत्र तैयारी है, उनसे जुड़ी नहीं है।" },
 } satisfies Record<string, Bilingual>;
 

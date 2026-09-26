@@ -17,32 +17,33 @@ import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { MapTap } from "@/lib/demo/ui/school/MapTap";
 import { clean, Str } from "@/lib/demo/ui/school/shared";
+import { slotPhoto, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Card, CardGrid, Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
 const COPY = {
-  title: { en: "Contact the school", hi: "School से संपर्क करें" },
-  lead: { en: "The school office answers admissions, fees and transport questions.", hi: "Admission, fees और transport के सवालों के जवाब school office देता है।" },
-  ways: { en: "Reach the office", hi: "Office से बात करें" },
-  call: { en: "Call the office", hi: "Office को call करें" },
-  wa: { en: "Message on WhatsApp", hi: "WhatsApp पर message करें" },
-  mail: { en: "Write an email", hi: "Email लिखें" },
-  hours: { en: "Office hours", hi: "Office का समय" },
-  find: { en: "Find the school", hi: "School कैसे पहुँचें" },
+  title: { en: "Contact the school", hi: "स्कूल से संपर्क करें" },
+  lead: { en: "The school office answers admissions, fees and transport questions.", hi: "एडमिशन, फीस और ट्रांसपोर्ट के सवालों के जवाब स्कूल ऑफिस देता है।" },
+  ways: { en: "Reach the office", hi: "ऑफिस से बात करें" },
+  call: { en: "Call the office", hi: "ऑफिस को कॉल करें" },
+  wa: { en: "Message on WhatsApp", hi: "WhatsApp पर मैसेज करें" },
+  mail: { en: "Write an email", hi: "ईमेल लिखें" },
+  hours: { en: "Office hours", hi: "ऑफिस का समय" },
+  find: { en: "Find the school", hi: "स्कूल कैसे पहुँचें" },
   landmark: { en: "Landmark", hi: "पहचान" },
-  showMap: { en: "Show the map here", hi: "Map यहीं दिखाएँ" },
+  showMap: { en: "Show the map here", hi: "मैप यहीं दिखाएँ" },
   directions: { en: "Directions", hi: "रास्ता देखें" },
-  mapTitle: { en: "Map to the school", hi: "School का map" },
-  branches: { en: "Our other campuses", hi: "हमारे दूसरे campus" },
-  travel: { en: "School transport", hi: "School transport" },
-  desk: { en: "Transport desk", hi: "Transport desk" },
-  official: { en: "Official channels only", hi: "सिर्फ़ official तरीके" },
+  mapTitle: { en: "Map to the school", hi: "स्कूल का मैप" },
+  branches: { en: "Our other campuses", hi: "हमारे दूसरे कैंपस" },
+  travel: { en: "School transport", hi: "स्कूल ट्रांसपोर्ट" },
+  desk: { en: "Transport desk", hi: "ट्रांसपोर्ट डेस्क" },
+  official: { en: "Official channels only", hi: "सिर्फ़ आधिकारिक तरीके" },
   officialBody: {
     en: "The numbers and addresses on this page are the school's only official channels. Admission is decided by the school office alone, and nobody can promise a seat for a payment.",
-    hi: "इस पेज पर दिए नंबर और पते ही school के official तरीके हैं। Admission का फैसला सिर्फ़ school office करता है, और पैसे लेकर seat का वादा कोई नहीं कर सकता।",
+    hi: "इस पेज पर दिए नंबर और पते ही स्कूल के आधिकारिक तरीके हैं। एडमिशन का फैसला सिर्फ़ स्कूल ऑफिस करता है, और पैसे लेकर सीट का वादा कोई नहीं कर सकता।",
   },
-  admissions: { en: "Admissions", hi: "Admission" },
+  admissions: { en: "Admissions", hi: "एडमिशन" },
 } satisfies Record<string, Bilingual>;
 
 function Way({ icon, title, value, href }: { icon: ReactNode; title: string; value: ReactNode; href?: string }) {
@@ -124,6 +125,7 @@ export default function ContactPage({ site, ctx }: SitePageProps) {
 
       {showTravel && (
         <Section n={++n} title={tr(COPY.travel, lang)}>
+          <WithPhoto src={slotPhoto(site, "transport")} ratio="3 / 2">
           <Bi of={site.transport} k="intro" as="p" className="mb-4 max-w-prose text-lg" />
           {routes.length > 0 && (
             <ul className="divide-y divide-[hsl(var(--ds-line))] border-y border-[hsl(var(--ds-line))]">
@@ -133,6 +135,7 @@ export default function ContactPage({ site, ctx }: SitePageProps) {
             </ul>
           )}
           {c.transportDesk && <p className="mt-4"><span className="font-semibold">{tr(COPY.desk, lang)}: </span><Str text={c.transportDesk} /></p>}
+          </WithPhoto>
         </Section>
       )}
 

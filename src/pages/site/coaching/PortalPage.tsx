@@ -18,10 +18,10 @@ import { Card, CardGrid, Section } from "../kit/Section";
 import { Bi } from "../kit/Text";
 
 const COPY = {
-  title: { en: "Student and parent login", hi: "Student और अभिभावक login" },
+  title: { en: "Student and parent login", hi: "छात्र और अभिभावक लॉगिन" },
   crumb: { en: "Student portal", hi: "स्टूडेंट पोर्टल" },
-  lead: { en: "Attendance, test results and fee receipts are on the institute's own portal. These links open it.", hi: "Attendance, टेस्ट रिज़ल्ट और फीस की रसीदें संस्थान के अपने portal पर हैं। ये links उसे खोलते हैं।" },
-  links: { en: "Portals", hi: "Portals" },
+  lead: { en: "Attendance, test results and fee receipts are on the institute's own portal. These links open it.", hi: "अटेंडेंस, टेस्ट रिज़ल्ट और फीस की रसीदें संस्थान के अपने पोर्टल पर हैं। ये लिंक उसे खोलते हैं।" },
+  links: { en: "Portals", hi: "पोर्टल" },
 } satisfies Record<string, Bilingual>;
 
 export default function PortalPage({ site, ctx }: SitePageProps) {

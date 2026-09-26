@@ -22,16 +22,16 @@ import { Action, Bi, Monogram } from "../kit/Text";
 const COPY = {
   title: { en: "Visit or call", hi: "मिलने आएँ या कॉल करें" },
   crumb: { en: "Contact", hi: "संपर्क" },
-  lead: { en: "Come to the centre and meet the teachers. Call or send a WhatsApp message first and we will keep a time for you.", hi: "Centre आएँ और टीचर्स से मिलें। पहले कॉल या WhatsApp करें, हम आपके लिए समय रखेंगे।" },
+  lead: { en: "Come to the centre and meet the teachers. Call or send a WhatsApp message first and we will keep a time for you.", hi: "सेंटर आएँ और टीचर्स से मिलें। पहले कॉल या WhatsApp करें, हम आपके लिए समय रखेंगे।" },
   reach: { en: "How to reach us", hi: "हम तक कैसे पहुँचें" },
   address: { en: "Address", hi: "पता" },
   landmark: { en: "Landmark", hi: "पहचान" },
   hours: { en: "Hours", hi: "समय" },
-  email: { en: "Email", hi: "Email" },
-  loadMap: { en: "Show the map", hi: "Map दिखाएँ" },
-  mapNote: { en: "The map loads only when you tap, to save your data.", hi: "आपका data बचाने के लिए map tap करने पर ही load होगा।" },
+  email: { en: "Email", hi: "ईमेल" },
+  loadMap: { en: "Show the map", hi: "मैप दिखाएँ" },
+  mapNote: { en: "The map loads only when you tap, to save your data.", hi: "आपका डेटा बचाने के लिए मैप टैप करने पर ही लोड होगा।" },
   openMaps: { en: "Open in Google Maps", hi: "Google Maps में खोलें" },
-  branches: { en: "Our centres", hi: "हमारे centres" },
+  branches: { en: "Our centres", hi: "हमारे सेंटर" },
 } satisfies Record<string, Bilingual>;
 
 export default function ContactPage({ site, ctx }: SitePageProps) {

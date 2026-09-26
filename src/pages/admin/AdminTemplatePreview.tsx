@@ -40,7 +40,7 @@ export default function AdminTemplatePreview() {
   const meta = templateMeta(id);
   const [loaded, setLoaded] = useState<LoadedTemplate | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
-  const { duplicate, busy, error } = useDuplicateTemplate();
+  const { request, busy, error, dialog } = useDuplicateTemplate();
 
   useEffect(() => {
     let alive = true;
@@ -96,7 +96,7 @@ export default function AdminTemplatePreview() {
         </span>
         <button
           type="button"
-          onClick={() => duplicate(meta.id)}
+          onClick={() => request(meta.id)}
           disabled={busy !== null}
           className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/5 px-3 text-xs font-medium text-primary hover:bg-primary/10 disabled:cursor-wait disabled:opacity-60"
         >
@@ -105,7 +105,9 @@ export default function AdminTemplatePreview() {
         </button>
       </div>
 
-      {(error || failed) && (
+      {dialog}
+
+      {((error && !dialog) || failed) && (
         <div role="alert" className="flex gap-2 border-b border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
           <p>{error || failed}</p>

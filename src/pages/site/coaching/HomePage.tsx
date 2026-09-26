@@ -4,6 +4,10 @@
  * "How joining works" block before the CTA. Inserts: c2's notice strip under
  * the hero; c5's next-three-exams strip is the hero's data object.
  *
+ * Photos: the hero's (CoachingHero sets it per family), the faculty
+ * portraits, and one section photo (admissions) beside "How joining works".
+ * No more: the results and courses stay type, for rhythm.
+ *
  * Every section renders only with data; every link comes from ctx.href;
  * every trust figure carries its basis line. Results (aggregate figures) and
  * Toppers (named, consented people) are separate sections.
@@ -17,34 +21,36 @@ import { demoFee } from "@/lib/demo/record";
 import { CountCard, FacultyCard, RatingLine, ResultCard, ReviewCard } from "@/lib/demo/ui/coaching/cards";
 import { startsWithNumber } from "@/lib/demo/ui/coaching/copy";
 import { GoalPicker, hasNextUp, NextUp, NoticeStrip, ResultsBand } from "@/lib/demo/ui/coaching/home";
-import { Hero } from "../kit/Hero";
+import { CoachingHero } from "@/lib/demo/ui/coaching/hero";
+import { SectionPhoto, sectionPhoto } from "@/lib/demo/ui/coaching/photos";
 import { Reveal, SiteLink } from "../kit/motion";
+import { SampleNote } from "../kit/SampleNote";
 import { Card, CardGrid, Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
 const COPY = {
-  headline: { en: "{areas} coaching in {city}", hi: "{city} में {areas} की coaching" },
+  headline: { en: "{areas} coaching in {city}", hi: "{city} में {areas} की कोचिंग" },
   since: { en: "Since {year}", hi: "{year} से" },
   results: { en: "Results", hi: "रिज़ल्ट" },
-  allResults: { en: "All results by year and exam", hi: "साल और exam के हिसाब से सभी रिज़ल्ट" },
+  allResults: { en: "All results by year and exam", hi: "साल और एग्ज़ाम के हिसाब से सभी रिज़ल्ट" },
   courses: { en: "Courses", hi: "कोर्स" },
   coursesLead: { en: "Duration, timings and the fee, printed on each course page.", hi: "हर कोर्स पेज पर अवधि, समय और फीस लिखी है।" },
   allCourses: { en: "Compare all courses", hi: "सभी कोर्स देखें" },
   faculty: { en: "The teachers", hi: "टीचर्स" },
   allFaculty: { en: "Meet every teacher", hi: "सभी टीचर्स से मिलें" },
-  toppers: { en: "Our students", hi: "हमारे students" },
+  toppers: { en: "Our students", hi: "हमारे छात्र" },
   recent: { en: "Recent results", hi: "हाल के रिज़ल्ट" },
-  reviews: { en: "What parents and students say", hi: "अभिभावक और students क्या कहते हैं" },
-  allReviews: { en: "Read every review", hi: "सभी reviews पढ़ें" },
+  reviews: { en: "What parents and students say", hi: "अभिभावक और छात्र क्या कहते हैं" },
+  allReviews: { en: "Read every review", hi: "सभी रिव्यू पढ़ें" },
   joining: { en: "How joining works", hi: "जुड़ना कैसे होता है" },
   step1: { en: "Book a free demo class", hi: "फ्री डेमो क्लास बुक करें" },
-  step2: { en: "Sit in a real class and meet the teacher", hi: "असली class में बैठें और टीचर से मिलें" },
-  step3: { en: "Choose a batch and join", hi: "Batch चुनें और join करें" },
-  ctaTitle: { en: "Try one class before you decide", hi: "फैसला करने से पहले एक class देखें" },
-  ctaBody: { en: "The demo class is free, and there is no pressure to join on the day. Bring a notebook.", hi: "डेमो class free है, उसी दिन join करने का कोई दबाव नहीं। बस एक notebook लाएँ।" },
+  step2: { en: "Sit in a real class and meet the teacher", hi: "असली क्लास में बैठें और टीचर से मिलें" },
+  step3: { en: "Choose a batch and join", hi: "बैच चुनें और जॉइन करें" },
+  ctaTitle: { en: "Try one class before you decide", hi: "फैसला करने से पहले एक क्लास देखें" },
+  ctaBody: { en: "The demo class is free, and there is no pressure to join on the day. Bring a notebook.", hi: "डेमो क्लास फ्री है, उसी दिन जॉइन करने का कोई दबाव नहीं। बस एक कॉपी लाएँ।" },
   fee: { en: "Fee", hi: "फीस" },
   feeOnCall: { en: "Fee on call", hi: "फीस फ़ोन पर" },
-  starts: { en: "Next batch {date}", hi: "अगला batch {date}" },
+  starts: { en: "Next batch {date}", hi: "अगला बैच {date}" },
 } satisfies Record<string, Bilingual>;
 
 function More({ to, label }: { to: string | null; label: string }) {
@@ -78,11 +84,13 @@ export default function HomePage({ site, ctx }: SitePageProps) {
   const year = (site.establishedYear || site.established || "").trim();
   const eyebrowIsCity = site.instituteName === title;
   const facts = [year && trf(COPY.since, lang, { year }), !eyebrowIsCity && site.city, bi(site, "classSizePromise", lang)].filter(Boolean) as string[];
+  /* The one section photo on the home page: "sit in a real class", beside the steps. */
+  const joinPhoto = !!sectionPhoto(site, "admissions");
   let n = 0;
 
   return (
     <>
-      <Hero
+      <CoachingHero
         eyebrow={site.instituteName !== title ? site.instituteName : site.city}
         title={title}
         lead={<Bi of={site} k="tagline" />}
@@ -144,11 +152,14 @@ export default function HomePage({ site, ctx }: SitePageProps) {
             {(named.length ? named.slice(0, 8) : unnamed).map((r, i) => <Reveal key={i} index={i}><ResultCard r={r} /></Reveal>)}
           </CardGrid>
           <Bi of={site} k="resultsNote" as="p" className="mt-4 text-[hsl(var(--ds-ink-soft))]" />
+          {/* The band above already carries the line when it is shown. */}
+          {!(stats.length > 0 || counts.length > 0) && <SampleNote block="results" className="mt-3" />}
         </Section>
       )}
 
       {reviews.length >= 2 && (
         <Section n={++n} title={tr(COPY.reviews, lang)} lead={<RatingLine />}>
+          <SampleNote block="reviews" className="mb-6" />
           <CardGrid cols={3}>
             {reviews.slice(0, 3).map((r, i) => <Reveal key={i} index={i}><ReviewCard r={r} /></Reveal>)}
           </CardGrid>
@@ -157,7 +168,8 @@ export default function HomePage({ site, ctx }: SitePageProps) {
       )}
 
       <Section n={++n} title={tr(COPY.joining, lang)} tone="tint">
-        <ol className="grid gap-6 md:grid-cols-3">
+        <div className={joinPhoto ? "grid gap-8 md:grid-cols-[1fr_1fr] md:items-center lg:gap-12" : ""}>
+        <ol className={`grid gap-6 ${joinPhoto ? "" : "md:grid-cols-3"}`}>
           {steps.map((s, i) => (
             <Reveal as="li" key={i} index={i} className="flex gap-4">
               <span className="ds-display ds-num flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--ds-brand))] text-lg text-[hsl(var(--ds-on-brand))]">{i + 1}</span>
@@ -168,6 +180,8 @@ export default function HomePage({ site, ctx }: SitePageProps) {
             </Reveal>
           ))}
         </ol>
+        {joinPhoto && <Reveal><SectionPhoto slot="admissions" /></Reveal>}
+        </div>
       </Section>
 
       {demo && (

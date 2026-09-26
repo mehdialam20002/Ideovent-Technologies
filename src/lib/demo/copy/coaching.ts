@@ -416,17 +416,17 @@ function hindi(): CoachingCopy {
     skipTo: (heading) => `सीधे ${heading} पर जाइए`,
     /* A screen reader announces these, in the Hindi voice the page asked for,
        so they are Hindi like the school template's, not the English pair. */
-    navLabel: "इस site के sections",
-    footerNavLabel: "नीचे के links",
-    openMenu: "Menu खोलिए",
-    closeMenu: "Menu बंद कीजिए",
+    navLabel: "इस वेबसाइट के सेक्शन",
+    footerNavLabel: "नीचे के लिंक",
+    openMenu: "मेन्यू खोलिए",
+    closeMenu: "मेन्यू बंद कीजिए",
 
     heading: {
-      courses: "Courses और batches",
+      courses: "कोर्स और बैच",
       fees: "Fees",
-      results: "Results और selections",
+      results: "रिज़ल्ट और सिलेक्शन",
       faculty: "Faculty",
-      method: "Parents हमें क्यों चुनते हैं",
+      method: "पैरेंट्स हमें क्यों चुनते हैं",
       trial: "Free demo class",
       /* Not "कैसा दिखता है", which is "what it looks like" run through a
          dictionary. A timetable is something a week DOES. */
@@ -450,15 +450,15 @@ function hindi(): CoachingCopy {
       where: "संपर्क",
     },
 
-    seeCourses: "Batches देखिए",
-    trialCta: "Demo class book कीजिए",
-    trialMessage: (institute) => `नमस्ते ${institute}। मुझे demo class book करनी है।`,
+    seeCourses: "बैच देखिए",
+    trialCta: "डेमो क्लास बुक कीजिए",
+    trialMessage: (institute) => `नमस्ते ${institute}। मुझे डेमो क्लास बुक करनी है।`,
     contactMessage: (institute) => `नमस्ते ${institute}।`,
     courseMessage: (institute, course) =>
-      `नमस्ते ${institute}। मुझे ${course} batch के बारे में जानना है।`,
+      `नमस्ते ${institute}। मुझे ${course} बैच के बारे में जानना है।`,
     /* No serif italic in Devanagari. See the note at the top of this file. */
     taglineTail: {
-      before: "एक लाइन, वही जो आपके board पर लिखी है, काफ़ी है।",
+      before: "एक लाइन, वही जो आपके बोर्ड पर लिखी है, काफ़ी है।",
       accent: "",
       after: "",
     },
@@ -471,55 +471,55 @@ function hindi(): CoachingCopy {
          "स्थापना 2011" is what the board over the door says. */
       since: "स्थापना",
       where: "कहाँ",
-      next: "अगली batch",
+      next: "अगली बैच",
     },
     heroBlank: {
-      groups: "आपकी batches यहाँ आएँगी",
+      groups: "आपकी बैच यहाँ आएँगी",
       since: "जिस साल शुरू किया, वह जोड़िए",
       where: "अपना शहर जोड़िए",
     },
 
-    coursesHeadline: "अपनी batch चुनिए।",
-    coursesLead: "हर batch, उसकी timing और fees, इसी page पर। कोई PDF download नहीं करनी।",
+    coursesHeadline: "अपनी बैच चुनिए।",
+    coursesLead: "हर बैच, उसकी टाइमिंग और फीस, इसी पेज पर। कोई PDF डाउनलोड नहीं करनी।",
     /* "Duration" and "mode" stay English: "अवधि" is a word a parent reads on
        a fixed-deposit slip, and nobody says "online अवधि". */
-    courseFact: { duration: "Duration", timings: "Timing", starts: "कब से", fee: "Fees" },
+    courseFact: { duration: "अवधि", timings: "टाइमिंग", starts: "कब से", fee: "फीस" },
     courseBlank: {
       duration: "जोड़ना बाक़ी",
-      level: "किसके लिए है, जैसे Class 11 से 12",
+      level: "किसके लिए है, जैसे क्लास 11 से 12",
     },
     enquireCta: "पूछिए",
-    reservedCourseName: "आपके course का नाम",
+    reservedCourseName: "आपके कोर्स का नाम",
     toBeAdded: "जोड़ना बाक़ी",
 
     resultColumns: [
-      { label: "Rank या score", hint: "ठीक वैसे ही जैसे आप छापते हैं" },
-      { label: "Student", hint: "सिर्फ़ उनकी अनुमति से" },
-      { label: "Exam और साल", hint: "जैसे JEE Advanced 2025" },
+      { label: "रैंक या स्कोर", hint: "ठीक वैसे ही जैसे आप छापते हैं" },
+      { label: "छात्र", hint: "सिर्फ़ उनकी अनुमति से" },
+      { label: "एग्ज़ाम और साल", hint: "जैसे JEE Advanced 2025" },
     ],
     nameWithheld: "नाम नहीं दिया गया",
 
-    facultyLead: "Batches असल में कौन लेता है।",
-    facultyColumns: ["नाम", "Subject", "Qualification"],
+    facultyLead: "बैच असल में कौन लेता है।",
+    facultyColumns: ["नाम", "विषय", "योग्यता"],
     facultyBlank: {
       name: "नाम जोड़ना बाक़ी",
-      subject: "Subject जोड़ना बाक़ी",
-      qualification: "Qualification जोड़ना बाक़ी",
+      subject: "विषय जोड़ना बाक़ी",
+      qualification: "योग्यता जोड़ना बाक़ी",
     },
 
-    trialFact: { duration: "कितनी देर", bring: "क्या लाना है", book: "कैसे book करें" },
+    trialFact: { duration: "कितनी देर", bring: "क्या लाना है", book: "कैसे बुक करें" },
     trialBlank: {
       duration: "कितनी देर चलती है, यह जोड़िए",
       bring: "क्या लाना है, यह जोड़िए",
     },
     trialTail: {
       before:
-        "यह हिस्सा आपका है। सबसे ज़्यादा admission यहीं से आते हैं, इसलिए वही लाइन लिखिए जो आप सचमुच बोलते हैं।",
+        "यह हिस्सा आपका है। सबसे ज़्यादा एडमिशन यहीं से आते हैं, इसलिए वही लाइन लिखिए जो आप सचमुच बोलते हैं।",
       accent: "",
       after: "",
     },
 
-    scheduleColumns: ["Batch", "दिन", "समय", "Subject", "Faculty"],
+    scheduleColumns: ["बैच", "दिन", "समय", "विषय", "फैकल्टी"],
     scheduleCaption: (heading, institute) => `${institute} का ${heading}`,
     emptyCell: "–",
 
@@ -531,18 +531,18 @@ function hindi(): CoachingCopy {
     labelEmail: "Email",
     labelHours: "समय",
     labelAddress: "पता",
-    openInMaps: "Maps में खोलिए",
-    formTitle: "Batch के बारे में पूछिए",
+    openInMaps: "मैप में खोलिए",
+    formTitle: "बैच के बारे में पूछिए",
     formNote: (institute) =>
-      `यह form अभी सिर्फ़ demo के लिए है और कुछ भेजता नहीं। Live site पर parent के send दबाते ही यह कुछ ही second में WhatsApp और email से ${institute} तक पहुँच जाता है।`,
-    fieldName: "Student का नाम",
-    fieldPhone: "फ़ोन number",
-    fieldCourse: "कौन सी batch",
+      `यह फ़ॉर्म अभी सिर्फ़ डेमो के लिए है और कुछ भेजता नहीं। लाइव वेबसाइट पर पैरेंट के सेंड दबाते ही यह कुछ ही सेकंड में WhatsApp और ईमेल से ${institute} तक पहुँच जाता है।`,
+    fieldName: "छात्र का नाम",
+    fieldPhone: "फ़ोन नंबर",
+    fieldCourse: "कौन सी बैच",
     fieldMessage: "और कुछ कहना हो तो",
-    formSubmit: "Enquiry भेजिए",
-    formWhatsapp: "या WhatsApp पर message कीजिए",
+    formSubmit: "पूछताछ भेजिए",
+    formWhatsapp: "या WhatsApp पर मैसेज कीजिए",
     formSent: (institute) =>
-      `कुछ भेजा नहीं गया, क्योंकि यह सिर्फ़ demo है। Live site पर यह enquiry अब तक ${institute} के फ़ोन पर पहुँच चुकी होती।`,
+      `कुछ भेजा नहीं गया, क्योंकि यह सिर्फ़ डेमो है। लाइव वेबसाइट पर यह पूछताछ अब तक ${institute} के फ़ोन पर पहुँच चुकी होती।`,
 
     /* Devanagari has no italic, so `heroVerb` is set plain by the template
        here. The word is still ours and still the hinge of the headline; it
@@ -550,20 +550,20 @@ function hindi(): CoachingCopy {
     heroVerb: "coaching",
     heroIn: ", ",
     heroAnd: " और ",
-    boardTitle: "अगली batches",
-    seeAllBatches: "सारी batches देखिए",
+    boardTitle: "अगली बैच",
+    seeAllBatches: "सारी बैच देखिए",
     askUsTitle: "हमसे पूछिए",
 
     exampleTag: "उदाहरण के आँकड़े",
     exampleFooterNote:
-      "इस page का हर नाम, आँकड़ा, तारीख़ और fee उदाहरण है, जिसे Ideovent ने यह दिखाने के लिए रखा है कि page कैसा बनता है। इनमें से कुछ भी किसी असली institute का नहीं है।",
+      "इस पेज का हर नाम, आँकड़ा, तारीख़ और फीस उदाहरण है, जिसे Ideovent ने यह दिखाने के लिए रखा है कि पेज कैसा बनता है। इनमें से कुछ भी किसी असली संस्थान का नहीं है।",
 
-    bandLine: "Fees देने से पहले एक असली class में बैठकर देख लीजिए।",
-    bandCta: "Demo class book कीजिए",
+    bandLine: "फीस देने से पहले एक असली क्लास में बैठकर देख लीजिए।",
+    bandCta: "डेमो क्लास बुक कीजिए",
 
     batchColumns: {
       batch: "Batch",
-      who: "किस class के लिए",
+      who: "किस क्लास के लिए",
       when: "दिन और समय",
       starts: "कब से",
       fee: "Fees",
@@ -576,107 +576,107 @@ function hindi(): CoachingCopy {
        a parent says it out loud ("fees 3,500 a month se shuru hai"). The
        period note in the middle is the institute's own text and stays in
        whatever language they typed it. */
-    feesFrom: { before: "Batches ", accent: "", after: " से शुरू" },
+    feesFrom: { before: "बैच ", accent: "", after: " से शुरू" },
     feesAsk: "पूरा जवाब नीचे सवालों में है, और फ़ोन पर एक मिनट में।",
 
-    resultFields: { exam: "Exam और साल", student: "Student", batch: "Batch" },
+    resultFields: { exam: "एग्ज़ाम और साल", student: "छात्र", batch: "बैच" },
 
     trialSteps: [
-      "Call कीजिए या WhatsApp पर message भेजिए",
-      "हम बताएँगे कि इस हफ़्ते किस class में seat है",
-      "पूरी class में बैठिए",
+      "कॉल कीजिए या WhatsApp पर मैसेज भेजिए",
+      "हम बताएँगे कि इस हफ़्ते किस क्लास में सीट है",
+      "पूरी क्लास में बैठिए",
     ],
 
     faqHeading: "सवाल",
-    faqLead: "वही सवाल जो parents फ़ोन पर पूछते हैं, fees वाला भी।",
+    faqLead: "वही सवाल जो पैरेंट्स फ़ोन पर पूछते हैं, फीस वाला भी।",
 
-    enquireTitle: { first: "कौन सी batch सही रहेगी?", second: "पूछ लीजिए, एक मिनट लगेगा।" },
+    enquireTitle: { first: "कौन सी बैच सही रहेगी?", second: "पूछ लीजिए, एक मिनट लगेगा।" },
     enquireLead:
-      "Call कीजिए, या एक WhatsApp message भेजिए। Office के समय में जवाब मिलता है और किसी को calling list में नहीं डाला जाता।",
+      "कॉल कीजिए, या एक WhatsApp मैसेज भेजिए। ऑफिस के समय में जवाब मिलता है और किसी को कॉलिंग लिस्ट में नहीं डाला जाता।",
     callUs: "Call",
 
     contactHeading: "हम कहाँ हैं",
     contactBlank:
-      "आपका फ़ोन number, WhatsApp, पता और office के समय यहाँ आएँगे। एक बार भेज दीजिए, page पर जहाँ-जहाँ चाहिए वहाँ अपने आप लग जाएँगे।",
+      "आपका फ़ोन नंबर, WhatsApp, पता और ऑफिस के समय यहाँ आएँगे। एक बार भेज दीजिए, पेज पर जहाँ-जहाँ चाहिए वहाँ अपने आप लग जाएँगे।",
 
     /* The chip on a pinned notice. What a school writes on the one notice it
        wants read first is "ज़रूरी सूचना", so the chip says the first word. */
     pinned: "ज़रूरी",
 
-    footerSections: "इस site पर",
-    footerTimetable: "Timetable इसी page पर, किसी download में नहीं",
+    footerSections: "इस वेबसाइट पर",
+    footerTimetable: "टाइम-टेबल इसी पेज पर, किसी डाउनलोड में नहीं",
     backToTop: "ऊपर जाइए",
 
     ph: {
       tagline: "अपनी एक लाइन यहाँ जोड़िए: आप क्या पढ़ाते हैं, और किसे पढ़ाते हैं।",
-      focus: "आप जिन exams की तैयारी कराते हैं, वे जोड़िए: JEE, NEET, CUET, banking",
+      focus: "आप जिन एग्ज़ाम की तैयारी कराते हैं, वे जोड़िए: JEE, NEET, CUET, बैंकिंग",
 
-      coursesTitle: "आपकी batches यहाँ आएँगी",
+      coursesTitle: "आपकी बैच यहाँ आएँगी",
       coursesBody:
-        "हर course के लिए एक row: level, duration, timing, batch की शुरुआत की तारीख़ और fees। आप list भेज दीजिए, हम इसे ऐसे सजाएँगे कि student फ़ोन पर पढ़ ले और Google भी उसका एक-एक शब्द पढ़ सके। कोई PDF नहीं।",
+        "हर कोर्स के लिए एक लाइन: लेवल, अवधि, टाइमिंग, बैच की शुरुआत की तारीख़ और फीस। आप लिस्ट भेज दीजिए, हम इसे ऐसे सजाएँगे कि छात्र फ़ोन पर पढ़ ले और Google भी उसका एक-एक शब्द पढ़ सके। कोई PDF नहीं।",
 
-      courseFee: "Fees पूछने पर",
-      courseTimings: "Timing जोड़ना बाक़ी",
-      courseStarts: "अगली batch की तारीख़ जोड़ना बाक़ी",
+      courseFee: "फीस पूछने पर",
+      courseTimings: "टाइमिंग जोड़ना बाक़ी",
+      courseStarts: "अगली बैच की तारीख़ जोड़ना बाक़ी",
 
-      resultsTitle: `अपने ${new Date().getFullYear()} के results यहाँ जोड़िए`,
+      resultsTitle: `अपने ${new Date().getFullYear()} के रिज़ल्ट यहाँ जोड़िए`,
       resultsBody:
-        "Ranks, scores, selections और नाम, ठीक वैसे ही जैसे आप ख़ुद छापते हैं। हमने अपनी तरफ़ से एक भी आँकड़ा नहीं डाला: आपके नाम वाले page पर गढ़ा हुआ rank देखकर parent फ़ैसला कर लेते हैं, और जवाब आपको देना पड़ता है।",
+        "रैंक, स्कोर, सिलेक्शन और नाम, ठीक वैसे ही जैसे आप ख़ुद छापते हैं। हमने अपनी तरफ़ से एक भी आँकड़ा नहीं डाला: आपके नाम वाले पेज पर गढ़ा हुआ रैंक देखकर पैरेंट फ़ैसला कर लेते हैं, और जवाब आपको देना पड़ता है।",
       resultsNote:
-        "Student की फ़ोटो तभी लगेगी जब आपके पास उनकी अनुमति हो। हम मान नहीं लेंगे, आपसे पूछेंगे।",
+        "छात्र की फ़ोटो तभी लगेगी जब आपके पास उनकी अनुमति हो। हम मान नहीं लेंगे, आपसे पूछेंगे।",
 
-      facultyTitle: "आपकी faculty यहाँ आएगी",
+      facultyTitle: "आपकी फैकल्टी यहाँ आएगी",
       facultyBody:
-        "हर faculty member का नाम, subject और qualification। Coaching में parent सबसे ध्यान से यही हिस्सा पढ़ते हैं, इसलिए यह आपसे लेना सही है, अनजान लोगों की stock फ़ोटो से भरना नहीं।",
+        "हर फैकल्टी सदस्य का नाम, विषय और योग्यता। कोचिंग में पैरेंट सबसे ध्यान से यही हिस्सा पढ़ते हैं, इसलिए यह आपसे लेना सही है, अनजान लोगों की स्टॉक फ़ोटो से भरना नहीं।",
 
-      methodTitle: "Students क्यों टिके रहते हैं, आपके अपने शब्दों में",
+      methodTitle: "छात्र क्यों टिके रहते हैं, आपके अपने शब्दों में",
       methodBody:
-        "तीन-चार बातें जो आप सचमुच अलग करते हैं: batch size, test cycle, doubt sessions, और कमज़ोर student को जल्दी पकड़ने का तरीक़ा। ये आप ही लिखिए, क्योंकि अपनी पढ़ाई के बारे में दावा आप ही कर सकते हैं।",
+        "तीन-चार बातें जो आप सचमुच अलग करते हैं: बैच का साइज़, टेस्ट साइकिल, डाउट सेशन, और कमज़ोर छात्र को जल्दी पकड़ने का तरीक़ा। ये आप ही लिखिए, क्योंकि अपनी पढ़ाई के बारे में दावा आप ही कर सकते हैं।",
 
       trialTitle: "Free demo class",
       trialBody:
-        "Demo class में क्या होता है, कितनी देर चलती है और student उसे कैसे book करे, यह जोड़िए। Website पर कुछ भी पढ़कर, fees भी, उतने admission नहीं होते जितने एक demo class के बाद होते हैं।",
-      trialHowTo: "Book करने का तरीक़ा जोड़िए: call, WhatsApp message, या सीधे आ जाना।",
+        "डेमो क्लास में क्या होता है, कितनी देर चलती है और छात्र उसे कैसे बुक करे, यह जोड़िए। वेबसाइट पर कुछ भी पढ़कर, फीस भी, उतने एडमिशन नहीं होते जितने एक डेमो क्लास के बाद होते हैं।",
+      trialHowTo: "बुक करने का तरीक़ा जोड़िए: कॉल, WhatsApp मैसेज, या सीधे आ जाना।",
 
-      scheduleTitle: "आपका timetable यहाँ आएगा",
+      scheduleTitle: "आपका टाइम-टेबल यहाँ आएगा",
       scheduleBody:
-        "कौन सी batch किस दिन, किस समय और किस faculty के साथ चलती है। फ़ोन पर देख रहे student को अपनी row क़रीब तीन second में मिल जानी चाहिए।",
+        "कौन सी बैच किस दिन, किस समय और किस फैकल्टी के साथ चलती है। फ़ोन पर देख रहे छात्र को अपनी लाइन क़रीब तीन सेकंड में मिल जानी चाहिए।",
 
       noticesTitle: "सूचनाएँ, जो आप ख़ुद डालते हैं",
       noticesBody:
-        "नई batch, test की तारीख़, छुट्टी, result। आप type कीजिए और वह live: न developer, न दो लाइन बदलने का बिल।",
+        "नई बैच, टेस्ट की तारीख़, छुट्टी, रिज़ल्ट। आप टाइप कीजिए और वह लाइव: न डेवलपर, न दो लाइन बदलने का बिल।",
 
       aboutTitle: "आपके बारे में, आपके अपने शब्दों में",
       aboutBody:
-        "दो-तीन लाइनें: आपने कब शुरू किया, क्या करना चाहा, और शहर में किस बात के लिए जाने जाते हैं। आपकी तरफ़ से paragraph गढ़ने के बजाय हमने इसे ख़ाली छोड़ा है।",
+        "दो-तीन लाइनें: आपने कब शुरू किया, क्या करना चाहा, और शहर में किस बात के लिए जाने जाते हैं। आपकी तरफ़ से पैराग्राफ़ गढ़ने के बजाय हमने इसे ख़ाली छोड़ा है।",
 
-      phone: "आपका admission helpline number यहाँ आएगा",
-      whatsapp: "आपका WhatsApp number यहाँ आएगा",
-      email: "आपका enquiry email यहाँ आएगा",
+      phone: "आपका एडमिशन हेल्पलाइन नंबर यहाँ आएगा",
+      whatsapp: "आपका WhatsApp नंबर यहाँ आएगा",
+      email: "आपका पूछताछ ईमेल यहाँ आएगा",
       address: "आपका पता यहाँ आएगा",
-      hours: "आपके office के समय यहाँ आएँगे",
+      hours: "आपके ऑफिस के समय यहाँ आएँगे",
 
       /* The 2026 rebuild's blanks. "शुल्क" is correct Hindi for a fee and is
          the wrong word here: a parent scanning a coaching site is looking for
          "fees", in English, and will not stop on anything else. */
-      feesTitle: "आपकी fees यहाँ आएँगी",
+      feesTitle: "आपकी फीस यहाँ आएगी",
       feesBody:
-        "एक figure, उसके साथ “से शुरू”, और एक लाइन कि उसमें क्या-क्या शामिल है। न कोई table, न तीन price cards: वह बात फ़ोन पर होती है, और पूरा जवाब नीचे सवालों में रहता है।",
+        "एक रकम, उसके साथ “से शुरू”, और एक लाइन कि उसमें क्या-क्या शामिल है। न कोई टेबल, न तीन प्राइस कार्ड: वह बात फ़ोन पर होती है, और पूरा जवाब नीचे सवालों में रहता है।",
 
       faqTitle: "जो सवाल रोज़ पूछे जाते हैं",
       faqBody:
-        "आठ सवाल, उन्हीं शब्दों में जो parent फ़ोन पर बोलते हैं। जिनके जवाब आप रोज़ देते हैं, वही list भेज दीजिए। Fees वाला सवाल भी उसी में रहेगा, क्योंकि parent उसे वहीं ढूँढते हैं।",
+        "आठ सवाल, उन्हीं शब्दों में जो पैरेंट फ़ोन पर बोलते हैं। जिनके जवाब आप रोज़ देते हैं, वही लिस्ट भेज दीजिए। फीस वाला सवाल भी उसी में रहेगा, क्योंकि पैरेंट उसे वहीं ढूँढते हैं।",
 
-      boardTitle: "अगली batches",
+      boardTitle: "अगली बैच",
       boardBody:
-        "जो चार batches सबसे पहले शुरू हो रही हैं, वे यहाँ रहती हैं, तारीख़ और timing के साथ। Parent सबसे पहले यही देखते हैं, और ज़्यादातर sites इसे किसी PDF में रखती हैं।",
+        "जो चार बैच सबसे पहले शुरू हो रही हैं, वे यहाँ रहती हैं, तारीख़ और टाइमिंग के साथ। पैरेंट सबसे पहले यही देखते हैं, और ज़्यादातर वेबसाइटें इसे किसी PDF में रखती हैं।",
 
-      nextBatch: "अगली batch की तारीख़ जोड़ना बाक़ी",
+      nextBatch: "अगली बैच की तारीख़ जोड़ना बाक़ी",
       established: "जिस साल शुरू किया, वह जोड़िए",
 
       remainderTitle: "हमें आपसे बस इतना चाहिए",
       remainderBody:
-        "इस page पर बाक़ी सब कुछ आपका ही है। ये कुछ चीज़ें अभी हमें नहीं मिलीं, इसलिए पूरे page में बिखेरने के बजाय एक ही जगह लिख दी हैं।",
+        "इस पेज पर बाक़ी सब कुछ आपका ही है। ये कुछ चीज़ें अभी हमें नहीं मिलीं, इसलिए पूरे पेज में बिखेरने के बजाय एक ही जगह लिख दी हैं।",
     },
   };
 }

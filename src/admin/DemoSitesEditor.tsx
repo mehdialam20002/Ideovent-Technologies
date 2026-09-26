@@ -27,6 +27,9 @@ import {
 import { templateMeta } from "@/lib/demo/templates";
 import { hasProvisionalTemplateSlug } from "@/lib/demo/templates/fromTemplate";
 import { AdminField } from "./fields";
+import { DemoCarriedPanel } from "./DemoCarriedPanel";
+import { LinkNotes } from "./DemoLinkNotes";
+import { DemoPhotoSlots } from "./DemoPhotoSlots";
 import type { CollectionSchema } from "./schemas";
 import { cn } from "@/lib/utils";
 
@@ -131,6 +134,8 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
   const [draftSlot, setDraftSlot] = useState<DemoSiteSlot | null>(null);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  /** The unsent record whose link was just copied: it gets the "this shows a 404" note. */
+  const [linkNote, setLinkNote] = useState<string | null>(null);
   /** The record whose edit lock is being shown, if any. See slots.ts. */
   const [locked, setLocked] = useState<DemoSite | null>(null);
   /** The record being marked Sent, which asks who it is going to first. */
@@ -290,6 +295,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
 
   const copyLink = async (site: DemoSite) => {
     const url = demoSiteUrl(site.slug, host);
+    setLinkNote(demoStatus(site) === "sent" ? null : site.id);
     try {
       await navigator.clipboard.writeText(url);
       setCopied(site.id);
@@ -585,13 +591,18 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
                     </a>
                   ) : (
-                    <span
-                      title="Mark it Sent first. Free, Draft and Closed all show the 404."
-                      aria-label="The public link does not open until this demo is marked Sent"
-                      className="inline-flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-lg border border-border opacity-40"
+                    /* Not sent: the public link is the 404, so this opens the
+                       admin preview of the same pages instead. */
+                    <a
+                      href={`/admin/preview/site/${site.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Not sent yet, so this opens the preview. The public link shows a 404 until Mark sent."
+                      aria-label={`Open the preview of the demo for ${site.instituteName} in a new tab (the public link is not live until it is marked Sent)`}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground hover:border-primary/50"
                     >
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    </span>
+                    </a>
                   )}
 
                   {status === "sent" ? (
@@ -644,6 +655,11 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                   </button>
                 </div>
               </div>
+              <LinkNotes
+                status={status}
+                showDraftNote={linkNote === site.id && status !== "sent"}
+                localOnly={localOnly}
+              />
             </div>
           );
         })}
@@ -797,20 +813,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
               </div>
             )}
 
-            {editing.templateId && (
-              <div className="mb-5 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
-                <p className="font-medium">
-                  Made from the {templateMeta(editing.templateId)?.label || editing.templateId} template
-                </p>
-                <p className="mt-1 text-muted-foreground">
-                  Every fact about the example institute was cleared: name, city, contact details,
-                  principal, results, fees, dates, teachers, notices and the about text. Kept: the
-                  look, the course and batch structure with fees blank, the facilities, the admission
-                  steps and documents, and the general questions. Type this institute’s own details,
-                  and check each kept line against their own material before you send it.
-                </p>
-              </div>
-            )}
+            <DemoCarriedPanel site={editing} onChange={setEditing} />
 
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Name and link, wired together and validated. */}
@@ -889,6 +892,11 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                     {demoSiteUrl(editing.slug, host)}
                   </p>
                 )}
+                <LinkNotes
+                  status={demoStatus(editing)}
+                  showDraftNote={demoStatus(editing) !== "sent"}
+                  localOnly={localOnly}
+                />
               </div>
 
               {/* Kind. Drawn here because it decides which of the two templates
@@ -934,6 +942,12 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Every photo slot in one panel: hero, section photos, faculty
+                  portraits, gallery from the library. */}
+              <div className="sm:col-span-2">
+                <DemoPhotoSlots site={editing} onChange={setEditing} />
               </div>
 
               {/* The rest of the form, straight from the schema. */}

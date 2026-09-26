@@ -35,17 +35,32 @@
  *                           preview and the duplicate each set these.
  *   kind, theme             Owned by the registry, see above.
  *   palette                 Superseded by theme. Nothing new sets it.
- *   logo, heroImage         NO PHOTOGRAPHS AND NO CREST. A fictional institute
- *                           has neither, and a stock classroom standing in for
- *                           a real one is the fastest way to lose a parent.
+ *   logo                    NO CREST. A fictional institute has none.
  *   officialWebsite         A fictional institute has no real site to link to.
  *   results[].studentName   NO STUDENT IS EVER NAMED. A named child beside a
  *                           rank is the one line a family acts on, and an
  *                           invented one reads as real.
- *   results[].photo, faculty[].photo, and both photoConsent flags
- *                           No faces, for the same two reasons.
- *   gallery[].src           Must be "". Captions only; the section is set from
- *                           them typographically when there are no images.
+ *   results[].photo, founder photo, and every photoConsent flag
+ *                           No face beside a rank or a founder's story.
+ *
+ * ── PHOTOGRAPHS (26 September 2026) ───────────────────────────────────────
+ * Templates now carry STOCK photos from public/demo/img/ (licensed, listed in
+ * its manifest.json, typed in src/lib/demo/images). Only those: every photo
+ * field below is typed as a stock path, so a URL of anybody's campus is a
+ * compile error. Write them with `stockPhoto("school/hero-...")`.
+ *   heroImage               the home hero. One per template.
+ *   faculty[].photo         a people/* portrait. The same person never twice
+ *                           in one template.
+ *   sectionPhotos           one photo per section slot (campus, academics,
+ *                           admissions, transport, hostel...). Not every slot:
+ *                           rhythm matters.
+ *   photos[].src, gallery[].src
+ *                           a stock path, or "" for a caption-only entry.
+ * The alt text comes from the manifest, in both languages, and describes the
+ * scene; nothing may caption a stock photo as the institute's own building.
+ * A duplicate carries these paths (rule "stock" in ./fromTemplate.ts), and
+ * the admin checklist says "Photos are stock photos from the template" until
+ * Mehdi replaces the hero.
  *
  * ── THE FICTION RULES, which the type cannot check ────────────────────────
  * Every template is fiction written to show a segment well. So:
@@ -120,7 +135,7 @@
  *               in the object's own `hi` block under the same key, never in
  *               the plain field (scripts/check-demo-lang.mjs fails on it).
  *               s2 may set `defaultLang: "hi"` to open in Hindi.
- *   photos      captions only, like gallery: `src` must be "".
+ *   photos      a stock path or "" (see PHOTOGRAPHS above).
  *   founder     no photograph.
  *   results     follow CCPA 2024: courseName, courseDuration and paid on
  *               every coaching result; still no studentName.
@@ -140,6 +155,7 @@ import type {
   DemoSite,
 } from "@/lib/cms/types";
 import type { TemplateId } from "./ids";
+import type { DemoSectionPhotos, StockHeroSrc, StockPhotoSrc, StockPortraitSrc } from "../images";
 import type { DesignFamily, FamilyTheme } from "./families";
 
 /* ── Meta: the registry half ─────────────────────────────────────────────── */
@@ -192,12 +208,13 @@ type NotInTemplate =
   | "id" | "order" | "createdAt" | "updatedAt"
   | "slug" | "status" | "expiresAt" | "preparedOn" | "isExample" | "templateId"
   | "kind" | "theme" | "palette"
-  | "logo" | "heroImage" | "officialWebsite";
+  | "logo" | "officialWebsite";
 
 /** Re-declared below, either narrower or required. */
 type Redeclared =
   | "instituteName" | "city" | "state" | "country" | "market" | "currency"
-  | "faq" | "results" | "faculty" | "gallery" | "photos" | "founder";
+  | "faq" | "results" | "faculty" | "gallery" | "photos" | "founder"
+  | "heroImage" | "sectionPhotos";
 
 /**
  * A question and its answer. `generic: true` means it survives a duplicate;
@@ -211,17 +228,29 @@ export interface TemplateFaq extends DemoPoint {
 /** A result with no named student and no photograph. */
 export type TemplateResult = Omit<DemoResult, "studentName" | "photo" | "photoConsent">;
 
-/** A teacher with no photograph. The name is fictional. */
-export type TemplateFaculty = Omit<DemoFaculty, "photo" | "photoConsent">;
+/**
+ * A teacher. The name is fictional; the photo, if any, is a stock portrait
+ * (people/*), which needs no consent flag because it is a licensed model.
+ */
+export type TemplateFaculty = Omit<DemoFaculty, "photo" | "photoConsent"> & {
+  photo?: StockPortraitSrc;
+};
 
-/** A gallery entry is a caption. There is never a file behind it. */
+/** A gallery entry: a stock photo, or "" for a caption alone. */
 export interface TemplateGalleryItem {
-  src: "";
+  src: "" | StockPhotoSrc;
   alt: string;
 }
 
-/** A categorised photo in a template: a caption, no file. */
-export type TemplatePhoto = Omit<DemoPhoto, "src"> & { src: "" };
+/**
+ * A categorised photo for the Gallery page: a stock photo, or "" for a
+ * caption alone. With a stock photo, leave `alt` "" (the manifest's alt is
+ * used) and keep `caption` generic: it is cleared on a duplicate.
+ */
+export type TemplatePhoto = Omit<DemoPhoto, "src"> & { src: "" | StockPhotoSrc };
+
+/** Section photos: stock paths only. */
+export type TemplateSectionPhotos = { [K in keyof DemoSectionPhotos]?: StockPhotoSrc };
 
 /** The founder, with no photograph. */
 export type TemplateFounder = Omit<DemoFounder, "photo" | "photoConsent">;
@@ -239,6 +268,9 @@ export type TemplateContent = Omit<DemoSite, NotInTemplate | Redeclared> & {
   gallery?: TemplateGalleryItem[];
   photos?: TemplatePhoto[];
   founder?: TemplateFounder;
+  /** The home hero: a hero-sized stock photo. */
+  heroImage?: StockHeroSrc;
+  sectionPhotos?: TemplateSectionPhotos;
 };
 
 /** What a content file default-exports. Build it with `defineTemplateContent`. */

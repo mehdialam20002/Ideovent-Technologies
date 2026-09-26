@@ -78,6 +78,32 @@ function demoWhatsappHref(site: DemoSite, opener: (institute: string, place: str
  * is the same object. Not sticky: it scrolls away and never covers anything.
  * At most 44px at desktop and two lines, about 60px, at 390px.
  */
+/**
+ * THE RIBBON IS SET IN THE DEVICE'S OWN FACE, NEVER IN A WEBFONT.
+ *
+ * It used to inherit the demo's body stack, which starts with Inter. Inter
+ * loads from Google without blocking paint (display=swap, see index.html), so
+ * the ribbon's first frame was set in Segoe UI / Roboto / San Francisco and
+ * re-set in Inter whenever the font file landed, which on a cold cache over a
+ * slow link was two to eight seconds after load. Inter runs about eight per cent
+ * wider than Segoe UI at this size, so at 390px the sentence re-wrapped: the
+ * institute's name dropped from line one to line two (CLS 0.034 on c1, 6 of
+ * 10 cold loads), and on a name sitting near the break the strip gained a
+ * third line and pushed the whole site down under the reader's thumb.
+ *
+ * Reserving height would not have been enough, because words moving inside
+ * the strip are a layout shift of their own. A face that is already on the
+ * device cannot swap, so the strip is laid out once and never again. This is
+ * Ideovent's line, outside the institute's palette on purpose, and it reads
+ * as the system's own small print, which is the register it should have.
+ * Devanagari resolves to the system face (Nirmala UI, Noto Sans Devanagari)
+ * either way, so the Hindi ribbon is unchanged.
+ */
+const RIBBON_FONT = {
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
+} as const;
+
 export function DemoRibbon({ site }: { site: DemoSite }) {
   /* The ribbon follows the reader's choice for one plain reason: a director
      who has just switched the whole page to Hindi and finds the one line above
@@ -98,7 +124,7 @@ export function DemoRibbon({ site }: { site: DemoSite }) {
     </a>
   );
   return (
-    <div className="bg-[#081738] text-white/75">
+    <div className="bg-[#081738] text-white/75" style={RIBBON_FONT}>
       <div className="container-page flex flex-wrap items-center justify-between gap-x-5 gap-y-0.5 py-[6px] text-[11.5px] leading-[1.35] sm:text-[12px] sm:leading-[1.3] xl:py-2.5 xl:text-[12.5px]">
         <p className="min-w-0">
           {m.ribbonBefore}

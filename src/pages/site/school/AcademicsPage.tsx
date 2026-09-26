@@ -14,6 +14,7 @@ import { bi, hasBi, tr, withText, type Bilingual } from "@/lib/demo/site/bilingu
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { Timeline } from "@/lib/demo/ui/school/Timeline";
+import { slotPhoto, PhotoBand } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
 import { Card, CardGrid, Section } from "../kit/Section";
@@ -22,13 +23,13 @@ import { Action, Bi } from "../kit/Text";
 const COPY = {
   title: { en: "Academics", hi: "पढ़ाई" },
   stages: { en: "Stages of schooling", hi: "पढ़ाई के चरण" },
-  classes: { en: "Classes and subjects", hi: "Classes और विषय" },
+  classes: { en: "Classes and subjects", hi: "क्लास और विषय" },
   timings: { en: "Timings", hi: "समय" },
   assessment: { en: "How children are assessed", hi: "मूल्यांकन कैसे होता है" },
-  calendar: { en: "Academic calendar", hi: "Academic calendar" },
-  downloads: { en: "Downloads", hi: "Downloads" },
-  results: { en: "See the results", hi: "परिणाम देखें" },
-  admissions: { en: "Admissions", hi: "Admission" },
+  calendar: { en: "Academic calendar", hi: "एकेडमिक कैलेंडर" },
+  downloads: { en: "Downloads", hi: "डाउनलोड" },
+  results: { en: "See the results", hi: "रिज़ल्ट देखें" },
+  admissions: { en: "Admissions", hi: "एडमिशन" },
 } satisfies Record<string, Bilingual>;
 
 export default function AcademicsPage({ site, ctx }: SitePageProps) {
@@ -53,6 +54,7 @@ export default function AcademicsPage({ site, ctx }: SitePageProps) {
 
       {stages.length > 0 && (
         <Section n={++n} title={tr(COPY.stages, lang)}>
+          <PhotoBand src={slotPhoto(site, "academics")} />
           <ol className="grid gap-4 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none">
             {stages.map((s, i) => (
               <Reveal as="li" key={i} index={i} className="relative">

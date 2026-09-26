@@ -19,7 +19,7 @@
  */
 
 import type { ComponentType } from "react";
-import type { DemoKind, DemoSite } from "@/lib/cms/types";
+import type { DemoKind, DemoScheduleRow, DemoSite } from "@/lib/cms/types";
 import type { Bilingual } from "./bilingual";
 import { hasBi, withText } from "./bilingual";
 import { isCbseSchool } from "./disclosure";
@@ -55,6 +55,20 @@ const withUrl = <T extends { url?: string }>(list: T[] | undefined) => (list || 
 const photoCount = (s: DemoSite) =>
   (s.photos || []).filter((p) => p.src).length + (s.gallery || []).filter((g) => g.src).length;
 
+/**
+ * The rows of a timetable that carry a time. A timetable with no times is no
+ * data: a duplicate clears every `time` (templates/fromTemplate.ts, because a
+ * clock time is the institute's fact), and a table of batch names with no
+ * hours is not a timetable. Every reader of a batch timetable (site.schedule)
+ * goes through this, so it disappears until times are typed in.
+ */
+export function timedRows(rows: DemoScheduleRow[] | undefined): DemoScheduleRow[] {
+  return withText(rows, "label").filter((r) => hasBi(r, "time"));
+}
+
+/** True when the record has a batch timetable worth printing. */
+export const hasTimetable = (s: DemoSite) => timedRows(s.schedule).length > 0;
+
 /** A notice is live until its ISO `expires` date has passed. */
 export function liveNotices(site: DemoSite, today: string) {
   return withText(site.notices, "title").filter((x) => !x.expires || x.expires >= today);
@@ -70,7 +84,7 @@ export const SCHOOL_PAGES: SitePageDef<SchoolPageId>[] = [
   { id: "about", path: "about", label: L("About", "हमारे बारे में"), nav: "main", footer: "institute", built: true,
     has: (s) => hasBi(s, "about") || hasBi(s, "principalMessage") || hasBi(s, "vision"),
     load: () => import("@/pages/site/school/AboutPage") },
-  { id: "admissions", path: "admissions", label: L("Admissions", "Admission"), nav: "main", footer: "admissions", built: true,
+  { id: "admissions", path: "admissions", label: L("Admissions", "एडमिशन"), nav: "main", footer: "admissions", built: true,
     has: () => true, load: () => import("@/pages/site/school/AdmissionsPage") },
   { id: "academics", path: "academics", label: L("Academics", "पढ़ाई"), nav: "main", footer: "resources", built: true,
     has: (s) => n(s.academics?.stages) > 0 || hasBi(s.academics, "intro") || n(s.courses) > 0,
@@ -79,7 +93,7 @@ export const SCHOOL_PAGES: SitePageDef<SchoolPageId>[] = [
     has: (s) => n(withText(s.courses, "name")) > 0, load: () => import("@/pages/site/school/ProgrammesPage") },
   { id: "faculty", path: "faculty", label: L("Faculty", "शिक्षक"), nav: "main", footer: "institute", built: true,
     has: (s) => n(withText(s.faculty, "name")) > 0, load: () => import("@/pages/site/school/FacultyPage") },
-  { id: "facilities", path: "facilities", label: L("Campus", "Campus"), nav: "main", footer: "institute", built: true,
+  { id: "facilities", path: "facilities", label: L("Campus", "कैंपस"), nav: "main", footer: "institute", built: true,
     has: (s) => n(s.facilities) + n(s.facilityDetails) >= 2, load: () => import("@/pages/site/school/FacilitiesPage") },
   { id: "boarding", path: "boarding", label: L("Boarding", "हॉस्टल"), nav: "main", footer: "institute", built: true,
     has: (s) => n(s.boarding?.houses) + n(s.boarding?.routine) + n(s.boarding?.topics) > 0,
@@ -88,7 +102,7 @@ export const SCHOOL_PAGES: SitePageDef<SchoolPageId>[] = [
     has: (s) => n(withText(s.safety, "title")) >= 2, load: () => import("@/pages/site/school/SafetyPage") },
   { id: "student-life", path: "student-life", label: L("Student life", "छात्र जीवन"), nav: "main", footer: "institute", built: true,
     has: (s) => n(withText(s.studentLife, "title")) >= 2, load: () => import("@/pages/site/school/StudentLifePage") },
-  { id: "results", path: "results", label: L("Results", "परिणाम"), nav: "main", footer: "resources", built: true,
+  { id: "results", path: "results", label: L("Results", "रिज़ल्ट"), nav: "main", footer: "resources", built: true,
     has: (s) => n(s.results) + n(s.boardResults) > 0, load: () => import("@/pages/site/school/ResultsPage") },
   { id: "gallery", path: "gallery", label: L("Gallery", "गैलरी"), nav: "main", footer: "resources", built: true,
     has: (s) => photoCount(s) >= 4, load: () => import("@/pages/site/school/GalleryPage") },
@@ -97,7 +111,7 @@ export const SCHOOL_PAGES: SitePageDef<SchoolPageId>[] = [
   { id: "parents", path: "parents", label: L("Parents", "अभिभावक"), nav: "footer", footer: "resources", built: true,
     has: (s) => n(withUrl(s.portalLinks)) + n(s.academics?.calendar) + n(withUrl(s.downloads)) > 0,
     load: () => import("@/pages/site/school/ParentsPage") },
-  { id: "transport", path: "transport", label: L("Transport", "Transport"), nav: "footer", footer: "admissions", built: true,
+  { id: "transport", path: "transport", label: L("Transport", "ट्रांसपोर्ट"), nav: "footer", footer: "admissions", built: true,
     has: (s) => n(s.transport?.routes) > 0 || !!(s.contact?.transportDesk || "").trim(),
     load: () => import("@/pages/site/school/TransportPage") },
   { id: "disclosure", path: "disclosure", label: L("Mandatory Disclosure", "अनिवार्य सार्वजनिक जानकारी"), nav: "footer", footer: "legal", built: true, still: true,
@@ -135,7 +149,7 @@ export const COACHING_PAGES: SitePageDef<CoachingPageId>[] = [
     has: (s) => hasBi(s.scholarship, "date"), load: () => import("@/pages/site/coaching/ScholarshipPage") },
   { id: "exam-calendar", path: "exam-calendar", label: L("Exam calendar", "परीक्षा कैलेंडर"), nav: "main", footer: "resources", built: true,
     has: (s) => n(s.govExams?.calendar) > 0, load: () => import("@/pages/site/coaching/ExamCalendarPage") },
-  { id: "cut-offs", path: "cut-offs", label: L("Previous cut-offs", "पिछले cut-off"), nav: "main", footer: "resources", built: true,
+  { id: "cut-offs", path: "cut-offs", label: L("Previous cut-offs", "पिछले कट-ऑफ"), nav: "main", footer: "resources", built: true,
     has: (s) => n(s.govExams?.cutoffs) > 0, load: () => import("@/pages/site/coaching/CutOffsPage") },
   { id: "olympiad", path: "olympiad", label: L("Olympiad", "ओलंपियाड"), nav: "main", footer: "resources", built: true,
     has: (s) => n(withText(s.olympiad?.exams, "title")) > 0, load: () => import("@/pages/site/coaching/OlympiadPage") },

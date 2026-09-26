@@ -65,7 +65,7 @@ const RECORD: { term: string; detail: string }[] = [
   {
     term: "GST",
     detail:
-      "Not registered. Invoices are non-GST and say so on their face, so the amount quoted is the amount payable. If your institution needs a GST invoice, ask on the first call and you will get a straight answer.",
+      "Not registered. Invoices are non-GST and say so on their face, so the amount quoted is the amount payable. If your business needs a GST invoice, ask on the first call and you will get a straight answer.",
   },
   {
     term: "Who signs",

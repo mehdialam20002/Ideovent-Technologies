@@ -60,13 +60,13 @@ const clean = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
  */
 const LABEL_KEYS = new Set(["group", "category", "audience"]);
 export const LABEL_WORDS: Record<string, string> = {
-  parents: "अभिभावक", families: "परिवार", students: "स्टूडेंट्स", teachers: "शिक्षक",
-  leadership: "प्रबंधन", alumni: "पुराने स्टूडेंट्स",
+  parents: "अभिभावक", families: "परिवार", students: "छात्र", teachers: "शिक्षक",
+  leadership: "प्रबंधन", alumni: "पुराने छात्र",
   lists: "सूची", policies: "नियम", learning: "पढ़ाई", academics: "पढ़ाई",
   subjects: "विषय", timings: "समय", exams: "परीक्षाएँ", "getting here": "यहाँ कैसे पहुँचें",
-  "about us": "हमारे बारे में", "first class": "पहली class", "previous papers": "पिछले साल के paper",
-  "model papers": "Model paper", "sample papers": "Sample paper", boarding: "हॉस्टल",
-  menu: "खाने का menu", "before term": "Term से पहले", general: "सामान्य",
+  "about us": "हमारे बारे में", "first class": "पहली क्लास", "previous papers": "पिछले साल के पेपर",
+  "model papers": "मॉडल पेपर", "sample papers": "सैंपल पेपर", boarding: "हॉस्टल",
+  menu: "खाने का मेन्यू", "before term": "टर्म से पहले", general: "सामान्य",
   care: "देखभाल", olympiad: "ओलंपियाड", olympiads: "ओलंपियाड",
   sports: "खेल", safety: "सुरक्षा", health: "सेहत", events: "कार्यक्रम", campus: "कैंपस",
   classrooms: "क्लासरूम", celebrations: "त्योहार और उत्सव", "annual day": "वार्षिक उत्सव",
@@ -92,6 +92,23 @@ export function bi<T extends object>(obj: T | null | undefined, key: keyof T & s
 /** True when the field has text in either language. Use it in page predicates. */
 export function hasBi<T extends object>(obj: T | null | undefined, key: keyof T & string): boolean {
   return !!bi(obj, key, "en");
+}
+
+const HI_MONTHS: Record<string, string> = {
+  january: "जनवरी", february: "फ़रवरी", march: "मार्च", april: "अप्रैल", may: "मई", june: "जून",
+  july: "जुलाई", august: "अगस्त", september: "सितंबर", october: "अक्टूबर", november: "नवंबर", december: "दिसंबर",
+};
+
+/**
+ * A free-text date such as "29 August 2026" (a blog post's date, the exam
+ * calendar's "updated" line) in the reader's language. Only a plain
+ * "day Month year" or "Month year" is rewritten, month name only; anything
+ * else stays as typed.
+ */
+export function dateIn(s: string | undefined, lang: DemoLang): string {
+  const v = clean(s);
+  if (lang !== "hi" || !/^(\d{1,2} )?[A-Za-z]+ \d{4}$/.test(v)) return v;
+  return v.replace(/[A-Za-z]+/, (m) => HI_MONTHS[m.toLowerCase()] || m);
 }
 
 /** True when a string contains Devanagari. The leak detector's test. */

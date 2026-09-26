@@ -10,6 +10,7 @@ import { bi, hasBi, tr, withText, type Bilingual } from "@/lib/demo/site/bilingu
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { Timeline } from "@/lib/demo/ui/school/Timeline";
+import { slotPhoto, PhotoBand } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
 import { Card, CardGrid, Section } from "../kit/Section";
@@ -40,6 +41,7 @@ export default function ProgrammesPage({ site, ctx }: SitePageProps) {
 
       {bands.length > 0 && (
         <Section n={++n} title={tr(COPY.bands, lang)}>
+          <PhotoBand src={slotPhoto(site, "academics")} />
           <CardGrid cols={bands.length >= 4 ? 4 : 3}>
             {bands.map((c, i) => (
               <Reveal key={i} index={i}>

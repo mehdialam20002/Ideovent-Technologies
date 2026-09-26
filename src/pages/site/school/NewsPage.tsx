@@ -9,12 +9,11 @@
 
 import { useState } from "react";
 import { ExternalLink, Pin } from "lucide-react";
-import { demoDate } from "@/lib/demo/record";
 import { hasBi, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { FilterChips, useFlipList } from "@/lib/demo/ui/school/filter";
-import { lastPosted, sortedNotices } from "@/lib/demo/ui/school/shared";
+import { demoDateIn, lastPosted, sortedNotices } from "@/lib/demo/ui/school/shared";
 import { PageHead } from "../kit/Hero";
 import { Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
@@ -22,7 +21,7 @@ import { Action, Bi } from "../kit/Text";
 const COPY = {
   title: { en: "Notices and events", hi: "सूचनाएँ और कार्यक्रम" },
   lead: { en: "Everything current, newest first. Old notices come down on their own.", hi: "जो अभी लागू है, नया सबसे ऊपर। पुरानी सूचनाएँ अपने आप हट जाती हैं।" },
-  board: { en: "The board", hi: "Notice board" },
+  board: { en: "The board", hi: "नोटिस बोर्ड" },
   all: { en: "All", hi: "सभी" },
   notices: { en: "Notices", hi: "सूचनाएँ" },
   events: { en: "Events", hi: "कार्यक्रम" },
@@ -52,7 +51,7 @@ export default function NewsPage({ site, ctx }: SitePageProps) {
     <>
       <PageHead title={tr(COPY.title, lang)} lead={tr(COPY.lead, lang)}
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.title, lang) }]}>
-        {updated && <p className="ds-num mt-4 text-sm opacity-80">{trf(SHELL_COPY.lastUpdated, lang, { date: demoDate(updated, site.market) })}</p>}
+        {updated && <p className="ds-num mt-4 text-sm opacity-80">{trf(SHELL_COPY.lastUpdated, lang, { date: demoDateIn(updated, site.market, lang) })}</p>}
       </PageHead>
 
       {list.length > 0 && (
@@ -70,7 +69,7 @@ export default function NewsPage({ site, ctx }: SitePageProps) {
             {shown.map(({ x, k, kind }) => (
               <li key={k} data-k={k} className="ds-card grid gap-2 p-5 sm:grid-cols-[11rem_1fr] sm:gap-6">
                 <div className="flex flex-wrap items-center gap-2 sm:block">
-                  <p className="ds-num font-semibold text-[hsl(var(--ds-accent))]">{hasBi(x, "date") ? <Bi of={x} k="date" /> : x.posted ? demoDate(x.posted, site.market) : ""}</p>
+                  <p className="ds-num font-semibold text-[hsl(var(--ds-accent))]">{hasBi(x, "date") ? <Bi of={x} k="date" /> : x.posted ? demoDateIn(x.posted, site.market, lang) : ""}</p>
                   <p className="text-sm text-[hsl(var(--ds-ink-soft))] sm:mt-1">{tr(kind === "event" ? COPY.events : COPY.notices, lang)}</p>
                   {x.pinned && <p className="inline-flex items-center gap-1 text-sm font-semibold sm:mt-1"><Pin className="h-3.5 w-3.5" aria-hidden="true" />{tr(COPY.pinned, lang)}</p>}
                 </div>
@@ -78,7 +77,7 @@ export default function NewsPage({ site, ctx }: SitePageProps) {
                   <Bi of={x} k="title" as="h3" className="ds-display text-xl leading-snug" />
                   <Bi of={x} k="body" as="p" className="mt-2 max-w-prose text-[hsl(var(--ds-ink-soft))]" />
                   <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                    {x.expires && <span className="ds-num text-[hsl(var(--ds-ink-soft))]">{trf(COPY.until, lang, { date: demoDate(x.expires, site.market) })}</span>}
+                    {x.expires && <span className="ds-num text-[hsl(var(--ds-ink-soft))]">{trf(COPY.until, lang, { date: demoDateIn(x.expires, site.market, lang) })}</span>}
                     {(x.url || "").trim() && (
                       <a href={x.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold underline underline-offset-4">
                         {tr(COPY.more, lang)}<ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />

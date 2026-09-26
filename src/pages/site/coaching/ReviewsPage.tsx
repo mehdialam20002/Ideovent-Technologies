@@ -17,13 +17,14 @@ import { Chips } from "@/lib/demo/ui/coaching/Chips";
 import { C_COPY } from "@/lib/demo/ui/coaching/copy";
 import { distinct, useFilter } from "@/lib/demo/ui/coaching/filter";
 import { PageHead } from "../kit/Hero";
+import { SampleNote } from "../kit/SampleNote";
 import { CardGrid, Section } from "../kit/Section";
 import { Action } from "../kit/Text";
 
 const COPY = {
-  title: { en: "What parents and students say", hi: "अभिभावक और students क्या कहते हैं" },
+  title: { en: "What parents and students say", hi: "अभिभावक और छात्र क्या कहते हैं" },
   lead: { en: "Published with each person's permission.", hi: "हर व्यक्ति की अनुमति से प्रकाशित।" },
-  reviews: { en: "Reviews", hi: "Reviews" },
+  reviews: { en: "Reviews", hi: "रिव्यू" },
   kind: { en: "Show", hi: "दिखाएँ" },
 } satisfies Record<string, Bilingual>;
 
@@ -44,6 +45,7 @@ export default function ReviewsPage({ site, ctx }: SitePageProps) {
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.reviews, lang) }]}
       >
         <div className="mt-3"><RatingLine /></div>
+        <SampleNote block="reviews" className="mt-3" />
       </PageHead>
       <Section n={1} title={tr(COPY.reviews, lang)}>
         <Chips label={tr(COPY.kind, lang)} value={f.value} onChange={f.choose}

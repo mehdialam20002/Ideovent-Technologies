@@ -76,3 +76,29 @@
 @media (prefers-reduced-motion: reduce) {
   .dsc-check[data-draw] path { transition: none; stroke-dashoffset: 0; }
 }
+
+/* ── Photo frames per family (section photos, bands, the hero frame) ── */
+.dsc-frame { background: hsl(var(--ds-surface-2)); }
+.ds-site[data-family="classic"] .dsc-frame { border-radius: 0; outline: 1px solid hsl(var(--ds-rule)); outline-offset: 6px; }
+.ds-site[data-family="modern"] .dsc-frame { border-radius: var(--ds-radius); }
+.ds-site[data-family="warm"] .dsc-frame { border-radius: calc(var(--ds-radius) + 12px); }
+.dsc-band { aspect-ratio: 16 / 9; }
+@media (min-width: 768px) { .dsc-band { aspect-ratio: 21 / 9; } }
+
+/* ── Hero photos ── */
+/* modern b: the photo fills the hero; the scrim is the hero ground at 0.84 on
+   a phone (text runs the full width) and a left-heavy gradient on a desktop,
+   so the text column sits on at least 0.8 of the ground: cream text measures
+   5.4:1 or more even over a white pixel. */
+.dsc-hero-scrim { background: hsl(var(--ds-hero-bg) / 0.84); }
+@media (min-width: 1024px) {
+  .dsc-hero-scrim { background: linear-gradient(to right, hsl(var(--ds-hero-bg) / 0.9) 0%, hsl(var(--ds-hero-bg) / 0.86) 52%, hsl(var(--ds-hero-bg) / 0.3) 100%); }
+}
+/* warm a: the rounded frame, with a marigold tile set behind it. */
+.dsc-hero-frame { position: relative; }
+.dsc-hero-frame::before {
+  content: ""; position: absolute; inset: 18px -14px -14px 18px; border-radius: calc(var(--ds-radius) + 16px);
+  background: hsl(var(--ds-cta)); z-index: 0;
+}
+.dsc-hero-frame > * { position: relative; z-index: 1; border-radius: calc(var(--ds-radius) + 16px); }
+@media (max-width: 639px) { .dsc-hero-frame::before { inset: 12px -8px -8px 12px; } }

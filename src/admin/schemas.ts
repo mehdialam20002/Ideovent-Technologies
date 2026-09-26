@@ -442,7 +442,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
         { name: "feeNote", label: "Fee note", type: "text", placeholder: "per year, payable in three instalments" },
         { name: "detail", label: "One or two lines", type: "textarea", full: true },
       ] },
-      { name: "faculty", label: "Faculty", type: "array", full: true, help: "In coaching the teacher is the product, so this section sits early. A photograph renders ONLY when consent is ticked.", itemFields: [
+      { name: "faculty", label: "Faculty", type: "array", full: true, help: "In coaching the teacher is the product, so this section sits early. A teacher's own photograph renders ONLY when consent is ticked. A stock portrait from the library (set in the Photos panel) needs no consent: it is a licensed model, not their teacher.", itemFields: [
         { name: "name", label: "Name", type: "text", full: true },
         { name: "subject", label: "Subject", type: "text" },
         { name: "qualification", label: "Qualification", type: "text", placeholder: "M.Sc. Physics, Delhi University", help: "Their own line, copied. Never upgraded to something that sounds better." },
@@ -491,17 +491,19 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
 
       /* ── Pictures ───────────────────────────────────────────────────── */
       { name: "logo", label: "Their logo", type: "image", full: true, help: "Only a file you actually have. Never linked from their own site: the build fails on a hotlink, and a logo served from their server disappears the day they notice." },
-      { name: "heroImage", label: "Hero image", type: "image", full: true, help: "A photograph of THEIR building, if they gave you one. Never a stock photograph of somebody else’s campus standing in for theirs." },
-      { name: "gallery", label: "Gallery", type: "array", full: true, help: "Only images you actually have. An empty gallery is a designed state; a gallery of stock classrooms is a lie with pictures.", itemFields: mediaFields },
+      /* heroImage is edited in the Photos panel at the top of the form
+         (src/admin/DemoPhotoSlots.tsx), with the section photos and the
+         faculty portraits. */
+      { name: "gallery", label: "Gallery (captions and files)", type: "array", full: true, help: "Stock photos from the template are marked in the Photos panel above. Replace them with the institute's own files before the demo goes out: a stock classroom must never be captioned as their campus.", itemFields: mediaFields },
 
       /* ── Their own contact details ──────────────────────────────────── */
-      { name: "contact", label: "Their contact details", type: "group", full: true, fields: [
-        { name: "phone", label: "Phone, as they print it", type: "text", placeholder: "+91 98765 43210", help: "COPIED FROM THEIR OWN SITE OR SIGNBOARD, OR LEFT EMPTY. Never a plausible number, never one digit changed, never “probably”. A wrong number here is published on a page a parent believes is the school’s, and the calls go to a real stranger. Empty prints an obvious placeholder instead." },
-        { name: "whatsapp", label: "WhatsApp, digits only", type: "text", placeholder: "919876543210", help: "With the country code, no spaces or plus. Same rule: theirs, or empty." },
-        { name: "email", label: "Email", type: "text", help: "Theirs, copied. Not a guess at the pattern." },
+      { name: "contact", label: "Their contact details: add from their own website", type: "group", full: true, fields: [
+        { name: "phone", label: "Phone, as they print it", type: "text", placeholder: "Add from their own website", help: "COPIED FROM THEIR OWN SITE OR SIGNBOARD, OR LEFT EMPTY. Never a plausible number, never one digit changed, never “probably”. A wrong number here is published on a page a parent believes is the school’s, and the calls go to a real stranger. Empty leaves the phone row off the pages." },
+        { name: "whatsapp", label: "WhatsApp, digits only", type: "text", placeholder: "Add from their own website", help: "With the country code, no spaces or plus. Same rule: theirs, or empty." },
+        { name: "email", label: "Email", type: "text", placeholder: "Add from their own website", help: "Theirs, copied. Not a guess at the pattern." },
         { name: "addressLines", label: "Address", type: "stringlist", full: true, help: "One line per line, exactly as they write it." },
         { name: "hours", label: "Office hours", type: "text", full: true, placeholder: "Mon to Sat, 9 am to 7 pm" },
-        { name: "mapUrl", label: "Map link", type: "text", full: true, help: "Their own maps listing. Not a pin you dropped." },
+        { name: "mapUrl", label: "Map link", type: "text", full: true, placeholder: "Add from their own website", help: "Their own maps listing. Not a pin you dropped." },
         { name: "mapQuery", label: "Map search, if there is no link", type: "text", full: true, placeholder: "Holy Cross School, Patna", help: "Used to build a “find us” search when there is no listing. A search rather than a pin on purpose: a guessed pin puts a school on a stranger’s roof." },
       ] },
       { name: "officialWebsite", label: "Their real website", type: "text", full: true, placeholder: "https://…", help: "The demo marker links to it, so anyone who lands here by accident can reach the actual institute in one click instead of mistaking this page for it. Leave empty if they have none; the marker then says so." },

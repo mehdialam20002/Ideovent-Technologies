@@ -1,7 +1,7 @@
 /**
  * COURSES INDEX. /courses
  *
- *   head      title, lead
+ *   head      title, lead, then the `courses` section photo as a wide band
  *   filter    goal chips (by category) with the filter transition, when 2+
  *   grid      one card per course: name, band, duration, mode, next batch,
  *             fee (a cleared fee prints "Fee on call"), linking to its page
@@ -17,6 +17,7 @@
 import { Helmet } from "react-helmet-async";
 import { bi, biLabel, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import { courseSlug, type SitePageProps } from "@/lib/demo/site/context";
+import { timedRows } from "@/lib/demo/site/pages";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { demoFee } from "@/lib/demo/record";
 import { Chips } from "@/lib/demo/ui/coaching/Chips";
@@ -24,14 +25,15 @@ import { distinct, useFilter } from "@/lib/demo/ui/coaching/filter";
 import { DataTable } from "@/lib/demo/ui/coaching/Table";
 import { C_COPY, startsWithNumber } from "@/lib/demo/ui/coaching/copy";
 import { PageHead } from "../kit/Hero";
+import { PhotoBand } from "@/lib/demo/ui/coaching/photos";
 import { SiteLink } from "../kit/motion";
 import { Card, CardGrid, Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Courses and fees", hi: "कोर्स और फीस" },
-  lead: { en: "Every course with its duration, timings and fee. Open a course for the syllabus, the teachers and the instalments.", hi: "हर कोर्स की अवधि, समय और फीस। Syllabus, टीचर्स और किस्तों के लिए कोर्स खोलें।" },
-  leadOne: { en: "Every class with its subjects, timings and monthly fee.", hi: "हर class के विषय, समय और महीने की फीस।" },
+  lead: { en: "Every course with its duration, timings and fee. Open a course for the syllabus, the teachers and the instalments.", hi: "हर कोर्स की अवधि, समय और फीस। सिलेबस, टीचर्स और किस्तों के लिए कोर्स खोलें।" },
+  leadOne: { en: "Every class with its subjects, timings and monthly fee.", hi: "हर क्लास के विषय, समय और महीने की फीस।" },
   goal: { en: "Goal", hi: "लक्ष्य" },
   all: { en: "All courses", hi: "सभी कोर्स" },
   compare: { en: "Compare courses", hi: "कोर्स की तुलना" },
@@ -42,11 +44,11 @@ const COPY = {
   fee: { en: "Fee", hi: "फीस" },
   subjects: { en: "Subjects", hi: "विषय" },
   feeOnCall: { en: "Fee on call, printed on the receipt", hi: "फीस फ़ोन पर, रसीद पर लिखी होगी" },
-  starts: { en: "Next batch {date}", hi: "अगला batch {date}" },
-  seats: { en: "{n} seats a batch", hi: "एक batch में {n} seats" },
-  view: { en: "Syllabus, teachers and fee", hi: "Syllabus, टीचर्स और फीस" },
-  timetable: { en: "Batch timings", hi: "Batch का समय" },
-  batch: { en: "Batch", hi: "Batch" },
+  starts: { en: "Next batch {date}", hi: "अगला बैच {date}" },
+  seats: { en: "{n} seats a batch", hi: "एक बैच में {n} सीटें" },
+  view: { en: "Syllabus, teachers and fee", hi: "सिलेबस, टीचर्स और फीस" },
+  timetable: { en: "Batch timings", hi: "बैच का समय" },
+  batch: { en: "Batch", hi: "बैच" },
   days: { en: "Days", hi: "दिन" },
   time: { en: "Time", hi: "समय" },
   subject: { en: "Subject", hi: "विषय" },
@@ -60,7 +62,8 @@ export default function CoursesPage({ site, ctx }: SitePageProps) {
   const shown = f.value === "all" ? courses : courses.filter((c) => (c.category || "").trim() === f.value);
   const perCourse = courses.some((c) => ctx.href("course", courseSlug(c)));
   const demo = ctx.href("demo-class") || ctx.href("contact");
-  const schedule = withText(site.schedule, "label");
+  /* No times, no timetable: see timedRows. */
+  const schedule = timedRows(site.schedule);
   let n = 0;
 
   return (
@@ -73,6 +76,7 @@ export default function CoursesPage({ site, ctx }: SitePageProps) {
       >
         {demo && <div className="mt-6"><Action href={demo}>{tr(SHELL_COPY.bookDemo, lang)}</Action></div>}
       </PageHead>
+      <PhotoBand slot="courses" className="pt-8 sm:pt-10" />
 
       <Section n={++n} title={tr(COPY.all, lang)}>
         <Chips label={tr(COPY.goal, lang)} value={f.value} onChange={f.choose}

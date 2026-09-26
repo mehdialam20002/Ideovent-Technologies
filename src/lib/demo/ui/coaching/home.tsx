@@ -17,6 +17,7 @@ import type { DemoCourse, DemoNotice, DemoSite, DemoStat } from "@/lib/cms/types
 import { bi, biLabel, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import { courseSlug, useSite } from "@/lib/demo/site/context";
 import { CountUp, Reveal, SiteLink } from "@/pages/site/kit/motion";
+import { SampleNote } from "@/pages/site/kit/SampleNote";
 import { Figure, Section } from "@/pages/site/kit/Section";
 import { Bi } from "@/pages/site/kit/Text";
 import { startsWithNumber } from "./copy";
@@ -24,13 +25,13 @@ import "./coaching.css";
 
 const COPY = {
   preparing: { en: "I am preparing for", hi: "मैं तैयारी कर रहा हूँ" },
-  nextBatches: { en: "Next batches", hi: "अगले batches" },
-  nextExams: { en: "Next exams", hi: "आने वाले exams" },
+  nextBatches: { en: "Next batches", hi: "अगले बैच" },
+  nextExams: { en: "Next exams", hi: "आने वाले एग्ज़ाम" },
   starts: { en: "Starts", hi: "शुरू" },
-  examDate: { en: "Exam", hi: "Exam" },
-  notification: { en: "Notification", hi: "Notification" },
-  notices: { en: "Notice board", hi: "Notice board" },
-  fullCalendar: { en: "Full exam calendar", hi: "पूरा exam calendar" },
+  examDate: { en: "Exam", hi: "एग्ज़ाम" },
+  notification: { en: "Notification", hi: "नोटिफ़िकेशन" },
+  notices: { en: "Notice board", hi: "नोटिस बोर्ड" },
+  fullCalendar: { en: "Full exam calendar", hi: "पूरा एग्ज़ाम कैलेंडर" },
   allCourses: { en: "All courses", hi: "सभी कोर्स" },
 } satisfies Record<string, Bilingual>;
 
@@ -190,7 +191,11 @@ export function NoticeStrip() {
 }
 
 /** Aggregate figures, each with its basis line. Modern: a dark full-bleed band. */
-export function ResultsBand({ n, title, stats, children }: { n: number; title: string; stats: DemoStat[]; children?: ReactNode }) {
+export function ResultsBand({ n, title, stats, children, sample = true }: {
+  n: number; title: string; stats: DemoStat[]; children?: ReactNode;
+  /** False where the page head already carries the sample line. */
+  sample?: boolean;
+}) {
   const { family, lang } = useSite();
   if (!stats.length && !children) return null;
   if (family === "modern") {
@@ -198,6 +203,7 @@ export function ResultsBand({ n, title, stats, children }: { n: number; title: s
       <section className="dsc-band-dark">
         <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <h2 className="ds-display text-3xl sm:text-4xl">{title}</h2>
+          {sample && <SampleNote block="results" className="mt-3" onDark />}
           {stats.length > 0 && (
             <div className="mt-10 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
               {stats.map((s, i) => (
@@ -216,6 +222,7 @@ export function ResultsBand({ n, title, stats, children }: { n: number; title: s
   }
   return (
     <Section n={n} title={title}>
+      {sample && <SampleNote block="results" className="mb-6" />}
       {stats.length > 0 && (
         <div className={`grid gap-8 sm:grid-cols-2 ${family === "classic" ? "" : "lg:grid-cols-4"}`}>
           {stats.map((s, i) => <Figure key={i} value={s.value} label={<Bi of={s} k="label" />} basis={bi(s, "basis", lang)} />)}

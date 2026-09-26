@@ -116,7 +116,8 @@ function WorkCard({ project: p }: { project: Project }) {
 }
 
 export default function WorkShowcase() {
-  const featured = useCollection("projects").filter((p) => p.featured);
+  const all = useCollection("projects");
+  const featured = all.filter((p) => p.featured);
 
   // No featured projects means no section. A heading over an empty grid is the
   // same titled hole the emptied testimonials array would have left if its
@@ -130,6 +131,17 @@ export default function WorkShowcase() {
   const lead = featured.find((p) => Boolean(p.coverImage));
   const rest = (lead ? featured.filter((p) => p.id !== lead.id) : featured).slice(0, 3);
   const leadAddress = host(lead?.liveUrl);
+
+  // SOFTWARE, 26 Sep 2026. The four featured cards are all consumer sites, and a
+  // founder or a firm that wants busywork taken off its team needs to see
+  // software too. HRMS Lite and Lead CRM are verified paid client projects
+  // (_assets/FACTS.md). Picked by id, not by the `featured` flag, so the four
+  // sites above keep their slots. They carry no live link on purpose: signed
+  // out, both are a login box (see noLiveUrlReason in seed.ts), so the cards
+  // go to the case studies, which say exactly what each one does.
+  const software = ["hrms-lite", "lead-crm"]
+    .map((id) => all.find((p) => p.id === id))
+    .filter((p): p is Project => Boolean(p));
 
   return (
     <section
@@ -148,7 +160,7 @@ export default function WorkShowcase() {
         <Reveal>
           <div className="flex flex-col gap-5 border-t-2 border-secondary/70 pt-8 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
-              <Eyebrow>Sites we have built</Eyebrow>
+              <Eyebrow>What we have built</Eyebrow>
               {/* The serif italic accent, one of exactly two on this page. See
                   _assets/DESIGN-DIRECTION.md §1: one or two words, never a whole
                   line. The rest of the headline is Sora 300, so the accent is
@@ -157,19 +169,19 @@ export default function WorkShowcase() {
                 Go and look at the <span className="accent-italic text-gradient">actual thing</span>.
               </h2>
             </div>
-            {/* HOMEPAGE-COPY-DECK.md section 5. The HighQ line names the one
+            {/* HOMEPAGE-COPY-DECK-V2.md A5. The HighQ line names the one
                 coaching build without linking it: highqclasses.ideovent.com does
-                not open yet. On the day it does, give the project a liveUrl,
-                feature it and put it first (seed.ts `projects`). */}
+                not open yet. On the day it does, give the project a liveUrl and
+                feature it after the four live sites (seed.ts `projects`). */}
             <div className="max-w-md md:pb-2">
               <p className="text-sm text-muted-foreground text-pretty">
-                Each card is a real site we built. The address is printed on it. Open it in
-                another tab and judge it for yourself.
+                Each site card shows the real address. Open it in another tab and judge it
+                for yourself. Below them is the software we built for teams.
               </p>
               <p className="mt-3 text-sm text-muted-foreground text-pretty">
-                Run a coaching institute? We built the website and admin panel for HighQ
-                Classes. Its address is being moved, so for now we show it to you on a call
-                instead of linking to a page that does not open.
+                Run a school or coaching institute? We built the website and admin panel for
+                HighQ Classes, and we can show you a sample site made for yours. HighQ's
+                address is being moved, so for now we show it on a call.
               </p>
             </div>
           </div>
@@ -276,6 +288,27 @@ export default function WorkShowcase() {
               </motion.div>
             ))}
           </motion.div>
+        )}
+
+        {software.length > 0 && (
+          <Reveal className="mt-12 lg:mt-16">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="sm:col-span-2 lg:col-span-1 lg:pr-4 lg:pt-2">
+                <Eyebrow>Software we have built</Eyebrow>
+                <h3 className="mt-4 font-display text-xl font-semibold leading-snug md:text-2xl">
+                  Tools a team uses every day
+                </h3>
+                <p className="mt-3 text-sm text-muted-foreground text-pretty">
+                  An HR system and a lead CRM, built for clients. Both hold other people's
+                  names and numbers and sit behind a login, so there is no public screenshot.
+                  The case study says what each one does, and what we cannot claim.
+                </p>
+              </div>
+              {software.map((p) => (
+                <WorkCard key={p.id} project={p} />
+              ))}
+            </div>
+          </Reveal>
         )}
 
         <Reveal className="mt-10">

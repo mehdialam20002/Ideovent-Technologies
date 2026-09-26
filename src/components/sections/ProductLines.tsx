@@ -29,7 +29,7 @@ export default function ProductLines() {
   const internship = useSingleton("internship");
 
   /* HOMEPAGE-COPY-DECK.md section 10 (26 Sep 2026): the LaunchPad card leaves
-     the home page. A principal reading about their admissions has no use for an
+     the home page. An owner reading about their business has no use for an
      internship card; it keeps its own page (/internship) and its footer link.
      Mehdi decides (deck decision 6): set this to true to bring it back, and the
      heading and side line below switch back to the two-card wording. */
@@ -91,15 +91,15 @@ export default function ProductLines() {
                 </h2>
               ) : (
                 <h2 className="mt-5 text-display font-display font-thin-display">
-                  School software,{" "}
-                  <span className="font-loud-display">when you are ready for it</span>
+                  For schools and coaching:{" "}
+                  <span className="font-loud-display">EduFlow</span>
                 </h2>
               )}
             </div>
             <p className="max-w-md text-sm text-muted-foreground text-pretty md:pb-2">
               {SHOW_LAUNCHPAD
                 ? "One is software for schools, still in development. One is an internship we teach. Both are described exactly as they stand today."
-                : "For the office work a website does not cover: fees, attendance and parent updates. The card below says exactly where it stands today."}
+                : "Fees, attendance and parent updates in one place, for schools and coaching institutes. It is still in development. The card below says exactly where it stands."}
             </p>
           </div>
         </Reveal>

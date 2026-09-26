@@ -12,8 +12,13 @@
  *   programmes  stages or age bands, linked to Academics or Programmes
  *   highlight   board results (safety facts for a play school)
  *   life        boarding or student-life teaser
+ *   teachers    up to four teachers with photos, in the family's frame
  *   explore     tiles that link to the pages that prove each claim
- *   facilities, gallery of six (real photos only), testimonials (consented)
+ *   facilities, gallery of six (photos not already on this page),
+ *               testimonials (consented)
+ * Photos: the hero (ui/school/hero.tsx), an academics band over the
+ * programmes, the campus photo beside the facilities, the hostel photo beside
+ * boarding. Each only when the record holds it.
  *   visit       the closing admissions band: status, Apply, Call, WhatsApp, map
  */
 
@@ -23,24 +28,28 @@ import type { SiteContext, SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import type { SchoolPageId } from "@/lib/demo/site/pageSets";
 import { admissionStatus, clean, freshNotices, schoolPhotos, Str } from "@/lib/demo/ui/school/shared";
-import { Hero } from "../kit/Hero";
+import { People } from "@/lib/demo/ui/school/people";
+import { photoAlt, slotPhoto, PhotoBand, WithPhoto } from "@/lib/demo/ui/school/photos";
+import { SchoolHero } from "@/lib/demo/ui/school/hero";
+import { facultyPhotoSrc } from "@/lib/demo/images";
 import { ArrowRight } from "lucide-react";
 import { Reveal, SiteLink } from "../kit/motion";
+import { SampleNote } from "../kit/SampleNote";
 import { Card, CardGrid, Figure, Section } from "../kit/Section";
 import { Action, Bi, Photo } from "../kit/Text";
 
 const COPY = {
-  visit: { en: "Visit the school", hi: "School देखने आएँ" },
+  visit: { en: "Visit the school", hi: "स्कूल देखने आएँ" },
   proof: { en: "In figures", hi: "आँकड़ों में" },
-  notices: { en: "Notice board", hi: "Notice board" },
+  notices: { en: "Notice board", hi: "नोटिस बोर्ड" },
   allNotices: { en: "All notices and events", hi: "सभी सूचनाएँ और कार्यक्रम" },
-  about: { en: "About the school", hi: "School के बारे में" },
+  about: { en: "About the school", hi: "स्कूल के बारे में" },
   readMore: { en: "Read more about us", hi: "हमारे बारे में और पढ़ें" },
   fromHead: { en: "From the {title}", hi: "{title} की ओर से" },
-  programmes: { en: "Classes and programmes", hi: "Classes और कार्यक्रम" },
-  seeProgrammes: { en: "See every class in detail", hi: "हर class की पूरी जानकारी" },
-  results: { en: "Results", hi: "परिणाम" },
-  allResults: { en: "See the full results", hi: "पूरे परिणाम देखें" },
+  programmes: { en: "Classes and programmes", hi: "क्लास और कार्यक्रम" },
+  seeProgrammes: { en: "See every class in detail", hi: "हर क्लास की पूरी जानकारी" },
+  results: { en: "Results", hi: "रिज़ल्ट" },
+  allResults: { en: "See the full results", hi: "पूरा रिज़ल्ट देखें" },
   safety: { en: "Safety and care", hi: "सुरक्षा और देखभाल" },
   moreSafety: { en: "How we keep children safe", hi: "बच्चों की सुरक्षा कैसे होती है" },
   boarding: { en: "Boarding life", hi: "हॉस्टल की ज़िंदगी" },
@@ -48,15 +57,17 @@ const COPY = {
   life: { en: "Beyond the classroom", hi: "कक्षा के बाहर" },
   moreLife: { en: "Student life", hi: "छात्र जीवन" },
   explore: { en: "Everything a parent checks", hi: "अभिभावक जो-जो देखते हैं" },
-  facilities: { en: "On campus", hi: "Campus में" },
-  seeCampus: { en: "Tour the campus", hi: "Campus देखें" },
+  facilities: { en: "On campus", hi: "कैंपस में" },
+  seeCampus: { en: "Tour the campus", hi: "कैंपस देखें" },
   gallery: { en: "A look inside", hi: "अंदर की एक झलक" },
-  seeGallery: { en: "Open the gallery", hi: "Gallery खोलें" },
+  seeGallery: { en: "Open the gallery", hi: "गैलरी खोलें" },
   voices: { en: "What parents say", hi: "अभिभावक क्या कहते हैं" },
-  visitTitle: { en: "See an ordinary school day", hi: "School का एक आम दिन देखें" },
-  visitBody: { en: "Call or message the office to fix a time to see the school.", hi: "School देखने का समय तय करने के लिए office को call या message करें।" },
-  admissionsCard: { en: "Admissions", hi: "Admission" },
-  classesOpen: { en: "Classes", hi: "Classes" },
+  teachers: { en: "Meet the teachers", hi: "शिक्षकों से मिलिए" },
+  allTeachers: { en: "All our teachers", hi: "सभी शिक्षक" },
+  visitTitle: { en: "See an ordinary school day", hi: "स्कूल का एक आम दिन देखें" },
+  visitBody: { en: "Call or message the office to fix a time to see the school.", hi: "स्कूल देखने का समय तय करने के लिए ऑफिस को कॉल या मैसेज करें।" },
+  admissionsCard: { en: "Admissions", hi: "एडमिशन" },
+  classesOpen: { en: "Classes", hi: "क्लास" },
   nextDate: { en: "Next date", hi: "अगली तारीख" },
   continuum: { en: "The programme", hi: "कार्यक्रम" },
   latestNotice: { en: "Latest notice", hi: "ताज़ा सूचना" },
@@ -64,15 +75,15 @@ const COPY = {
 
 /** What each explore tile says about the page it links to. */
 const EXPLORE: { id: SchoolPageId; body: Bilingual }[] = [
-  { id: "academics", body: { en: "Stages, subjects and how children are assessed", hi: "Stages, विषय और मूल्यांकन का तरीका" } },
+  { id: "academics", body: { en: "Stages, subjects and how children are assessed", hi: "स्टेज, विषय और मूल्यांकन का तरीका" } },
   { id: "programmes", body: { en: "Programmes by age, and a day in the life", hi: "उम्र के हिसाब से कार्यक्रम और दिनचर्या" } },
-  { id: "results", body: { en: "Board results, year by year, in full", hi: "साल दर साल पूरे board results" } },
+  { id: "results", body: { en: "Board results, year by year, in full", hi: "साल दर साल पूरे बोर्ड रिज़ल्ट" } },
   { id: "faculty", body: { en: "The teachers, their subjects and experience", hi: "शिक्षक, उनके विषय और अनुभव" } },
   { id: "facilities", body: { en: "Rooms, grounds and everyday care", hi: "कक्षाएँ, मैदान और रोज़ की देखभाल" } },
-  { id: "boarding", body: { en: "Houses, routine, food and pastoral care", hi: "Houses, दिनचर्या, खाना और देखभाल" } },
-  { id: "safety", body: { en: "Pickup, CCTV, staff checks and first aid", hi: "Pickup, CCTV, staff जाँच और first aid" } },
-  { id: "transport", body: { en: "Bus routes, stops and timings", hi: "Bus routes, stops और समय" } },
-  { id: "parents", body: { en: "Portal, calendar and downloads", hi: "Portal, calendar और downloads" } },
+  { id: "boarding", body: { en: "Houses, routine, food and pastoral care", hi: "हाउस, दिनचर्या, खाना और देखभाल" } },
+  { id: "safety", body: { en: "Pickup, CCTV, staff checks and first aid", hi: "पिकअप, CCTV, स्टाफ जाँच और फर्स्ट एड" } },
+  { id: "transport", body: { en: "Bus routes, stops and timings", hi: "बस रूट, स्टॉप और समय" } },
+  { id: "parents", body: { en: "Portal, calendar and downloads", hi: "पोर्टल, कैलेंडर और डाउनलोड" } },
   { id: "disclosure", body: { en: "The CBSE mandatory public disclosure", hi: "CBSE की अनिवार्य सार्वजनिक जानकारी" } },
 ];
 
@@ -88,6 +99,8 @@ export default function HomePage({ site, ctx }: SitePageProps) {
   const headTitle = bi(site, "principalTitle", lang);
   const hasHead = !!(site.principalName || "").trim() && hasBi(site, "principalMessage");
   const progHref = ctx.href("academics") || ctx.href("programmes");
+  /* Teachers with a photo; three on a warm grid of three, else four. */
+  const teachers = withText(site.faculty, "name").filter((f) => facultyPhotoSrc(f)).slice(0, family === "warm" ? 3 : 4);
   let n = 0;
   return (
     <>
@@ -96,6 +109,7 @@ export default function HomePage({ site, ctx }: SitePageProps) {
 
       {!statsInHero && stats.length > 0 && (
         <Section n={++n} title={tr(COPY.proof, lang)}>
+          <SampleNote block="results" className="mb-6" />
           <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4">
             {stats.slice(0, 4).map((s, i) => (
               <Reveal key={i} index={i}><Figure value={s.value} label={bi(s, "label", lang)} basis={bi(s, "basis", lang)} /></Reveal>
@@ -146,6 +160,7 @@ export default function HomePage({ site, ctx }: SitePageProps) {
 
       {programmes.length > 0 && (
         <Section n={++n} title={tr(COPY.programmes, lang)}>
+          <PhotoBand src={slotPhoto(site, "academics")} />
           <CardGrid cols={programmes.length === 4 ? 4 : 3}>
             {programmes.map((c, i) => (
               <Reveal key={i} index={i}>
@@ -173,6 +188,7 @@ export default function HomePage({ site, ctx }: SitePageProps) {
             ))}
           </ul>
           <Bi of={site} k="resultsNote" as="p" className="mt-4 max-w-prose text-[hsl(var(--ds-ink-soft))]" />
+          <SampleNote block="results" className="mt-3" />
           {ctx.href("results") && <div className="mt-6"><Action href={ctx.href("results")!} tone="ghost">{tr(COPY.allResults, lang)}</Action></div>}
         </Section>
       ) : safety.length > 0 ? (
@@ -186,6 +202,13 @@ export default function HomePage({ site, ctx }: SitePageProps) {
         </Section>
       ) : null}
 
+      {teachers.length >= 3 && (
+        <Section n={++n} title={tr(COPY.teachers, lang)}>
+          <People people={teachers} />
+          {ctx.href("faculty") && <div className="mt-6"><Action href={ctx.href("faculty")!} tone="ghost">{tr(COPY.allTeachers, lang)}</Action></div>}
+        </Section>
+      )}
+
       <HomeRest site={site} ctx={ctx} start={n} />
     </>
   );
@@ -198,7 +221,15 @@ function HomeRest({ site, ctx, start }: { site: DemoSite; ctx: SiteContext; star
   const life = withText(site.studentLife, "title").slice(0, 3);
   const explore = EXPLORE.map((e) => ({ ...e, href: ctx.href(e.id), label: ctx.pages.find((p) => p.id === e.id)?.label })).filter((e) => e.href && e.label);
   const facilities = clean(site.facilities);
-  const photos = schoolPhotos(site).filter((p) => p.src).slice(0, 6);
+  const campus = facilities.length > 0 ? slotPhoto(site, "campus") : undefined;
+  /* A plain facility that is also a detail title prints the detail, so it has its Hindi. */
+  const twin = (f: string) => (site.facilityDetails || []).find((d) => (d.title || "").trim().toLowerCase() === f.toLowerCase());
+  /* The gallery strip skips photos this page already shows. */
+  const shown = new Set([site.heroImage, slotPhoto(site, "academics"), campus, boarding ? slotPhoto(site, "hostel") : undefined].filter(Boolean));
+  const pool = schoolPhotos(site).filter((p, i, all) => p.src && !shown.has(p.src) && all.findIndex((q) => q.src === p.src) === i);
+  /* Full rows only: 6 (3 by 2), 4 (4 across) or 3, never a lone tile. */
+  const photos = pool.slice(0, pool.length >= 6 ? 6 : pool.length >= 4 ? 4 : 3);
+  const galleryCols = photos.length === 4 ? "grid-cols-2 lg:grid-cols-4" : photos.length === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2 lg:grid-cols-3";
   const reviews = withText(site.reviews, "quote").filter((r) => r.consent).slice(0, 3);
   const status = admissionStatus(site, lang, ctx.today);
   const apply = ctx.href("admissions");
@@ -208,7 +239,13 @@ function HomeRest({ site, ctx, start }: { site: DemoSite; ctx: SiteContext; star
     <>
       {(boarding || life.length > 0) && (
         <Section n={++n} title={tr(boarding ? COPY.boarding : COPY.life, lang)}>
-          {boarding && <Bi of={boarding} k="intro" as="p" className="mb-6 max-w-prose text-lg" />}
+          {boarding && (
+            <div className="mb-8">
+              <WithPhoto src={slotPhoto(site, "hostel")} ratio="3 / 2">
+                <Bi of={boarding} k="intro" as="p" className="max-w-prose text-lg" />
+              </WithPhoto>
+            </div>
+          )}
           {life.length > 0 && (
             <CardGrid cols={3}>
               {life.map((p, i) => (
@@ -244,23 +281,25 @@ function HomeRest({ site, ctx, start }: { site: DemoSite; ctx: SiteContext; star
 
       {facilities.length > 0 && (
         <Section n={++n} title={tr(COPY.facilities, lang)}>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {facilities.map((f, i) => (
+          <WithPhoto src={campus} flip>
+          <ul className={`grid gap-3 sm:grid-cols-2 ${campus ? "" : "lg:grid-cols-3"}`}>
+            {facilities.slice(0, campus ? 8 : undefined).map((f, i) => (
               <Reveal as="li" key={f} index={i} className="ds-card flex items-start gap-3 p-4">
                 <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--ds-accent))]" />
-                <Str text={f} />
+                {twin(f) ? <Bi of={twin(f)} k="title" /> : <Str text={f} />}
               </Reveal>
             ))}
           </ul>
           {ctx.href("facilities") && <div className="mt-6"><Action href={ctx.href("facilities")!} tone="ghost">{tr(COPY.seeCampus, lang)}</Action></div>}
+          </WithPhoto>
         </Section>
       )}
 
       {photos.length >= 3 && (
         <Section n={++n} title={tr(COPY.gallery, lang)}>
-          <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <ul className={`grid gap-3 ${galleryCols}`}>
             {photos.map((p, i) => (
-              <Reveal as="li" key={p.key} index={i}><Photo src={p.src} alt={bi(p.obj, "alt", lang)} ratio="4 / 3" className="rounded-[var(--ds-radius)]" /></Reveal>
+              <Reveal as="li" key={p.key} index={i}><Photo src={p.src} alt={photoAlt(p, lang)} ratio="4 / 3" sizes="(min-width: 1024px) 360px, 50vw" className="rounded-[var(--ds-radius)]" /></Reveal>
             ))}
           </ul>
           {ctx.href("gallery") && <div className="mt-6"><Action href={ctx.href("gallery")!} tone="ghost">{tr(COPY.seeGallery, lang)}</Action></div>}
@@ -269,6 +308,7 @@ function HomeRest({ site, ctx, start }: { site: DemoSite; ctx: SiteContext; star
 
       {reviews.length > 0 && (
         <Section n={++n} title={tr(COPY.voices, lang)}>
+          <SampleNote block="reviews" className="mb-6" />
           <CardGrid cols={3}>
             {reviews.map((r, i) => (
               <Reveal key={i} index={i}>
@@ -307,6 +347,8 @@ function HomeHero({ site, ctx }: { site: DemoSite; ctx: SiteContext }) {
   const stats = withText(site.stats, "label").filter((s) => (s.value || "").trim());
   const notice = freshNotices(site, today)[0];
   const next = withText(site.admissions?.timeline, "title").find((t) => hasBi(t, "date"));
+  /* An uploaded hero is the institute's own photo, so its alt is the name. A
+     stock hero ignores this and takes the manifest's scene alt. */
   const photo = site.heroImage ? { src: site.heroImage, alt: site.instituteName } : undefined;
   const key = `${family}-${variant}`;
 
@@ -374,7 +416,8 @@ function HomeHero({ site, ctx }: { site: DemoSite; ctx: SiteContext }) {
     : [site.boardOrAffiliation?.split(",")[0], site.city].filter(Boolean).join(" · ");
 
   return (
-    <Hero
+    <SchoolHero
+      photoSrc={site.heroImage || undefined}
       eyebrow={eyebrow || undefined}
       title={site.instituteName}
       lead={<Bi of={site} k="tagline" accent />}

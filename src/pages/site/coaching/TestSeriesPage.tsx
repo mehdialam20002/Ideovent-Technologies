@@ -17,23 +17,24 @@ import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { C_COPY } from "@/lib/demo/ui/coaching/copy";
 import { DataTable } from "@/lib/demo/ui/coaching/Table";
 import { PageHead } from "../kit/Hero";
+import { PhotoBand } from "@/lib/demo/ui/coaching/photos";
 import { Card, CardGrid, Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Test series", hi: "टेस्ट सीरीज़" },
-  lead: { en: "Regular tests on the real exam pattern, with the schedule printed in advance.", hi: "असली exam pattern पर नियमित टेस्ट, schedule पहले से तय।" },
+  lead: { en: "Regular tests on the real exam pattern, with the schedule printed in advance.", hi: "असली एग्ज़ाम पैटर्न पर नियमित टेस्ट, शेड्यूल पहले से तय।" },
   types: { en: "Kinds of test", hi: "टेस्ट के प्रकार" },
-  schedule: { en: "Schedule", hi: "Schedule" },
+  schedule: { en: "Schedule", hi: "शेड्यूल" },
   test: { en: "Test", hi: "टेस्ट" },
   date: { en: "Date or day", hi: "तारीख या दिन" },
   time: { en: "Time", hi: "समय" },
-  syllabus: { en: "Syllabus", hi: "Syllabus" },
-  pattern: { en: "Pattern and marking", hi: "Pattern और marking" },
-  downloads: { en: "Downloads", hi: "Downloads" },
-  platform: { en: "Take the tests online", hi: "Online टेस्ट दें" },
-  platformBody: { en: "Online tests and results are on the institute's own test platform.", hi: "Online टेस्ट और रिज़ल्ट संस्थान के अपने test platform पर हैं।" },
-  open: { en: "Open the test platform", hi: "Test platform खोलें" },
+  syllabus: { en: "Syllabus", hi: "सिलेबस" },
+  pattern: { en: "Pattern and marking", hi: "पैटर्न और मार्किंग" },
+  downloads: { en: "Downloads", hi: "डाउनलोड" },
+  platform: { en: "Take the tests online", hi: "ऑनलाइन टेस्ट दें" },
+  platformBody: { en: "Online tests and results are on the institute's own test platform.", hi: "ऑनलाइन टेस्ट और रिज़ल्ट संस्थान के अपने टेस्ट प्लेटफ़ॉर्म पर हैं।" },
+  open: { en: "Open the test platform", hi: "टेस्ट प्लेटफ़ॉर्म खोलें" },
 } satisfies Record<string, Bilingual>;
 
 export default function TestSeriesPage({ site, ctx }: SitePageProps) {
@@ -55,6 +56,8 @@ export default function TestSeriesPage({ site, ctx }: SitePageProps) {
       >
         {platform && <div className="mt-6"><Action href={platform}>{tr(COPY.open, lang)}</Action></div>}
       </PageHead>
+      {/* The `study` section photo: a hall of students writing, or self study. */}
+      <PhotoBand slot="study" className="pt-8 sm:pt-10" />
 
       {types.length > 0 && (
         <Section n={++n} title={tr(COPY.types, lang)}>

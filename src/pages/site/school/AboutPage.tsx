@@ -15,29 +15,30 @@ import { bi, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bi
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { clean, Str } from "@/lib/demo/ui/school/shared";
+import { firstSlot, SlotPhoto, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
 import { Card, CardGrid, FactTable, Section } from "../kit/Section";
-import { Action, Bi, Photo } from "../kit/Text";
+import { Action, Bi } from "../kit/Text";
 
 const COPY = {
-  title: { en: "About the school", hi: "School के बारे में" },
+  title: { en: "About the school", hi: "स्कूल के बारे में" },
   story: { en: "Our story", hi: "हमारी कहानी" },
   purpose: { en: "What we work towards", hi: "हमारा लक्ष्य" },
   vision: { en: "Vision", hi: "हमारा लक्ष्य" },
   mission: { en: "Mission", hi: "हमारा मिशन" },
   head: { en: "A message from the {title}", hi: "{title} का संदेश" },
-  headPlain: { en: "A message from the head", hi: "प्रधानाचार्य का संदेश" },
-  record: { en: "The school at a glance", hi: "School एक नज़र में" },
+  headPlain: { en: "A message from the head", hi: "प्रिंसिपल का संदेश" },
+  record: { en: "The school at a glance", hi: "स्कूल एक नज़र में" },
   founded: { en: "Founded", hi: "स्थापना" },
-  board: { en: "Board and affiliation", hi: "Board और affiliation" },
-  udise: { en: "UDISE+ code", hi: "UDISE+ code" },
+  board: { en: "Board and affiliation", hi: "बोर्ड और एफ़िलिएशन" },
+  udise: { en: "UDISE+ code", hi: "UDISE+ कोड" },
   place: { en: "Location", hi: "स्थान" },
-  head2: { en: "Head of school", hi: "प्रधानाचार्य" },
-  houses: { en: "The houses", hi: "Houses" },
-  campus: { en: "On campus", hi: "Campus में" },
-  apply: { en: "Admissions", hi: "Admission" },
-  visit: { en: "Visit the school", hi: "School देखने आएँ" },
+  head2: { en: "Head of school", hi: "प्रिंसिपल" },
+  houses: { en: "The houses", hi: "हाउस" },
+  campus: { en: "On campus", hi: "कैंपस में" },
+  apply: { en: "Admissions", hi: "एडमिशन" },
+  visit: { en: "Visit the school", hi: "स्कूल देखने आएँ" },
 } satisfies Record<string, Bilingual>;
 
 export default function AboutPage({ site, ctx }: SitePageProps) {
@@ -46,6 +47,9 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
   const hasHead = hasBi(site, "principalMessage");
   const houses = withText(site.boarding?.houses, "title");
   const facilities = !ctx.href("facilities") ? clean(site.facilities) : [];
+  /* The story sits beside the about photo, or the hero when there is none. */
+  const storyPhoto = firstSlot(site, "about") || site.heroImage || undefined;
+  const campusPhoto = firstSlot(site, "campus", "dining");
   const record = [
     (site.established || site.establishedYear || "").trim() && { label: tr(COPY.founded, lang), value: site.established || site.establishedYear },
     (site.boardOrAffiliation || "").trim() && { label: tr(COPY.board, lang), value: <Str text={site.boardOrAffiliation || ""} /> },
@@ -64,7 +68,7 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
         <Section n={++n} title={tr(COPY.story, lang)}>
           <div className="grid gap-8 lg:grid-cols-[3fr_2fr] lg:items-start">
             <Bi of={site} k="about" as="p" className="max-w-prose whitespace-pre-line text-lg leading-relaxed" />
-            {site.heroImage && <Photo src={site.heroImage} alt={site.instituteName} ratio="4 / 5" className="rounded-[var(--ds-radius)]" />}
+            <SlotPhoto src={storyPhoto} ratio="4 / 5" sizes="(min-width: 1024px) 440px, 100vw" />
           </div>
         </Section>
       )}
@@ -118,13 +122,15 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
 
       {facilities.length > 0 && (
         <Section n={++n} title={tr(COPY.campus, lang)}>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <WithPhoto src={campusPhoto} flip ratio="3 / 2">
+          <ul className={`grid gap-3 sm:grid-cols-2 ${campusPhoto ? "" : "lg:grid-cols-3"}`}>
             {facilities.map((f, i) => (
               <Reveal as="li" key={f} index={i} className="ds-card flex items-start gap-3 p-4">
                 <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--ds-accent))]" /><Str text={f} />
               </Reveal>
             ))}
           </ul>
+          </WithPhoto>
         </Section>
       )}
 

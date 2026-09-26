@@ -25,8 +25,8 @@ const COPY = {
   title: { en: "The teachers", hi: "हमारे टीचर्स" },
   lead: { en: "Who will teach your child, what they studied, and how long they have taught.", hi: "आपके बच्चे को कौन पढ़ाएगा, उन्होंने क्या पढ़ा है और कितने साल से पढ़ा रहे हैं।" },
   subject: { en: "Subject", hi: "विषय" },
-  team: { en: "Faculty", hi: "Faculty" },
-  sitIn: { en: "Sit in one of their classes first", hi: "पहले उनकी एक class में बैठकर देखें" },
+  team: { en: "Faculty", hi: "फैकल्टी" },
+  sitIn: { en: "Sit in one of their classes first", hi: "पहले उनकी एक क्लास में बैठकर देखें" },
 } satisfies Record<string, Bilingual>;
 
 export default function FacultyPage({ site, ctx }: SitePageProps) {

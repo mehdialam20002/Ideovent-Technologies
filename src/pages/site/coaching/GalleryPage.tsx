@@ -18,7 +18,7 @@ import { PageHead } from "../kit/Hero";
 import { Section } from "../kit/Section";
 
 const COPY = {
-  title: { en: "The centre in photographs", hi: "तस्वीरों में हमारा centre" },
+  title: { en: "The centre in photographs", hi: "तस्वीरों में हमारा सेंटर" },
   crumb: { en: "Gallery", hi: "गैलरी" },
   show: { en: "Show", hi: "दिखाएँ" },
   photos: { en: "Photographs", hi: "तस्वीरें" },

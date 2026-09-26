@@ -171,11 +171,13 @@ export const seed: ContentData = {
      * company in Delhi" is unverifiable and exactly the class of claim
      * FACTS.md forbids. */
     defaultSeo: {
-      // HOMEPAGE-COPY-DECK.md section 13: the first words a searching principal
-      // reads. Leads with what the searcher typed, our name last.
-      title: "School and coaching websites in Delhi | Ideovent Technologies",
+      // HOMEPAGE-COPY-DECK-V2.md section C: the first words a searching owner
+      // reads. Leads with what the searcher typed, our name last. This is also
+      // the fallback title for every page without its own: keep it for any
+      // growing business, not one trade.
+      title: "Websites, apps and software for growing businesses | Ideovent, New Delhi",
       description:
-        "Websites for private schools and coaching institutes. Fees, bus routes, batch timings and an enquiry form that reaches you. Free website check. Written scope and a fixed price.",
+        "Websites your customers can find on Google, that open fast on a phone and send every enquiry to you. Apps and software too. Free website check, fixed price in writing.",
       keywords: [
         "web development company Saket",
         "website development New Delhi",
@@ -184,7 +186,8 @@ export const seed: ContentData = {
         "React and Next.js development New Delhi",
         "web application development Delhi",
         "UI UX design New Delhi",
-        "school and coaching website development India",
+        "small business website development India",
+        "mobile app development Delhi",
         "web development internship New Delhi",
       ],
       ogImage: `${B}og/ideovent-og.png`,
@@ -220,7 +223,7 @@ export const seed: ContentData = {
       enabled: true,
       delaySeconds: 60,
       // Keep identical to LEAD_POPUP_DEFAULTS in components/lead/core.ts.
-      heading: "Want to know what a parent sees on your site?",
+      heading: "Want to know what your customers see on your site?",
       subheading: "Leave your website address and number. We check it on a phone and reply on WhatsApp with what we found. Free.",
     },
   },
@@ -398,7 +401,7 @@ export const seed: ContentData = {
     },
     footer: {
       tagline:
-        "A web studio in Saket, New Delhi. Websites and portals for schools, coaching institutes and growing businesses.",
+        "A web and software studio in Saket, New Delhi. Websites, apps and software for growing businesses.",
       columns: [
         {
           heading: "Work with us",
@@ -471,8 +474,10 @@ export const seed: ContentData = {
    * ("CORRECTIONS CONFIRMED BY MEHDI, 24 Sep 2026", which replaced the earlier
    * table outright) AND MATCHES /pricing EXACTLY:
    *     landing / single page      8,000-20,000  → "Landing page or single page"
-   *     school website             20,000-45,000 → "School website"
-   *     coaching or school portal  40,000-85,000 → "Coaching or school portal"
+   *     school website             20,000-45,000 → "Website"
+   *     coaching or school portal  40,000-85,000 → "Portal or web app"
+   * (Relabelled for any business on 26 Sep 2026, same figures:
+   * _assets/HOMEPAGE-COPY-DECK-V2.md A9 and decision G1.)
    * (custom software, the care plan and outside-India go in `priceTeaser.more`.)
    *
    * 26 SEP 2026: THE LEDGER LEFT THE HERO. Mehdi: "ye pricing starting me hi kyu
@@ -498,31 +503,33 @@ export const seed: ContentData = {
     // does is the h1's job anyway; this line carries where it is and since when,
     // both of which are facts in _assets/FACTS.md.
     badge: "Saket, New Delhi · est. 2024",
-    // HOMEPAGE-COPY-DECK.md section 1 (26 Sep 2026). The h1 is about the
-    // buyer's parents, not about what we build. Three entries because
-    // headingLines accents a whole line: the accent is the short last line.
-    // Mehdi decides between this and the deck's alternatives A and B:
-    //   A: "When a parent searches / for you tonight, make sure / the enquiry reaches you."
-    //   B: "A parent decides / about your school / before the first visit."
+    // _assets/HOMEPAGE-COPY-DECK-V2.md A1 (26 Sep 2026). The h1 is about the
+    // buyer's customers, not about what we build, and it speaks to any growing
+    // business. headingLines accents a whole line: the accent is the last line.
+    // Runner-up headlines are in the deck, section H. If four lines push the
+    // CTAs below the fold at 375px, fall back to three: "Your customers look
+    // you up before they call." / "Make sure they find you," / accent line.
     headingLines: [
-      { text: "Parents look up your school online." },
-      { text: "Make sure they" },
-      { text: "like what they see.", highlighted: true },
+      { text: "Your customers look you up" },
+      { text: "before they call." },
+      { text: "Make sure they find you," },
+      { text: "trust you and get in touch.", highlighted: true },
     ],
     subheading:
-      "You deal directly with the three partners. You get a written scope and a fixed price before you pay anything.",
+      "You deal directly with the three partners. You get a written scope and a fixed price before you pay anything. The code, logins and domain stay yours.",
+    // "can be found on Google and Maps": what the site does, never a ranking.
     audience:
-      "For private schools and coaching institutes. Fees, bus routes, batch timings and results, easy to find on a parent's phone. Every enquiry reaches you the minute it is sent.",
-    // The quiet line for everyone who is not a school (deck section 1).
+      "For owners of growing businesses: clinics, gyms, shops, restaurants, law and CA firms, schools and coaching. Your site can be found on Google and Maps, opens fast on a phone, and sends every enquiry to you.",
+    // The quiet line for the software buyer (deck V2 A1).
     otherBuyers: {
-      text: "Not a school? We also build for growing businesses in India, and for small firms in the US, UK, UAE and Australia.",
-      link: { label: "See services", href: "/services" },
+      text: "Need an app, a portal or software for your team? Tell us the process or the idea. The first call is free.",
+      link: { label: "See what we build", href: "/services" },
     },
     // "Get a free website check" is the 97% step (Sell Like Crazy's small first
     // step); "Start a project" was a step only the 3% ready to buy will take.
     ctas: [
       { label: "Get a free website check", href: "/#contact", variant: "primary" },
-      { label: "See sites we have built", href: "/work", variant: "outline" },
+      { label: "See what we have built", href: "/work", variant: "outline" },
     ],
     // NOT RENDERED IN THE HERO ANY MORE. Mehdi, 26 Sep 2026: no price in the
     // first screen. PriceSummary.tsx shows it at section 9 of the home page,
@@ -533,10 +540,10 @@ export const seed: ContentData = {
       heading: "What it usually costs",
       rows: [
         { label: "Landing page or single page", range: "₹8,000-₹20,000" },
-        { label: "School website", range: "₹20,000-₹45,000" },
-        { label: "Coaching or school portal", range: "₹40,000-₹85,000" },
+        { label: "Website", range: "₹20,000-₹45,000" },
+        { label: "Portal or web app", range: "₹40,000-₹85,000" },
       ],
-      more: "Care plan ₹1,000-₹3,500 a month, optional. Custom software from ₹90,000. Outside India from $300.",
+      more: "Custom software from ₹90,000. Care plan ₹1,000-₹3,500 a month, optional. Outside India from $300.",
       note: "Indicative · non-GST · fixed in writing after one call",
       link: { label: "Every tier, with what it includes and what it does not", href: "/pricing", variant: "ghost" },
       link2: { label: "Not sure which fits? Get the free check", href: "/#contact", variant: "ghost" },
@@ -870,7 +877,7 @@ export const seed: ContentData = {
       longDescription: "Planned with you screen by screen, built, tested on the phones your users actually have, and published to the app stores.",
       deliverables: ["iOS & Android development", "Android and iPhone apps", "Mobile UI/UX design", "App store optimization", "Maintenance & support"] },
     { id: "brand", title: "Brand Identity", slug: "brand-identity", icon: "Sparkles", category: "Design", showOnHome: false, showInFooter: false, order: 5,
-      shortDescription: "A logo and a few simple rules, so your name looks the same on the gate, the bus and the website.",
+      shortDescription: "A logo and a few simple rules, so your name looks the same on your shopfront, your WhatsApp and your website.",
       longDescription: "Logo, colours, type and a short guide, so whoever makes your next banner or brochure gets it right.",
       deliverables: ["Logo design", "Visual identity", "Brand guidelines", "Marketing collateral", "Brand strategy"] },
   ],
@@ -899,7 +906,7 @@ export const seed: ContentData = {
    * ────────────────────────────────────────────────────────────────────────── */
   projects: [
     /* ── Client work ─────────────────────────────────────────────────────── */
-    { id: "gym-map", title: "GYM MAP. Gym Discovery & Joining Platform", slug: "gym-map", category: "web", sector: "Fitness · marketplace", clientName: "GYM MAP", featured: true, order: 1,
+    { id: "gym-map", title: "GYM MAP. Gym Discovery & Joining Platform", slug: "gym-map", category: "web", sector: "Fitness · marketplace", clientName: "GYM MAP", featured: true, order: 0,
       summary: "A gym discovery platform: search by city, area or gym name, compare gyms side by side on price, distance and facilities, and join from the listing. It runs on a sample catalogue while accounts, online joining and payments are built out. And the product says so on its own page rather than filling itself with gyms that do not exist.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/gym-map.webp`, gallery: [], liveUrl: "https://gym-map-customer-web.vercel.app",
@@ -914,7 +921,7 @@ export const seed: ContentData = {
       ],
       noClaims: "There are no member numbers, no gym numbers and no conversion figures here, because the product has not onboarded a gym yet. Any such figure today would be invented. “Verified gyms”, “transparent pricing” and “earned reviews” are the product’s own promises, written on its page. They are not outcomes we are claiming to have delivered." },
 
-    { id: "wedart", title: "WedArt Films. Wedding Photography & Films Studio", slug: "wedart-films", category: "web", sector: "Wedding photography", clientName: "WedArt Films", featured: true, order: 0,
+    { id: "wedart", title: "WedArt Films. Wedding Photography & Films Studio", slug: "wedart-films", category: "web", sector: "Wedding photography", clientName: "WedArt Films", featured: true, order: 1,
       summary: "A portfolio and booking site for a cinematic wedding photography and films studio: a filterable gallery of wedding stories, pre-wedding shoots and cinematic films, three named packages, a team section and an enquiry form with WhatsApp beside it.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/wedart-films.webp`, gallery: [], liveUrl: "https://wedart.vercel.app",
@@ -929,7 +936,7 @@ export const seed: ContentData = {
       ],
       noClaims: "We claim no bookings, no revenue and no enquiry uplift. There is no earlier site to compare against, and inventing one would be worse than having none. The studio’s own testimonials and star ratings belong to the studio and say nothing about us. One thing about the live page that we would rather tell you than have you notice: the gallery photographs are still placeholders from a stock library. A wedding studio’s portfolio is its only proof, and a portfolio of other people’s photographs proves nothing: the studio’s own images are the outstanding item on this build and they are the studio’s to supply." },
 
-    { id: "atelier", title: "Atelier Co. Clothing E-Commerce Storefront", slug: "atelier-co", category: "web", sector: "Clothing retail", clientName: "Atelier Co.", featured: true, order: 3,
+    { id: "atelier", title: "Atelier Co. Clothing E-Commerce Storefront", slug: "atelier-co", category: "web", sector: "Clothing retail", clientName: "Atelier Co.", featured: true, order: 2,
       summary: "A clothing storefront built to read as an editorial magazine rather than a grid of products: a three-panel hero, occasion-led collections, a best-seller rail with colour selection in the card, a saved-items and bag flow, and a styling journal.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/atelier-co.webp`, gallery: [], liveUrl: "https://eccom2.vercel.app",
@@ -949,7 +956,7 @@ export const seed: ContentData = {
       ],
       noClaims: "The dispatch window, the average fit rating, the count of seasonal drops and the rating on every product card are the client’s own copy. None of them came from a customer, an order or a review, and none of them is repeated here as an outcome." },
 
-    { id: "tamkuhi-bazaar", title: "Tamkuhi Bazaar. Local Delivery Marketplace", slug: "tamkuhi-bazaar", category: "web", sector: "Quick commerce", clientName: "Tamkuhi Bazaar", featured: true, order: 2,
+    { id: "tamkuhi-bazaar", title: "Tamkuhi Bazaar. Local Delivery Marketplace", slug: "tamkuhi-bazaar", category: "web", sector: "Quick commerce", clientName: "Tamkuhi Bazaar", featured: true, order: 3,
       summary: "A hyperlocal delivery marketplace for groceries, food and daily essentials in a cluster of small towns, built so a customer enters a delivery location on the first screen and never has to leave it to find a shop.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/tamkuhi-bazaar.webp`, gallery: [], liveUrl: "https://tamkuhibazaar-online.vercel.app",
@@ -1132,7 +1139,7 @@ export const seed: ContentData = {
       photo: { src: "", alt: "" },
       socials: [] },
     { id: "animesh", name: "Animesh Raturi", role: "Co-Founder & Marketing Lead", visible: true, order: 2,
-      bio: "Co-founder and a partner in the firm. Runs how Ideovent reaches the schools, coaching institutes and businesses it builds for.",
+      bio: "Co-founder and a partner in the firm. Runs how Ideovent reaches the businesses it builds for.",
       photo: { src: "", alt: "" },
       socials: [] },
     { id: "abhilasha", name: "Abhilasha Kumari", role: "Developer", visible: true, order: 3,
@@ -1171,10 +1178,10 @@ export const seed: ContentData = {
     // HOMEPAGE-COPY-DECK.md section 8. p3 used to add "40 / 30 / 30 outside
     // India". That split is not in FACTS.md, so it is off until Mehdi confirms it
     // (it is still on /pricing; decision 8 in the deck).
-    { id: "p1", number: "01", title: "Scope", description: "One call about what is not working. Then you get a written scope, a list of what is not included, and a fixed price. You read both before you pay anything.", order: 0 },
+    { id: "p1", number: "01", title: "Scope", description: "One call about what is not working, or what you want to build. Then you get a written scope, a list of what is not included, and a fixed price. You read both before you pay anything.", order: 0 },
     { id: "p2", number: "02", title: "Design", description: "Two rounds of changes at the design stage, written into the agreement. If your site has admin screens, they are a second stage, with their own two rounds.", order: 1 },
     { id: "p3", number: "03", title: "Build", description: "You pay 50%, then 30%, then 20%. The middle payment falls at the design-and-build stage, so you pay it against work you can see.", order: 2 },
-    { id: "p4", number: "04", title: "Handover", description: "Thirty days of free fixes after launch, with or without a care plan. The code becomes yours on the final payment.", order: 3 },
+    { id: "p4", number: "04", title: "Handover", description: "Thirty days of free fixes after launch, with or without a care plan. On the final payment, the code and admin logins are handed to you. Your domain stays under your control.", order: 3 },
   ],
 
   /* ──────────────────────────────────────────────────────────────────────────
@@ -1190,17 +1197,23 @@ export const seed: ContentData = {
    * as one that must never appear, and it is rewritten below.
    * ────────────────────────────────────────────────────────────────────────── */
   faqs: [
-    /* services FAQ, HOMEPAGE-COPY-DECK.md section 11 (26 Sep 2026). Order is
-     * the order a principal asks: already have a site, who updates it, how
-     * long, do I own it, payment, and cost last. The ₹8,000-₹20,000 band is a
-     * "landing page or single page" (FACTS.md), not a "business website".
+    /* services FAQ, _assets/HOMEPAGE-COPY-DECK-V2.md A11 (26 Sep 2026). Order is
+     * the order an owner asks: already have a site, cost, will the price grow,
+     * how long, who updates it, what if you disappear, do I own it, payment,
+     * apps and software, schools and coaching. Written for any growing
+     * business; schools and coaching get one FAQ of their own (f14). The
+     * ₹8,000-₹20,000 band is a "landing page or single page" (FACTS.md).
      * f2 timelines come from Pricing.tsx, not FACTS.md: Mehdi to confirm. */
-    { id: "f10", question: "We already have a website. Why change?", answer: "Often you should not. If your site opens fast on a phone, shows your fees and dates, and enquiries reach you, keep it. The free check will tell you honestly. If it is fine, we say so.", category: "services", order: 0 },
-    { id: "f3", question: "Who will update it after launch?", answer: "Your office will. On a school website, your staff post notices and circulars themselves. If something breaks in the first 30 days, we fix it free, with or without a care plan. After that, a care plan is optional: ₹1,000, ₹2,000 or ₹3,500 a month, with a first reply within 48 working hours, 24 working hours or the same working day. Cancel with 30 days’ notice. You keep the code, the accounts, the backups and your domain.", category: "services", order: 1 },
-    { id: "f2", question: "How long does it take?", answer: "A landing page takes 2 to 3 weeks. A school website takes 3 to 5 weeks. A coaching or school portal takes 6 to 10 weeks. Custom software takes 10 weeks or more. The clock starts when the advance is paid and your content is with us. Admissions open in December, so count back from there.", category: "services", order: 2 },
-    { id: "f7", question: "Do I own the website?", answer: "Yes. The code we write for you becomes yours on the final payment, and the admin logins are handed to you. Your domain stays under your control. We build on some parts we reuse across projects. Those stay ours, and you get a free licence to use them in your site, for as long as you want.", category: "services", order: 3 },
-    { id: "f6", question: "How does payment work?", answer: "50% when you sign. 30% at the design-and-build stage, when you can see the work. 20% before handover. Invoices are due within 7 days. We are not registered under GST, so the price we quote is the full amount you pay.", category: "services", order: 4 },
-    { id: "f1", question: "How much does it cost?", answer: "Roughly: a landing page or single page ₹8,000-₹20,000, a school website ₹20,000-₹45,000, a coaching or school portal ₹40,000-₹85,000, and custom software from ₹90,000. After one call you get a written scope, a list of what is not included, and a fixed price. It does not change unless you approve a written change note.", category: "services", order: 5 },
+    { id: "f10", question: "We already have a website. Why change?", answer: "Often you should not. If your site opens fast on a phone, shows your prices and timings, and enquiries reach you, keep it. The free check will tell you honestly. If it is fine, we say so.", category: "services", order: 0 },
+    { id: "f1", question: "How much does it cost?", answer: "Roughly: a landing page or single page ₹8,000-₹20,000, a website ₹20,000-₹45,000, a portal or web app ₹40,000-₹85,000, and custom software from ₹90,000. After one call you get a written scope, a list of what is not included, and a fixed price. It does not change unless you approve a written change note.", category: "services", order: 1 },
+    { id: "f11", question: "Will the price grow after we start?", answer: "No. The fixed price is in the agreement you sign. If you ask for something outside the written scope, we send a change note with its price first. Nothing changes unless you approve it in writing.", category: "services", order: 2 },
+    { id: "f2", question: "How long does it take?", answer: "A landing page takes 2 to 3 weeks. A website takes 3 to 5 weeks. A portal or web app takes 6 to 10 weeks. Custom software takes 10 weeks or more. The clock starts when the advance is paid and your content is with us.", category: "services", order: 3 },
+    { id: "f3", question: "Who will update it after launch?", answer: "Your team can. On a website with editable pages, you change text, photos, prices and notices yourself. If something breaks in the first 30 days, we fix it free, with or without a care plan. After that, a care plan is optional: ₹1,000, ₹2,000 or ₹3,500 a month, with a first reply within 48 working hours, 24 working hours or the same working day. Cancel with 30 days’ notice. You keep the code, the accounts, the backups and your domain.", category: "services", order: 4 },
+    { id: "f12", question: "What if you disappear after launch?", answer: "You are not stuck. On the final payment, the code and admin logins are handed to you, and your domain stays under your control. Any developer can pick it up from there. We fix anything that breaks in the first 30 days for free. After that, the optional care plan gives you written reply times.", category: "services", order: 5 },
+    { id: "f7", question: "Do I own the website?", answer: "Yes. The code we write for you becomes yours on the final payment, and the admin logins are handed to you. Your domain stays under your control. We build on some parts we reuse across projects. Those stay ours, and you get a free licence to use them in your site, for as long as you want.", category: "services", order: 6 },
+    { id: "f6", question: "How does payment work?", answer: "50% when you sign. 30% at the design-and-build stage, when you can see the work. 20% before handover. Invoices are due within 7 days. We are not registered under GST, so the price we quote is the full amount you pay.", category: "services", order: 7 },
+    { id: "f13", question: "Do you build apps and software too?", answer: "Yes. Web apps, portals, SaaS products, and Android and iPhone apps. We built HRMS Lite and Lead CRM for clients, and our own app Aura Orbit is live with Razorpay payments. Tell us the process or the idea. The first call is free.", category: "services", order: 8 },
+    { id: "f14", question: "Do you work with schools and coaching institutes?", answer: "Yes, it is one of the fields we know well. We built the website and admin panel for HighQ Classes, a coaching institute. We can show you a sample site made for your school or institute. We are also building EduFlow, software for schools and coaching, which is still in development.", category: "services", order: 9 },
 
     { id: "f4", question: "What do I actually get from the internship?", answer: "Twelve weeks of structured curriculum, written feedback on every pull request from one of the partners, five shipped artefacts you own, and (if you pass the published 100-mark rubric) a certificate with a QR code anyone can verify on this site. What you do not get is a job or a placement. We have no placement cell and no hiring partners, and we will not tell you otherwise.", category: "internship", order: 5 },
     { id: "f5", question: "Is the internship certificate verifiable?", answer: "Yes. Every certificate has a unique ID and a QR code that resolves at /verify on this site. Try one before you apply: /verify/INT2025A74. Two people have earned one since 2024, which is exactly why it is worth checking.", category: "internship", order: 6 },

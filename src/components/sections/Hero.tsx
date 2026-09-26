@@ -20,8 +20,11 @@ import { cn } from "@/lib/utils";
  * in PITCH-PAGE-PLAYBOOK 7.3 (price after value) and the order of Sell Like Crazy,
  * which the copy deck (_assets/HOMEPAGE-COPY-DECK.md) follows. So:
  *
- *   1. The h1 is about the BUYER's parents, not about what we build: "Parents look
- *      up your school online. / Make sure they / like what they see."
+ *   1. The h1 is about the BUYER's customers, not about what we build: "Your
+ *      customers look you up / before they call. / Make sure they find you, /
+ *      trust you and get in touch." (_assets/HOMEPAGE-COPY-DECK-V2.md A1.) It
+ *      speaks to any growing business; schools and coaching are one of the
+ *      trades named in the audience line, not the studio's identity.
  *   2. WHO, `home.audience`, immediately under it, in foreground text rather than
  *      muted, because it is an answer and not a caption.
  *   3. ONE FREE NEXT STEP, not a price: the primary button is "Get a free website
@@ -33,7 +36,7 @@ import { cn } from "@/lib/utils";
  * also still the home page's inbound link to /pricing. Do not put it back here.
  *
  * LAYOUT, one column: head (what + who), then tail (buttons, the reassurance
- * line, the one quiet line for non-schools). The headline keeps the whole
+ * line, the one quiet line for software buyers). The headline keeps the whole
  * container from lg up (no max-width), which was the fix for a measured 240px
  * hole at 1440 when a price card sat beside it. Nothing sits beside it now.
  *
@@ -136,12 +139,19 @@ export default function Hero() {
 ))}
             </div>
 
-            <p className="mt-4 max-w-xl text-sm text-muted-foreground text-pretty">
+            {/* For the owner with no site at all, who would otherwise read
+                "website check" as not for them. "How you show up", never a
+                ranking promise. */}
+            <p className="mt-4 max-w-xl text-sm text-foreground/85 text-pretty">
+              No website yet? We check how you show up on Google and Maps instead.
+            </p>
+
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground text-pretty">
               {home.subheading}
             </p>
 
-            {/* One quiet line for everyone who is not a school: growing
-                businesses in India and small firms abroad. Same classes as the
+            {/* One quiet line for the software buyer: an app, a portal or
+                software for the team, first call free. Same classes as the
                 reassurance line above it, so it reads as a footnote. */}
             {others?.text && (
               <p className="mt-2 max-w-xl text-sm text-muted-foreground text-pretty">

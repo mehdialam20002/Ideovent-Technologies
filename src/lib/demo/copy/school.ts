@@ -326,13 +326,13 @@ function hindi(): SchoolCopy {
   return {
     lang: "hi",
 
-    skipToMain: "सीधे content पर जाइए",
-    navLabel: "इस site के sections",
-    openMenu: "Menu खोलिए",
-    closeMenu: "Menu बंद कीजिए",
+    skipToMain: "सीधे कंटेंट पर जाइए",
+    navLabel: "इस वेबसाइट के सेक्शन",
+    openMenu: "मेन्यू खोलिए",
+    closeMenu: "मेन्यू बंद कीजिए",
     exampleTag: "उदाहरण के आँकड़े",
     exampleFooterNote:
-      "इस page का हर नाम, आँकड़ा और तारीख़ उदाहरण है, जिसे Ideovent Technologies ने यह दिखाने के लिए रखा है कि site कैसी दिखेगी। यहाँ कुछ भी किसी असली school ने publish नहीं किया है।",
+      "इस पेज का हर नाम, आँकड़ा और तारीख़ उदाहरण है, जिसे Ideovent Technologies ने यह दिखाने के लिए रखा है कि वेबसाइट कैसी दिखेगी। यहाँ कुछ भी किसी असली स्कूल ने पब्लिश नहीं किया है।",
 
     /* The eyebrow over a section and the word in the nav are the same word in
        Hindi, which is not true in English ("About us" and "About"), so both
@@ -377,17 +377,17 @@ function hindi(): SchoolCopy {
       contact: "संपर्क",
     },
 
-    admissionsLineFallback: "Admission: इस session के बारे में हमसे पूछिए",
-    stripLink: "Admission कैसे लें",
+    admissionsLineFallback: "एडमिशन: इस सेशन के बारे में हमसे पूछिए",
+    stripLink: "एडमिशन कैसे लें",
     heroAction: {
-      wa: "WhatsApp पर admission के बारे में पूछिए",
-      mail: "Admission office को email कीजिए",
-      apply: "Admission कैसे लें",
-      visit: "आकर school देखिए",
+      wa: "WhatsApp पर एडमिशन के बारे में पूछिए",
+      mail: "एडमिशन ऑफिस को ईमेल कीजिए",
+      apply: "एडमिशन कैसे लें",
+      visit: "आकर स्कूल देखिए",
     },
     labelWhatsapp: "WhatsApp",
     labelEmail: "Email",
-    labelCall: "Call कीजिए",
+    labelCall: "कॉल कीजिए",
 
     /* The word on the signboard. Every school gate in the country reads
        "स्थापना 1998" or "Estd. 1998", so this is the label a parent already
@@ -408,7 +408,7 @@ function hindi(): SchoolCopy {
     aboutTitle: (name) => `${name} के बारे में`,
 
     academicsTitle: "हम क्या पढ़ाते हैं।",
-    courseEmptyRow: "इसके subjects, timing और fees जोड़ दीजिए।",
+    courseEmptyRow: "इसके विषय, टाइमिंग और फीस जोड़ दीजिए।",
     courseFact: {
       level: "किसके लिए",
       subjects: "Subjects",
@@ -421,94 +421,94 @@ function hindi(): SchoolCopy {
       fee: "Fees",
     },
 
-    resultsTitle: "हमारे students ने क्या हासिल किया।",
+    resultsTitle: "हमारे छात्रों ने क्या हासिल किया।",
     resultsSub: "ठीक वैसे ही जैसे छपते हैं। न कोई आँकड़ा बढ़ाया गया है, न कोई जोड़ा गया।",
 
-    facilitiesTitle: "School में रोज़ का दिन।",
+    facilitiesTitle: "स्कूल में रोज़ का दिन।",
     facultyTitle: "यहाँ कौन पढ़ाता है।",
-    facultySub: "School चुनते वक़्त parents असल में teachers चुन रहे होते हैं।",
+    facultySub: "स्कूल चुनते वक़्त पैरेंट्स असल में टीचर्स चुन रहे होते हैं।",
     /* Not "School, अपनी तस्वीरों में", which is the English sentence with
        Hindi words in it. "झलक" is what a parent says about a set of photos. */
-    galleryTitle: "School की एक झलक।",
+    galleryTitle: "स्कूल की एक झलक।",
     galleryCaptionsNote:
-      "Captions तैयार हैं। जिस दिन school तस्वीरें भेजेगा, वे यहाँ लग जाएँगी, ठीक से compress करके ताकि page क़रीब दो second में खुले। तब तक यहाँ किसी और school की तस्वीर नहीं लगेगी।",
+      "कैप्शन तैयार हैं। जिस दिन स्कूल तस्वीरें भेजेगा, वे यहाँ लग जाएँगी, ठीक से कंप्रेस करके ताकि पेज क़रीब दो सेकंड में खुले। तब तक यहाँ किसी और स्कूल की तस्वीर नहीं लगेगी।",
 
     /* No serif italic on a Devanagari word. The accent face has no Devanagari
        glyphs, so the browser shears the fallback font's letters into a fake
        oblique, which breaks the head-line every letter hangs from and reads as
        a rendering fault. The heading is set plain in Hindi; the page keeps its
        two accents in English and gives them up here, which is the right trade. */
-    visitTitle: { before: "आइए, एक बार school देख लीजिए।", accent: "", after: "" },
+    visitTitle: { before: "आइए, एक बार स्कूल देख लीजिए।", accent: "", after: "" },
     visitSub:
-      "Website एक हद तक ही बता सकती है। ज़्यादातर parents campus पर बिताए दस मिनट में ही तय कर लेते हैं, इसलिए यह हिस्सा सबसे ज़रूरी है।",
+      "वेबसाइट एक हद तक ही बता सकती है। ज़्यादातर पैरेंट्स कैंपस पर बिताए दस मिनट में ही तय कर लेते हैं, इसलिए यह हिस्सा सबसे ज़रूरी है।",
     /* "Open morning" is a British school's phrase and means nothing to a
        Delhi parent; "school visit" is what they say. */
-    visitDatesLabel: "School visit के दिन और ज़रूरी तारीख़ें",
+    visitDatesLabel: "स्कूल विज़िट के दिन और ज़रूरी तारीख़ें",
 
-    admissionsTitle: "Admission कैसे लें।",
+    admissionsTitle: "एडमिशन कैसे लें।",
     admissionsSub:
-      "पूरी जानकारी एक ही screen पर, ताकि रात नौ बजे पढ़ रहे माता-पिता को भी साफ़ पता चले कि अगला क़दम क्या है।",
+      "पूरी जानकारी एक ही स्क्रीन पर, ताकि रात नौ बजे पढ़ रहे माता-पिता को भी साफ़ पता चले कि अगला क़दम क्या है।",
     admissionsProcess: "क्या करना है",
     admissionsBring: "क्या साथ लाना है",
     admissionsDates: "ज़रूरी तारीख़ें",
     admissionsFormNote:
-      "Live website पर हर enquiry भेजते ही WhatsApp और email से आपके office तक पहुँच जाएगी, नाम, class और number पहले से " +
-      "message में लिखे हुए। जो पहले जवाब देता है, admission अक्सर उसी को मिलता है।",
+      "लाइव वेबसाइट पर हर पूछताछ भेजते ही WhatsApp और ईमेल से आपके ऑफिस तक पहुँच जाएगी, नाम, क्लास और नंबर पहले से " +
+      "मैसेज में लिखे हुए। जो पहले जवाब देता है, एडमिशन अक्सर उसी को मिलता है।",
 
-    noticesTitle: "सूचनाएँ और circulars।",
+    noticesTitle: "सूचनाएँ और सर्कुलर।",
     noticesSub:
-      "ये आप ख़ुद डालते हैं। छुट्टी, exam की तारीख़, parents' meeting। आप type कीजिए और वह live हो जाती है, न developer चाहिए, न दो लाइन बदलने का बिल।",
+      "ये आप ख़ुद डालते हैं। छुट्टी, एग्ज़ाम की तारीख़, पैरेंट-टीचर मीटिंग। आप टाइप कीजिए और वह लाइव हो जाती है, न डेवलपर चाहिए, न दो लाइन बदलने का बिल।",
     noticePinned: "ज़रूरी",
 
     contactTitle: (name) => `${name} से संपर्क।`,
     labelPhone: "फ़ोन",
     labelAddress: "पता",
-    labelHours: "Office का समय",
-    mapLink: (name) => `${name} को map पर देखिए`,
-    mapFrameTitle: (name) => `${name} का map`,
+    labelHours: "ऑफिस का समय",
+    mapLink: (name) => `${name} को मैप पर देखिए`,
+    mapFrameTitle: (name) => `${name} का मैप`,
 
     stillNeedLabel: "अगला क़दम",
     stillNeedTitle: "हमें आपसे अभी क्या-क्या चाहिए।",
     stillNeedLead:
-      "ऊपर सब कुछ तैयार है और चल रहा है। ये वो बातें हैं जो सिर्फ़ school ही बता सकता है; जैसे चाहें भेज दीजिए, जैसा लिखा होगा वैसा ही लगेगा।",
+      "ऊपर सब कुछ तैयार है और चल रहा है। ये वो बातें हैं जो सिर्फ़ स्कूल ही बता सकता है; जैसे चाहें भेज दीजिए, जैसा लिखा होगा वैसा ही लगेगा।",
 
-    footerSections: "इस page पर",
-    footerNavLabel: "इस site के sections, दोबारा",
+    footerSections: "इस पेज पर",
+    footerNavLabel: "इस वेबसाइट के सेक्शन, दोबारा",
     backToTop: "ऊपर जाइए",
 
     blank: {
       tagline: "आपकी एक लाइन यहाँ आएगी",
       about:
-        "School के बारे में दो-चार लाइनें यहाँ आएँगी, आपके अपने शब्दों में। यह अक्सर वही paragraph होता है जो आपके prospectus में पहले से लिखा है।",
-      established: "जिस साल school शुरू हुआ, वह जोड़िए",
+        "स्कूल के बारे में दो-चार लाइनें यहाँ आएँगी, आपके अपने शब्दों में। यह अक्सर वही पैराग्राफ़ होता है जो आपके प्रॉस्पेक्टस में पहले से लिखा है।",
+      established: "जिस साल स्कूल शुरू हुआ, वह जोड़िए",
 
-      principalName: "अपने Principal का नाम जोड़िए",
+      principalName: "अपने प्रिंसिपल का नाम जोड़िए",
       principalMessage:
-        "आपके Principal का संदेश यहाँ आएगा। जैसा आप लिखकर देंगे, हम बिल्कुल वैसा ही लगाएँगे, उन्हीं के नाम के साथ।",
+        "आपके प्रिंसिपल का संदेश यहाँ आएगा। जैसा आप लिखकर देंगे, हम बिल्कुल वैसा ही लगाएँगे, उन्हीं के नाम के साथ।",
 
-      admissionsDates: "अपनी admission की तारीख़ें जोड़िए",
-      admissionsSteps: "Admission के steps यहाँ आएँगे: माता-पिता पहले क्या करें, और उसके बाद क्या होता है।",
-      admissionsDocuments: "Admission के वक़्त आप जो documents माँगते हैं, वे यहाँ आएँगे।",
+      admissionsDates: "अपनी एडमिशन की तारीख़ें जोड़िए",
+      admissionsSteps: "एडमिशन के स्टेप यहाँ आएँगे: माता-पिता पहले क्या करें, और उसके बाद क्या होता है।",
+      admissionsDocuments: "एडमिशन के वक़्त आप जो डॉक्यूमेंट माँगते हैं, वे यहाँ आएँगे।",
 
-      courses: "आपकी classes और streams यहाँ आएँगी, उन्हीं timings और fees के साथ जो आप बताते हैं।",
-      faculty: "आपके teachers यहाँ आएँगे, हर एक के subject के साथ।",
+      courses: "आपकी क्लास और स्ट्रीम यहाँ आएँगी, उन्हीं टाइमिंग और फीस के साथ जो आप बताते हैं।",
+      faculty: "आपके टीचर्स यहाँ आएँगे, हर एक के विषय के साथ।",
       facilities: "आपकी सुविधाएँ यहाँ आएँगी। सिर्फ़ वही, जो सचमुच हैं।",
-      gallery: "आपके अपने campus की तस्वीरें यहाँ आएँगी। files भेज दीजिए, हम लगा देंगे।",
-      notices: "आपकी सूचनाएँ और circulars यहाँ आएँगे। यह हिस्सा आप ख़ुद update करेंगे।",
-      results: "आपके results यहाँ आएँगे, ठीक वैसे ही जैसे आप ख़ुद छापते हैं।",
+      gallery: "आपके अपने कैंपस की तस्वीरें यहाँ आएँगी। फ़ाइलें भेज दीजिए, हम लगा देंगे।",
+      notices: "आपकी सूचनाएँ और सर्कुलर यहाँ आएँगे। यह हिस्सा आप ख़ुद अपडेट करेंगे।",
+      results: "आपके रिज़ल्ट यहाँ आएँगे, ठीक वैसे ही जैसे आप ख़ुद छापते हैं।",
 
-      phone: "आपका admission helpline number यहाँ आएगा",
-      email: "आपका enquiry email यहाँ आएगा",
+      phone: "आपका एडमिशन हेल्पलाइन नंबर यहाँ आएगा",
+      email: "आपका पूछताछ ईमेल यहाँ आएगा",
       address: "आपका पता यहाँ आएगा",
-      hours: "Office के समय जोड़िए",
-      map: "अपनी map listing जोड़िए",
+      hours: "ऑफिस के समय जोड़िए",
+      map: "अपनी मैप लिस्टिंग जोड़िए",
 
-      board: "अपना board और affiliation number जोड़िए",
+      board: "अपना बोर्ड और एफ़िलिएशन नंबर जोड़िए",
       /* Not "सजा देंगे": without the nukta a reader can take it as सज़ा,
          punishment, which is the wrong word to meet on your own website. */
-      admissions: "अपनी admission process बता दीजिए, हम इसे साफ़-साफ़ steps में लगा देंगे",
+      admissions: "अपनी एडमिशन प्रोसेस बता दीजिए, हम इसे साफ़-साफ़ स्टेप में लगा देंगे",
       contactAll:
-        "आपका phone number, email, पता और office का समय यहाँ आएँगे, ठीक वैसे ही जैसे आप छापते हैं। भेज दीजिए और यह हिस्सा पूरा हो जाएगा।",
+        "आपका फ़ोन नंबर, ईमेल, पता और ऑफिस का समय यहाँ आएँगे, ठीक वैसे ही जैसे आप छापते हैं। भेज दीजिए और यह हिस्सा पूरा हो जाएगा।",
     },
   };
 }

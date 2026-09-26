@@ -7,7 +7,8 @@ import { useSingleton } from "@/lib/cms/context";
  * THE FREE WEBSITE CHECK, the offer. New on 26 Sep 2026
  * (_assets/HOMEPAGE-COPY-DECK.md section 7).
  *
- * The small first step for the 97% of principals who are not buying this week.
+ * The small first step for the 97% of owners who are not buying this week.
+ * Copy: _assets/HOMEPAGE-COPY-DECK-V2.md A7.
  * It is the 10-minute phone checklist Mehdi already runs for pitch pages,
  * written up as two to four plain observations. If the site is fine we say so:
  * never invent a defect.
@@ -21,7 +22,7 @@ import { useSingleton } from "@/lib/cms/context";
  *
  * NOT ON THE PAGE, WAITING FOR MEHDI (deck decision 2). If he says yes, add this
  * as one more line under the grid, same classes as the "It costs nothing" line:
- *   "For some schools, after the check and a short call, we build your new home
+ *   "For some businesses, after the check and a short call, we build your new home
  *    page before you pay the advance. We tell you on the call if we can do it
  *    for you."
  *
@@ -34,9 +35,9 @@ const COLUMNS = [
     items: [
       "We open it on a phone, on mobile data.",
       "We fill in your enquiry form with our own number, and see where it goes.",
-      "We count the taps to your fees and admission dates.",
-      "We share your link on WhatsApp and see what a parent sees.",
-      "We search your name, and “school near” your area.",
+      "We count the taps to your prices, timings and contact details.",
+      "We share your link on WhatsApp and see what your customer sees.",
+      "We search your name, and your trade near your area, on Google and Maps.",
     ],
   },
   {
@@ -45,7 +46,7 @@ const COLUMNS = [
       "Two to four things we found, in plain words, on a private page made for you.",
       "What each one would take to fix.",
       "If your site is fine, we tell you that.",
-      "No website yet? We search your name the way a parent would, and tell you what they find.",
+      "No website yet? We search your name the way a customer would, and tell you what they find.",
     ],
   },
   {
@@ -78,7 +79,7 @@ export default function FreeCheck() {
           <div className="rounded-3xl border border-border bg-card/50 p-6 sm:p-10">
             <Eyebrow>Free website check</Eyebrow>
             <h2 className="mt-5 max-w-xl font-display text-xl font-light leading-snug sm:text-2xl">
-              We check your site the way a parent does.{" "}
+              We check your site the way your customer does.{" "}
               <span className="font-extrabold">Free.</span>
             </h2>
 
@@ -106,6 +107,13 @@ export default function FreeCheck() {
                 It costs nothing. No call is needed unless you want one. We reply on WhatsApp, {when}.
               </p>
             </div>
+            {/* The software buyer's first step (deck V2 A7). A free first call,
+                not a free written scope: /pricing charges a discovery fee for
+                custom SaaS (deck V2 decision G4). */}
+            <p className="mt-5 max-w-2xl text-sm text-muted-foreground text-pretty">
+              Have a process or an app idea instead? Tell us about it on a free first call. You get a
+              plain answer in writing on what it would take.
+            </p>
           </div>
         </Reveal>
       </div>

@@ -67,7 +67,7 @@ export function Hero(p: HeroProps) {
           <div className="flex justify-center"><Actions primary={p.primary} secondary={p.secondary} /></div>
         </div>
         {photo && <Photo src={photo.src} alt={photo.alt} ratio="21 / 9" priority className="mx-auto max-w-6xl" />}
-        {p.aside && <div className={`${wrap} pb-10`}>{p.aside}</div>}
+        {p.aside && <div className={`${wrap} pb-10 ${photo ? "pt-8" : ""}`}>{p.aside}</div>}
       </header>
     );
   }
@@ -219,7 +219,9 @@ export function PageHead({ eyebrow, title, lead, crumbs, children }: {
   }
   return (
     <header className="px-4 pt-4 sm:px-6">
-      <div className="mx-auto max-w-6xl rounded-[calc(var(--ds-radius)+8px)] bg-[hsl(var(--ds-brand))] px-5 py-10 text-[hsl(var(--ds-on-brand))] sm:px-10">
+      {/* The band is dark, so a "Sample figures" line placed in it takes the
+          band's own ink instead of the page's soft ink (src/pages/site/kit/SampleNote.tsx). */}
+      <div className="mx-auto max-w-6xl rounded-[calc(var(--ds-radius)+8px)] bg-[hsl(var(--ds-brand))] px-5 py-10 text-[hsl(var(--ds-on-brand))] sm:px-10 [&_[data-sample-note]]:!text-inherit [&_[data-sample-note]]:opacity-90">
         {crumbs && <div className="opacity-90 [&_*]:!text-inherit"><Breadcrumb items={crumbs} /></div>}
         {eyebrow && <p className="mt-5 font-semibold">{eyebrow}</p>}
         <h1 className="ds-display mt-2 text-3xl sm:text-5xl">{title}</h1>

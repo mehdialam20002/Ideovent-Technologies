@@ -1,6 +1,7 @@
 /**
  * PHOTO STRIP WITH LIGHTBOX, for the About centre strip and the Gallery page.
- * Only real photos (a src) are shown; the caller renders the designed
+ * Only photos with a src are shown (stock ones with their srcset and the
+ * manifest alt, through DemoPhoto); the caller renders the designed
  * no-photo state when there are none. The lightbox opens with a fade and a
  * 0.96 to 1 scale over 220ms (motion "full" only), has arrow keys, swipe,
  * Esc, and keeps focus inside while open.
@@ -8,13 +9,15 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import type { DemoPhoto } from "@/lib/cms/types";
+import type { DemoPhoto as DemoPhotoRecord } from "@/lib/cms/types";
 import { bi, tr, trf } from "@/lib/demo/site/bilingual";
 import { useSite } from "@/lib/demo/site/context";
+import { getStockPhoto, stockAlt } from "@/lib/demo/images";
+import { DemoPhoto } from "@/pages/site/kit/DemoPhoto";
 import { C_COPY } from "./copy";
 import "./coaching.css";
 
-export function PhotoGrid({ photos, cols = 3 }: { photos: DemoPhoto[]; cols?: 2 | 3 | 4 }) {
+export function PhotoGrid({ photos, cols = 3 }: { photos: DemoPhotoRecord[]; cols?: 2 | 3 | 4 }) {
   const { lang } = useSite();
   const [open, setOpen] = useState<number | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -26,8 +29,8 @@ export function PhotoGrid({ photos, cols = 3 }: { photos: DemoPhoto[]; cols?: 2 
           <li key={i} data-f="">
             <button type="button" className="ds-card ds-card-img block w-full overflow-hidden" data-interactive=""
               onClick={(e) => { opener.current = e.currentTarget; setOpen(i); }}>
-              <img src={p.src} alt={bi(p, "alt", lang)} loading="lazy" decoding="async" width={p.width || 600} height={p.height || 450}
-                className="aspect-[4/3] h-auto w-full object-cover" />
+              <DemoPhoto src={p.src} alt={bi(p, "alt", lang)} ratio="4 / 3"
+                sizes={cols === 4 ? "(min-width: 1024px) 270px, 50vw" : cols === 2 ? "(min-width: 1152px) 560px, 50vw" : "(min-width: 1024px) 370px, 50vw"} />
             </button>
             {bi(p, "caption", lang) && <p className="mt-2 text-sm text-[hsl(var(--ds-ink-soft))]">{bi(p, "caption", lang)}</p>}
           </li>
@@ -42,7 +45,7 @@ export function PhotoGrid({ photos, cols = 3 }: { photos: DemoPhoto[]; cols?: 2 
 }
 
 function Lightbox({ photos, index, onIndex, onClose }: {
-  photos: DemoPhoto[]; index: number; onIndex: (i: number) => void; onClose: () => void;
+  photos: DemoPhotoRecord[]; index: number; onIndex: (i: number) => void; onClose: () => void;
 }) {
   const { lang, motion } = useSite();
   const box = useRef<HTMLDivElement | null>(null);
@@ -89,7 +92,7 @@ function Lightbox({ photos, index, onIndex, onClose }: {
       <button type="button" data-close="" onClick={onClose} aria-label={tr(C_COPY.close, lang)} className="absolute right-3 top-3"><X className="h-7 w-7" aria-hidden="true" /></button>
       {photos.length > 1 && <button type="button" onClick={() => go(-1)} aria-label={tr(C_COPY.prev, lang)} className="absolute left-2 top-1/2 -translate-y-1/2"><ChevronLeft className="h-8 w-8" aria-hidden="true" /></button>}
       <figure>
-        <img src={p.src} alt={bi(p, "alt", lang)} />
+        <LightboxImage src={p.src} alt={bi(p, "alt", lang)} lang={lang} />
         <figcaption>
           {bi(p, "caption", lang)}
           <span className="block text-sm opacity-80">{trf(C_COPY.photoOf, lang, { i: String(index + 1), n: String(photos.length) })}</span>
@@ -98,4 +101,12 @@ function Lightbox({ photos, index, onIndex, onClose }: {
       {photos.length > 1 && <button type="button" onClick={() => go(1)} aria-label={tr(C_COPY.next, lang)} className="absolute right-2 top-1/2 -translate-y-1/2"><ChevronRight className="h-8 w-8" aria-hidden="true" /></button>}
     </div>
   );
+}
+
+/** The largest file of a stock photo (its manifest alt), or the file as given. */
+function LightboxImage({ src, alt, lang }: { src: string; alt: string; lang: "en" | "hi" }) {
+  const stock = getStockPhoto(src);
+  if (!stock) return <img src={src} alt={alt} />;
+  const big = stock.sizes[0];
+  return <img src={big.src} alt={stockAlt(stock, lang)} width={big.w} height={big.h} decoding="async" />;
 }
