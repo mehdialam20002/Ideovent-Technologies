@@ -23,11 +23,11 @@
  */
 
 import type { DemoSite } from "@/lib/cms/types";
-import { bi, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biPairs, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SiteContext, SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import type { SchoolPageId } from "@/lib/demo/site/pageSets";
-import { admissionStatus, clean, freshNotices, schoolPhotos, Str } from "@/lib/demo/ui/school/shared";
+import { admissionStatus, freshNotices, schoolPhotos, Str } from "@/lib/demo/ui/school/shared";
 import { People } from "@/lib/demo/ui/school/people";
 import { photoAlt, slotPhoto, PhotoBand, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { SchoolHero } from "@/lib/demo/ui/school/hero";
@@ -65,7 +65,7 @@ const COPY = {
   teachers: { en: "Meet the teachers", hi: "शिक्षकों से मिलिए" },
   allTeachers: { en: "All our teachers", hi: "सभी शिक्षक" },
   visitTitle: { en: "See an ordinary school day", hi: "स्कूल का एक आम दिन देखें" },
-  visitBody: { en: "Call or message the office to fix a time to see the school.", hi: "स्कूल देखने का समय तय करने के लिए ऑफिस को कॉल या मैसेज करें।" },
+  visitBody: { en: "Call or message the office to fix a time to see the school.", hi: "स्कूल देखने का समय तय करने के लिए ऑफ़िस को कॉल या मैसेज करें।" },
   admissionsCard: { en: "Admissions", hi: "एडमिशन" },
   classesOpen: { en: "Classes", hi: "क्लास" },
   nextDate: { en: "Next date", hi: "अगली तारीख" },
@@ -183,7 +183,7 @@ export default function HomePage({ site, ctx }: SitePageProps) {
             {results.map((r, i) => (
               <Reveal as="li" key={i} index={i} className="ds-card p-5">
                 <Bi of={r} k="achievement" as="p" className="ds-display text-xl leading-snug text-[hsl(var(--ds-brand-ink))]" />
-                <p className="ds-num mt-2 text-sm text-[hsl(var(--ds-ink-soft))]">{[r.exam, r.year].filter(Boolean).join(", ")}</p>
+                <p className="ds-num mt-2 text-sm text-[hsl(var(--ds-ink-soft))]">{[bi(r, "exam", lang), bi(r, "year", lang)].filter(Boolean).join(", ")}</p>
               </Reveal>
             ))}
           </ul>
@@ -220,7 +220,7 @@ function HomeRest({ site, ctx, start }: { site: DemoSite; ctx: SiteContext; star
   const boarding = hasBi(site.boarding, "intro") ? site.boarding : null;
   const life = withText(site.studentLife, "title").slice(0, 3);
   const explore = EXPLORE.map((e) => ({ ...e, href: ctx.href(e.id), label: ctx.pages.find((p) => p.id === e.id)?.label })).filter((e) => e.href && e.label);
-  const facilities = clean(site.facilities);
+  const facilities = biPairs(site, "facilities", lang);
   const campus = facilities.length > 0 ? slotPhoto(site, "campus") : undefined;
   /* A plain facility that is also a detail title prints the detail, so it has its Hindi. */
   const twin = (f: string) => (site.facilityDetails || []).find((d) => (d.title || "").trim().toLowerCase() === f.toLowerCase());
@@ -284,9 +284,9 @@ function HomeRest({ site, ctx, start }: { site: DemoSite; ctx: SiteContext; star
           <WithPhoto src={campus} flip>
           <ul className={`grid gap-3 sm:grid-cols-2 ${campus ? "" : "lg:grid-cols-3"}`}>
             {facilities.slice(0, campus ? 8 : undefined).map((f, i) => (
-              <Reveal as="li" key={f} index={i} className="ds-card flex items-start gap-3 p-4">
+              <Reveal as="li" key={f.en || f.text} index={i} className="ds-card flex items-start gap-3 p-4">
                 <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--ds-accent))]" />
-                {twin(f) ? <Bi of={twin(f)} k="title" /> : <Str text={f} />}
+                {twin(f.en) ? <Bi of={twin(f.en)} k="title" /> : <Str text={f.text} />}
               </Reveal>
             ))}
           </ul>
@@ -408,12 +408,12 @@ function HomeHero({ site, ctx }: { site: DemoSite; ctx: SiteContext }) {
     sticker = bi(site, "sessionLabel", lang) ? `${tr(COPY.admissionsCard, lang)} ${bi(site, "sessionLabel", lang)}` : undefined;
   } else {
     /* Classic: the ruled facts line. */
-    facts = [(site.established || "").trim(), status.text].filter(Boolean);
+    facts = [bi(site, "established", lang), status.text].filter(Boolean);
   }
 
   const eyebrow = family === "classic"
-    ? [site.boardOrAffiliation, site.city].filter(Boolean).join(", ")
-    : [site.boardOrAffiliation?.split(",")[0], site.city].filter(Boolean).join(" · ");
+    ? [bi(site, "boardOrAffiliation", lang), bi(site, "city", lang)].filter(Boolean).join(", ")
+    : [bi(site, "boardOrAffiliation", lang).split(",")[0], bi(site, "city", lang)].filter(Boolean).join(" · ");
 
   return (
     <SchoolHero

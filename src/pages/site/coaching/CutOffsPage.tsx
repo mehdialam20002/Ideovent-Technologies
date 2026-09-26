@@ -8,7 +8,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biLabel, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { Chips } from "@/lib/demo/ui/coaching/Chips";
@@ -51,7 +51,7 @@ export default function CutOffsPage({ site, ctx }: SitePageProps) {
       <Section n={1} title={tr(COPY.byExam, lang)}>
         <div className="flex flex-col gap-1 lg:flex-row lg:gap-6">
           <Chips label={tr(COPY.exam, lang)} value={fe.value} onChange={fe.choose}
-            options={[...exams.map((e) => ({ value: e, label: e })), { value: "all", label: tr(C_COPY.allExams, lang) }]} />
+            options={[...exams.map((e) => ({ value: e, label: biLabel(rows, "exam", e, lang) })), { value: "all", label: tr(C_COPY.allExams, lang) }]} />
           {years.length > 1 && <Chips label={tr(COPY.year, lang)} value={fy.value} onChange={fy.choose}
             options={[{ value: "all", label: tr(C_COPY.allYears, lang) }, ...years.map((y) => ({ value: y, label: y }))]} />}
         </div>
@@ -61,14 +61,14 @@ export default function CutOffsPage({ site, ctx }: SitePageProps) {
             const list = shown.filter((r) => r.exam === exam && (r.year || "") === year);
             return (
               <div key={key} data-f="">
-                <p className="ds-display mb-2 text-lg">{[exam, year].filter(Boolean).join("  ·  ")}</p>
-                <DataTable head={[tr(COPY.category, lang), tr(COPY.cutoff, lang)]} rows={list.map((r) => [r.category, r.cutoff])} />
+                <p className="ds-display mb-2 text-lg">{[biLabel(rows, "exam", exam, lang), year].filter(Boolean).join("  ·  ")}</p>
+                <DataTable head={[tr(COPY.category, lang), tr(COPY.cutoff, lang)]} rows={list.map((r) => [bi(r, "category", lang), bi(r, "cutoff", lang)])} />
               </div>
             );
           })}
         </div>
         <div className="mt-6 max-w-[68ch] space-y-1">
-          {g?.cutoffSource && <p>{trf(C_COPY.source, lang, { source: g.cutoffSource })}</p>}
+          {g?.cutoffSource && <p>{trf(C_COPY.source, lang, { source: bi(g, "cutoffSource", lang) })}</p>}
           <p className="text-[hsl(var(--ds-ink-soft))]">{tr(COPY.change, lang)}</p>
         </div>
       </Section>

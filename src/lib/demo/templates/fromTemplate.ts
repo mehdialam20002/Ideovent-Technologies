@@ -344,6 +344,11 @@ export function fromTemplate(
   copy.shortName = "";
   copy.city = city || content.city;
   copy.state = moving ? "" : content.state;
+  /* The Hindi name, when typed, is the Hindi page's masthead. Stored in the
+     existing hi block; empty leaves the Hindi page on the English name. */
+  const hiName = (who.hiName || "").trim();
+  if (hiName) copy.hi = { ...(copy.hi || {}), instituteName: hiName };
+  else if (copy.hi) delete copy.hi.instituteName;
 
   /* NEW */
   const taken = new Set(sites.map((s) => s.id));

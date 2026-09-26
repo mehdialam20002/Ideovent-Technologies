@@ -11,10 +11,10 @@
  */
 
 import type { ReactNode } from "react";
-import { bi, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
-import { clean, Str } from "@/lib/demo/ui/school/shared";
+import { Str } from "@/lib/demo/ui/school/shared";
 import { firstSlot, SlotPhoto, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
@@ -46,16 +46,19 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
   const headTitle = bi(site, "principalTitle", lang);
   const hasHead = hasBi(site, "principalMessage");
   const houses = withText(site.boarding?.houses, "title");
-  const facilities = !ctx.href("facilities") ? clean(site.facilities) : [];
+  const facilities = !ctx.href("facilities") ? biList(site, "facilities", lang) : [];
   /* The story sits beside the about photo, or the hero when there is none. */
   const storyPhoto = firstSlot(site, "about") || site.heroImage || undefined;
   const campusPhoto = firstSlot(site, "campus", "dining");
+  const founded = bi(site, "established", lang) || bi(site, "establishedYear", lang);
+  const board = bi(site, "boardOrAffiliation", lang);
+  const udise = bi(site, "udiseCode", lang);
   const record = [
-    (site.established || site.establishedYear || "").trim() && { label: tr(COPY.founded, lang), value: site.established || site.establishedYear },
-    (site.boardOrAffiliation || "").trim() && { label: tr(COPY.board, lang), value: <Str text={site.boardOrAffiliation || ""} /> },
-    (site.udiseCode || "").trim() && { label: tr(COPY.udise, lang), value: <span className="ds-num">{site.udiseCode}</span> },
+    founded && { label: tr(COPY.founded, lang), value: founded },
+    board && { label: tr(COPY.board, lang), value: <Str text={board} /> },
+    udise && { label: tr(COPY.udise, lang), value: <span className="ds-num">{udise}</span> },
     (site.principalName || "").trim() && { label: tr(COPY.head2, lang), value: [site.principalName, headTitle].filter(Boolean).join(", ") },
-    (site.city || "").trim() && { label: tr(COPY.place, lang), value: [site.city, site.state].filter(Boolean).join(", ") },
+    (site.city || "").trim() && { label: tr(COPY.place, lang), value: [bi(site, "city", lang), bi(site, "state", lang)].filter(Boolean).join(", ") },
   ].filter(Boolean) as { label: string; value: ReactNode }[];
   let n = 0;
 

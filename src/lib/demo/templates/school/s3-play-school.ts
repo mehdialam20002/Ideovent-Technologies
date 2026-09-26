@@ -76,7 +76,7 @@ export default defineTemplateContent("school", {
   /* ── CLEARED: the session being recruited for ────────────────────────── */
   sessionLabel: "2027-28",
   hi: {
-    tagline: "एक बड़े पर ज़्यादा से ज़्यादा दस बच्चे, अपनी रसोई का खाना, और स्कूल में घुलना-मिलना *आपके बच्चे की रफ़्तार से*।",
+    tagline: "एक बड़े के साथ ज़्यादा से ज़्यादा दस बच्चे, अपनी रसोई का खाना, और स्कूल में घुलना-मिलना *आपके बच्चे की रफ़्तार से*।",
     about: "गिलहरी हाउस दो से छह साल के बच्चों का प्ले स्कूल है, इंदौर के विजय नगर में एक पुराने बंगले में। यह 2015 में नौ बच्चों के साथ शुरू हुआ और आज यहाँ चार ग्रुप में 66 बच्चे हैं, और किसी भी ग्रुप में एक बड़े पर दस से ज़्यादा बच्चे नहीं। गेट पूरे दिन बंद रहता है, हर आने वाला रजिस्टर में नाम लिखता है, और बच्चा सिर्फ़ उसी बड़े के साथ घर जाता है जिसका नाम और फ़ोटो पिक-अप कार्ड पर है। वॉशरूम को छोड़कर हर कमरे में कैमरे हैं। लंच हर सुबह हमारी अपनी रसोई में बनता है: कोई पैकेट वाला खाना नहीं, कोई मीठा ड्रिंक नहीं। नौकरी करने वाले माता-पिता के लिए डे-केयर शाम 6:30 बजे तक खुला रहता है।",
     vision: "ऐसे बच्चे जो बड़े स्कूल में जिज्ञासा लेकर पहुँचें, पूरी कहानी बैठकर सुन सकें, मदद माँग सकें और अपनी बारी का इंतज़ार कर सकें, और जिन्हें अपना पहला स्कूल एक खुशहाल घर की तरह याद रहे।",
     mission: "छोटे ग्रुप, हर दिन वही दो बड़े, अपनी रसोई का खाना, बंद गेट, और जब तक बच्चा पेंसिल पकड़ने लायक न हो, कोई वर्कशीट नहीं।",
@@ -86,6 +86,18 @@ export default defineTemplateContent("school", {
     resultsNote: "इस हिस्से का हर आँकड़ा उदाहरण है, जिसे Ideovent ने यह दिखाने के लिए रखा है कि प्ले स्कूल अभिभावकों के सवालों का जवाब कैसे दे सकता है। आपके अपने आँकड़े इसकी जगह लाइन दर लाइन आएँगे, ठीक वैसे ही जैसे आप छापते हैं।",
     admissionsHeadline: "2027-28 के एडमिशन सोमवार 2 नवंबर 2026 से शुरू",
     sessionLabel: "2027-28",
+    established: "2015 में शुरू",
+    city: "इंदौर",
+    state: "मध्य प्रदेश",
+    boardOrAffiliation: "NCF फ़ाउंडेशनल स्टेज, उदाहरण रजिस्ट्रेशन नं. 00000000",
+    facilities: [
+      "बाहर खेलने की जगह: रेत, फिसलपट्टी और झूले",
+      "बच्चों के नाप के वॉशरूम, दिन भर साफ़",
+      "रीडिंग कॉर्नर: हिंदी और इंग्लिश की चित्र-किताबें",
+      "एक्टिविटी रूम: संगीत, खेलकूद, पेंटिंग और मिट्टी",
+      "क्लासरूम और खेलने की जगहों में CCTV",
+      "फ़र्स्ट एड, और उसे देने के लिए ट्रेंड स्टाफ़",
+    ],
   },
   vision: "Children who arrive at big school curious, able to sit through a story, ask for help and wait their turn, and who remember their first school as a happy house.",
   mission: "Small groups, the same two adults every day, food from our own kitchen, a locked gate, and no worksheets before a child is ready to hold a pencil.",
@@ -135,7 +147,7 @@ export default defineTemplateContent("school", {
       fee: "3,800",
       feeNote: "a month",
       detail: "The first fortnight is for settling in. A parent stays for the first hour on day one, and the time apart grows a little each day.",
-      hi: { name: "प्ले ग्रुप", level: "2 से 3 साल", subjects: "खेल, गाने और कविताएँ, रेत और पानी, पहले शब्द, टॉयलेट की आदत", timings: "सुबह 9:30 से दोपहर 12 बजे तक", feeNote: "महीना", detail: "पहले पंद्रह दिन घुलने-मिलने के लिए हैं। पहले दिन पहला घंटा माता-पिता में से कोई साथ रहता है, और अलग रहने का समय रोज़ थोड़ा बढ़ता है।" },
+      hi: { seats: "12 बच्चे, दो टीचर", name: "प्ले ग्रुप", level: "2 से 3 साल", subjects: "खेल, गाने और कविताएँ, रेत और पानी, पहले शब्द, टॉयलेट की आदत", timings: "सुबह 9:30 से दोपहर 12 बजे तक", feeNote: "महीना", detail: "पहले पंद्रह दिन घुलने-मिलने के लिए हैं। पहले दिन पहला घंटा माता-पिता में से कोई साथ रहता है, और अलग रहने का समय रोज़ थोड़ा बढ़ता है।" },
     },
     {
       name: "Nursery",
@@ -146,7 +158,7 @@ export default defineTemplateContent("school", {
       fee: "4,300",
       feeNote: "a month",
       detail: "Children learn to hold a crayon properly this year. Nobody is asked to write letters yet.",
-      hi: { name: "नर्सरी", level: "3 से 4 साल", subjects: "बोलना और सुनना, रंग और आकार, शुरुआती गिनती, हिंदी और इंग्लिश में कविताएँ, बाहर का खेल", timings: "सुबह 9 से दोपहर 12:30 बजे तक", feeNote: "महीना", detail: "इस साल बच्चे क्रेयॉन ठीक से पकड़ना सीखते हैं। अभी किसी से अक्षर लिखने को नहीं कहा जाता।" },
+      hi: { seats: "16 बच्चे, एक टीचर और एक असिस्टेंट", name: "नर्सरी", level: "3 से 4 साल", subjects: "बोलना और सुनना, रंग और आकार, शुरुआती गिनती, हिंदी और इंग्लिश में कविताएँ, बाहर का खेल", timings: "सुबह 9 से दोपहर 12:30 बजे तक", feeNote: "महीना", detail: "इस साल बच्चे क्रेयॉन ठीक से पकड़ना सीखते हैं। अभी किसी से अक्षर लिखने को नहीं कहा जाता।" },
     },
     {
       name: "LKG",
@@ -157,7 +169,7 @@ export default defineTemplateContent("school", {
       fee: "4,700",
       feeNote: "a month",
       detail: "Letters are learnt by their sound first. Written work is one page a day at most, done in school and never sent home.",
-      hi: { name: "LKG", level: "4 से 5 साल", subjects: "फ़ोनिक्स, लिखने की तैयारी, गिनती, कहानियाँ, आर्ट, संगीत और खेलकूद", timings: "सुबह 9 से दोपहर 1 बजे तक", feeNote: "महीना", detail: "अक्षर पहले उनकी आवाज़ से सिखाए जाते हैं। लिखने का काम दिन में ज़्यादा से ज़्यादा एक पन्ना, स्कूल में ही, कभी घर नहीं भेजा जाता।" },
+      hi: { seats: "18 बच्चे, एक टीचर और एक असिस्टेंट", name: "LKG", level: "4 से 5 साल", subjects: "फ़ोनिक्स, लिखने की तैयारी, गिनती, कहानियाँ, आर्ट, संगीत और खेलकूद", timings: "सुबह 9 से दोपहर 1 बजे तक", feeNote: "महीना", detail: "अक्षर पहले उनकी आवाज़ से सिखाए जाते हैं। लिखने का काम दिन में ज़्यादा से ज़्यादा एक पन्ना, स्कूल में ही, कभी घर नहीं भेजा जाता।" },
     },
     {
       name: "UKG",
@@ -168,7 +180,7 @@ export default defineTemplateContent("school", {
       fee: "4,900",
       feeNote: "a month",
       detail: "By March every child reads a short picture book aloud to their teacher. We help families with the Class I forms for the schools they choose.",
-      hi: { name: "UKG", level: "5 से 6 साल", subjects: "आसान शब्द पढ़ना, लिखना, चीज़ों से जोड़ना, हिंदी वर्णमाला, प्रकृति की सैर", timings: "सुबह 9 से दोपहर 1 बजे तक", feeNote: "महीना", detail: "मार्च तक हर बच्चा अपनी टीचर को एक छोटी चित्र-किताब ज़ोर से पढ़कर सुनाता है। आप जो स्कूल चुनें, उनके कक्षा 1 के फ़ॉर्म भरने में हम मदद करते हैं।" },
+      hi: { seats: "20 बच्चे, एक टीचर और एक असिस्टेंट", name: "UKG", level: "5 से 6 साल", subjects: "आसान शब्द पढ़ना, लिखना, चीज़ों से जोड़ना, हिंदी वर्णमाला, प्रकृति की सैर", timings: "सुबह 9 से दोपहर 1 बजे तक", feeNote: "महीना", detail: "मार्च तक हर बच्चा अपनी टीचर को एक छोटी चित्र-किताब ज़ोर से पढ़कर सुनाता है। आप जो स्कूल चुनें, उनके कक्षा 1 के फ़ॉर्म भरने में हम मदद करते हैं।" },
     },
     {
       name: "Daycare",
@@ -179,7 +191,7 @@ export default defineTemplateContent("school", {
       fee: "2,500",
       feeNote: "a month, on top of the programme fee",
       detail: "Children stay in the same house with a carer they already know from the morning. Lights go down for the nap at 2:00 pm, and the snack at 4:30 is fruit and something from the kitchen.",
-      hi: { name: "डे-केयर", level: "2 से 6 साल, सुबह के सेशन के बाद", subjects: "लंच, झपकी, शांत खेल, बाहर का समय और नाश्ता", timings: "शाम 6:30 बजे तक, सोमवार से शुक्रवार", feeNote: "महीना, प्रोग्राम फीस के अलावा", detail: "बच्चे उसी घर में रहते हैं, सुबह से जानी-पहचानी केयरटेकर के साथ। दोपहर 2 बजे झपकी के लिए लाइट धीमी होती है, और 4:30 बजे के नाश्ते में फल और रसोई का कुछ होता है।" },
+      hi: { seats: "20 बच्चे, दो केयरटेकर", name: "डे-केयर", level: "2 से 6 साल, सुबह के सेशन के बाद", subjects: "लंच, झपकी, शांत खेल, बाहर का समय और नाश्ता", timings: "शाम 6:30 बजे तक, सोमवार से शुक्रवार", feeNote: "महीना, प्रोग्राम फीस के अलावा", detail: "बच्चे उसी घर में रहते हैं, सुबह से जानी-पहचानी केयरटेकर के साथ। दोपहर 2 बजे झपकी के लिए लाइट धीमी होती है, और 4:30 बजे के नाश्ते में फल और रसोई का कुछ होता है।" },
     },
   ],
 
@@ -216,8 +228,8 @@ export default defineTemplateContent("school", {
   resultsNote:
     "Every figure in this section is example content, placed by Ideovent to show how a play school can report what parents ask about. Your own figures replace it line for line, exactly as you publish them.",
   results: [
-    { achievement: "8 of 10 Playgroup children settled within the first week", exam: "Playgroup settling in", year: "2026", note: "The other two by the third week", hi: { achievement: "प्ले ग्रुप के 10 में से 8 बच्चे पहले हफ़्ते में घुल-मिल गए", note: "बाकी दो तीसरे हफ़्ते तक" } },
-    { achievement: "19 of 20 UKG children in their first-choice school", exam: "Class I admissions", year: "2026", hi: { achievement: "UKG के 20 में से 19 बच्चों को पहली पसंद का स्कूल मिला" } },
+    { achievement: "8 of 10 Playgroup children settled within the first week", exam: "Playgroup settling in", year: "2026", note: "The other two by the third week", hi: { exam: "प्ले ग्रुप में घुलना-मिलना", achievement: "प्ले ग्रुप के 10 में से 8 बच्चे पहले हफ़्ते में घुल-मिल गए", note: "बाकी दो तीसरे हफ़्ते तक" } },
+    { achievement: "19 of 20 UKG children in their first-choice school", exam: "Class I admissions", year: "2026", hi: { exam: "कक्षा 1 के एडमिशन", achievement: "UKG के 20 में से 19 बच्चों को पहली पसंद का स्कूल मिला" } },
     { achievement: "2 parent meetings a term, with a written note on your child", note: "Speech, play, friendships and eating", hi: { achievement: "हर टर्म 2 पैरेंट-टीचर मीटिंग, बच्चे पर लिखे नोट के साथ", note: "बोलना, खेल, दोस्ती और खाना" } },
     { achievement: "2 weeks of settling in, with a parent close by", note: "Longer if your child needs it", hi: { achievement: "घुलने-मिलने के 2 हफ़्ते, माता-पिता पास में", note: "बच्चे को ज़रूरत हो तो ज़्यादा" } },
   ],
@@ -255,9 +267,9 @@ export default defineTemplateContent("school", {
     { title: "Veranda for rainy days", body: "A covered play space along the house, so outdoor time happens in the monsoon too.", group: "Outdoors", hi: { title: "बारिश के दिनों के लिए बरामदा", body: "घर के साथ-साथ ढकी हुई खेलने की जगह, ताकि मानसून में भी बाहर का समय हो।", group: "बाहर" } },
     { title: "Four group rooms", body: "One per group, on the ground floor, each with low shelves, a reading mat and a window onto the garden.", group: "Indoors", hi: { title: "चार ग्रुप रूम", body: "हर ग्रुप का एक कमरा, ग्राउंड फ़्लोर पर, नीची अलमारियाँ, पढ़ने की दरी और बगीचे की तरफ़ खिड़की।", group: "अंदर" } },
     { title: "Activity room", body: "Music, movement, painting and clay. The floor is washable and so, mostly, are the children.", group: "Indoors", hi: { title: "एक्टिविटी रूम", body: "संगीत, खेलकूद, पेंटिंग और मिट्टी। फ़र्श धुल जाता है, और ज़्यादातर बच्चे भी।", group: "अंदर" } },
-    { title: "Our own kitchen", body: "Lunch and snacks are cooked here every morning. No packaged food, no sweet drinks, and the week's menu is on the door.", group: "Care", hi: { title: "हमारी अपनी रसोई", body: "लंच और नाश्ता हर सुबह यहीं बनता है। कोई पैकेट वाला खाना नहीं, कोई मीठा ड्रिंक नहीं, और हफ़्ते का मेन्यू दरवाज़े पर लगा है।" } },
-    { title: "Nap room", body: "Low beds with a sheet for each child, washed every Friday, for the daycare children after lunch.", group: "Care", hi: { title: "झपकी का कमरा", body: "डे-केयर के बच्चों के लिए लंच के बाद नीचे बिस्तर, हर बच्चे की अलग चादर, हर शुक्रवार धुलती है।" } },
-    { title: "Child-sized washrooms", body: "Low basins and toilets, cleaned through the day, with a woman helper always nearby.", group: "Care", hi: { title: "बच्चों के नाप के वॉशरूम", body: "नीचे वॉशबेसिन और टॉयलेट, दिन भर सफ़ाई, और पास में हमेशा एक महिला हेल्पर।" } },
+    { title: "Our own kitchen", body: "Lunch and snacks are cooked here every morning. No packaged food, no sweet drinks, and the week's menu is on the door.", group: "Care", hi: { title: "हमारी अपनी रसोई", body: "लंच और नाश्ता हर सुबह यहीं बनता है। कोई पैकेट वाला खाना नहीं, कोई मीठा ड्रिंक नहीं, और हफ़्ते का मेन्यू दरवाज़े पर लगा है।", group: "देखभाल" } },
+    { title: "Nap room", body: "Low beds with a sheet for each child, washed every Friday, for the daycare children after lunch.", group: "Care", hi: { title: "झपकी का कमरा", body: "डे-केयर के बच्चों के लिए लंच के बाद नीचे बिस्तर, हर बच्चे की अलग चादर, हर शुक्रवार धुलती है।", group: "देखभाल" } },
+    { title: "Child-sized washrooms", body: "Low basins and toilets, cleaned through the day, with a woman helper always nearby.", group: "Care", hi: { title: "बच्चों के नाप के वॉशरूम", body: "नीचे वॉशबेसिन और टॉयलेट, दिन भर सफ़ाई, और पास में हमेशा एक महिला हेल्पर।", group: "देखभाल" } },
   ],
 
   /* ── STOCK photos for the Gallery chips: src and category kept on
@@ -274,12 +286,12 @@ export default defineTemplateContent("school", {
 
   /* ── CLEARED: gallery. Captions only; they are also the shot list. ───── */
   gallery: [
-    { src: "", alt: "Circle time in Nursery, 10:30 am." },
-    { src: "", alt: "The sand pit after the first rain of June." },
-    { src: "", alt: "Lunch at the low tables. Monday is moong dal khichdi." },
-    { src: "", alt: "Pick-up at the gate, one name called at a time." },
-    { src: "", alt: "LKG painting with their hands, and then washing them." },
-    { src: "", alt: "The daycare room at 2:00 pm, lights down for the nap." },
+    { src: "", alt: "Circle time in Nursery, 10:30 am.", hi: { alt: "नर्सरी में सर्कल टाइम, सुबह 10:30।" } },
+    { src: "", alt: "The sand pit after the first rain of June.", hi: { alt: "जून की पहली बारिश के बाद रेत का गड्ढा।" } },
+    { src: "", alt: "Lunch at the low tables. Monday is moong dal khichdi.", hi: { alt: "नीची मेज़ों पर लंच। सोमवार को मूँग दाल की खिचड़ी।" } },
+    { src: "", alt: "Pick-up at the gate, one name called at a time.", hi: { alt: "गेट पर छुट्टी, एक बार में एक नाम पुकारा जाता है।" } },
+    { src: "", alt: "LKG painting with their hands, and then washing them.", hi: { alt: "LKG के बच्चे हाथों से पेंटिंग करते हैं, और फिर हाथ धोते हैं।" } },
+    { src: "", alt: "The daycare room at 2:00 pm, lights down for the nap.", hi: { alt: "दोपहर 2 बजे डे-केयर का कमरा, झपकी के लिए लाइट धीमी।" } },
   ],
 
   /* ── CLEARED: the admissions line and its dates ──────────────────────── */
@@ -325,14 +337,14 @@ export default defineTemplateContent("school", {
       { label: "LKG", amount: "₹4,700", period: "monthly", note: "Paid quarterly, lunch and materials included", hi: { note: "हर तिमाही, लंच और सामान शामिल" } },
       { label: "UKG", amount: "₹4,900", period: "monthly", note: "Paid quarterly, lunch and materials included", hi: { note: "हर तिमाही, लंच और सामान शामिल" } },
       { label: "Daycare until 6:30 pm", amount: "₹2,500", period: "also", note: "Monthly, only if you use it", hi: { label: "डे-केयर, शाम 6:30 बजे तक", note: "हर महीने, सिर्फ़ लेने पर" } },
-      { label: "School van", amount: "₹1,600 to ₹2,200", period: "also", note: "Monthly, by distance", hi: { label: "स्कूल वैन", note: "हर महीने, दूरी के हिसाब से" } },
-      { label: "Uniform and bag", amount: "About ₹1,800", period: "also", note: "Once a year. No costume or event fees", hi: { label: "यूनिफ़ॉर्म और बैग", note: "साल में एक बार। कोई पोशाक या कार्यक्रम फीस नहीं" } },
+      { label: "School van", amount: "₹1,600 to ₹2,200", period: "also", note: "Monthly, by distance", hi: { label: "स्कूल वैन", amount: "₹1,600 से ₹2,200", note: "हर महीने, दूरी के हिसाब से" } },
+      { label: "Uniform and bag", amount: "About ₹1,800", period: "also", note: "Once a year. No costume or event fees", hi: { label: "यूनिफ़ॉर्म और बैग", amount: "लगभग ₹1,800", note: "साल में एक बार। कोई पोशाक या कार्यक्रम फीस नहीं" } },
     ],
     feeNote: "Fees are paid each quarter, in April, July, October and January, and are not raised during the year. Nothing else is charged through the year: no costume fee for the annual day, no picnic fee, no book fee.",
     ageAsOn: "31 March 2027",
     ageRules: [
-      { className: "Playgroup", minAge: "2", maxAge: "3" },
-      { className: "Nursery", minAge: "3", maxAge: "4" },
+      { className: "Playgroup", minAge: "2", maxAge: "3", hi: { className: "प्ले ग्रुप" } },
+      { className: "Nursery", minAge: "3", maxAge: "4", hi: { className: "नर्सरी" } },
       { className: "LKG", minAge: "4", maxAge: "5" },
       { className: "UKG", minAge: "5", maxAge: "6" },
     ],
@@ -348,6 +360,20 @@ export default defineTemplateContent("school", {
       whoCanApply: "दो से छह साल के बच्चे। प्ले ग्रुप में बच्चा पूरे साल, उसी महीने आ सकता है जब वह दो साल का हो; नर्सरी, LKG और UKG अप्रैल में शुरू होते हैं।",
       feeNote: "फीस हर तिमाही, अप्रैल, जुलाई, अक्टूबर और जनवरी में भरी जाती है, और साल के बीच में नहीं बढ़ती। साल भर और कुछ नहीं लिया जाता: वार्षिक उत्सव की पोशाक, पिकनिक या किताबों की कोई फीस नहीं।",
       rteNote: "गिलहरी हाउस सिर्फ़ प्री-स्कूल है, इसलिए RTE की 25% सीटें यहाँ लागू नहीं होतीं। वे आपके बच्चे के अगले स्कूल की पहली कक्षा में लागू होती हैं, और हम परिवारों को वे फ़ॉर्म भरने में मदद करते हैं।",
+      ageAsOn: "31 मार्च 2027",
+      steps: [
+        "स्कूल देखने का समय बुक करने के लिए फ़ोन कीजिए या WhatsApp मैसेज भेजिए।",
+        "किसी कार्य-दिवस की सुबह बच्चे के साथ आइए और वह कमरा देखिए जिसमें आपका बच्चा बैठेगा।",
+        "एडमिशन फ़ॉर्म भरिए, बच्चे की सेहत, खाने और एलर्जी की जानकारी के साथ।",
+        "पहले दिन से पहले क्लास टीचर के साथ घुलने-मिलने के दिनों की योजना बनाइए।",
+      ],
+      documents: [
+        "जन्म प्रमाण पत्र",
+        "टीकाकरण का रिकॉर्ड",
+        "बच्चे का और माता-पिता में से एक का आधार",
+        "बच्चे की फ़ोटो, और हर उस बड़े की फ़ोटो जो बच्चे को लेने आएगा",
+        "इमरजेंसी संपर्क, और कोई भी मेडिकल या एलर्जी की जानकारी",
+      ],
     },
   },
 
@@ -411,7 +437,7 @@ export default defineTemplateContent("school", {
     mapQuery: "Gilhari House Play School, Indore",
     landmark: "Two lanes behind the Scheme 54 vegetable market, the blue gate with the squirrel on it",
     transportDesk: "+91 00000 00000",
-    hi: { hours: "ऑफ़िस सोमवार से शनिवार, सुबह 9 से शाम 4 बजे तक। डे-केयर शाम 6:30 बजे तक, सोमवार से शुक्रवार।", landmark: "स्कीम 54 सब्ज़ी मंडी के पीछे दो गली, गिलहरी वाला नीला गेट" },
+    hi: { addressLines: ["गिलहरी हाउस प्ले स्कूल", "14 Example Road, स्कीम 54, विजय नगर", "इंदौर, मध्य प्रदेश 452000"], hours: "ऑफ़िस सोमवार से शनिवार, सुबह 9 से शाम 4 बजे तक। डे-केयर शाम 6:30 बजे तक, सोमवार से शुक्रवार।", landmark: "स्कीम 54 सब्ज़ी मंडी के पीछे दो गली, गिलहरी वाला नीला गेट" },
   },
 
   /* ── CLEARED: parents' words. Fiction on its face. ───────────────────── */
@@ -419,21 +445,21 @@ export default defineTemplateContent("school", {
     {
       quote: "She cried for four mornings. On the fifth she let go of my hand at the gate and did not look back. Ruchi ma'am sent us a photo at 10:30 every one of those days.",
       relation: "Mother of a Playgroup child",
-      hi: { quote: "वह चार सुबह रोई। पाँचवीं सुबह उसने गेट पर मेरा हाथ छोड़ा और पीछे मुड़कर नहीं देखा। उन सभी दिनों में रुचि मैम ने हमें हर दिन 10:30 बजे एक फ़ोटो भेजी।", relation: "प्ले ग्रुप की बच्ची की माँ" },
+      hi: { quote: "वह चार सुबह रोई। पाँचवीं सुबह उसने गेट पर मेरा हाथ छोड़ा और पीछे मुड़कर नहीं देखा। उन सभी दिनों में रुचि मैम ने हमें हर दिन 10:30 बजे एक फ़ोटो भेजी।", relation: "प्ले ग्रुप की बच्ची की माँ", source: "Ideovent का लिखा उदाहरण रिव्यू" },
       source: "Example review written by Ideovent",
       consent: true,
     },
     {
       quote: "What sold us was the kitchen. We could see the dal being cooked when we came to visit.",
       relation: "Father of a child in LKG",
-      hi: { quote: "हमें रसोई ने मना लिया। देखने आए तो दाल बनती हुई दिख रही थी।", relation: "LKG के बच्चे के पिता" },
+      hi: { quote: "हमें रसोई ने मना लिया। देखने आए तो दाल बनती हुई दिख रही थी।", relation: "LKG के बच्चे के पिता", source: "Ideovent का लिखा उदाहरण रिव्यू" },
       source: "Example review written by Ideovent",
       consent: true,
     },
     {
       quote: "Both of us work, and daycare in the same house meant our son never had to change places at 1:00 pm.",
       relation: "Parents of a child in Nursery and daycare",
-      hi: { quote: "हम दोनों नौकरी करते हैं, और उसी घर में डे-केयर होने से हमारे बेटे को दोपहर 1 बजे जगह नहीं बदलनी पड़ी।", relation: "नर्सरी और डे-केयर वाले बच्चे के माता-पिता" },
+      hi: { quote: "हम दोनों नौकरी करते हैं, और उसी घर में डे-केयर होने से हमारे बेटे को दोपहर 1 बजे जगह नहीं बदलनी पड़ी।", relation: "नर्सरी और डे-केयर वाले बच्चे के माता-पिता", source: "Ideovent का लिखा उदाहरण रिव्यू" },
       source: "Example review written by Ideovent",
       consent: true,
     },
@@ -442,8 +468,8 @@ export default defineTemplateContent("school", {
   /* ── CLEARED: the Parents page. Links only; no login form is ever built
         on a demo page. example.com in a template. ──────────────────────── */
   portalLinks: [
-    { label: "Parent app", url: "https://example.com/app", audience: "Parents", note: "The day's photos, attendance and notes from the teacher", hi: { label: "पैरेंट ऐप", note: "दिन की फ़ोटो, हाज़िरी और टीचर के नोट" } },
-    { label: "Pay fees online", url: "https://example.com/fees", audience: "Parents", note: "Quarterly fees, with an emailed receipt", hi: { label: "ऑनलाइन फीस भरें", note: "तिमाही फीस, ईमेल पर रसीद के साथ" } },
+    { label: "Parent app", url: "https://example.com/app", audience: "Parents", note: "The day's photos, attendance and notes from the teacher", hi: { label: "पैरेंट ऐप", audience: "अभिभावक", note: "दिन की फ़ोटो, हाज़िरी और टीचर के नोट" } },
+    { label: "Pay fees online", url: "https://example.com/fees", audience: "Parents", note: "Quarterly fees, with an emailed receipt", hi: { label: "ऑनलाइन फीस भरें", audience: "अभिभावक", note: "तिमाही फीस, ईमेल पर रसीद के साथ" } },
   ],
   downloads: [
     { label: "This month's lunch menu", group: "Menu", hi: { label: "इस महीने का लंच मेन्यू", group: "मेन्यू" } },
@@ -456,9 +482,9 @@ export default defineTemplateContent("school", {
   transport: {
     intro: "Two vans on three short routes, with a woman attendant on board who hands each child to the class teacher at the gate.",
     routes: [
-      { name: "Van A, Vijay Nagar and Scheme 78", stops: ["Scheme 78 park", "Vijay Nagar square", "Sayaji crossing"], pickup: "8:30 am", drop: "12:45 pm" },
-      { name: "Van A, second trip, Nipania", stops: ["Nipania main road", "Bombay Hospital turn"], pickup: "8:45 am", drop: "1:05 pm" },
-      { name: "Van B, Sukhliya and Scheme 114", stops: ["Sukhliya market", "Scheme 114 gate", "MR 10 crossing"], pickup: "8:35 am", drop: "12:50 pm" },
+      { name: "Van A, Vijay Nagar and Scheme 78", stops: ["Scheme 78 park", "Vijay Nagar square", "Sayaji crossing"], pickup: "8:30 am", drop: "12:45 pm", hi: { name: "वैन A, विजय नगर और स्कीम 78", stops: ["स्कीम 78 पार्क", "विजय नगर चौराहा", "सयाजी चौराहा"], pickup: "सुबह 8:30", drop: "दोपहर 12:45" } },
+      { name: "Van A, second trip, Nipania", stops: ["Nipania main road", "Bombay Hospital turn"], pickup: "8:45 am", drop: "1:05 pm", hi: { name: "वैन A, दूसरा चक्कर, निपानिया", stops: ["निपानिया मेन रोड", "बॉम्बे हॉस्पिटल मोड़"], pickup: "सुबह 8:45", drop: "दोपहर 1:05" } },
+      { name: "Van B, Sukhliya and Scheme 114", stops: ["Sukhliya market", "Scheme 114 gate", "MR 10 crossing"], pickup: "8:35 am", drop: "12:50 pm", hi: { name: "वैन B, सुखलिया और स्कीम 114", stops: ["सुखलिया मार्केट", "स्कीम 114 गेट", "MR 10 चौराहा"], pickup: "सुबह 8:35", drop: "दोपहर 12:50" } },
     ],
     safety: [
       "A woman attendant on every trip",
@@ -470,6 +496,12 @@ export default defineTemplateContent("school", {
     hi: {
       intro: "तीन छोटे रूट पर दो वैन, हर वैन में एक महिला अटेंडेंट जो हर बच्चे को गेट पर क्लास टीचर को सौंपती है।",
       feeNote: "दूरी के हिसाब से ₹1,600 से ₹2,200 महीना। डे-केयर वाले बच्चे अपने माता-पिता के साथ घर जाते हैं।",
+      safety: [
+        "हर ट्रिप पर एक महिला अटेंडेंट",
+        "दरवाज़ों पर चाइल्ड लॉक, और हर सीट पर सीट बेल्ट",
+        "GPS ट्रैकिंग, लोकेशन पैरेंट ऐप पर",
+        "बच्चा सिर्फ़ पिक-अप कार्ड वाले बड़े को सौंपा जाता है",
+      ],
     },
   },
 });

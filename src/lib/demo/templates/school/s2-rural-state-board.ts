@@ -89,6 +89,19 @@ export default defineTemplateContent("school", {
     vision: "हर गाँव का बच्चा, चाहे हिंदी मीडियम में पढ़े या इंग्लिश मीडियम में, दसवीं के बाद अपने पैरों पर खड़ा होने लायक पढ़ाई लेकर निकले।",
     mission: "रोज़ की हाज़िरी, हर बच्चे की कॉपी हर हफ़्ते जाँची हुई, फीस साल की शुरुआत में तय और पूरी लिखी हुई, और हर गाँव तक वैन।",
     sessionLabel: "2027-28",
+    established: "स्थापना 1998",
+    city: "सण्डीला",
+    state: "उत्तर प्रदेश",
+    boardOrAffiliation: "UP Board, हिंदी और इंग्लिश मीडियम, उदाहरण मान्यता संख्या 00000000",
+    udiseCode: "09000000000 (उदाहरण)",
+    facilities: [
+      "लड़कियों और लड़कों के लिए अलग शौचालय, और साफ़ पीने का पानी",
+      "हाईस्कूल की कक्षाओं के लिए विज्ञान लैब",
+      "कंप्यूटर रूम",
+      "लाइब्रेरी और पढ़ने का कोना",
+      "खेल, ड्रिल और सुबह की प्रार्थना सभा के लिए मैदान",
+      "स्कूल ऑफ़िस में फ़र्स्ट एड",
+    ],
   },
   sessionLabel: "2027-28",
   vision: "Every child from the villages around us, in the Hindi or the English medium, leaves Class X able to stand on their own feet.",
@@ -208,20 +221,20 @@ export default defineTemplateContent("school", {
   resultsNote:
     "Every figure in this section is example content, placed by Ideovent to show how a result list is set. Your own results replace it line for line, exactly as you publish them.",
   results: [
-    { achievement: "98.4% passed", exam: "UP Board High School", year: "2026", note: "63 of 64 students", category: "High School", hi: { achievement: "98.4% पास", note: "64 में से 63 बच्चे" } },
-    { achievement: "41 first divisions", exam: "UP Board High School", year: "2026", note: "60% marks or above", category: "High School", hi: { achievement: "41 प्रथम श्रेणी", note: "60% या उससे ज़्यादा अंक" } },
-    { achievement: "12 distinctions in mathematics", exam: "UP Board High School", year: "2026", note: "75 marks or above", category: "High School", hi: { achievement: "गणित में 12 विशेष योग्यता", note: "75 या उससे ज़्यादा अंक" } },
-    { achievement: "89.5% highest aggregate", exam: "UP Board High School", year: "2026", category: "High School", hi: { achievement: "सबसे ज़्यादा कुल अंक 89.5%" } },
-    { achievement: "96.6% passed", exam: "UP Board High School", year: "2025", note: "57 of 59 students", category: "High School", hi: { achievement: "96.6% पास", note: "59 में से 57 बच्चे" } },
+    { achievement: "98.4% passed", exam: "UP Board High School", year: "2026", note: "63 of 64 students", category: "High School", hi: { exam: "UP Board हाईस्कूल", category: "हाईस्कूल", achievement: "98.4% पास", note: "64 में से 63 बच्चे" } },
+    { achievement: "41 first divisions", exam: "UP Board High School", year: "2026", note: "60% marks or above", category: "High School", hi: { exam: "UP Board हाईस्कूल", category: "हाईस्कूल", achievement: "41 प्रथम श्रेणी", note: "60% या उससे ज़्यादा अंक" } },
+    { achievement: "12 distinctions in mathematics", exam: "UP Board High School", year: "2026", note: "75 marks or above", category: "High School", hi: { exam: "UP Board हाईस्कूल", category: "हाईस्कूल", achievement: "गणित में 12 विशेष योग्यता", note: "75 या उससे ज़्यादा अंक" } },
+    { achievement: "89.5% highest aggregate", exam: "UP Board High School", year: "2026", category: "High School", hi: { exam: "UP Board हाईस्कूल", category: "हाईस्कूल", achievement: "सबसे ज़्यादा कुल अंक 89.5%" } },
+    { achievement: "96.6% passed", exam: "UP Board High School", year: "2025", note: "57 of 59 students", category: "High School", hi: { exam: "UP Board हाईस्कूल", category: "हाईस्कूल", achievement: "96.6% पास", note: "59 में से 57 बच्चे" } },
   ],
 
   /* ── CLEARED: the board table, three years, in the columns CBSE uses
         (registered, passed, pass percentage), which is also how a UP Board
         school reports to the district. ──────────────────────────────────── */
   boardResults: [
-    { year: "2026", className: "High School (X)", registered: "64", passed: "63", passPercent: "98.4%" },
-    { year: "2025", className: "High School (X)", registered: "59", passed: "57", passPercent: "96.6%" },
-    { year: "2024", className: "High School (X)", registered: "55", passed: "53", passPercent: "96.4%" },
+    { year: "2026", className: "High School (X)", hi: { className: "हाईस्कूल (10)" }, registered: "64", passed: "63", passPercent: "98.4%" },
+    { year: "2025", className: "High School (X)", hi: { className: "हाईस्कूल (10)" }, registered: "59", passed: "57", passPercent: "96.6%" },
+    { year: "2024", className: "High School (X)", hi: { className: "हाईस्कूल (10)" }, registered: "55", passed: "53", passPercent: "96.4%" },
   ],
 
   /* ── CLEARED: the proof row, each figure with its basis line ─────────── */
@@ -279,25 +292,25 @@ export default defineTemplateContent("school", {
         licensed model, never the teacher), kept on duplicate for a row that
         survives, and never the same person twice. ───────── */
   faculty: [
-    { name: "Neelam Awasthi", photo: "/demo/img/people/teacher-w07-240.webp", role: "Principal", group: "Leadership", subject: "Mathematics", qualification: "M.Sc. Mathematics, B.Ed.", experience: "17 years here, Principal since 2018", hi: { group: "प्रबंधन", role: "प्रधानाचार्या", subject: "गणित", experience: "यहाँ 17 साल, 2018 से प्रधानाचार्या" } },
-    { name: "Sunita Mishra", photo: "/demo/img/people/teacher-w05-240.webp", group: "High school", subject: "Hindi and Sanskrit", qualification: "M.A. Hindi, B.Ed.", experience: "19 years, here since 2007", hi: { group: "हाईस्कूल", subject: "हिंदी और संस्कृत", experience: "19 साल, 2007 से यहाँ" } },
-    { name: "Arun Kumar Verma", photo: "/demo/img/people/teacher-m07-240.webp", group: "High school", subject: "Mathematics", qualification: "M.Sc. Mathematics, B.Ed.", experience: "14 years, Class VI to X", style: "Gives every child one sum to do on the board every week.", hi: { group: "हाईस्कूल", subject: "गणित", experience: "14 साल, कक्षा 6 से 10", style: "हर हफ़्ते हर बच्चे से बोर्ड पर एक सवाल हल करवाते हैं।" } },
-    { name: "Farheen Siddiqui", photo: "/demo/img/people/teacher-w02-240.webp", group: "High school", subject: "English", qualification: "M.A. English, B.Ed.", experience: "8 years, the English medium sections", hi: { group: "हाईस्कूल", subject: "अंग्रेज़ी", experience: "8 साल, इंग्लिश मीडियम के सेक्शन" } },
-    { name: "Rakesh Yadav", photo: "/demo/img/people/teacher-m03-240.webp", group: "High school", subject: "Science", qualification: "M.Sc. Chemistry, B.Ed.", experience: "11 years, and runs the laboratory", hi: { group: "हाईस्कूल", subject: "विज्ञान", experience: "11 साल, और लैब की ज़िम्मेदारी इन्हीं की" } },
-    { name: "Poonam Shukla", photo: "/demo/img/people/teacher-w01-240.webp", group: "Primary", subject: "Class II class teacher", qualification: "B.A., D.El.Ed., UPTET", experience: "6 years, here since 2020", hi: { group: "प्राइमरी", subject: "कक्षा 2 की क्लास टीचर", experience: "6 साल, 2020 से यहाँ" } },
-    { name: "Mohd. Irfan", photo: "/demo/img/people/teacher-m05-240.webp", group: "Primary", subject: "Games and physical education", qualification: "B.P.Ed.", experience: "12 years, takes the morning drill", hi: { group: "प्राइमरी", subject: "खेल और शारीरिक शिक्षा", experience: "12 साल, सुबह की ड्रिल यही कराते हैं" } },
+    { name: "Neelam Awasthi", photo: "/demo/img/people/teacher-w07-240.webp", role: "Principal", group: "Leadership", subject: "Mathematics", qualification: "M.Sc. Mathematics, B.Ed.", experience: "17 years here, Principal since 2018", hi: { group: "प्रबंधन", role: "प्रधानाचार्या", qualification: "M.Sc. गणित, B.Ed.", subject: "गणित", experience: "यहाँ 17 साल, 2018 से प्रधानाचार्या" } },
+    { name: "Sunita Mishra", photo: "/demo/img/people/teacher-w11-240.webp", group: "High school", subject: "Hindi and Sanskrit", qualification: "M.A. Hindi, B.Ed.", experience: "19 years, here since 2007", hi: { qualification: "M.A. हिंदी, B.Ed.", group: "हाईस्कूल", subject: "हिंदी और संस्कृत", experience: "19 साल, 2007 से यहाँ" } },
+    { name: "Arun Kumar Verma", photo: "/demo/img/people/teacher-m13-240.webp", group: "High school", subject: "Mathematics", qualification: "M.Sc. Mathematics, B.Ed.", experience: "14 years, Class VI to X", style: "Gives every child one sum to do on the board every week.", hi: { qualification: "M.Sc. गणित, B.Ed.", group: "हाईस्कूल", subject: "गणित", experience: "14 साल, कक्षा 6 से 10", style: "हर हफ़्ते हर बच्चे से बोर्ड पर एक सवाल हल करवाते हैं।" } },
+    { name: "Farheen Siddiqui", photo: "/demo/img/people/teacher-w01-240.webp", group: "High school", subject: "English", qualification: "M.A. English, B.Ed.", experience: "8 years, the English medium sections", hi: { qualification: "M.A. अंग्रेज़ी, B.Ed.", group: "हाईस्कूल", subject: "अंग्रेज़ी", experience: "8 साल, इंग्लिश मीडियम के सेक्शन" } },
+    { name: "Rakesh Yadav", photo: "/demo/img/people/teacher-m09-240.webp", group: "High school", subject: "Science", qualification: "M.Sc. Chemistry, B.Ed.", experience: "11 years, and runs the laboratory", hi: { qualification: "M.Sc. रसायन विज्ञान, B.Ed.", group: "हाईस्कूल", subject: "विज्ञान", experience: "11 साल, और लैब की ज़िम्मेदारी इन्हीं की" } },
+    { name: "Poonam Shukla", photo: "/demo/img/people/teacher-w04-240.webp", group: "Primary", subject: "Class II class teacher", qualification: "B.A., D.El.Ed., UPTET", experience: "6 years, here since 2020", hi: { group: "प्राइमरी", subject: "कक्षा 2 की क्लास टीचर", experience: "6 साल, 2020 से यहाँ" } },
+    { name: "Mohd. Irfan", photo: "/demo/img/people/teacher-m03-240.webp", group: "Primary", subject: "Games and physical education", qualification: "B.P.Ed.", experience: "12 years, takes the morning drill", hi: { group: "प्राइमरी", subject: "खेल और शारीरिक शिक्षा", experience: "12 साल, सुबह की ड्रिल यही कराते हैं" } },
   ],
 
   /* ── CLEARED: gallery. Captions only; they are also the shot list. The
         legacy gallery has no Hindi slot, so its captions are English and the
         Hindi lives in `photos` below. ───────────────────────────────────── */
   gallery: [
-    { src: "", alt: "Morning assembly on the front ground, 7:45 am." },
-    { src: "", alt: "Van 3 at the canal bridge stop, 7:05 am." },
-    { src: "", alt: "Class IX science practical: testing leaves for starch." },
-    { src: "", alt: "The Republic Day procession, 26 January." },
-    { src: "", alt: "The computer room, Class VII, on a Thursday." },
-    { src: "", alt: "Result day in April: parents at the notice board." },
+    { src: "", alt: "Morning assembly on the front ground, 7:45 am.", hi: { alt: "सामने के मैदान में सुबह की प्रार्थना सभा, 7:45 बजे।" } },
+    { src: "", alt: "Van 3 at the canal bridge stop, 7:05 am.", hi: { alt: "नहर पुल वाले स्टॉप पर वैन 3, सुबह 7:05 बजे।" } },
+    { src: "", alt: "Class IX science practical: testing leaves for starch.", hi: { alt: "कक्षा 9 का विज्ञान प्रैक्टिकल: पत्तियों में स्टार्च की जाँच।" } },
+    { src: "", alt: "The Republic Day procession, 26 January.", hi: { alt: "26 जनवरी, गणतंत्र दिवस की प्रभात फेरी।" } },
+    { src: "", alt: "The computer room, Class VII, on a Thursday.", hi: { alt: "गुरुवार को कंप्यूटर रूम में कक्षा 7।" } },
+    { src: "", alt: "Result day in April: parents at the notice board.", hi: { alt: "अप्रैल में रिज़ल्ट का दिन: नोटिस बोर्ड पर अभिभावक।" } },
   ],
 
   /* ── STOCK photos for the Gallery chips: src and category kept on
@@ -357,14 +370,14 @@ export default defineTemplateContent("school", {
       { label: "Class I to V", amount: "₹550", period: "monthly", note: "₹6,600 for the year", hi: { label: "कक्षा 1 से 5", note: "पूरे साल के ₹6,600" } },
       { label: "Class VI to VIII", amount: "₹650", period: "monthly", note: "₹7,800 for the year", hi: { label: "कक्षा 6 से 8", note: "पूरे साल के ₹7,800" } },
       { label: "Class IX and X", amount: "₹800", period: "monthly", note: "₹9,600 for the year", hi: { label: "कक्षा 9 और 10", note: "पूरे साल के ₹9,600" } },
-      { label: "School van", amount: "₹300 to ₹550", period: "also", note: "Monthly, by distance, only if you use it", hi: { label: "स्कूल वैन", note: "महीने का, दूरी के हिसाब से, सिर्फ़ वैन लेने पर" } },
-      { label: "UP Board exam fee, Class X", amount: "As the Board sets it", period: "also", note: "Paid once, with the board form", hi: { label: "UP Board परीक्षा शुल्क, कक्षा 10", note: "एक बार, बोर्ड फ़ॉर्म के साथ" } },
+      { label: "School van", amount: "₹300 to ₹550", period: "also", note: "Monthly, by distance, only if you use it", hi: { label: "स्कूल वैन", amount: "₹300 से ₹550", note: "महीने का, दूरी के हिसाब से, सिर्फ़ वैन लेने पर" } },
+      { label: "UP Board exam fee, Class X", amount: "As the Board sets it", period: "also", note: "Paid once, with the board form", hi: { label: "UP Board परीक्षा शुल्क, कक्षा 10", amount: "बोर्ड जितनी तय करे", note: "एक बार, बोर्ड फ़ॉर्म के साथ" } },
     ],
     feeNote: "The fee can be paid monthly, or for the year in April. It is fixed in April and does not change during the year. Every payment gets a printed receipt at the counter.",
     ageAsOn: "31 March 2027",
     ageRules: [
-      { className: "Nursery", minAge: "3", maxAge: "4" },
-      { className: "Class I", minAge: "6", maxAge: "7" },
+      { className: "Nursery", minAge: "3", maxAge: "4", hi: { className: "नर्सरी" } },
+      { className: "Class I", minAge: "6", maxAge: "7", hi: { className: "कक्षा 1" } },
     ],
     rteNote: "A quarter of the Nursery and Class I seats are for children from weaker and disadvantaged families under the RTE Act. They are allotted by the UP government's online lottery, not by the school, and the school charges those children no fee.",
     hi: {
@@ -378,6 +391,20 @@ export default defineTemplateContent("school", {
       whoCanApply: "नर्सरी से कक्षा 9 तक, हिंदी या इंग्लिश मीडियम में। कक्षा 10 में सिर्फ़ किसी दूसरे UP Board स्कूल से ट्रांसफ़र होकर आने वाले बच्चे।",
       feeNote: "फीस हर महीने दे सकते हैं, या अप्रैल में पूरे साल की एक साथ। फीस अप्रैल में तय होती है और साल के बीच नहीं बदलती। हर भुगतान पर काउंटर से छपी हुई रसीद मिलती है।",
       rteNote: "RTE क़ानून के तहत नर्सरी और कक्षा 1 की एक चौथाई सीटें कमज़ोर और वंचित परिवारों के बच्चों के लिए हैं। ये सीटें उत्तर प्रदेश सरकार की ऑनलाइन लॉटरी से मिलती हैं, स्कूल से नहीं, और इन बच्चों से स्कूल कोई फीस नहीं लेता।",
+      steps: [
+        "किसी भी कार्य-दिवस पर बच्चे के साथ स्कूल ऑफ़िस आइए और एडमिशन फ़ॉर्म ले जाइए।",
+        "फ़ॉर्म घर पर भरिए और यहाँ लिखे कागज़ों के साथ वापस लाइए।",
+        "दूसरी कक्षा या उससे ऊपर में आने वाला बच्चा हिंदी, अंग्रेज़ी और गणित का एक छोटा टेस्ट देता है, ताकि क्लास टीचर जानें कि कहाँ से शुरू करना है।",
+        "ऑफ़िस काउंटर पर एडमिशन फीस जमा कीजिए, और रसीद व किताबों की सूची ले लीजिए।",
+      ],
+      documents: [
+        "जन्म प्रमाणपत्र",
+        "बच्चे और माता या पिता का आधार कार्ड",
+        "दूसरी कक्षा और उससे ऊपर के लिए, पिछले स्कूल की TC (ट्रांसफ़र सर्टिफ़िकेट)",
+        "पिछली पास की हुई कक्षा की मार्कशीट या रिपोर्ट कार्ड",
+        "बच्चे की पासपोर्ट साइज़ फ़ोटो",
+        "आय और जाति प्रमाणपत्र, सिर्फ़ छात्रवृत्ति के आवेदन के लिए",
+      ],
     },
   },
 
@@ -468,14 +495,14 @@ export default defineTemplateContent("school", {
       relation: "Father of a Class VII student",
       source: "Example review written by Ideovent",
       consent: true,
-      hi: { quote: "मेरा बेटा कक्षा 5 तक हिंदी मीडियम में था। कक्षा 6 में इंग्लिश मीडियम में गया, और क्लास टीचर ने एक महीने तक उसे अलग से पढ़ाया जब तक वह बराबर नहीं आ गया।", relation: "कक्षा 7 के छात्र के पिता" },
+      hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "मेरा बेटा कक्षा 5 तक हिंदी मीडियम में था। कक्षा 6 में इंग्लिश मीडियम में गया, और क्लास टीचर ने एक महीने तक उसे अलग से पढ़ाया जब तक वह बराबर नहीं आ गया।", relation: "कक्षा 7 के छात्र के पिता" },
     },
     {
       quote: "The van comes to our village at 7:05 every day. In three years it has not missed a single morning.",
       relation: "Mother of two children, Class II and Class VIII",
       source: "Example review written by Ideovent",
       consent: true,
-      hi: { quote: "वैन रोज़ 7:05 पर हमारे गाँव आती है। तीन साल में एक दिन भी नहीं छूटी।", relation: "दो बच्चों की माँ, कक्षा 2 और कक्षा 8" },
+      hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "वैन रोज़ 7:05 पर हमारे गाँव आती है। तीन साल में एक दिन भी नहीं छूटी।", relation: "दो बच्चों की माँ, कक्षा 2 और कक्षा 8" },
     },
   ],
 
@@ -484,10 +511,10 @@ export default defineTemplateContent("school", {
   transport: {
     intro: "Four vans reach 22 villages. No route is longer than 14 km, and every van has a woman helper.",
     routes: [
-      { name: "Van 1, Hardoi road", stops: ["Canal bridge", "Primary health centre", "Mandi gate"], pickup: "7:05 am", drop: "2:20 pm" },
-      { name: "Van 2, Malihabad road", stops: ["Brick kiln turn", "Panchayat bhawan", "Temple crossing"], pickup: "7:00 am", drop: "2:25 pm" },
-      { name: "Van 3, Balamau side", stops: ["Canal bridge south", "Railway crossing", "Sugar mill gate"], pickup: "6:55 am", drop: "2:30 pm" },
-      { name: "Van 4, town and noon trip", stops: ["Bus stand", "Tehsil", "Sabzi mandi"], pickup: "7:15 am", drop: "12:15 pm and 2:15 pm" },
+      { name: "Van 1, Hardoi road", stops: ["Canal bridge", "Primary health centre", "Mandi gate"], pickup: "7:05 am", drop: "2:20 pm", hi: { name: "वैन 1, हरदोई रोड", stops: ["नहर पुल", "प्राथमिक स्वास्थ्य केंद्र", "मंडी गेट"], pickup: "सुबह 7:05", drop: "दोपहर 2:20" } },
+      { name: "Van 2, Malihabad road", stops: ["Brick kiln turn", "Panchayat bhawan", "Temple crossing"], pickup: "7:00 am", drop: "2:25 pm", hi: { name: "वैन 2, मलिहाबाद रोड", stops: ["ईंट भट्ठा मोड़", "पंचायत भवन", "मंदिर चौराहा"], pickup: "सुबह 7:00", drop: "दोपहर 2:25" } },
+      { name: "Van 3, Balamau side", stops: ["Canal bridge south", "Railway crossing", "Sugar mill gate"], pickup: "6:55 am", drop: "2:30 pm", hi: { name: "वैन 3, बालामऊ की तरफ़", stops: ["नहर पुल दक्षिण", "रेलवे क्रॉसिंग", "चीनी मिल गेट"], pickup: "सुबह 6:55", drop: "दोपहर 2:30" } },
+      { name: "Van 4, town and noon trip", stops: ["Bus stand", "Tehsil", "Sabzi mandi"], pickup: "7:15 am", drop: "12:15 pm and 2:15 pm", hi: { name: "वैन 4, कस्बा और दोपहर का चक्कर", stops: ["बस स्टैंड", "तहसील", "सब्ज़ी मंडी"], pickup: "सुबह 7:15", drop: "दोपहर 12:15 और 2:15" } },
     ],
     safety: [
       "A woman helper on every van",
@@ -498,6 +525,11 @@ export default defineTemplateContent("school", {
     hi: {
       intro: "चार वैन 22 गाँवों तक जाती हैं। कोई रूट 14 किलोमीटर से लंबा नहीं, और हर वैन में एक महिला सहायक।",
       feeNote: "5 किलोमीटर तक ₹300 महीना, 10 किलोमीटर तक ₹450, उससे आगे ₹550। 1 अक्टूबर से 31 मार्च तक सर्दी में समय एक घंटा देर से।",
+      safety: [
+        "हर वैन में एक महिला सहायक",
+        "हर वैन स्कूल वाहन के रूप में रजिस्टर्ड है, उसके कागज़ ऑफ़िस में रखे हैं",
+        "बच्चा सिर्फ़ परिवार के उसी सदस्य को सौंपा जाता है जिसे ऑफ़िस जानता है",
+      ],
     },
   },
 
@@ -512,6 +544,7 @@ export default defineTemplateContent("school", {
     landmark: "On the Hardoi road, past the petrol pump, opposite the brick kiln",
     transportDesk: "+91 00000 00000",
     hi: {
+      addressLines: ["Kachnar Vidya Niketan", "Example Road, सण्डीला से 3 किलोमीटर", "ज़िला हरदोई, उत्तर प्रदेश 241000"],
       hours: "ऑफ़िस सोमवार से शनिवार, सुबह 8:00 से 1:00 बजे तक। फीस काउंटर पर 12:30 बजे तक जमा होती है।",
       landmark: "हरदोई रोड पर, पेट्रोल पंप के आगे, ईंट भट्ठे के सामने",
     },

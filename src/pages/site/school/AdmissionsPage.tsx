@@ -22,7 +22,7 @@
 import { useState, type FormEvent } from "react";
 import type { DemoFeeRow } from "@/lib/cms/types";
 import { demoFee } from "@/lib/demo/record";
-import { bi, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { PageHead } from "../kit/Hero";
@@ -49,8 +49,8 @@ const COPY = {
   ageLead: { en: "Enter the date of birth. Ages are counted as on {asOn}.", hi: "जन्म तिथि डालें। उम्र {asOn} के हिसाब से गिनी जाती है।" },
   dob: { en: "Date of birth", hi: "जन्म तिथि" },
   ageResult: { en: "Eligible for {cls}", hi: "{cls} के लिए योग्य" },
-  ageNone: { en: "No class matches this date of birth. Please call the office.", hi: "इस जन्म तिथि के लिए कोई क्लास नहीं मिली। ऑफिस से बात करें।" },
-  ageRelax: { en: "The school may allow a relaxation of up to one month. Ask the office.", hi: "स्कूल एक महीने तक की छूट दे सकता है। ऑफिस से पूछें।" },
+  ageNone: { en: "No class matches this date of birth. Please call the office.", hi: "इस जन्म तिथि के लिए कोई क्लास नहीं मिली। ऑफ़िस से बात करें।" },
+  ageRelax: { en: "The school may allow a relaxation of up to one month. Ask the office.", hi: "स्कूल एक महीने तक की छूट दे सकता है। ऑफ़िस से पूछें।" },
   stepsTitle: { en: "How admission works", hi: "एडमिशन कैसे होता है" },
   docsTitle: { en: "Documents to bring", hi: "साथ लाने वाले डॉक्यूमेंट" },
   feesTitle: { en: "Fees", hi: "फीस" },
@@ -59,7 +59,7 @@ const COPY = {
   officialTitle: { en: "Official channels only", hi: "सिर्फ़ आधिकारिक तरीके" },
   officialBody: {
     en: "Admission is decided by the school office alone. Nobody can promise a seat for a payment. Pay fees only at the school or through the channels on this page.",
-    hi: "एडमिशन का फैसला सिर्फ़ स्कूल ऑफिस करता है। पैसे लेकर सीट का वादा कोई नहीं कर सकता। फीस सिर्फ़ स्कूल में या इस पेज पर दिए तरीकों से भरें।",
+    hi: "एडमिशन का फैसला सिर्फ़ स्कूल ऑफ़िस करता है। पैसे लेकर सीट का वादा कोई नहीं कर सकता। फीस सिर्फ़ स्कूल में या इस पेज पर दिए तरीकों से भरें।",
   },
   formTitle: { en: "Send an enquiry", hi: "पूछताछ भेजें" },
   formLeadWa: { en: "This opens WhatsApp with your message. Nothing is stored on this site.", hi: "यह आपका मैसेज WhatsApp में खोलेगा। इस वेबसाइट पर कुछ सेव नहीं होता।" },
@@ -98,8 +98,8 @@ export default function AdmissionsPage({ site, ctx }: SitePageProps) {
 
   const programmes = withText(site.courses, "name");
   const timeline = withText(a.timeline, "title");
-  const steps = (a.steps || []).filter((s) => s.trim());
-  const docs = (a.documents || []).filter((s) => s.trim());
+  const steps = biList(a, "steps", lang);
+  const docs = biList(a, "documents", lang);
   const fees = withText(a.fees, "label");
   const faq = withText(site.faq, "title").filter((f) => /admission|प्रवेश/i.test(`${f.group || ""} ${f.hi?.group || ""}`));
 
@@ -252,7 +252,7 @@ function AgeChecker({ rules, year, asOn, lang }: {
     const sorted = [...rules].filter((r) => r.className && r.minAge).sort((x, y) => Number(x.minAge) - Number(y.minAge));
     /* minAge is "as on" the date; maxAge is exclusive ("3 to 4" means under 4). */
     const fit = sorted.filter((r) => age >= Number(r.minAge) && (!r.maxAge || age < Number(r.maxAge))).pop();
-    result = fit ? trf(COPY.ageResult, lang, { cls: fit.className }) : tr(COPY.ageNone, lang);
+    result = fit ? trf(COPY.ageResult, lang, { cls: bi(fit, "className", lang) || fit.className }) : tr(COPY.ageNone, lang);
   }
   /* In Hindi, the parsed date is printed with Hindi month names ("31 मार्च 2027"). */
   const asOnText = lang === "hi" && m && month >= 0
@@ -285,7 +285,7 @@ function FeeTable({ rows, currency, lang }: { rows: DemoFeeRow[]; currency: Site
             {g.rows.map((r, i) => (
               <tr key={i} className="border-b border-[hsl(var(--ds-line))]">
                 <td className="py-3 pr-4"><Bi of={r} k="label" className="block font-medium" /><Bi of={r} k="note" className="mt-0.5 block text-sm text-[hsl(var(--ds-ink-soft))]" /></td>
-                <td className="ds-num whitespace-nowrap py-3 text-right align-top font-semibold">{demoFee(r.amount, currency)}</td>
+                <td className="ds-num whitespace-nowrap py-3 text-right align-top font-semibold">{demoFee(bi(r, "amount", lang), currency)}</td>
               </tr>
             ))}
           </tbody>

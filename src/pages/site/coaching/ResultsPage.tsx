@@ -13,7 +13,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { biLabel, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { Chips } from "@/lib/demo/ui/coaching/Chips";
@@ -72,7 +72,7 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
             options={[{ value: "all", label: tr(C_COPY.allYears, lang) }, ...years.map((y) => ({ value: y, label: y }))]} />
           <Chips label={tr(COPY.exam, lang)} value={fe.value}
             onChange={(v) => { fe.choose(v); }}
-            options={[{ value: "all", label: tr(C_COPY.allExams, lang) }, ...exams.map((e) => ({ value: e, label: e }))]} />
+            options={[{ value: "all", label: tr(C_COPY.allExams, lang) }, ...exams.map((e) => ({ value: e, label: biLabel(all, "exam", e, lang) }))]} />
         </div>
         <p className="sr-only" aria-live="polite">{trf(C_COPY.showing, lang, { n: String(all.filter(pass).length) })}</p>
         <div ref={(el) => { fy.gridRef.current = el; fe.gridRef.current = el; }}>

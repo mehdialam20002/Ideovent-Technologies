@@ -268,8 +268,9 @@ export function templatePreviewSite(t: LoadedTemplate): DemoSite {
   return {
     ...rest,
     /* The `generic` flag is template bookkeeping for the duplicate; the page
-       never sees it. */
-    faq: faq?.map(({ title, body }) => ({ title, body })),
+       never sees it. Everything else (group, the `hi` twin) is kept, or the
+       Hindi preview prints the English questions. */
+    faq: faq?.map(({ generic: _generic, ...f }) => f),
     id: `tpl_${t.meta.id}`,
     slug: `${TEMPLATE_PREVIEW_SLUG_PREFIX}${t.meta.id}`,
     status: "draft",

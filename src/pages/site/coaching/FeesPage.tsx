@@ -14,7 +14,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { bi, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { demoFee } from "@/lib/demo/record";
@@ -54,7 +54,7 @@ export default function FeesPage({ site, ctx }: SitePageProps) {
   const fp = site.feesPolicy;
   const courses = withText(site.courses, "name");
   const faculty = withText(site.faculty, "name").filter((f) => bi(f, "qualification", lang));
-  const modes = (fp?.paymentModes || []).filter((m) => m.trim());
+  const modes = biList(fp, "paymentModes", lang);
   const payRows = [
     ...(bi(fp, "instalmentNote", lang) ? [{ label: tr(COPY.instalments, lang), value: <Bi of={fp} k="instalmentNote" /> }] : []),
     ...(modes.length ? [{ label: tr(COPY.modes, lang), value: modes.join(", ") }] : []),
@@ -101,7 +101,7 @@ export default function FeesPage({ site, ctx }: SitePageProps) {
       {(fp?.studentsCoached || fp?.studentsSucceeded) && (
         <Section n={++n} title={tr(COPY.counts, lang)}>
           <FactTable rows={[
-            ...(fp?.countsYear ? [{ label: tr(COPY.year, lang), value: fp.countsYear }] : []),
+            ...(fp?.countsYear ? [{ label: tr(COPY.year, lang), value: bi(fp, "countsYear", lang) }] : []),
             ...(fp?.studentsCoached ? [{ label: tr(COPY.coached, lang), value: <span className="ds-num">{fp.studentsCoached}</span> }] : []),
             ...(fp?.studentsSucceeded ? [{ label: tr(COPY.succeeded, lang), value: <span className="ds-num">{fp.studentsSucceeded}</span> }] : []),
           ]} />

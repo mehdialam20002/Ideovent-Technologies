@@ -7,12 +7,14 @@
  *             query comes from the record's map query, else name and city,
  *             so a name-and-city record still has a working map.
  *   branches  other centres with their own address, phone and hours
+ * With no phone and no WhatsApp (a fresh duplicate: contact is cleared) the
+ * heading and lead invite a visit instead of asking for a call.
  */
 
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
-import { bi, tr, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, tr, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { PageHead } from "../kit/Hero";
@@ -32,13 +34,15 @@ const COPY = {
   mapNote: { en: "The map loads only when you tap, to save your data.", hi: "आपका डेटा बचाने के लिए मैप टैप करने पर ही लोड होगा।" },
   openMaps: { en: "Open in Google Maps", hi: "Google Maps में खोलें" },
   branches: { en: "Our centres", hi: "हमारे सेंटर" },
+  titleVisit: { en: "Visit the centre", hi: "सेंटर आकर मिलें" },
+  leadVisit: { en: "Come to the centre on any working day, meet the teachers and sit in on a class. Questions on batches and fees are answered there in person.", hi: "किसी भी कामकाजी दिन सेंटर आइए, टीचर्स से मिलिए और एक क्लास में बैठकर देखिए। बैच और फीस के हर सवाल का जवाब वहीं मिलेगा।" },
 } satisfies Record<string, Bilingual>;
 
 export default function ContactPage({ site, ctx }: SitePageProps) {
   const { lang } = ctx;
   const c = site.contact || {};
   const [mapOn, setMapOn] = useState(false);
-  const lines = [...(c.addressLines || []).filter((l) => l.trim()), site.city].filter(Boolean) as string[];
+  const lines = [...biList(c, "addressLines", lang), bi(site, "city", lang)].filter(Boolean) as string[];
   const query = (c.mapQuery || "").trim() || [site.instituteName, ...(c.addressLines || []), site.city].filter(Boolean).join(", ");
   const branches = (site.contact?.branches || []).filter((b) => (b.name || "").trim());
   const a = ctx.actions;
@@ -47,8 +51,8 @@ export default function ContactPage({ site, ctx }: SitePageProps) {
     <>
       <Helmet><title>{`${tr(COPY.crumb, lang)} | ${site.instituteName}`}</title></Helmet>
       <PageHead
-        title={tr(COPY.title, lang)}
-        lead={tr(COPY.lead, lang)}
+        title={tr(a.tel || a.whatsapp ? COPY.title : COPY.titleVisit, lang)}
+        lead={tr(a.tel || a.whatsapp ? COPY.lead : COPY.leadVisit, lang)}
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.crumb, lang) }]}
       >
         {(a.tel || a.whatsapp) && (
@@ -97,9 +101,9 @@ export default function ContactPage({ site, ctx }: SitePageProps) {
           <CardGrid cols={3}>
             {branches.map((b) => (
               <Card key={b.name} className="h-full">
-                <p className="ds-display text-lg">{b.name}</p>
-                {(b.addressLines || []).map((l) => <p key={l}>{l}</p>)}
-                {b.hours && <p className="mt-2 text-sm text-[hsl(var(--ds-ink-soft))]">{b.hours}</p>}
+                <p className="ds-display text-lg">{bi(b, "name", lang)}</p>
+                {biList(b, "addressLines", lang).map((l) => <p key={l}>{l}</p>)}
+                {bi(b, "hours", lang) && <p className="mt-2 text-sm text-[hsl(var(--ds-ink-soft))]">{bi(b, "hours", lang)}</p>}
                 <div className="mt-3 flex flex-wrap gap-x-4">
                   {b.phone && <a href={`tel:${b.phone.replace(/[^\d+]/g, "")}`} className="inline-flex min-h-[44px] items-center gap-1 font-semibold underline"><Phone className="h-4 w-4" aria-hidden="true" />{b.phone}</a>}
                   <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.mapQuery || [b.name, ...(b.addressLines || [])].join(", "))}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center gap-1 underline"><MapPin className="h-4 w-4" aria-hidden="true" />{tr(SHELL_COPY.findUs, lang)}</a>

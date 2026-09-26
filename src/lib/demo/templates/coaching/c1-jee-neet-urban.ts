@@ -87,6 +87,10 @@ export default defineTemplateContent("coaching", {
     classSizePromise: "एक बैच में चालीस से ज़्यादा नहीं। ड्रॉपर बैच में छत्तीस।",
     hostel: "हमारा अपना हॉस्टल नहीं है। हम जाँचे हुए हॉस्टल और PG की सूची देते हैं, और हर एक को हमारे काउंसलर ने ख़ुद देखा है।",
     sessionLabel: "सत्र 2027-28",
+    established: "2011 से",
+    city: "कोटा",
+    state: "राजस्थान",
+    boardOrAffiliation: "एक प्राइवेट कोचिंग इंस्टीट्यूट। किसी बोर्ड से संबद्ध नहीं, और ऐसा दावा भी नहीं करते।",
   },
 
   /* ── CLEARED: the About page. ─────────────────────────────────────────── */
@@ -172,7 +176,7 @@ export default defineTemplateContent("coaching", {
         detail: "स्कूल के हिसाब से समय: कामकाजी दिन पर 2:00 बजे से पहले कुछ नहीं। डाउट डेस्क 1:00 बजे खुलता है, अपॉइंटमेंट नहीं चाहिए।",
         feeNote: "प्रति वर्ष, चार किस्तों में",
         eligibility: "गणित और विज्ञान के साथ क्लास 10 पास, और अप्रैल 2027 में किसी भी बोर्ड से क्लास 11 में।",
-        refundNote: "दस दिन पहले बताकर छोड़ें तो बची हुई फीस का हिस्सा दस दिन में लौटा दिया जाता है।",
+        refundNote: "दस दिन पहले बताकर छोड़ें तो बची हुई फीस का हिस्सा दस दिन में लौटा दिया जाता है। दूसरे साल में भी यही नियम है।",
         level: "क्लास 11 से 12",
         subjects: "फिज़िक्स, केमिस्ट्री, मैथ्स",
         duration: "24 महीने",
@@ -181,6 +185,9 @@ export default defineTemplateContent("coaching", {
         batchStarts: "5 अप्रैल 2027 से शुरू",
         category: "JEE",
         testPlan: "हर गुरुवार एक चैप्टर टेस्ट और हर दूसरे रविवार JEE का पूरा पेपर। दोनों पर अगले दिन क्लास में चर्चा होती है।",
+        seats: "एक बैच में 40",
+        material: ["हर चैप्टर का छपा हुआ मॉड्यूल", "रोज़ की प्रैक्टिस शीट", "पिछले सालों के JEE पेपर, क्लास में हल किए हुए", "रिवीज़न के लिए फ़ॉर्मूला बुकलेट"],
+        inclusions: ["सारा छपा हुआ मटीरियल", "हर पखवाड़े की टेस्ट सीरीज़", "डाउट डेस्क, हर कामकाजी दिन", "अभिभावकों को हर पखवाड़े अंकों की रिपोर्ट"],
       },
     },
     {
@@ -233,6 +240,9 @@ export default defineTemplateContent("coaching", {
         batchStarts: "6 अप्रैल 2027 से शुरू",
         category: "NEET",
         testPlan: "हर दूसरे रविवार 180 सवालों का NEET पेपर, और हर गुरुवार बायोलॉजी का 45 सवालों का टेस्ट।",
+        seats: "एक बैच में 40",
+        material: ["बायोलॉजी के लिए NCERT के लाइन दर लाइन नोट्स", "फिज़िक्स और केमिस्ट्री के छपे हुए मॉड्यूल", "डायग्राम प्रैक्टिस की किताब", "पिछले सालों के NEET पेपर"],
+        inclusions: ["सारा छपा हुआ मटीरियल", "हर पखवाड़े की टेस्ट सीरीज़", "हर हफ़्ते बायोलॉजी टेस्ट", "अभिभावकों को हर पखवाड़े अंकों की रिपोर्ट"],
       },
     },
     {
@@ -262,7 +272,7 @@ export default defineTemplateContent("coaching", {
         { title: "Is one year enough?", body: "For a student who did Class 11 properly at school, often yes. At the counselling meeting we look at the Class 11 marks and tell you honestly.", hi: { title: "क्या एक साल काफ़ी है?", body: "जिस बच्चे ने स्कूल में क्लास 11 ठीक से पढ़ी है, उसके लिए अक्सर हाँ। काउंसलिंग मीटिंग में हम क्लास 11 के अंक देखकर आपको सच बताते हैं।" } },
       ],
       hi: {
-        category: "कक्षा 12",
+        category: "क्लास 12",
         name: "क्लास 12, एक साल, JEE या NEET",
         detail: "पहले आठ हफ़्तों में क्लास 11 का रिवीज़न, क्लास 12 के सिलेबस के साथ। इस बैच की फीस मार्च में तय होगी।",
         level: "क्लास 12",
@@ -273,6 +283,9 @@ export default defineTemplateContent("coaching", {
         batchStarts: "19 अप्रैल 2027 से शुरू",
         eligibility: "अप्रैल 2027 से क्लास 12 में, फिज़िक्स, केमिस्ट्री और मैथ्स या बायोलॉजी के साथ।",
         testPlan: "हर हफ़्ते एक चैप्टर टेस्ट और हर दूसरे रविवार पूरा पेपर, वही पेपर जो दो साल वाला बैच देता है।",
+        seats: "एक बैच में 40",
+        material: ["क्लास 12 के छपे हुए मॉड्यूल", "क्लास 11 की रिवीज़न बुकलेट", "पिछले सालों के पेपर"],
+        inclusions: ["सारा छपा हुआ मटीरियल", "हर पखवाड़े की टेस्ट सीरीज़", "डाउट डेस्क, हर कामकाजी दिन"],
         refundNote: "दस दिन पहले बताकर छोड़ें तो फीस का बचा हुआ हिस्सा दस दिन के अंदर हिसाब से लौटा दिया जाता है।",
       },
     },
@@ -324,6 +337,9 @@ export default defineTemplateContent("coaching", {
         category: "ड्रॉपर",
         eligibility: "फिज़िक्स और केमिस्ट्री के साथ क्लास 12 पास, और JEE के लिए मैथ्स या NEET के लिए बायोलॉजी।",
         testPlan: "अक्टूबर से हर रविवार पूरा पेपर, और जनवरी से हर तीसरे दिन।",
+        seats: "एक बैच में 36",
+        material: ["दोनों साल के छपे हुए मॉड्यूल", "रोज़ की प्रैक्टिस शीट", "पिछले दस साल के पेपर, हल किए हुए"],
+        inclusions: ["सारा छपा हुआ मटीरियल", "साल के सभी टेस्ट", "सुबह का डाउट डेस्क", "अभिभावकों के साथ हर महीने मीटिंग"],
         refundNote: "दस दिन पहले बताकर छोड़ें तो फीस का बचा हुआ हिस्सा दस दिन के अंदर हिसाब से लौटा दिया जाता है।",
       },
     },
@@ -360,6 +376,8 @@ export default defineTemplateContent("coaching", {
         eligibility: "क्लास 12 का या दोबारा तैयारी कर रहा कोई भी बच्चा, किसी भी इंस्टीट्यूट से या बिना इंस्टीट्यूट के।",
         testPlan: "JEE Main या NEET के मौजूदा पैटर्न में 22 पूरे पेपर, अक्टूबर से अप्रैल तक हर दूसरे रविवार।",
         refundNote: "पाँचवें पेपर से पहले छोड़ें तो बाक़ी पेपरों की फीस दस दिन के अंदर लौटा दी जाती है।",
+        seats: "किसी भी इंस्टीट्यूट के विद्यार्थी के लिए खुली",
+        inclusions: ["22 पूरे पेपर", "उस पेपर को देने वाले सभी के साथ रैंक", "हर सवाल का विश्लेषण", "हर पेपर पर एक चर्चा क्लास"],
       },
     },
   ],
@@ -372,27 +390,27 @@ export default defineTemplateContent("coaching", {
   /* Every row names the course, its duration and whether it was paid, as
      the CCPA 2024 coaching guidelines require of a published result. */
   results: [
-    { achievement: "AIR 612", exam: "JEE Advanced", year: "2026", note: "Dropper batch", category: "JEE", courseName: "Dropper batch, JEE", courseDuration: "11 months", paid: "paid", consent: true, quote: "The Sunday papers were harder than the real one. By April the exam hall felt like a Sunday.", hi: { achievement: "AIR 612", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, JEE", quote: "रविवार के पेपर असली पेपर से कठिन थे। अप्रैल तक परीक्षा हॉल भी रविवार जैसा लगने लगा।" } },
-    { achievement: "AIR 2,347", exam: "JEE Advanced", year: "2026", note: "Two year classroom batch", category: "JEE", courseName: "JEE Main and Advanced, two year", courseDuration: "24 months", paid: "paid", hi: { achievement: "AIR 2,347", note: "दो साल का क्लासरूम बैच", courseName: "JEE Main और Advanced, दो साल" } },
-    { achievement: "99.83 percentile", exam: "JEE Main, January session", year: "2026", note: "Two year classroom batch", category: "JEE", courseName: "JEE Main and Advanced, two year", courseDuration: "24 months", paid: "scholarship", hi: { achievement: "99.83 पर्सेंटाइल", note: "दो साल का क्लासरूम बैच", courseName: "JEE Main और Advanced, दो साल" } },
-    { achievement: "686 of 720", exam: "NEET UG", year: "2026", note: "Dropper batch", category: "NEET", courseName: "Dropper batch, NEET", courseDuration: "11 months", paid: "paid", consent: true, quote: "Ma'am made us draw every NCERT diagram twice. Three questions in the paper were those diagrams.", hi: { achievement: "720 में से 686", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, NEET", quote: "मैम ने हमसे NCERT का हर डायग्राम दो बार बनवाया। पेपर में तीन सवाल उन्हीं डायग्राम से थे।" } },
-    { achievement: "652 of 720", exam: "NEET UG", year: "2026", note: "Two year classroom batch", category: "NEET", courseName: "NEET, two year", courseDuration: "24 months", paid: "paid", hi: { achievement: "720 में से 652", note: "दो साल का क्लासरूम बैच", courseName: "NEET, दो साल" } },
-    { achievement: "212 of 460 qualified for NEET UG counselling", exam: "NEET UG", year: "2026", note: "All batches, 2026 cohort", category: "NEET", courseName: "All NEET courses", courseDuration: "11 to 24 months", paid: "paid", hi: { achievement: "460 में से 212 NEET UG काउंसलिंग के लिए क्वालिफ़ाई", note: "सभी बैच, 2026 का साल", courseName: "NEET के सभी कोर्स" } },
-    { achievement: "AIR 1,905", exam: "JEE Advanced", year: "2025", note: "Two year classroom batch", category: "JEE", courseName: "JEE Main and Advanced, two year", courseDuration: "24 months", paid: "paid", hi: { achievement: "AIR 1,905", note: "दो साल का क्लासरूम बैच", courseName: "JEE Main और Advanced, दो साल" } },
-    { achievement: "99.61 percentile", exam: "JEE Main, April session", year: "2025", note: "Class 12 one year batch", category: "JEE", courseName: "Class 12, one year", courseDuration: "11 months", paid: "paid", hi: { achievement: "99.61 पर्सेंटाइल", note: "क्लास 12 का एक साल वाला बैच", courseName: "क्लास 12, एक साल" } },
-    { achievement: "671 of 720", exam: "NEET UG", year: "2025", note: "Dropper batch", category: "NEET", courseName: "Dropper batch, NEET", courseDuration: "11 months", paid: "scholarship", hi: { achievement: "720 में से 671", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, NEET" } },
-    { achievement: "AIR 3,418", exam: "JEE Advanced", year: "2024", note: "Dropper batch", category: "JEE", courseName: "Dropper batch, JEE", courseDuration: "11 months", paid: "paid", hi: { achievement: "AIR 3,418", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, JEE" } },
-    { achievement: "660 of 720", exam: "NEET UG", year: "2024", note: "Two year classroom batch", category: "NEET", courseName: "NEET, two year", courseDuration: "24 months", paid: "paid", hi: { achievement: "720 में से 660", note: "दो साल का क्लासरूम बैच", courseName: "NEET, दो साल" } },
+    { achievement: "AIR 612", exam: "JEE Advanced", year: "2026", note: "Dropper batch", category: "JEE", courseName: "Dropper batch, JEE", courseDuration: "11 months", paid: "paid", consent: true, quote: "The Sunday papers were harder than the real one. By April the exam hall felt like a Sunday.", hi: { courseDuration: "11 महीने", achievement: "AIR 612", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, JEE", quote: "रविवार के पेपर असली पेपर से कठिन थे। अप्रैल तक परीक्षा हॉल भी रविवार जैसा लगने लगा।" } },
+    { achievement: "AIR 2,347", exam: "JEE Advanced", year: "2026", note: "Two year classroom batch", category: "JEE", courseName: "JEE Main and Advanced, two year", courseDuration: "24 months", paid: "paid", hi: { courseDuration: "24 महीने", achievement: "AIR 2,347", note: "दो साल का क्लासरूम बैच", courseName: "JEE Main और Advanced, दो साल" } },
+    { achievement: "99.83 percentile", exam: "JEE Main, January session", year: "2026", note: "Two year classroom batch", category: "JEE", courseName: "JEE Main and Advanced, two year", courseDuration: "24 months", paid: "scholarship", hi: { exam: "JEE Main, जनवरी सत्र", courseDuration: "24 महीने", achievement: "99.83 पर्सेंटाइल", note: "दो साल का क्लासरूम बैच", courseName: "JEE Main और Advanced, दो साल" } },
+    { achievement: "686 of 720", exam: "NEET UG", year: "2026", note: "Dropper batch", category: "NEET", courseName: "Dropper batch, NEET", courseDuration: "11 months", paid: "paid", consent: true, quote: "Ma'am made us draw every NCERT diagram twice. Three questions in the paper were those diagrams.", hi: { courseDuration: "11 महीने", achievement: "720 में से 686", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, NEET", quote: "मैम ने हमसे NCERT का हर डायग्राम दो बार बनवाया। पेपर में तीन सवाल उन्हीं डायग्राम से थे।" } },
+    { achievement: "652 of 720", exam: "NEET UG", year: "2026", note: "Two year classroom batch", category: "NEET", courseName: "NEET, two year", courseDuration: "24 months", paid: "paid", hi: { courseDuration: "24 महीने", achievement: "720 में से 652", note: "दो साल का क्लासरूम बैच", courseName: "NEET, दो साल" } },
+    { achievement: "212 of 460 qualified for NEET UG counselling", exam: "NEET UG", year: "2026", note: "All batches, 2026 cohort", category: "NEET", courseName: "All NEET courses", courseDuration: "11 to 24 months", paid: "paid", hi: { courseDuration: "11 से 24 महीने", achievement: "460 में से 212 NEET UG काउंसलिंग के लिए क्वालिफ़ाई", note: "सभी बैच, 2026 का साल", courseName: "NEET के सभी कोर्स" } },
+    { achievement: "AIR 1,905", exam: "JEE Advanced", year: "2025", note: "Two year classroom batch", category: "JEE", courseName: "JEE Main and Advanced, two year", courseDuration: "24 months", paid: "paid", hi: { courseDuration: "24 महीने", achievement: "AIR 1,905", note: "दो साल का क्लासरूम बैच", courseName: "JEE Main और Advanced, दो साल" } },
+    { achievement: "99.61 percentile", exam: "JEE Main, April session", year: "2025", note: "Class 12 one year batch", category: "JEE", courseName: "Class 12, one year", courseDuration: "11 months", paid: "paid", hi: { exam: "JEE Main, अप्रैल सत्र", courseDuration: "11 महीने", achievement: "99.61 पर्सेंटाइल", note: "क्लास 12 का एक साल वाला बैच", courseName: "क्लास 12, एक साल" } },
+    { achievement: "671 of 720", exam: "NEET UG", year: "2025", note: "Dropper batch", category: "NEET", courseName: "Dropper batch, NEET", courseDuration: "11 months", paid: "scholarship", hi: { courseDuration: "11 महीने", achievement: "720 में से 671", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, NEET" } },
+    { achievement: "AIR 3,418", exam: "JEE Advanced", year: "2024", note: "Dropper batch", category: "JEE", courseName: "Dropper batch, JEE", courseDuration: "11 months", paid: "paid", hi: { courseDuration: "11 महीने", achievement: "AIR 3,418", note: "ड्रॉपर बैच", courseName: "ड्रॉपर बैच, JEE" } },
+    { achievement: "660 of 720", exam: "NEET UG", year: "2024", note: "Two year classroom batch", category: "NEET", courseName: "NEET, two year", courseDuration: "24 months", paid: "paid", hi: { courseDuration: "24 महीने", achievement: "720 में से 660", note: "दो साल का क्लासरूम बैच", courseName: "NEET, दो साल" } },
   ],
 
   /* ── CLEARED: faculty. In coaching the teacher is the product, so every
         line says what the person takes, not only how long they have taught. */
   faculty: [
-    { name: "Hemant Rathore", photo: "/demo/img/people/teacher-m09-240.webp", subject: "Physics", qualification: "M.Sc. Physics", experience: "17 years. Takes the two year JEE batch and the dropper batch.", role: "Head of Physics", group: "Physics", batches: "JEE two year, NEET two year, Dropper", style: "Starts every chapter with an experiment you can do on the desk, then the derivation, then the problems.", hi: { subject: "भौतिकी", experience: "17 साल। JEE दो साल और ड्रॉपर बैच लेते हैं।", role: "भौतिकी विभाग प्रमुख", style: "हर चैप्टर मेज़ पर किए जा सकने वाले प्रयोग से, फिर डेरिवेशन, फिर सवाल।", qualification: "M.Sc. फिज़िक्स", group: "फिज़िक्स" } },
-    { name: "Shalini Verma", photo: "/demo/img/people/teacher-w09-240.webp", subject: "Organic chemistry", qualification: "M.Sc. Chemistry", experience: "13 years. Takes every batch from Class 11 up.", role: "Head of Chemistry", group: "Chemistry", batches: "All batches", style: "Mechanisms on the board, never memorised lists. Every reaction is drawn arrow by arrow.", hi: { subject: "ऑर्गेनिक केमिस्ट्री", experience: "13 साल। क्लास 11 से हर बैच।", role: "रसायन विभाग प्रमुख", style: "रिएक्शन रटाए नहीं जाते, हर मैकेनिज़्म बोर्ड पर तीर दर तीर।", qualification: "M.Sc. केमिस्ट्री", group: "केमिस्ट्री" } },
-    { name: "Imran Qureshi", photo: "/demo/img/people/teacher-m12-240.webp", subject: "Mathematics", qualification: "M.Sc. Mathematics", experience: "19 years. Takes the JEE batches and the Monday test discussion.", role: "Head of Mathematics", group: "Mathematics", batches: "JEE two year, Class 12, Dropper", style: "Solves the same problem three ways and asks the class which one they would use under a clock.", hi: { subject: "गणित", experience: "19 साल। JEE बैच और सोमवार की टेस्ट चर्चा।", role: "गणित विभाग प्रमुख", style: "एक सवाल तीन तरीक़ों से, फिर पूछते हैं कि घड़ी चलते हुए कौन सा चुनोगे।", qualification: "M.Sc. मैथ्स", group: "मैथ्स" } },
-    { name: "Pooja Saxena", photo: "/demo/img/people/teacher-w03-240.webp", subject: "Botany and zoology", qualification: "M.Sc. Zoology", experience: "10 years. Takes both NEET batches.", group: "Biology", batches: "NEET two year, Class 12, Dropper", style: "NCERT line by line, with a diagram drawn in every class.", hi: { subject: "वनस्पति और जंतु विज्ञान", experience: "10 साल। दोनों NEET बैच।", style: "NCERT पंक्ति दर पंक्ति, हर क्लास में एक डायग्राम।", qualification: "M.Sc. ज़ूलॉजी", group: "बायोलॉजी" } },
-    { name: "Devashish Jain", photo: "/demo/img/people/teacher-m04-240.webp", subject: "Physical and inorganic chemistry", qualification: "M.Sc. Chemistry, B.Ed.", experience: "8 years. Writes the test series papers.", role: "Test series coordinator", group: "Chemistry", batches: "NEET two year, Dropper, Test series", style: "Numericals first, theory as the numericals need it.", hi: { subject: "फिज़िकल और इनऑर्गेनिक केमिस्ट्री", experience: "8 साल। टेस्ट सीरीज़ के पेपर यही बनाते हैं।", role: "टेस्ट सीरीज़ समन्वयक", style: "पहले न्यूमेरिकल, थ्योरी उतनी जितनी न्यूमेरिकल को चाहिए।", qualification: "M.Sc. केमिस्ट्री, B.Ed.", group: "केमिस्ट्री" } },
+    { name: "Hemant Rathore", photo: "/demo/img/people/teacher-m09-240.webp", subject: "Physics", qualification: "M.Sc. Physics", experience: "17 years. Takes the two year JEE batch and the dropper batch.", role: "Head of Physics", group: "Physics", batches: "JEE two year, NEET two year, Dropper", style: "Starts every chapter with an experiment you can do on the desk, then the derivation, then the problems.", hi: { batches: "JEE दो साल, NEET दो साल, ड्रॉपर", subject: "भौतिकी", experience: "17 साल। JEE दो साल और ड्रॉपर बैच लेते हैं।", role: "भौतिकी विभाग प्रमुख", style: "हर चैप्टर मेज़ पर किए जा सकने वाले प्रयोग से, फिर डेरिवेशन, फिर सवाल।", qualification: "M.Sc. फिज़िक्स", group: "फिज़िक्स" } },
+    { name: "Shalini Verma", photo: "/demo/img/people/teacher-w09-240.webp", subject: "Organic chemistry", qualification: "M.Sc. Chemistry", experience: "13 years. Takes every batch from Class 11 up.", role: "Head of Chemistry", group: "Chemistry", batches: "All batches", style: "Mechanisms on the board, never memorised lists. Every reaction is drawn arrow by arrow.", hi: { batches: "सभी बैच", subject: "ऑर्गेनिक केमिस्ट्री", experience: "13 साल। क्लास 11 से हर बैच।", role: "रसायन विभाग प्रमुख", style: "रिएक्शन रटाए नहीं जाते, हर मैकेनिज़्म बोर्ड पर तीर दर तीर।", qualification: "M.Sc. केमिस्ट्री", group: "केमिस्ट्री" } },
+    { name: "Imran Qureshi", photo: "/demo/img/people/teacher-m12-240.webp", subject: "Mathematics", qualification: "M.Sc. Mathematics", experience: "19 years. Takes the JEE batches and the Monday test discussion.", role: "Head of Mathematics", group: "Mathematics", batches: "JEE two year, Class 12, Dropper", style: "Solves the same problem three ways and asks the class which one they would use under a clock.", hi: { batches: "JEE दो साल, क्लास 12, ड्रॉपर", subject: "गणित", experience: "19 साल। JEE बैच और सोमवार की टेस्ट चर्चा।", role: "गणित विभाग प्रमुख", style: "एक सवाल तीन तरीक़ों से, फिर पूछते हैं कि घड़ी चलते हुए कौन सा चुनोगे।", qualification: "M.Sc. मैथ्स", group: "मैथ्स" } },
+    { name: "Pooja Saxena", photo: "/demo/img/people/teacher-w03-240.webp", subject: "Botany and zoology", qualification: "M.Sc. Zoology", experience: "10 years. Takes both NEET batches.", group: "Biology", batches: "NEET two year, Class 12, Dropper", style: "NCERT line by line, with a diagram drawn in every class.", hi: { batches: "NEET दो साल, क्लास 12, ड्रॉपर", subject: "वनस्पति और जंतु विज्ञान", experience: "10 साल। दोनों NEET बैच।", style: "NCERT पंक्ति दर पंक्ति, हर क्लास में एक डायग्राम।", qualification: "M.Sc. ज़ूलॉजी", group: "बायोलॉजी" } },
+    { name: "Devashish Jain", photo: "/demo/img/people/teacher-m04-240.webp", subject: "Physical and inorganic chemistry", qualification: "M.Sc. Chemistry, B.Ed.", experience: "8 years. Writes the test series papers.", role: "Test series coordinator", group: "Chemistry", batches: "NEET two year, Dropper, Test series", style: "Numericals first, theory as the numericals need it.", hi: { batches: "NEET दो साल, ड्रॉपर, टेस्ट सीरीज़", subject: "फिज़िकल और इनऑर्गेनिक केमिस्ट्री", experience: "8 साल। टेस्ट सीरीज़ के पेपर यही बनाते हैं।", role: "टेस्ट सीरीज़ समन्वयक", style: "पहले न्यूमेरिकल, थ्योरी उतनी जितनी न्यूमेरिकल को चाहिए।", qualification: "M.Sc. केमिस्ट्री, B.Ed.", group: "केमिस्ट्री" } },
   ],
 
   /* ── CLEARED: why parents choose us. Each block is a parent's worry,
@@ -430,15 +448,15 @@ export default defineTemplateContent("coaching", {
   scheduleNote:
     "The 2026-27 week. The Sunday test is compulsory for every classroom batch and is the only class that is never rescheduled.",
   schedule: [
-    { label: "JEE, Class 11", days: "Monday and Thursday", time: "2:00 to 6:00 pm", subject: "Physics", faculty: "Hemant Rathore", room: "Hall 1", hi: { label: "JEE, कक्षा 11", days: "सोमवार और गुरुवार", time: "दोपहर 2 से शाम 6 बजे", subject: "भौतिकी" } },
-    { label: "JEE, Class 11", days: "Tuesday and Friday", time: "2:00 to 6:00 pm", subject: "Mathematics", faculty: "Imran Qureshi", room: "Hall 1", hi: { label: "JEE, कक्षा 11", days: "मंगलवार और शुक्रवार", time: "दोपहर 2 से शाम 6 बजे", subject: "गणित" } },
-    { label: "JEE, Class 11", days: "Wednesday and Saturday", time: "2:00 to 6:00 pm", subject: "Chemistry", faculty: "Shalini Verma", room: "Hall 1", hi: { label: "JEE, कक्षा 11", days: "बुधवार और शनिवार", time: "दोपहर 2 से शाम 6 बजे", subject: "रसायन" } },
-    { label: "NEET, Class 11", days: "Monday and Thursday", time: "2:00 to 6:00 pm", subject: "Botany and zoology", faculty: "Pooja Saxena", room: "Hall 2", hi: { label: "NEET, कक्षा 11", days: "सोमवार और गुरुवार", time: "दोपहर 2 से शाम 6 बजे", subject: "वनस्पति और जंतु विज्ञान" } },
-    { label: "NEET, Class 11", days: "Tuesday and Friday", time: "2:00 to 6:00 pm", subject: "Physics", faculty: "Hemant Rathore", room: "Hall 2", hi: { label: "NEET, कक्षा 11", days: "मंगलवार और शुक्रवार", time: "दोपहर 2 से शाम 6 बजे", subject: "भौतिकी" } },
-    { label: "NEET, Class 11", days: "Wednesday and Saturday", time: "2:00 to 6:00 pm", subject: "Chemistry", faculty: "Devashish Jain", room: "Hall 2", hi: { label: "NEET, कक्षा 11", days: "बुधवार और शनिवार", time: "दोपहर 2 से शाम 6 बजे", subject: "रसायन" } },
-    { label: "Dropper batch", days: "Monday to Saturday", time: "7:30 am to 12:30 pm", subject: "Full syllabus, rotating", faculty: "All five teachers", room: "Hall 3", hi: { days: "सोमवार से शनिवार", time: "सुबह 7:30 से दोपहर 12:30", subject: "पूरा सिलेबस, बारी-बारी से", label: "ड्रॉपर बैच" } },
-    { label: "Test, all classroom batches", days: "Alternate Sundays", time: "9:00 am to 12:00 noon", subject: "Full paper, exam conditions", faculty: "Invigilated by the subject teacher", room: "Halls 1 to 3", hi: { label: "टेस्ट, सभी क्लासरूम बैच", days: "हर दूसरे रविवार", time: "सुबह 9 से दोपहर 12 बजे", subject: "पूरा पेपर, परीक्षा जैसे माहौल में" } },
-    { label: "Doubt desk", days: "Monday to Saturday", time: "1:00 to 2:00 pm", subject: "Any subject, no appointment", faculty: "One teacher on rota", room: "Room 4", hi: { time: "दोपहर 1 से 2 बजे", subject: "कोई भी विषय, पहले से समय लेने की ज़रूरत नहीं", days: "सोमवार से शनिवार", label: "डाउट डेस्क" } },
+    { label: "JEE, Class 11", days: "Monday and Thursday", time: "2:00 to 6:00 pm", subject: "Physics", faculty: "Hemant Rathore", room: "Hall 1", hi: { room: "हॉल 1", label: "JEE, क्लास 11", days: "सोमवार और गुरुवार", time: "दोपहर 2 से शाम 6 बजे", subject: "भौतिकी" } },
+    { label: "JEE, Class 11", days: "Tuesday and Friday", time: "2:00 to 6:00 pm", subject: "Mathematics", faculty: "Imran Qureshi", room: "Hall 1", hi: { room: "हॉल 1", label: "JEE, क्लास 11", days: "मंगलवार और शुक्रवार", time: "दोपहर 2 से शाम 6 बजे", subject: "गणित" } },
+    { label: "JEE, Class 11", days: "Wednesday and Saturday", time: "2:00 to 6:00 pm", subject: "Chemistry", faculty: "Shalini Verma", room: "Hall 1", hi: { room: "हॉल 1", label: "JEE, क्लास 11", days: "बुधवार और शनिवार", time: "दोपहर 2 से शाम 6 बजे", subject: "रसायन" } },
+    { label: "NEET, Class 11", days: "Monday and Thursday", time: "2:00 to 6:00 pm", subject: "Botany and zoology", faculty: "Pooja Saxena", room: "Hall 2", hi: { room: "हॉल 2", label: "NEET, क्लास 11", days: "सोमवार और गुरुवार", time: "दोपहर 2 से शाम 6 बजे", subject: "वनस्पति और जंतु विज्ञान" } },
+    { label: "NEET, Class 11", days: "Tuesday and Friday", time: "2:00 to 6:00 pm", subject: "Physics", faculty: "Hemant Rathore", room: "Hall 2", hi: { room: "हॉल 2", label: "NEET, क्लास 11", days: "मंगलवार और शुक्रवार", time: "दोपहर 2 से शाम 6 बजे", subject: "भौतिकी" } },
+    { label: "NEET, Class 11", days: "Wednesday and Saturday", time: "2:00 to 6:00 pm", subject: "Chemistry", faculty: "Devashish Jain", room: "Hall 2", hi: { room: "हॉल 2", label: "NEET, क्लास 11", days: "बुधवार और शनिवार", time: "दोपहर 2 से शाम 6 बजे", subject: "रसायन" } },
+    { label: "Dropper batch", days: "Monday to Saturday", time: "7:30 am to 12:30 pm", subject: "Full syllabus, rotating", faculty: "All five teachers", room: "Hall 3", hi: { faculty: "पाँचों टीचर", room: "हॉल 3", days: "सोमवार से शनिवार", time: "सुबह 7:30 से दोपहर 12:30", subject: "पूरा सिलेबस, बारी-बारी से", label: "ड्रॉपर बैच" } },
+    { label: "Test, all classroom batches", days: "Alternate Sundays", time: "9:00 am to 12:00 noon", subject: "Full paper, exam conditions", faculty: "Invigilated by the subject teacher", room: "Halls 1 to 3", hi: { faculty: "निगरानी विषय के टीचर की", room: "हॉल 1 से 3", label: "टेस्ट, सभी क्लासरूम बैच", days: "हर दूसरे रविवार", time: "सुबह 9 से दोपहर 12 बजे", subject: "पूरा पेपर, परीक्षा जैसे माहौल में" } },
+    { label: "Doubt desk", days: "Monday to Saturday", time: "1:00 to 2:00 pm", subject: "Any subject, no appointment", faculty: "One teacher on rota", room: "Room 4", hi: { faculty: "बारी-बारी से एक टीचर", room: "कमरा 4", time: "दोपहर 1 से 2 बजे", subject: "कोई भी विषय, पहले से समय लेने की ज़रूरत नहीं", days: "सोमवार से शनिवार", label: "डाउट डेस्क" } },
   ],
 
   /* ── CLEARED: the demo class, which is a promise with terms. ─────────── */
@@ -695,6 +713,7 @@ export default defineTemplateContent("coaching", {
       mode: "सेंटर पर, सुबह 10:00 से 12:00, या उसी समय ऑनलाइन",
       eligibility: "2027 में दो साल के कोर्स के लिए क्लास 10 के विद्यार्थी, और ड्रॉपर बैच के लिए क्लास 12 के विद्यार्थी।",
       resultDate: "रविवार 22 नवंबर 2026",
+      centres: ["कोटा, Example Road", "ऑनलाइन, घर से"],
       syllabus: "क्लास 10: क्लास 9 और 10 का मैथ्स और साइंस, साथ में मानसिक योग्यता का एक हिस्सा। क्लास 12: क्लास 11 का फिज़िक्स, केमिस्ट्री, और मैथ्स या बायोलॉजी।",
     },
   },
@@ -708,7 +727,7 @@ export default defineTemplateContent("coaching", {
       author: "Rakesh Bhandari",
       excerpt: "The hostel decides more of a Kota year than the institute does. What we ask on every visit, and what a parent should see with their own eyes.",
       body: "Most parents choose the institute first and the hostel in an afternoon. It should be the other way round, or at least given the same care, because your child will spend more waking hours in that room than in our classrooms.\n\nAsk to see the room your child will actually get, not the show room on the ground floor. Check the window, the fan and the lock. Ask who holds the spare key.\n\nAsk what time the gate closes and who checks it. Ask what happens when a student does not come back. The right answer names a person and a phone call to you.\n\nEat one meal in the mess, unannounced if you can. Ask how the refund works for hostel and mess if your child leaves mid-year. In Rajasthan the law now says it must be pro-rata. Get it in writing.",
-      hi: { title: "कोटा में हॉस्टल चुनना: पैसे देने से पहले सात सवाल", excerpt: "कोटा का साल इंस्टीट्यूट से ज़्यादा हॉस्टल तय करता है। हर विज़िट पर हम क्या पूछते हैं, और अभिभावक को अपनी आँखों से क्या देखना चाहिए।", body: "ज़्यादातर अभिभावक पहले इंस्टीट्यूट चुनते हैं और हॉस्टल एक दोपहर में। होना इसका उल्टा चाहिए, या कम से कम दोनों पर बराबर ध्यान, क्योंकि बच्चा हमारे क्लासरूम से ज़्यादा जागते घंटे उस कमरे में बिताएगा।\n\nवही कमरा दिखाने को कहिए जो बच्चे को सच में मिलेगा, नीचे वाला दिखावटी कमरा नहीं। खिड़की, पंखा और ताला देखिए। पूछिए कि दूसरी चाबी किसके पास रहती है।\n\nपूछिए कि गेट कितने बजे बंद होता है और कौन देखता है। पूछिए कि बच्चा वापस न आए तो क्या होता है। सही जवाब में किसी व्यक्ति का नाम होगा और आपको एक फ़ोन।\n\nमेस में एक बार खाना खाइए, हो सके तो बिना बताए। पूछिए कि बच्चा साल के बीच में छोड़े तो हॉस्टल और मेस की फीस कैसे लौटती है। राजस्थान में अब क़ानून कहता है कि यह हिसाब से लौटनी चाहिए। लिखित में लीजिए।" },
+      hi: { date: "12 सितंबर 2026", title: "कोटा में हॉस्टल चुनना: पैसे देने से पहले सात सवाल", excerpt: "कोटा का साल इंस्टीट्यूट से ज़्यादा हॉस्टल तय करता है। हर विज़िट पर हम क्या पूछते हैं, और अभिभावक को अपनी आँखों से क्या देखना चाहिए।", body: "ज़्यादातर अभिभावक पहले इंस्टीट्यूट चुनते हैं और हॉस्टल एक दोपहर में। होना इसका उल्टा चाहिए, या कम से कम दोनों पर बराबर ध्यान, क्योंकि बच्चा हमारे क्लासरूम से ज़्यादा जागते घंटे उस कमरे में बिताएगा।\n\nवही कमरा दिखाने को कहिए जो बच्चे को सच में मिलेगा, नीचे वाला दिखावटी कमरा नहीं। खिड़की, पंखा और ताला देखिए। पूछिए कि दूसरी चाबी किसके पास रहती है।\n\nपूछिए कि गेट कितने बजे बंद होता है और कौन देखता है। पूछिए कि बच्चा वापस न आए तो क्या होता है। सही जवाब में किसी व्यक्ति का नाम होगा और आपको एक फ़ोन।\n\nमेस में एक बार खाना खाइए, हो सके तो बिना बताए। पूछिए कि बच्चा साल के बीच में छोड़े तो हॉस्टल और मेस की फीस कैसे लौटती है। राजस्थान में अब क़ानून कहता है कि यह हिसाब से लौटनी चाहिए। लिखित में लीजिए।" },
     },
     {
       slug: "reading-a-test-report",
@@ -719,6 +738,7 @@ export default defineTemplateContent("coaching", {
       body: "The report has a total, a rank, and a table of attempted, correct and wrong answers by subject. Parents read the total. Read the wrong answers first.\n\nA student with many wrong answers is guessing, and the negative marking is costing them more than the chapters they do not know. That is a habit, and it can be fixed in a month.\n\nA student with few attempts is slow or afraid. That needs timed practice, not more theory.\n\nThen ask one question at dinner: which question did you get wrong that you knew how to do? The answer tells you more than the rank.",
       hi: {
         title: "बच्चे की हर पखवाड़े की टेस्ट रिपोर्ट कैसे पढ़ें",
+        date: "29 अगस्त 2026",
         excerpt: "पेज पर सबसे कम काम का नंबर कुल अंक है। पहले पढ़ने वाली तीन लाइनें, और खाने पर बच्चे से पूछने वाला एक सवाल।",
         body: "रिपोर्ट में कुल अंक, रैंक, और हर विषय के किए गए, सही और ग़लत सवालों की एक टेबल होती है। अभिभावक कुल अंक पढ़ते हैं। पहले ग़लत जवाब पढ़िए।\n\nजिस बच्चे के बहुत जवाब ग़लत हैं, वह अंदाज़ा लगा रहा है, और नेगेटिव मार्किंग उसे न आने वाले चैप्टरों से ज़्यादा नुक़सान पहुँचा रही है। यह एक आदत है, और एक महीने में सुधर सकती है।\n\nजिस बच्चे ने कम सवाल किए हैं, वह धीमा है या डरा हुआ है। इसके लिए समय बाँधकर अभ्यास चाहिए, और थ्योरी नहीं।\n\nफिर खाने पर एक सवाल पूछिए: कौन सा सवाल ग़लत हुआ जो तुम्हें आता था? इसका जवाब रैंक से ज़्यादा बताता है।",
       },
@@ -732,6 +752,7 @@ export default defineTemplateContent("coaching", {
       body: "A dropper year works when the student lost marks to something fixable: a weak Class 11, an illness, a bad paper day. It rarely works when the student has already given two honest years and the test marks were flat throughout.\n\nLook at the last ten test scores, not the final exam. A rising line says another year may help. A flat line says the method has to change, not only the calendar.\n\nAnd ask the child, alone, whether they want it. A dropper year chosen by the parents is the hardest year we teach.",
       hi: {
         title: "क्या बच्चे को ड्रॉपर साल लेना चाहिए? एक सीधा जवाब",
+        date: "20 जून 2026",
         excerpt: "कभी-कभी हाँ। अक्सर नहीं। परिवार से पहले टेस्ट रिकॉर्ड को पता होता है।",
         body: "ड्रॉपर साल तब काम करता है जब बच्चे के अंक किसी सुधरने लायक़ वजह से कटे हों: कमज़ोर क्लास 11, कोई बीमारी, पेपर वाले दिन की गड़बड़। जब बच्चा दो साल पूरी ईमानदारी से दे चुका हो और टेस्ट के अंक पूरे समय एक जैसे रहे हों, तब यह शायद ही काम करता है।\n\nआख़िरी परीक्षा नहीं, पिछले दस टेस्ट के अंक देखिए। ऊपर जाती लाइन कहती है कि एक और साल मदद कर सकता है। सपाट लाइन कहती है कि सिर्फ़ कैलेंडर नहीं, तरीक़ा बदलना होगा।\n\nऔर बच्चे से, अकेले में, पूछिए कि क्या वह यह चाहता है। अभिभावकों का चुना हुआ ड्रॉपर साल हमारे लिए पढ़ाने का सबसे मुश्किल साल होता है।",
       },
@@ -758,6 +779,8 @@ export default defineTemplateContent("coaching", {
       receipts: "हर भुगतान की छपी रसीद, और वही रसीद उसी दिन ईमेल पर। नक़द नहीं लिया जाता।",
       noIncrease: "बच्चे के आने पर जो फीस छपी है, कोर्स ख़त्म होने तक वही रहेगी।",
       hostel: "हमारा अपना हॉस्टल नहीं है। सूची वाले हॉस्टल की फीस सीधे हॉस्टल को जाती है, उनकी अपनी रिफ़ंड शर्तों पर, जिन्हें हम सूची में डालने से पहले देखते हैं।",
+      paymentModes: ["UPI", "बैंक ट्रांसफ़र", "फ़्रंट डेस्क पर कार्ड", "डिमांड ड्राफ़्ट"],
+      countsYear: "2025-26: JEE Advanced या NEET UG काउंसलिंग के लिए क्वालिफ़ाई करने वाले विद्यार्थी",
     },
   },
 
@@ -773,6 +796,7 @@ export default defineTemplateContent("coaching", {
     hi: {
       hours: "सोमवार से शनिवार, सुबह 9:00 से शाम 7:30। रविवार, टेस्ट वाले दिन सुबह 8:00 से दोपहर 1:00।",
       landmark: "Example Road बस स्टैंड के पीछे, स्टेशनरी की दुकान के ऊपर",
+      addressLines: ["Parallax Academy", "तीसरी मंज़िल, Example Tower, Example Road", "कोटा, राजस्थान 324000"],
     },
   },
 });

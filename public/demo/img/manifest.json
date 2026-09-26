@@ -866,6 +866,159 @@
    "licence": "Unsplash License (https://unsplash.com/license)"
   },
   {
+   "id": "coaching/c4-library-reading",
+   "file": "coaching/c4-library-reading",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 57896,
+     "src": "/demo/img/coaching/c4-library-reading-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 25246,
+     "src": "/demo/img/coaching/c4-library-reading-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A girl and a boy in maroon blazers reading books at a library table",
+   "altHi": "लाइब्रेरी की मेज़ पर मरून ब्लेज़र में एक लड़की और एक लड़का किताबें पढ़ते हुए",
+   "category": "library",
+   "suggestedFor": [
+    "c4",
+    "s1"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "sourceUrl": "https://www.pexels.com/photo/students-studying-in-a-library-in-india-33745692/",
+   "source": "Pexels",
+   "photographer": "Gokuldham Nar",
+   "photographerUrl": "https://www.pexels.com/@gokuldhamnar/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c4-smart-class",
+   "file": "coaching/c4-smart-class",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 57678,
+     "src": "/demo/img/coaching/c4-smart-class-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 25866,
+     "src": "/demo/img/coaching/c4-smart-class-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Students in maroon uniforms at their desks watching a lesson on a smart board in a bright classroom",
+   "altHi": "रोशन क्लासरूम में मरून यूनिफ़ॉर्म में बच्चे अपनी डेस्क से स्मार्ट बोर्ड पर पाठ देखते हुए",
+   "category": "classroom",
+   "suggestedFor": [
+    "c4",
+    "s1"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "sourceUrl": "https://www.pexels.com/photo/interactive-classroom-session-with-engaged-students-35551059/",
+   "source": "Pexels",
+   "photographer": "Gokuldham Nar",
+   "photographerUrl": "https://www.pexels.com/@gokuldhamnar/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c4-biology-lab",
+   "file": "coaching/c4-biology-lab",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 69200,
+     "src": "/demo/img/coaching/c4-biology-lab-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 28520,
+     "src": "/demo/img/coaching/c4-biology-lab-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A teacher explaining human anatomy models to students in maroon uniforms around a lab table",
+   "altHi": "लैब की मेज़ के चारों ओर मरून यूनिफ़ॉर्म में बच्चों को मानव शरीर के मॉडल समझाती टीचर",
+   "category": "lab",
+   "suggestedFor": [
+    "c4",
+    "c3",
+    "s1"
+   ],
+   "focal": {
+    "x": 0.45,
+    "y": 0.45
+   },
+   "objectPosition": "45% 45%",
+   "sourceUrl": "https://www.pexels.com/photo/biology-class-instruction-with-anatomical-models-35551044/",
+   "source": "Pexels",
+   "photographer": "Gokuldham Nar",
+   "photographerUrl": "https://www.pexels.com/@gokuldhamnar/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c4-globe-library",
+   "file": "coaching/c4-globe-library",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 74624,
+     "src": "/demo/img/coaching/c4-globe-library-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 33428,
+     "src": "/demo/img/coaching/c4-globe-library-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Three girls in maroon blazers pointing at places on a globe at a library table",
+   "altHi": "लाइब्रेरी की मेज़ पर मरून ब्लेज़र में तीन लड़कियाँ ग्लोब पर जगहें ढूँढते हुए",
+   "category": "library",
+   "suggestedFor": [
+    "c4",
+    "s1"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.45
+   },
+   "objectPosition": "50% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-exploring-globe-in-modern-library-setting-35551010/",
+   "photographer": "Gokuldham Nar",
+   "photographerUrl": "https://www.pexels.com/@gokuldhamnar/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
    "id": "people/teacher-w01",
    "file": "people/teacher-w01",
    "format": "webp",
@@ -1852,53 +2005,6 @@
    "licence": "Pexels License (https://www.pexels.com/license/)"
   },
   {
-   "id": "people/teacher-m10",
-   "file": "people/teacher-m10",
-   "format": "webp",
-   "sizes": [
-    {
-     "w": 480,
-     "h": 480,
-     "bytes": 11416,
-     "src": "/demo/img/people/teacher-m10-480.webp"
-    },
-    {
-     "w": 240,
-     "h": 240,
-     "bytes": 4228,
-     "src": "/demo/img/people/teacher-m10-240.webp"
-    }
-   ],
-   "width": 480,
-   "height": 480,
-   "alt": "Portrait of a Sikh man in a navy turban and blazer beside a whiteboard",
-   "altHi": "व्हाइटबोर्ड के पास नेवी पगड़ी और ब्लेज़र में सिख पुरुष का पोर्ट्रेट",
-   "category": "teacher-portrait",
-   "suggestedFor": [
-    "c1",
-    "c2",
-    "c3",
-    "c4",
-    "c5",
-    "s1",
-    "s2",
-    "s3",
-    "s4",
-    "s5"
-   ],
-   "gender": "male",
-   "focal": {
-    "x": 0.5,
-    "y": 0.4
-   },
-   "objectPosition": "50% 40%",
-   "source": "Pexels",
-   "sourceUrl": "https://www.pexels.com/photo/portrait-of-a-teacher-writing-on-a-whiteboard-18870261/",
-   "photographer": "World Sikh Organization of Canada",
-   "photographerUrl": "https://www.pexels.com/@worldsikhorg/",
-   "licence": "Pexels License (https://www.pexels.com/license/)"
-  },
-  {
    "id": "people/teacher-m11",
    "file": "people/teacher-m11",
    "format": "webp",
@@ -2038,6 +2144,53 @@
    "photographer": "Lisa and everlast jorney",
    "photographerUrl": "https://www.pexels.com/@llizzk/",
    "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-m14",
+   "file": "people/teacher-m14",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 21644,
+     "src": "/demo/img/people/teacher-m14-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 8744,
+     "src": "/demo/img/people/teacher-m14-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling Sikh man in a pink turban and a blue shirt",
+   "altHi": "गुलाबी पगड़ी और नीली शर्ट में मुस्कुराते सिख पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "male",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-with-a-pink-turban-smiles-at-the-camera-4bNYfo1J3VQ",
+   "photographer": "tejinder dhaliwal",
+   "photographerUrl": "https://unsplash.com/@tejzz7878",
+   "licence": "Unsplash License (https://unsplash.com/license)"
   },
   {
    "id": "school/hero-urban-senior-girls-class",

@@ -592,12 +592,12 @@ function hindi(): CoachingCopy {
 
     enquireTitle: { first: "कौन सी बैच सही रहेगी?", second: "पूछ लीजिए, एक मिनट लगेगा।" },
     enquireLead:
-      "कॉल कीजिए, या एक WhatsApp मैसेज भेजिए। ऑफिस के समय में जवाब मिलता है और किसी को कॉलिंग लिस्ट में नहीं डाला जाता।",
+      "कॉल कीजिए, या एक WhatsApp मैसेज भेजिए। ऑफ़िस के समय में जवाब मिलता है और किसी को कॉलिंग लिस्ट में नहीं डाला जाता।",
     callUs: "Call",
 
     contactHeading: "हम कहाँ हैं",
     contactBlank:
-      "आपका फ़ोन नंबर, WhatsApp, पता और ऑफिस के समय यहाँ आएँगे। एक बार भेज दीजिए, पेज पर जहाँ-जहाँ चाहिए वहाँ अपने आप लग जाएँगे।",
+      "आपका फ़ोन नंबर, WhatsApp, पता और ऑफ़िस के समय यहाँ आएँगे। एक बार भेज दीजिए, पेज पर जहाँ-जहाँ चाहिए वहाँ अपने आप लग जाएँगे।",
 
     /* The chip on a pinned notice. What a school writes on the one notice it
        wants read first is "ज़रूरी सूचना", so the chip says the first word. */
@@ -654,7 +654,7 @@ function hindi(): CoachingCopy {
       whatsapp: "आपका WhatsApp नंबर यहाँ आएगा",
       email: "आपका पूछताछ ईमेल यहाँ आएगा",
       address: "आपका पता यहाँ आएगा",
-      hours: "आपके ऑफिस के समय यहाँ आएँगे",
+      hours: "आपके ऑफ़िस के समय यहाँ आएँगे",
 
       /* The 2026 rebuild's blanks. "शुल्क" is correct Hindi for a fee and is
          the wrong word here: a parent scanning a coaching site is looking for

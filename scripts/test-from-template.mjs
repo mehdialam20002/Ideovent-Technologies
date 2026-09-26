@@ -308,7 +308,9 @@ for (const meta of TEMPLATES) {
     const diffs = [];
     for (const k of Object.keys(source)) {
       if (NOT_CONTENT.has(k) || source[k] === undefined) continue;
-      compare(source[k], copy[k], k, k === "hi", expect, diffs);
+      /* hi.instituteName is the typed Hindi name, not template copy: checked below. */
+      const noName = (h) => (h ? (({ instituteName: _n, ...rest }) => rest)(h) : h);
+      compare(k === "hi" ? noName(source[k]) : source[k], k === "hi" ? noName(copy[k]) : copy[k], k, k === "hi", expect, diffs);
     }
     if (c.disclosure) {
       const want = structuredClone(c.disclosure);
@@ -316,6 +318,7 @@ for (const meta of TEMPLATES) {
       compare(want, copy.disclosure, "disclosure", false, expect, diffs);
     }
     compare(c.contact?.hours || "", copy.contact?.hours || "", "contact.hours", false, expect, diffs);
+    tcheck((copy.hi?.instituteName || "") === (who.hiName || "").trim(), "hi.instituteName holds the Hindi name typed, and only that");
     tcheck(diffs.length === 0, `content equals the template's with the name replaced${diffs.length ? "\n      " + diffs.join("\n      ") : ""}`);
 
     /* 2. CONTACT */
@@ -344,7 +347,8 @@ for (const meta of TEMPLATES) {
 
     /* 4. NO TEMPLATE NAME */
     const nameRe = wordRe([c.instituteName, c.shortName, ...table.en, ...table.hi, ...NAME_WORDS[meta.id]], "gu"); /* case-sensitive: s5 has "the semal tree", a tree, not the name */
-    const found = [...new Set((cj.match(nameRe) || []))];
+    /* s5's Hindi alt names the semal tree ("सेमल का पेड़"), a tree, not the name. */
+    const found = [...new Set((cj.replace(/सेमल (?=क[ाे] पेड़)/gu, "").match(nameRe) || []))];
     tcheck(found.length === 0, `no form of the template's name anywhere (found ${found.join(", ")})`);
     tcheck(cj.includes(JSON.stringify(who.name).slice(1, -1)), "the new name is in the copy");
     if (who.hiName && table.hi.length && json(c.hi || {}).length > 2) {
@@ -382,6 +386,43 @@ for (const meta of TEMPLATES) {
     const real = { ...copy, sample: { ...copy.sample, real: true } };
     tcheck(!M.showSampleLine(real, "results") && !M.showSampleLine(real, "reviews"), "marking them real removes both lines");
     tcheck(!M.showSampleLine(JSON.parse(cj), "results") === !M.showSampleLine(copy, "results"), "a store round trip does not read as an edit");
+
+    /* 7. THE HINDI SLOTS (26 Sep 2026) are renamed like any other Hindi string.
+       A line naming the template (in Hindi) is planted in each slot of a
+       clone, so the check holds whatever the template file has filled so far:
+       school hi.facilities; coaching result.hi.courseDuration and
+       feesPolicy.hi.paymentModes. */
+    if (table.hi.length && who.hiName) {
+      const hiOld = table.hi[0];
+      const t2 = structuredClone(t);
+      const k2 = t2.content;
+      const planted = [];
+      if (meta.kind === "school") {
+        const en = k2.facilities?.length ? k2.facilities : (k2.facilities = ["Library"]);
+        const hi = [...(k2.hi?.facilities || [])];
+        while (hi.length < en.length) hi.push("");
+        hi[0] = `${hiOld} की लाइब्रेरी`;
+        k2.hi = { ...(k2.hi || {}), facilities: hi };
+        planted.push(["hi.facilities[0]", (x) => x.hi?.facilities?.[0], hi[0]]);
+      } else {
+        if (!k2.results?.length) k2.results = [{ achievement: "Selection" }];
+        const r = k2.results[0];
+        r.courseDuration = r.courseDuration || "Two years";
+        r.hi = { ...(r.hi || {}), courseDuration: `${hiOld} में दो साल` };
+        planted.push(["results[0].hi.courseDuration", (x) => x.results?.[0]?.hi?.courseDuration, r.hi.courseDuration]);
+        k2.feesPolicy = { ...(k2.feesPolicy || {}), paymentModes: k2.feesPolicy?.paymentModes?.length ? k2.feesPolicy.paymentModes : ["UPI"] };
+        const pm = [...(k2.feesPolicy.hi?.paymentModes || [])];
+        pm[0] = `${hiOld} के ऑफ़िस में UPI`;
+        k2.feesPolicy.hi = { ...(k2.feesPolicy.hi || {}), paymentModes: pm };
+        planted.push(["feesPolicy.hi.paymentModes[0]", (x) => x.feesPolicy?.hi?.paymentModes?.[0], pm[0]]);
+      }
+      const src2 = { ...k2, kind: meta.kind, theme: meta.theme };
+      const copy2 = NEGATIVE ? skipHindi(M.fromTemplate(t2, ctx, who), src2) : M.fromTemplate(t2, ctx, who);
+      for (const [path, get, value] of planted) {
+        const want = expect(value, true);
+        tcheck(want !== value && get(copy2) === want, `the Hindi slot ${path} is renamed (want ${JSON.stringify(want)}, got ${JSON.stringify(get(copy2))})`);
+      }
+    }
   }
 }
 
