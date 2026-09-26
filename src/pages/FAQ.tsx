@@ -13,6 +13,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import type { Faq } from "@/lib/cms/types";
+import { unbreakable } from "@/lib/typography";
 
 /** Human-friendly copy for known categories; unknown ones fall back to a title-cased label. */
 const CATEGORY_META: Record<string, { eyebrow: string; title: string; accent: string; subtitle: string }> = {
@@ -23,10 +24,17 @@ const CATEGORY_META: Record<string, { eyebrow: string; title: string; accent: st
     subtitle: "How our engagements are scoped, run and delivered from kickoff to launch.",
   },
   internship: {
-    eyebrow: "Internship",
+    eyebrow: "Ideovent LaunchPad",
     title: "The internship ",
     accent: "programme",
-    subtitle: "Everything applicants ask about eligibility, curriculum, certificates and payments.",
+    subtitle: "Everything applicants ask about eligibility, curriculum, certificates and what is not promised.",
+  },
+  eduflow: {
+    eyebrow: "EduFlow",
+    title: "Our school platform, ",
+    accent: "in development",
+    subtitle:
+      "EduFlow is not finished, has no paying schools and has no public demo. These are the questions institutions ask first, answered as they actually stand today.",
   },
   general: {
     eyebrow: "General",
@@ -38,9 +46,9 @@ const CATEGORY_META: Record<string, { eyebrow: string; title: string; accent: st
 
 const titleCase = (value: string) =>
   value
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .trim();
+.replace(/[-_]+/g, " ")
+.replace(/\b\w/g, (c) => c.toUpperCase())
+.trim();
 
 export default function FAQ() {
   const faqs = useCollection("faqs");
@@ -58,20 +66,47 @@ export default function FAQ() {
       map.get(key)!.push(faq);
     }
     // Keep the canonical order first, then any custom categories as they appear.
-    const preferred = ["services", "internship", "general"];
+    const preferred = ["services", "eduflow", "internship", "general"];
     const sorted = [
-      ...preferred.filter((c) => map.has(c)),
-      ...order.filter((c) => !preferred.includes(c)),
+...preferred.filter((c) => map.has(c)),
+...order.filter((c) => !preferred.includes(c)),
     ];
     return sorted.map((category) => ({ category, items: map.get(category)! }));
   }, [faqs]);
+
+  /* FAQPage markup, built from the same CMS answers the page renders. Google
+     requires the marked-up Q&A to be visible on the page, so this must never be
+     hand-written or extended beyond `faqs`. Skipped entirely when there are no
+     FAQs, rather than emitting an empty FAQPage. */
+  const faqSchema = useMemo(
+    () =>
+      faqs.length
+        ? {
+            "@type": "FAQPage",
+            mainEntity: faqs.map((f) => ({
+              "@type": "Question",
+              name: f.question,
+              acceptedAnswer: { "@type": "Answer", text: f.answer },
+            })),
+          }
+: undefined,
+    [faqs],
+);
 
   return (
     <Layout>
       <Seo
         title="FAQ"
-        description="Answers to the most common questions about Ideovent Technologies — our services, internship programme and how we work with clients."
+        description="Answers to what people actually ask Ideovent Technologies, what a project costs, how long it takes, what happens after launch, and how the LaunchPad internship and its verifiable certificate work."
         path="/faq"
+        keywords={[
+          "web development FAQ India",
+          "how long does a website take India",
+          "website cost questions New Delhi",
+          "Ideovent internship questions",
+        ]}
+        breadcrumbs={[{ name: "FAQ", path: "/faq" }]}
+        schema={faqSchema}
       />
 
       {/* 1. Hero */}
@@ -91,8 +126,8 @@ export default function FAQ() {
             </Reveal>
             <Reveal delay={0.1}>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-pretty">
-                Everything you might want to know before we start working together — from how our
-                projects run to the details of our internship programme. Still stuck? We're one
+                Everything you might want to know before we start working together, from how our
+                projects run to the details of our internship programme. Still stuck? We’re one
                 message away.
               </p>
             </Reveal>
@@ -103,7 +138,7 @@ export default function FAQ() {
                   <CtaButton
                     cta={{ label: "Email us", href: contact.emailHref, variant: "outline" }}
                   />
-                )}
+)}
               </div>
             </Reveal>
           </div>
@@ -117,34 +152,34 @@ export default function FAQ() {
           return (
             <section
               key={group.category}
-              className={index === 0 ? "pb-16 md:pb-20" : "section"}
+              className={index === 0 ? "pb-16 md:pb-20": "section"}
             >
               <div className="container-page grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
                 <div className="lg:sticky lg:top-28 lg:self-start">
                   <SectionHeading
                     align="left"
-                    eyebrow={meta ? meta.eyebrow : "FAQ"}
+                    eyebrow={meta ? meta.eyebrow: "FAQ"}
                     title={
                       meta ? (
                         <>
                           {meta.title}
                           <span className="accent-italic text-gradient">{meta.accent}</span>
                         </>
-                      ) : (
+): (
                         <>
                           {titleCase(group.category)}{" "}
                           <span className="accent-italic text-gradient">questions</span>
                         </>
-                      )
+)
                     }
                     subtitle={
-                      meta ? meta.subtitle : `Common questions about ${titleCase(group.category)}.`
+                      meta ? meta.subtitle: `Common questions about ${titleCase(group.category)}.`
                     }
                   />
                   <Reveal delay={0.1}>
                     <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                       <HelpCircle className="h-3.5 w-3.5 text-primary" />
-                      {group.items.length} question{group.items.length === 1 ? "" : "s"}
+                      {group.items.length} question{group.items.length === 1 ? "": "s"}
                     </span>
                   </Reveal>
                 </div>
@@ -157,21 +192,21 @@ export default function FAQ() {
                         value={faq.id}
                         className="border-border/60 last:border-b-0"
                       >
-                        <AccordionTrigger className="text-left font-display text-base font-medium hover:no-underline">
+                        <AccordionTrigger className="font-display text-base font-medium">
                           {faq.question}
                         </AccordionTrigger>
                         <AccordionContent className="text-base text-muted-foreground text-pretty">
                           {faq.answer}
                         </AccordionContent>
                       </AccordionItem>
-                    ))}
+))}
                   </Accordion>
                 </Reveal>
               </div>
             </section>
-          );
+);
         })
-      ) : (
+): (
         <section className="section">
           <div className="container-page">
             <div className="card-surface mx-auto max-w-xl p-12 text-center">
@@ -180,7 +215,7 @@ export default function FAQ() {
               </div>
               <h2 className="font-display text-xl font-semibold">No FAQs just yet</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                We're still writing these up. In the meantime, reach out and we'll answer anything you
+                We’re still writing these up. In the meantime, reach out and we’ll answer anything you
                 need directly.
               </p>
               <div className="mt-7">
@@ -189,13 +224,13 @@ export default function FAQ() {
             </div>
           </div>
         </section>
-      )}
+)}
 
       {/* 3. Reassurance strip */}
       <section className="section pt-0">
         <div className="container-page">
           <motion.div
-            variants={staggerContainer(0.08)}
+            variants={staggerContainer()}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.15 }}
@@ -207,7 +242,7 @@ export default function FAQ() {
                 title: "Fast, human replies",
                 description:
                   contact.responseTimePromise ||
-                  "We usually reply within one business day — no bots, no run-around.",
+                  "We usually reply within one business day: no bots, no run-around.",
               },
               {
                 icon: LifeBuoy,
@@ -224,14 +259,14 @@ export default function FAQ() {
             ].map((item) => {
               const Icon = item.icon;
               return (
-                <motion.div key={item.title} variants={fadeUp} className="card-surface p-7 hover-lift">
+                <motion.div key={item.title} variants={fadeUp} className="card-surface p-7">
                   <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-secondary">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="font-display text-lg font-semibold">{item.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
                 </motion.div>
-              );
+);
             })}
           </motion.div>
         </div>
@@ -248,25 +283,25 @@ export default function FAQ() {
                   Still have a <span className="accent-italic text-gradient">question?</span>
                 </h2>
                 <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground text-pretty md:text-lg">
-                  If you didn't find what you were looking for, tell us what's on your mind and we'll
+                  If you didn’t find what you were looking for, tell us what’s on your mind and we’ll
                   get back to you personally.
                 </p>
                 <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                   <CtaButton cta={{ label: "Get in touch", href: "/contact" }} />
                   {contact.phoneHref && (
                     <CtaButton
-                      cta={{ label: contact.phoneDisplay || "Call us", href: contact.phoneHref, variant: "outline" }}
+                      cta={{ label: unbreakable(contact.phoneDisplay) || "Call us", href: contact.phoneHref, variant: "outline" }}
                     />
-                  )}
+)}
                 </div>
 
                 <div className="mt-8 flex items-center justify-center">
                   <Link
                     to="/services"
-                    className="group inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    className="group inline-flex min-h-6 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground active:text-foreground/70"
                   >
                     Explore our services
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" />
                   </Link>
                 </div>
               </div>
@@ -275,5 +310,5 @@ export default function FAQ() {
         </div>
       </section>
     </Layout>
-  );
+);
 }

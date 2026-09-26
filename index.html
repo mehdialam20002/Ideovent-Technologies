@@ -1,89 +1,335 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en-IN" class="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-
-    <!-- Primary Meta (per-route values are managed at runtime via react-helmet-async) -->
-    <title>Ideovent Technologies — Digital Studio for Websites, Apps & Brands</title>
-    <meta
-      name="description"
-      content="Ideovent Technologies is a digital studio crafting high-performance websites, mobile apps, brands and marketing that help ambitious businesses grow."
-    />
-    <meta
-      name="keywords"
-      content="Ideovent Technologies, web development, mobile app development, UI UX design, digital agency, branding, SEO, Deoria, Uttar Pradesh, India"
-    />
     <meta name="author" content="Ideovent Technologies" />
-    <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#09090B" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#FBFAF7" media="(prefers-color-scheme: light)" />
-    <link rel="canonical" href="https://ideovent.com/" />
+    <!-- Brand navy #081738 is the exact logo colour and the dark theme's page
+         ground; #F8FAFC is the light one. See the token block in src/index.css. -->
+    <meta name="theme-color" content="#081738" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)" />
 
-    <!-- Icons / PWA -->
-    <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
-    <link rel="icon" href="%BASE_URL%ideovent.png" type="image/png" />
-    <link rel="apple-touch-icon" href="%BASE_URL%ideovent.png" />
+    <!--
+      EVERYTHING BELOW CARRYING data-rh="true" IS A NO-JAVASCRIPT FALLBACK ONLY.
+
+      react-helmet-async claims any head tag marked data-rh and REPLACES it when
+      <Seo> mounts. So these exist for scrapers that do not run JS, and they are
+      swapped for the real per-route values the moment React renders. Do not add
+      a description, canonical, robots, og:*, twitter:* or ld+json tag here
+      WITHOUT data-rh: Helmet appends rather than replaces, and the page would
+      then ship two canonicals with different values, which Google resolves by
+      ignoring the canonical signal altogether.
+
+      Conversely: never put data-rh on the icon or manifest <link>s below.
+      Helmet deletes every link[data-rh] it does not itself emit.
+    -->
+    <title>Ideovent Technologies. Web &amp; Software Studio in Saket, New Delhi</title>
+    <meta
+      data-rh="true"
+      name="description"
+      content="Ideovent Technologies is a web and software studio in Saket, New Delhi. We build websites, web apps, custom SaaS and mobile apps for businesses across Delhi NCR and India."
+    />
+    <meta
+      data-rh="true"
+      name="keywords"
+      content="web development company Saket, website development New Delhi, custom SaaS development Delhi NCR, React development New Delhi, web application development India, UI UX design New Delhi, school website development India, web development internship Delhi"
+    />
+    <meta data-rh="true" name="robots" content="index, follow" />
+    <link data-rh="true" rel="canonical" href="%VITE_PUBLIC_URL%/" />
+
+    <!--
+      Icons / PWA. Every file here is drawn from the REAL logo in
+      01-brand/logo/, not from a placeholder: favicon.svg is a byte copy of
+      01-brand/logo/favicon.svg (the iV monogram reversed out of a navy rounded
+      square, with the 16px optical-size corrections baked in), and the.ico and
+      the PNGs are rasterised from 01-brand/logo/png/* by
+      scripts/build_brand_assets.py.
+
+      The SVG is listed first and unsized: a browser that understands
+      image/svg+xml takes it and renders the mark sharp at any tab or bookmark
+      size; everything else falls through to the.ico. Both are the same mark on
+      the same navy, so the tab icon reads identically either way.
+    -->
+    <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="%BASE_URL%favicon.ico" sizes="48x48" />
+    <link rel="icon" href="%BASE_URL%icons/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" sizes="180x180" />
     <link rel="manifest" href="%BASE_URL%site.webmanifest" />
 
-    <!-- Open Graph -->
-    <meta property="og:site_name" content="Ideovent Technologies" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Ideovent Technologies — Digital Studio" />
+    <!-- Open Graph (fallback, see the note above) -->
+    <meta data-rh="true" property="og:site_name" content="Ideovent Technologies" />
+    <meta data-rh="true" property="og:locale" content="en_IN" />
+    <meta data-rh="true" property="og:type" content="website" />
     <meta
+      data-rh="true"
+      property="og:title"
+      content="Ideovent Technologies. Web &amp; Software Studio in Saket, New Delhi"
+    />
+    <meta
+      data-rh="true"
       property="og:description"
-      content="A digital studio crafting high-performance websites, apps, brands and marketing for ambitious businesses."
+      content="Websites, web apps, custom SaaS and mobile apps, built in Saket, New Delhi for clients across Delhi NCR and India."
     />
-    <meta property="og:url" content="https://ideovent.com/" />
-    <meta property="og:image" content="https://ideovent.com/ideovent.png" />
+    <meta data-rh="true" property="og:url" content="%VITE_PUBLIC_URL%/" />
+    <meta data-rh="true" property="og:image" content="%VITE_PUBLIC_URL%/og/ideovent-og.png" />
+    <meta data-rh="true" property="og:image:width" content="1200" />
+    <meta data-rh="true" property="og:image:height" content="630" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@ideovent_tech" />
-    <meta name="twitter:title" content="Ideovent Technologies — Digital Studio" />
+    <!-- Twitter (fallback, see the note above) -->
+    <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+    <meta data-rh="true" name="twitter:site" content="@Ideovent_" />
     <meta
-      name="twitter:description"
-      content="A digital studio crafting high-performance websites, apps, brands and marketing for ambitious businesses."
+      data-rh="true"
+      name="twitter:title"
+      content="Ideovent Technologies. Web &amp; Software Studio in Saket, New Delhi"
     />
-    <meta name="twitter:image" content="https://ideovent.com/ideovent.png" />
+    <meta
+      data-rh="true"
+      name="twitter:description"
+      content="Websites, web apps, custom SaaS and mobile apps, built in Saket, New Delhi for clients across Delhi NCR and India."
+    />
+    <meta data-rh="true" name="twitter:image" content="%VITE_PUBLIC_URL%/og/ideovent-og.png" />
 
-    <!-- Structured data -->
-    <script type="application/ld+json">
+    <!--
+      Structured data (fallback. Seo.tsx re-emits this graph plus the per-page
+      node once React mounts). NO AggregateRating and NO Review: nobody has
+      reviewed Ideovent, and marking up a rating that does not exist is both a
+      fabrication and a Google structured-data policy violation.
+    -->
+    <script data-rh="true" type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "ProfessionalService",
-        "name": "Ideovent Technologies",
-        "image": "https://ideovent.com/ideovent.png",
-        "description": "Digital studio for websites, mobile apps, branding and digital marketing.",
-        "url": "https://ideovent.com",
-        "telephone": "+919410707967",
-        "email": "contact@ideovent.com",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Salempur",
-          "addressLocality": "Deoria",
-          "addressRegion": "Uttar Pradesh",
-          "postalCode": "274509",
-          "addressCountry": "IN"
-        },
-        "geo": { "@type": "GeoCoordinates", "latitude": 26.3, "longitude": 83.916667 },
-        "openingHours": "Mo-Fr 09:00-18:00",
-        "sameAs": [
-          "https://www.linkedin.com/company/ideovent-technologies",
-          "https://x.com/Ideovent_",
-          "https://www.instagram.com/ideovent_official"
+        "@graph": [
+          {
+            "@type": ["Organization", "ProfessionalService"],
+            "@id": "%VITE_PUBLIC_URL%/#organization",
+            "name": "Ideovent Technologies",
+            "alternateName": "Ideovent",
+            "url": "%VITE_PUBLIC_URL%/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "%VITE_PUBLIC_URL%/icons/icon-512.png",
+              "width": 512,
+              "height": 512
+            },
+            "image": "%VITE_PUBLIC_URL%/og/ideovent-og.png",
+            "description": "Web and software studio in Saket, New Delhi building websites, web apps, custom SaaS and mobile apps.",
+            "email": "contact@ideovent.in",
+            "telephone": "+917761921786",
+            "foundingDate": "2024",
+            "founder": { "@type": "Person", "name": "Mehdi Alam" },
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Saket",
+              "addressLocality": "New Delhi",
+              "addressRegion": "Delhi",
+              "addressCountry": "IN"
+            },
+            "geo": { "@type": "GeoCoordinates", "latitude": 28.5245, "longitude": 77.2066 },
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "opens": "09:00",
+                "closes": "18:00"
+              }
+            ],
+            "areaServed": [
+              { "@type": "City", "name": "New Delhi" },
+              { "@type": "AdministrativeArea", "name": "Delhi NCR" },
+              { "@type": "Country", "name": "India" }
+            ],
+            "sameAs": [
+              "https://www.linkedin.com/company/ideovent-technologies",
+              "https://x.com/Ideovent_",
+              "https://www.facebook.com/profile.php?id=61575994778106",
+              "https://www.instagram.com/ideovent_official"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "%VITE_PUBLIC_URL%/#website",
+            "url": "%VITE_PUBLIC_URL%/",
+            "name": "Ideovent Technologies",
+            "inLanguage": "en-IN",
+            "publisher": { "@id": "%VITE_PUBLIC_URL%/#organization" }
+          }
         ]
       }
     </script>
 
-    <!-- Fonts: Space Grotesk (display) · Inter (body) · Instrument Serif (editorial italic accent) -->
+    <!--
+      Fonts: Sora (display) - Inter (body) - Instrument Serif (the accent word).
+
+      ==========================================================================
+      READ THIS BEFORE TOUCHING THE URL. IT HAS BEEN BROKEN TWICE.
+
+      The URL below is ONE STRING and it is fragile in a way that fails SILENTLY:
+      a bad css2 URL returns an HTTP 400 HTML error page, the browser cannot
+      parse it as CSS, no @font-face is registered, and the page renders in the
+      system fallback stack looking merely a bit plain. Nothing appears in the
+      console.
+
+      Two corruptions have already shipped:
+
+        1. `family=Sora: wght@400.600`  (a space after the colon, commas turned
+           into full stops). Malformed URL.
+        2. `family=Sora:wght@400,600&family=Inter:wght@400,700`, which is what
+           was live until 25 Sep 2026. In the css2 API the COMMA is the separator
+           between AXES in a multi-axis tuple (`ital,wght@0,400;1,700`). Discrete
+           values on a SINGLE axis are separated by a SEMICOLON, and a range by
+           two dots. Verified by fetching each spec on its own, 25 Sep 2026:
+
+               family=Sora:wght@400,600   ->  HTTP 400
+               family=Sora:wght@400;600   ->  HTTP 200
+               family=Inter:wght@400,700  ->  HTTP 400
+               family=Inter:wght@400;700  ->  HTTP 200
+
+           So for however long that revision was live, THIS SITE LOADED NO
+           WEBFONT AT ALL. Confirmed in a real page load: document.fonts.size was
+           0 and the h1 computed to Segoe UI. Every note in the previous version
+           of this comment, about weights and subsets and byte counts, described
+           a file the browser never received.
+
+      IF YOU CHANGE THIS URL, FETCH IT AND COUNT THE @font-face RULES:
+
+          curl -sS -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" "<the url>" | grep -c @font-face
+
+      A Chrome UA is required: Google serves woff2 only to a user agent it knows
+      supports it, and curl's default UA is answered with a truetype stylesheet.
+      The count for the URL below is 11.
+      ==========================================================================
+
+      THE THREE FAMILIES, AND WHY THERE ARE THREE AGAIN.
+
+      A previous pass cut the site to Sora + Inter while consolidating the
+      palette, and took Instrument Serif out with the rest. That was one cut too
+      many. The italic serif was never a third body face competing with the other
+      two: it sets ONE OR TWO WORDS PER HEADLINE and nothing else, which is the
+      single strongest "a person set this" signal the page has. It is back in
+      exactly that one role. See .accent-italic in src/index.css.
+
+        Sora              300..800   display: headings, the eyebrow, figures.
+        Inter             400..700   body copy, UI, tables.
+        Instrument Serif  italic 400: .accent-italic. One role, nothing else.
+
+      WEIGHTS ASKED FOR, AND WHERE EACH IS ACTUALLY USED. Counted by grep over
+      src/ on 25 Sep 2026. Nothing is requested that the source does not set:
+
+        Sora 300  `.font-thin-display`, the light half of the section-heading
+                  weight pair, set against `.font-loud-display` (800) on the
+                  same line. That jump is the design (DESIGN-DIRECTION.md, move
+                  3). NOTE, corrected 25 Sep 2026: this line used to claim 300
+                  was `.text-hero` and `.text-display`. It is not. Every
+                  `.text-hero` consumer is `font-semibold` (600) and the
+                  contrast on an h1 is carried by the serif accent beside it,
+                  not by weight. 300 is genuinely requested and genuinely used,
+                  just on the h2s rather than the h1s.
+        Sora 400  `font-display` spans carrying no weight class.
+        Sora 500  the h1..h6 base rule, `font-display font-medium`.
+        Sora 600  `font-semibold`, 218 occurrences.
+        Sora 700  `font-bold`, 21 occurrences, all of them on the pitch pages.
+                  NOTE: the previous URL asked for 400..600, so even once the
+                  comma is fixed those 21 would have been clamped to 600. 700 is
+                  in the range now because the source genuinely sets it.
+        Sora 800  `.eyebrow`. Extrabold small caps at 12px sitting directly above
+                  a 300-weight hero is where the widened range becomes visible on
+                  the first screen of every page, rather than in a style guide.
+        Inter 400/500/600  body copy, three weights across the UI.
+        Inter 700 <strong> inside the injected blog and legal HTML: 194
+                  occurrences across blogs.seed.json and legal.seed.json. Those
+                  bodies are authored as markdown, not JSX, so the tag carries
+                  the browser default of bold and there is no class to grep.
+        Instrument Serif has ONE weight. It ships Regular and Italic at 400 and
+                  nothing else, so `ital@1` is the whole of what there is to ask
+                  for. Do not add a wght axis to it: there is not one, and adding
+                  one returns HTTP 400.
+
+      RANGES (`400..700`), NOT LISTS (`400;700`). For a variable font Google
+      answers a range with ONE variable woff2 per subset and a list with one
+      instanced file per value per subset. Measured on the CSS itself:
+
+          Inter:wght@400;700   -> 14 @font-face,  6,716 B of CSS (with Sora)
+          Inter:wght@400..700  ->  7 @font-face,  4,224 B of CSS (with both others)
+
+      TRANSFER COST, MEASURED 25 Sep 2026, by
+      `curl -o /dev/null -w "%{size_download}"` with the Chrome UA above. woff2
+      is already compressed, so these are the bytes on the wire.
+
+      The page fetches latin + latin-ext for Sora and for Inter, and latin only
+      for Instrument Serif. latin-ext is not optional for the first two: it is
+      where Google puts U+20B9, the RUPEE SIGN, and the rupee appears on the home
+      hero price block, the whole of /pricing and every care-plan figure.
+      Instrument Serif never resolves latin-ext because every accent word on the
+      site is plain ASCII. If one ever carries an accented character it will
+      fetch a further 12,384 B, which is correct behaviour and not a regression.
+
+                                                    files        bytes
+        AS SHIPPED (the broken comma URL)               0            0
+        - the site was running on Segoe UI -
+        AS THAT URL INTENDED (semicolons)               4      170,764
+          Sora 400..600 latin          25,284
+          Sora 400..600 latin-ext      12,156
+          Inter latin                  48,256
+          Inter latin-ext              85,068
+        NOW                                             5      204,652
+          Sora 300..800 latin          33,652
+          Sora 300..800 latin-ext      15,548
+          Inter latin                  48,256    (unchanged: Google serves the
+          Inter latin-ext              85,068     same variable file for any
+          Instrument Serif latin       22,128     Inter range. Verified: 400..600
+                                                  and 400..700 return the same
+                                                  gstatic URL.)
+
+      So the honest comparison is +33,888 B and +1 request over what the previous
+      pass MEANT to ship, and +204,652 B over what it ACTUALLY shipped, which was
+      nothing. The 33,888 buys Sora 300, 700 and 800 and a real italic serif.
+      Inter is untouched and is 65% of the total on its own.
+
+      Plus 1 CSS request, which SHRANK from 6,716 B to 4,224 B despite gaining a
+      whole family, because of the range-versus-list change above.
+
+      LOADED WITHOUT BLOCKING THE FIRST PAINT. A plain <link rel="stylesheet"> to
+      fonts.googleapis.com is render-blocking: the browser paints nothing until a
+      third-party request resolves. Instead:
+
+        1. preconnect warms the TCP + TLS handshake to both Google font hosts;
+        2. rel="preload" as="style" fetches the CSS at high priority, but a
+           preload never blocks rendering;
+        3. the stylesheet is attached with media="print", which matches no screen
+           and is therefore not render-blocking, and onload flips it to
+           media="all" the moment it has arrived;
+        4. <noscript> covers the JS-off case, where blocking is the only option.
+
+      Combined with display=swap and the system fallback stacks in
+      tailwind.config.ts, text is readable from the first frame and re-renders in
+      the webfont when it lands.
+
+      THE THREE HREFS BELOW MUST STAY BYTE-IDENTICAL TO EACH OTHER. The preload
+      and the stylesheet are matched by URL; one character of drift and the
+      preload warms a file the stylesheet never asks for, which is both a wasted
+      request and a "preloaded but not used" console warning.
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=Instrument+Serif:ital@1&amp;family=Sora:wght@300..800&amp;display=swap"
     />
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all';this.onload=null;"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=Instrument+Serif:ital@1&amp;family=Sora:wght@300..800&amp;display=swap"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=Instrument+Serif:ital@1&amp;family=Sora:wght@300..800&amp;display=swap"
+      />
+    </noscript>
   </head>
 
   <body>

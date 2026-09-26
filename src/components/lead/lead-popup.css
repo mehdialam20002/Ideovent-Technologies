@@ -1,0 +1,33 @@
+/*
+  The enquiry card's one piece of motion: it rises 12px and fades in over
+  220ms on the site's single curve, once, when it appears. Nothing loops and
+  nothing moves after that.
+
+  Loaded with the pop-up's own lazy chunk, so none of this is in the CSS that
+  gates the first paint.
+
+  Reduced motion: the card appears in place, without movement. The
+  prefers-reduced-motion block at the foot of src/index.css already cuts every
+  animation to 0.001ms; the rule below removes this one outright as well, so
+  it does not depend on that block surviving somebody else's edit.
+*/
+@keyframes lead-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lead-popup {
+  animation: lead-popup-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lead-popup {
+    animation: none;
+  }
+}

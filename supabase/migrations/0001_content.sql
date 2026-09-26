@@ -1,4 +1,4 @@
--- Ideovent Technologies — Supabase schema
+-- Ideovent Technologies: Supabase schema
 -- Single-table content store used by src/lib/cms/supabaseStore.ts
 -- Run this in the Supabase SQL editor (or `supabase db push`).
 

@@ -7,7 +7,7 @@ import { collectionSchemas } from "@/admin/schemas";
 export default function AdminDashboard() {
   const data = useContent();
 
-  const cards = (["services", "projects", "posts", "team", "testimonials", "certificates"] as const).map((k) => ({
+  const cards = (["services", "projects", "posts", "pitchPages", "team", "certificates"] as const).map((k) => ({
     key: k,
     label: collectionSchemas[k]?.label || k,
     icon: collectionSchemas[k]?.icon || "Circle",
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
             <Link key={c.key} to={c.to} className="group rounded-3xl border border-border bg-card/60 p-5 transition-colors hover:border-primary/40">
               <div className="flex items-center justify-between">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0" />
               </div>
               <p className="mt-4 font-display text-3xl font-semibold">{c.count}</p>
               <p className="text-sm text-muted-foreground">{c.label}</p>
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <Link to="/admin/submissions" className="flex items-center justify-between rounded-3xl border border-border bg-card/60 p-5 hover:border-primary/40">
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/15 text-secondary"><Inbox className="h-5 w-5" /></span>
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary"><Inbox className="h-5 w-5" /></span>
             <div>
               <p className="font-medium">Contact leads</p>
               <p className="text-sm text-muted-foreground">{newLeads} new · {data.submissions.length} total</p>
@@ -52,7 +52,11 @@ export default function AdminDashboard() {
         </Link>
         <Link to="/admin/applications" className="flex items-center justify-between rounded-3xl border border-border bg-card/60 p-5 hover:border-primary/40">
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent"><GraduationCap className="h-5 w-5" /></span>
+            {/* --secondary (gold), not --accent: --accent is now shadcn's neutral
+                hover surface, so this tile would have been the same colour as a
+                menu hover. The leads tile beside it takes --primary, so the two
+                still read apart without inventing a third colour. */}
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/15 text-secondary"><GraduationCap className="h-5 w-5" /></span>
             <div>
               <p className="font-medium">Internship applications</p>
               <p className="text-sm text-muted-foreground">{pendingApps} pending · {data.applications.length} total</p>

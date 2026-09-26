@@ -1,23 +1,46 @@
-import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Seo } from "@/components/seo/Seo";
-import { Aurora } from "@/components/ui/aurora";
+import { EmptyState } from "@/components/ui/empty-state";
 
+/*
+  THE 404 IS ALSO THE DRAFT-PITCH PAGE.
+
+  src/pages/Pitch.tsx renders this component for any pitch record that is not
+  `live`, deliberately: a proposal still being written must not be readable by
+  anyone who guesses the institute's name, and an archived one has to stop
+  working when the offer stops standing. Neither may hint that something exists
+  at that address. So this page is read by two kinds of visitor, and it must
+  give nothing away about which one is reading it.
+
+  That is why the copy names no slug, offers no "did you mean", and does not
+  distinguish "never existed" from "not published yet". It also means this is
+  the most-reached dead end on the site, which is why it is worth more than one
+  link back to the homepage: the four addresses below are the pages a visitor
+  who mistyped something was most likely aiming at.
+*/
 export default function NotFound() {
   return (
     <Layout>
       <Seo title="Page not found" noindex />
-      <section className="relative flex min-h-[80vh] items-center justify-center overflow-hidden">
-        <Aurora />
-        <div className="container-page relative text-center">
-          <p className="font-display text-[8rem] font-semibold leading-none text-gradient md:text-[12rem]">404</p>
-          <h1 className="mt-2 font-display text-2xl font-semibold">This page took a <span className="accent-italic">wrong turn.</span></h1>
-          <p className="mx-auto mt-3 max-w-md text-muted-foreground">The page you're looking for may have been moved, renamed, or never existed.</p>
-          <Link to="/" className="mt-8 inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground transition-transform hover:scale-105">
-            Back to home
-          </Link>
-        </div>
-      </section>
+      <EmptyState
+        tone="page"
+        headingAs="h1"
+        code="404"
+        eyebrow="Page not found"
+        title={
+          <>
+            This page took a <span className="accent-italic">wrong turn.</span>
+          </>
+        }
+        body="The address may have been moved or renamed, or it may never have existed. Nothing is lost: everything on the site is two clicks from here."
+        action={{ label: "Back to home", href: "/" }}
+        links={[
+          { label: "Selected work", to: "/work" },
+          { label: "What we build", to: "/services" },
+          { label: "Prices", to: "/pricing" },
+          { label: "Talk to us", to: "/contact" },
+        ]}
+      />
     </Layout>
   );
 }

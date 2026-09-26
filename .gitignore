@@ -33,3 +33,12 @@ _shot.mjs
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*
+
+# Local-only material (kept out of the public repo; .vercelignore mirrors these)
+_unpublished/
+scripts/.tmp/
+screenshots-src/
+*.tmp.mjs
+*.tsbuildinfo

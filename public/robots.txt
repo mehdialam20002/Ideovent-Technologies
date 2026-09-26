@@ -1,14 +1,49 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Ideovent Technologies, https://ideovent.vercel.app
+# The site is a single-page React app served from index.html, so every crawlable
+# URL is listed in the sitemap below rather than discovered from a directory tree.
 
 User-agent: *
 Allow: /
+
+# The admin panel is a login wall over the CMS. Nothing behind it belongs in an
+# index, and every route under it renders the login page to a signed-out client
+# which sends robots noindex, nofollow.
+Disallow: /admin
+Disallow: /admin/
+
+# Social and messaging scrapers do not run JavaScript, so they only ever see the
+# fallback tags in index.html. Listed explicitly so nothing blocks them.
+#
+# Each of these is its OWN group. A crawler obeys only the single most specific
+# user-agent group that matches it and ignores every other group, including the
+# wildcard. So the Disallow lines above do NOT carry down here and have to be
+# repeated in each group. Without them these five agents were the only clients
+# on the internet explicitly permitted to fetch /admin, which is the opposite of
+# what this file is for.
+
+User-agent: Twitterbot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: facebookexternalhit
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: LinkedInBot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: WhatsApp
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: Slackbot-LinkExpanding
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+Sitemap: https://ideovent.vercel.app/sitemap.xml

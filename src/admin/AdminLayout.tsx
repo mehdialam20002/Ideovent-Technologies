@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Download, Upload, RotateCcw, LogOut, ExternalLink, Menu, X, Circle } from "lucide-react";
-import { useCms } from "@/lib/cms/context";
+import { useCms, useDeferredBodies } from "@/lib/cms/context";
 import { useAdminAuth } from "./auth";
 import { getIcon } from "@/lib/icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -14,9 +14,29 @@ const NAV = [
     title: "Content",
     items: [
       { label: "Home Hero", to: "/admin/s/home", icon: "Home" },
-      ...(["services", "projects", "posts", "team", "testimonials", "milestones", "process", "faqs", "stats", "clients", "socials"] as const).map((k) => ({
+...(["services", "projects", "posts", "team", "testimonials", "milestones", "process", "faqs", "stats", "clients", "socials"] as const).map((k) => ({
         label: collectionSchemas[k]!.label, to: `/admin/c/${k}`, icon: collectionSchemas[k]!.icon,
       })),
+    ],
+  },
+  /* Its own group, not a row under Content. A pitch page is outbound: it is
+     written for one named institute and sent to them, and it is the only thing
+     in the panel that produces a link somebody pastes into WhatsApp. Filing it
+     next to Services and Blog Posts would read as another part of the public
+     site, which is exactly what it is not. */
+  {
+    title: "Outbound",
+    items: [
+      { label: collectionSchemas.pitchPages!.label, to: "/admin/c/pitchPages", icon: collectionSchemas.pitchPages!.icon },
+      /* Demo sites sit beside the pitch pages because they go out the same
+         way, to the same person, from the same phone. They are listed SECOND
+         and not first only because the pitch pages were here first; nothing
+         about the order says which to send. The two are different
+         conversations and the admin says so on both screens. */
+      { label: collectionSchemas.demoSites!.label, to: "/admin/c/demoSites", icon: collectionSchemas.demoSites!.icon },
+      /* The ten fixed templates, in their own tab so the Demo sites list holds
+         only real demos. Preview and duplicate only: see AdminTemplates.tsx. */
+      { label: "Templates", to: "/admin/templates", icon: "LayoutGrid" },
     ],
   },
   { title: "Certificates", items: [{ label: "Certificates & QR", to: "/admin/certificates", icon: "Award" }] },
@@ -34,17 +54,46 @@ const NAV = [
       { label: "Contact / NAP", to: "/admin/s/contact", icon: "Phone" },
       { label: "Navigation", to: "/admin/s/navigation", icon: "Menu" },
       { label: "Internship", to: "/admin/s/internship", icon: "GraduationCap" },
+      /* EduFlow had a schema and a working /admin/s/eduflow route but no link
+       * to it, so the only way in was to type the URL. That matters more here
+       * than on the other singletons: /eduflow deliberately renders nothing at
+       * all for the values nobody has decided yet, pilot seats, pilot price,
+       * what works today, target date, demo URL, roadmap URL. And both the
+       * page and its schema tell Mehdi to fill them in "from /admin → EduFlow".
+       * Without this row that instruction pointed at a door with no handle. */
+      { label: "EduFlow", to: "/admin/s/eduflow", icon: singletonSchemas.eduflow.icon },
       { label: "Legal", to: "/admin/s/legal", icon: "Scale" },
     ],
   },
 ];
 
 export default function AdminLayout() {
+  // The public site defers the blog and legal bodies out of the entry chunk and
+  // only the pages that render them ask for them. The admin edits and EXPORTS
+  // them, so it must have the whole snapshot: without this, opening /admin and
+  // hitting Export would download a JSON file with nine empty article bodies and
+  // four empty policies. Requested here, at the shell, so every editor beneath it
+  // is covered rather than each one remembering.
+  useDeferredBodies();
   const { mode, actions } = useCms();
   const { logout } = useAdminAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Escape closes the mobile drawer and hands focus back to the toggle.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const doExport = () => {
     const blob = new Blob([actions.exportJson()], { type: "application/json" });
@@ -87,49 +136,78 @@ export default function AdminLayout() {
                       end={(item as any).end}
                       onClick={() => setOpen(false)}
                       className={({ isActive }) =>
-                        cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors", isActive ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                        cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors", isActive ? "bg-primary/10 font-medium text-primary": "text-muted-foreground hover:bg-muted hover:text-foreground")
                       }
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4" aria-hidden="true" />
                       {item.label}
                     </NavLink>
                   </li>
-                );
+);
               })}
             </ul>
           </div>
-        ))}
+))}
       </nav>
     </aside>
-  );
+);
 
   return (
     <div className="flex min-h-screen bg-background">
       <div className="hidden lg:block">{Sidebar}</div>
+      {/*
+        The mobile drawer could be opened from the keyboard but not closed from it:
+        the only dismissal was a click on the backdrop <div>, which is not focusable,
+        and there was no Escape handler and no close button. Both added, and focus
+        returns to the toggle that opened it.
+      */}
       {open && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <div className="relative">{Sidebar}</div>
+          <div id="admin-sidebar" className="relative">
+            <button
+              type="button"
+              aria-label="Close the admin menu"
+              onClick={() => {
+                setOpen(false);
+                menuButtonRef.current?.focus();
+              }}
+              className="absolute right-2 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+            {Sidebar}
+          </div>
         </div>
-      )}
+)}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur md:px-6">
+        {/*
+          Wraps rather than overflows. The right-hand cluster is six 36px controls
+          (Export, Import, Reset, View site, Theme, Log out) and at 375px the two
+          clusters together measured 394px against a 375px viewport, 19px of
+          horizontal page scroll on every admin route, in both themes. `flex-wrap`
+          with a min-height instead of a fixed h-16 lets the action cluster drop to
+          a second row on a phone; at >= sm the labels return and it fits on one
+          row again, so nothing above 375px changes and no control is hidden or
+          pushed off-screen.
+        */}
+        <header className="sticky top-0 z-40 flex min-h-[4rem] flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-background/80 px-4 py-2 backdrop-blur md:px-6">
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border lg:hidden"><Menu className="h-4 w-4" /></button>
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs", mode === "supabase" ? "border-success/40 text-success" : "border-border text-muted-foreground")}>
-              <Circle className={cn("h-2 w-2 fill-current", mode === "supabase" ? "text-success" : "text-warning")} />
-              {mode === "supabase" ? "Live (Supabase)" : "Local mode"}
+            <button ref={menuButtonRef} type="button" aria-label="Open the admin menu" aria-expanded={open} aria-controls="admin-sidebar" onClick={() => setOpen(true)} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border lg:hidden"><Menu className="h-4 w-4" aria-hidden="true" /></button>
+            <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs", mode === "supabase" ? "border-success/40 text-success": "border-border text-muted-foreground")}>
+              <Circle className={cn("h-2 w-2 fill-current", mode === "supabase" ? "text-success": "text-warning")} />
+              {mode === "supabase" ? "Live (Supabase)": "Local mode"}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <button onClick={doExport} title="Export content JSON" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-primary/50"><Download className="h-4 w-4" /><span className="hidden sm:inline">Export</span></button>
-            <button onClick={() => fileRef.current?.click()} title="Import content JSON" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-primary/50"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Import</span></button>
-            <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => e.target.files?.[0] && doImport(e.target.files[0])} />
-            <button onClick={doReset} title="Reset to defaults" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive"><RotateCcw className="h-4 w-4" /></button>
-            <Link to="/" target="_blank" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:border-primary/50"><ExternalLink className="h-4 w-4" /></Link>
+            <button type="button" aria-label="Export content JSON" title="Export content JSON" onClick={doExport} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-primary/50"><Download className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">Export</span></button>
+            <button type="button" aria-label="Import content JSON" title="Import content JSON" onClick={() => fileRef.current?.click()} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-primary/50"><Upload className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">Import</span></button>
+            <input ref={fileRef} type="file" accept="application/json" aria-label="Content JSON file to import" className="hidden" onChange={(e) => e.target.files?.[0] && doImport(e.target.files[0])} />
+            <button type="button" aria-label="Reset all content to defaults" title="Reset to defaults" onClick={doReset} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive"><RotateCcw className="h-4 w-4" aria-hidden="true" /></button>
+            <Link to="/" target="_blank" aria-label="Open the public site in a new tab" title="View site" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:border-primary/50"><ExternalLink className="h-4 w-4" aria-hidden="true" /></Link>
             <ThemeToggle />
-            <button onClick={async () => { await logout(); navigate("/admin/login"); }} title="Log out" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive"><LogOut className="h-4 w-4" /></button>
+            <button type="button" aria-label="Log out" title="Log out" onClick={async () => { await logout(); navigate("/admin/login"); }} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive"><LogOut className="h-4 w-4" aria-hidden="true" /></button>
           </div>
         </header>
 
@@ -138,5 +216,5 @@ export default function AdminLayout() {
         </main>
       </div>
     </div>
-  );
+);
 }
