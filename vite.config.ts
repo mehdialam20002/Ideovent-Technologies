@@ -1,9 +1,36 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
+/*
+  index.html writes %VITE_PUBLIC_URL% into its canonical, og and JSON-LD tags.
+  When the variable is unset Vite leaves the placeholder in place, and the
+  HTML plugin then fails the whole build on it ("URI malformed"). That is what
+  happened to the first Vercel preview of 26 September 2026: the variable is
+  set for Production only, so every branch preview failed to build.
+
+  So a build always gets a value. A Vercel preview uses its own address, which
+  is where its tags should point anyway (previews sit behind Vercel's login and
+  are never indexed). Anything else falls back to the permanent domain, the
+  same fallback src/lib/verify.ts and seed.ts use.
+
+  It checks .env as well as process.env before filling in, because Vite gives
+  process.env priority over .env files: filling process.env unconditionally
+  would silently override the value in a local .env. Vite loads the env after
+  this function has run, so setting process.env here is enough.
+*/
+function ensurePublicUrl(mode: string) {
+  if (loadEnv(mode, process.cwd(), "VITE_").VITE_PUBLIC_URL) return;
+  process.env.VITE_PUBLIC_URL =
+    process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://www.ideovent.in";
+}
+
 // https://vitejs.dev/config/
-export default defineConfig(() => ({
+export default defineConfig(({ mode }) => {
+  ensurePublicUrl(mode);
+  return {
   // Root by default; the GitHub Pages workflow sets DEPLOY_BASE=/Ideovent-Technologies/
   base: process.env.DEPLOY_BASE || "/",
   server: {
@@ -45,4 +72,5 @@ export default defineConfig(() => ({
     // regression is noisy rather than silent.
     chunkSizeWarningLimit: 400,
   },
-}));
+  };
+});
