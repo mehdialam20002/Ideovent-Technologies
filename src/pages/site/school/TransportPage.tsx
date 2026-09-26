@@ -11,7 +11,7 @@
 
 import { useState } from "react";
 import { Bus, Search } from "lucide-react";
-import { hasBi, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, hasBi, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { clean, Str } from "@/lib/demo/ui/school/shared";
@@ -39,11 +39,11 @@ export default function TransportPage({ site, ctx }: SitePageProps) {
   const { lang, actions } = ctx;
   const t = site.transport || {};
   const routes = (t.routes || []).filter((r) => (r.name || "").trim());
-  const safety = clean(t.safety);
+  const safety = biList(t, "safety", lang);
   const desk = (site.contact?.transportDesk || "").trim();
   const [q, setQ] = useState("");
   const needle = q.trim().toLowerCase();
-  const shown = needle ? routes.filter((r) => `${r.name} ${clean(r.stops).join(" ")}`.toLowerCase().includes(needle)) : routes;
+  const shown = needle ? routes.filter((r) => `${r.name} ${bi(r, "name", lang)} ${clean(r.stops).join(" ")} ${biList(r, "stops", lang).join(" ")}`.toLowerCase().includes(needle)) : routes;
   let n = 0;
 
   return (
@@ -69,10 +69,10 @@ export default function TransportPage({ site, ctx }: SitePageProps) {
           <ul className="mt-4 grid gap-4 md:grid-cols-2">
             {shown.map((r, i) => (
               <Reveal as="li" key={r.name} index={i} className="ds-card p-5">
-                <p className="flex items-center gap-2 font-semibold"><Bus className="h-5 w-5 text-[hsl(var(--ds-accent))]" aria-hidden="true" /><Str text={r.name} /></p>
-                {clean(r.stops).length > 0 && (
+                <p className="flex items-center gap-2 font-semibold"><Bus className="h-5 w-5 text-[hsl(var(--ds-accent))]" aria-hidden="true" /><Str text={bi(r, "name", lang)} /></p>
+                {biList(r, "stops", lang).length > 0 && (
                   <ol className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-1 text-[hsl(var(--ds-ink-soft))]">
-                    {clean(r.stops).map((s, j) => (
+                    {biList(r, "stops", lang).map((s, j) => (
                       <li key={s} className="flex items-center gap-1">
                         {j > 0 && <span aria-hidden="true">›</span>}
                         <span className={needle && s.toLowerCase().includes(needle) ? "rounded bg-[hsl(var(--ds-cta))] px-1 text-[hsl(var(--ds-on-cta))]" : ""}><Str text={s} /></span>
@@ -82,8 +82,8 @@ export default function TransportPage({ site, ctx }: SitePageProps) {
                 )}
                 {(r.pickup || r.drop) && (
                   <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[hsl(var(--ds-line))] pt-3 text-sm">
-                    {r.pickup && <div><dt className="text-[hsl(var(--ds-ink-soft))]">{tr(COPY.pickup, lang)}</dt><dd className="ds-num font-semibold">{r.pickup}</dd></div>}
-                    {r.drop && <div><dt className="text-[hsl(var(--ds-ink-soft))]">{tr(COPY.drop, lang)}</dt><dd className="ds-num font-semibold">{r.drop}</dd></div>}
+                    {r.pickup && <div><dt className="text-[hsl(var(--ds-ink-soft))]">{tr(COPY.pickup, lang)}</dt><dd className="ds-num font-semibold">{bi(r, "pickup", lang)}</dd></div>}
+                    {r.drop && <div><dt className="text-[hsl(var(--ds-ink-soft))]">{tr(COPY.drop, lang)}</dt><dd className="ds-num font-semibold">{bi(r, "drop", lang)}</dd></div>}
                   </dl>
                 )}
               </Reveal>

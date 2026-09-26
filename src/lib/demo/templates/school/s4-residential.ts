@@ -76,7 +76,7 @@ export default defineTemplateContent("school", {
   sessionLabel: "2027",
   hi: {
     tagline: "पैंसठ साल से बोर्डिंग स्कूल, चार हाउस, और *हर रविवार* घर पर फ़ोन।",
-    about: "Buransh Hill School 1961 में चीड़ और बुरांश के चालीस एकड़ के कैंपस पर शुरू हुआ, अल्मोड़ा से 7 km ऊपर, 1,900 मीटर की ऊँचाई पर। यह सिर्फ़ बोर्डिंग स्कूल है: कक्षा 4 से 12 तक 410 लड़के और लड़कियाँ, कोई डे स्कॉलर नहीं। बच्चे चार हाउस में रहते हैं, जिनके नाम असेंबली ग्राउंड से दिखने वाली चोटियों पर हैं: त्रिशूल, नंदा देवी, पंचाचूली और कामेट। हर हाउस में एक हाउसमास्टर या हाउसमिस्ट्रेस अपने परिवार के साथ रहते हैं, एक मेट्रन होती हैं, और एक डॉरमिटरी में ज़्यादा से ज़्यादा बारह बच्चे। कक्षा 6 तक के बच्चे अलग जूनियर हाउस में रहते हैं। स्कूल का साल मार्च से नवंबर तक चलता है, और सर्दियाँ बच्चे घर पर बिताते हैं।",
+    about: "Buransh Hill School 1961 में चीड़ और बुरांश के चालीस एकड़ के कैंपस पर शुरू हुआ, अल्मोड़ा से 7 किमी ऊपर, 1,900 मीटर की ऊँचाई पर। यह सिर्फ़ बोर्डिंग स्कूल है: कक्षा 4 से 12 तक 410 लड़के और लड़कियाँ, कोई डे स्कॉलर नहीं। बच्चे चार हाउस में रहते हैं, जिनके नाम असेंबली ग्राउंड से दिखने वाली चोटियों पर हैं: त्रिशूल, नंदा देवी, पंचाचूली और कामेट। हर हाउस में एक हाउसमास्टर या हाउसमिस्ट्रेस अपने परिवार के साथ रहते हैं, एक मेट्रन होती हैं, और एक डॉरमिटरी में ज़्यादा से ज़्यादा बारह बच्चे। कक्षा 6 तक के बच्चे अलग जूनियर हाउस में रहते हैं। स्कूल का साल मार्च से नवंबर तक चलता है, और सर्दियाँ बच्चे घर पर बिताते हैं।",
     principalTitle: "हेडमिस्ट्रेस",
     principalMessage: "हमारे ज़्यादातर पैरेंट्स एक दिन के सफ़र की दूरी पर रहते हैं, इसलिए मुझसे सबसे ज़्यादा यही पूछा जाता है कि आपको कैसे पता चलेगा कि बच्चा ठीक है। आपका बच्चा हर रविवार शाम घर पर फ़ोन करता है। हाउसमास्टर हर पंद्रह दिन में आपको चिट्ठी लिखते हैं। बच्चा बीमार हो, तो इन्फ़र्मरी उसी दिन आपको फ़ोन करती है। पहला टर्म सबसे मुश्किल होता है, बच्चों के लिए भी और पैरेंट्स के लिए भी। दूसरे टर्म तक ज़्यादातर बच्चे छुट्टियों के दिन गिनना छोड़ देते हैं।",
     resultsHeading: "2026 का बैच।",
@@ -85,6 +85,18 @@ export default defineTemplateContent("school", {
     vision: "सत्रह साल की उम्र में यहाँ से निकलने वाले बच्चे दूसरों के साथ रहना जानें, पहाड़ पर अपना ख़याल रखना जानें, और किताब के साथ अकेले बैठना जानें।",
     mission: "छोटे हाउस, जिनमें बड़े लोग साथ रहते हैं। हर रविवार घर पर फ़ोन और हर पंद्रह दिन में हाउस से चिट्ठी। साल के हर हफ़्ते पहाड़ ही क्लासरूम।",
     hostel: "हर बच्चा चार हाउस में से एक में रहता है, या कक्षा 6 तक जूनियर हाउस में। एक डॉरमिटरी में ज़्यादा से ज़्यादा बारह बच्चे, उसी फ़्लोर पर मेट्रन, और हाउस स्टाफ़ वहीं रहता है।",
+    established: "1961 में शुरू",
+    city: "अल्मोड़ा",
+    state: "उत्तराखंड",
+    boardOrAffiliation: "ICSE और ISC, उदाहरण एफ़िलिएशन नं. 00000000",
+    facilities: [
+      "बोर्डिंग हाउस, जिनमें हाउस स्टाफ़ साथ रहता है",
+      "डाइनिंग हॉल और किचन",
+      "नर्सिंग स्टाफ़ के साथ इन्फ़र्मरी",
+      "लाइब्रेरी और रीडिंग रूम",
+      "फिज़िक्स, केमिस्ट्री और बायोलॉजी की साइंस लैब",
+      "खेल के मैदान और इनडोर गेम्स हॉल",
+    ],
   },
   admissionsOpenUntil: "2026-10-31",
   vision: "Boarders who leave at seventeen knowing how to live with other people, how to look after themselves on a mountain, and how to sit alone with a book.",
@@ -101,9 +113,9 @@ export default defineTemplateContent("school", {
 
   /* ── CLEARED: parents' words. Fiction on its face. ───────────────────── */
   reviews: [
-    { quote: "The fortnightly letter from the housemaster is the best thing we get. Two paragraphs, and it always has one thing we did not know about our son.", relation: "Parents of a Class VIII boarder, Delhi", source: "Example review written by Ideovent", consent: true, hi: { quote: "हाउसमास्टर की पंद्रह दिन वाली चिट्ठी हमें मिलने वाली सबसे अच्छी चीज़ है। दो पैराग्राफ़, और हर बार उसमें अपने बेटे के बारे में कोई एक बात होती है जो हमें पता नहीं थी।", relation: "कक्षा 8 के बोर्डर के पैरेंट्स, दिल्ली" } },
-    { quote: "She had never been away from home for a night. The first Sunday call was mostly crying. By the sixth it was mostly about the cross-country team.", relation: "Mother of a Class V boarder, Lucknow", source: "Example review written by Ideovent", consent: true, hi: { quote: "वह कभी एक रात भी घर से दूर नहीं रही थी। पहले रविवार का फ़ोन ज़्यादातर रोने में गया। छठे तक बात ज़्यादातर क्रॉस-कंट्री टीम की होने लगी।", relation: "कक्षा 5 की बोर्डर की माँ, लखनऊ" } },
-    { quote: "Every extra on the term bill came with a receipt: the trek, the shoes, the dentist in Almora. We have never had a surprise.", relation: "Father of two boarders, Class IX and XII", source: "Example review written by Ideovent", consent: true, hi: { quote: "टर्म के बिल के हर एक्स्ट्रा ख़र्च के साथ रसीद आई: ट्रेक, जूते, अल्मोड़ा के डेंटिस्ट। हमें कभी कोई अचानक ख़र्च नहीं दिखा।", relation: "दो बोर्डर के पिता, कक्षा 9 और 12" } },
+    { quote: "The fortnightly letter from the housemaster is the best thing we get. Two paragraphs, and it always has one thing we did not know about our son.", relation: "Parents of a Class VIII boarder, Delhi", source: "Example review written by Ideovent", consent: true, hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "हाउसमास्टर की पंद्रह दिन वाली चिट्ठी हमें मिलने वाली सबसे अच्छी चीज़ है। दो पैराग्राफ़, और हर बार उसमें अपने बेटे के बारे में कोई एक बात होती है जो हमें पता नहीं थी।", relation: "कक्षा 8 के बोर्डर के पैरेंट्स, दिल्ली" } },
+    { quote: "She had never been away from home for a night. The first Sunday call was mostly crying. By the sixth it was mostly about the cross-country team.", relation: "Mother of a Class V boarder, Lucknow", source: "Example review written by Ideovent", consent: true, hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "वह कभी एक रात भी घर से दूर नहीं रही थी। पहले रविवार का फ़ोन ज़्यादातर रोने में गया। छठे तक बात ज़्यादातर क्रॉस-कंट्री टीम की होने लगी।", relation: "कक्षा 5 की बोर्डर की माँ, लखनऊ" } },
+    { quote: "Every extra on the term bill came with a receipt: the trek, the shoes, the dentist in Almora. We have never had a surprise.", relation: "Father of two boarders, Class IX and XII", source: "Example review written by Ideovent", consent: true, hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "टर्म के बिल के हर एक्स्ट्रा ख़र्च के साथ रसीद आई: ट्रेक, जूते, अल्मोड़ा के डेंटिस्ट। हमें कभी कोई अचानक ख़र्च नहीं दिखा।", relation: "दो बोर्डर के पिता, कक्षा 9 और 12" } },
   ],
 
   /* ── CLEARED: Academics page ─────────────────────────────────────────── */
@@ -171,6 +183,7 @@ export default defineTemplateContent("school", {
       name: "Junior school",
       hi: {
         name: "जूनियर स्कूल",
+        seats: "एक क्लास में 20; जूनियर हाउस की अपनी मेट्रन",
         level: "कक्षा 4 से 6, उम्र 9 से 11 साल",
         subjects: "इंग्लिश, हिंदी, गणित, सामान्य विज्ञान, सामाजिक अध्ययन, आर्ट, संगीत और खेल",
         timings: "जागने की घंटी सुबह 6:30 बजे, लाइट्स ऑफ़ रात 8:30 बजे",
@@ -189,6 +202,7 @@ export default defineTemplateContent("school", {
       name: "Middle school",
       hi: {
         name: "मिडिल स्कूल",
+        seats: "एक क्लास में 24",
         level: "कक्षा 7 से 8, उम्र 12 से 13 साल",
         subjects: "इंग्लिश, हिंदी, संस्कृत या फ़्रेंच, गणित, फिज़िक्स, केमिस्ट्री, बायोलॉजी, इतिहास, भूगोल और कंप्यूटर एप्लिकेशन",
         timings: "जागने की घंटी सुबह 6 बजे, लाइट्स ऑफ़ रात 9 बजे",
@@ -207,6 +221,7 @@ export default defineTemplateContent("school", {
       name: "ICSE",
       hi: {
         level: "कक्षा 9 से 10, उम्र 14 से 15 साल",
+        seats: "एक क्लास में 24",
         subjects: "इंग्लिश, एक दूसरी भाषा, इतिहास, नागरिक शास्त्र और भूगोल, गणित, विज्ञान, और एक वैकल्पिक विषय: कंप्यूटर एप्लिकेशन, इकोनॉमिक्स या आर्ट",
         timings: "जागने की घंटी सुबह 6 बजे, प्रेप शाम 6:30 से 8 बजे, लाइट्स ऑफ़ रात 9:30 बजे",
         feeNote: "सालाना, बोर्ड फीस अलग",
@@ -224,6 +239,7 @@ export default defineTemplateContent("school", {
       name: "ISC",
       hi: {
         level: "कक्षा 11 से 12, उम्र 16 से 17 साल",
+        seats: "एक क्लास में 20",
         subjects: "साइंस (फिज़िक्स, केमिस्ट्री, और गणित या बायोलॉजी), कॉमर्स और ह्यूमैनिटीज़, हर स्ट्रीम में इंग्लिश के साथ",
         timings: "जागने की घंटी सुबह 6 बजे, प्रेप शाम 6:30 से 8:30 बजे, लाइट्स ऑफ़ रात 10 बजे",
         feeNote: "सालाना, बोर्ड फीस अलग",
@@ -246,24 +262,24 @@ export default defineTemplateContent("school", {
   results: [
     { achievement: "93.4% average aggregate", exam: "ISC", year: "2026", note: "58 candidates", category: "ISC", hi: { achievement: "93.4% औसत कुल अंक", note: "58 स्टूडेंट्स" } },
     { achievement: "91.7% average aggregate", exam: "ICSE", year: "2026", note: "61 candidates", category: "ICSE", hi: { achievement: "91.7% औसत कुल अंक", note: "61 स्टूडेंट्स" } },
-    { achievement: "52 of 58 began university this year", exam: "ISC", year: "2026", note: "7 of them abroad", category: "Destinations", hi: { achievement: "58 में से 52 ने इस साल यूनिवर्सिटी में पढ़ाई शुरू की", note: "इनमें से 7 विदेश में" } },
-    { achievement: "100% passed", exam: "ICSE and ISC", year: "2026", note: "For the fourteenth year running", category: "ISC", hi: { achievement: "100% पास", note: "लगातार चौदहवें साल" } },
+    { achievement: "52 of 58 began university this year", exam: "ISC", year: "2026", note: "7 of them abroad", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "58 में से 52 ने इस साल यूनिवर्सिटी में पढ़ाई शुरू की", note: "इनमें से 7 विदेश में" } },
+    { achievement: "100% passed", exam: "ICSE and ISC", year: "2026", note: "For the fourteenth year running", category: "ISC", hi: { achievement: "100% पास", exam: "ICSE और ISC", note: "लगातार चौदहवें साल" } },
     /* Destinations: a count per university, never a named student. */
-    { achievement: "9 students", destination: "University of Delhi colleges", country: "India", exam: "ISC", year: "2026", category: "Destinations", hi: { achievement: "9 स्टूडेंट्स" } },
-    { achievement: "6 students", destination: "Private universities in the NCR and Pune", country: "India", exam: "ISC", year: "2026", category: "Destinations", hi: { achievement: "6 स्टूडेंट्स" } },
-    { achievement: "5 students", destination: "Engineering colleges through JEE Main", country: "India", exam: "ISC", year: "2026", category: "Destinations", hi: { achievement: "5 स्टूडेंट्स" } },
-    { achievement: "4 students", destination: "Universities in Canada", country: "Canada", exam: "ISC", year: "2026", category: "Destinations", hi: { achievement: "4 स्टूडेंट्स" } },
-    { achievement: "3 students", destination: "Universities in the United Kingdom", country: "United Kingdom", exam: "ISC", year: "2026", category: "Destinations", hi: { achievement: "3 स्टूडेंट्स" } },
+    { achievement: "9 students", destination: "University of Delhi colleges", country: "India", exam: "ISC", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "9 स्टूडेंट्स", destination: "दिल्ली यूनिवर्सिटी के कॉलेज", country: "भारत" } },
+    { achievement: "6 students", destination: "Private universities in the NCR and Pune", country: "India", exam: "ISC", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "6 स्टूडेंट्स", destination: "NCR और पुणे की प्राइवेट यूनिवर्सिटी", country: "भारत" } },
+    { achievement: "5 students", destination: "Engineering colleges through JEE Main", country: "India", exam: "ISC", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "5 स्टूडेंट्स", destination: "JEE Main से इंजीनियरिंग कॉलेज", country: "भारत" } },
+    { achievement: "4 students", destination: "Universities in Canada", country: "Canada", exam: "ISC", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "4 स्टूडेंट्स", destination: "कनाडा की यूनिवर्सिटी", country: "कनाडा" } },
+    { achievement: "3 students", destination: "Universities in the United Kingdom", country: "United Kingdom", exam: "ISC", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "3 स्टूडेंट्स", destination: "यूनाइटेड किंगडम की यूनिवर्सिटी", country: "यूनाइटेड किंगडम" } },
   ],
 
   /* ── CLEARED: the board table in the registered, passed, pass % columns ── */
   boardResults: [
-    { year: "2026", className: "ICSE (X)", registered: "61", passed: "61", passPercent: "100%" },
-    { year: "2026", className: "ISC (XII)", registered: "58", passed: "58", passPercent: "100%" },
-    { year: "2025", className: "ICSE (X)", registered: "59", passed: "59", passPercent: "100%" },
-    { year: "2025", className: "ISC (XII)", registered: "55", passed: "55", passPercent: "100%" },
-    { year: "2024", className: "ICSE (X)", registered: "62", passed: "62", passPercent: "100%" },
-    { year: "2024", className: "ISC (XII)", registered: "54", passed: "54", passPercent: "100%" },
+    { year: "2026", className: "ICSE (X)", registered: "61", passed: "61", passPercent: "100%", hi: { className: "ICSE (कक्षा 10)" } },
+    { year: "2026", className: "ISC (XII)", registered: "58", passed: "58", passPercent: "100%", hi: { className: "ISC (कक्षा 12)" } },
+    { year: "2025", className: "ICSE (X)", registered: "59", passed: "59", passPercent: "100%", hi: { className: "ICSE (कक्षा 10)" } },
+    { year: "2025", className: "ISC (XII)", registered: "55", passed: "55", passPercent: "100%", hi: { className: "ISC (कक्षा 12)" } },
+    { year: "2024", className: "ICSE (X)", registered: "62", passed: "62", passPercent: "100%", hi: { className: "ICSE (कक्षा 10)" } },
+    { year: "2024", className: "ISC (XII)", registered: "54", passed: "54", passPercent: "100%", hi: { className: "ISC (कक्षा 12)" } },
   ],
 
   /* ── KEPT WORD FOR WORD: facilities. What every boarding school has; the
@@ -307,12 +323,12 @@ export default defineTemplateContent("school", {
 
   /* ── CLEARED: gallery. Captions only; they are also the shot list. ───── */
   gallery: [
-    { src: "", alt: "The main building, 1961, from the lower field." },
-    { src: "", alt: "Trishul House at 9:00 pm, the last round before lights out." },
-    { src: "", alt: "Sunday calls home in the common room, 5:00 pm." },
-    { src: "", alt: "Breakfast in the dining hall, 7:15 am." },
-    { src: "", alt: "The cross-country course along the ridge in October." },
-    { src: "", alt: "Nanda Devi at sunrise, from the assembly ground." },
+    { src: "", alt: "The main building, 1961, from the lower field.", hi: { alt: "मुख्य इमारत, 1961, निचले मैदान से।" } },
+    { src: "", alt: "Trishul House at 9:00 pm, the last round before lights out.", hi: { alt: "रात 9 बजे त्रिशूल हाउस, लाइट्स ऑफ़ से पहले का आख़िरी चक्कर।" } },
+    { src: "", alt: "Sunday calls home in the common room, 5:00 pm.", hi: { alt: "कॉमन रूम में रविवार को घर पर फ़ोन, शाम 5 बजे।" } },
+    { src: "", alt: "Breakfast in the dining hall, 7:15 am.", hi: { alt: "डाइनिंग हॉल में नाश्ता, सुबह 7:15।" } },
+    { src: "", alt: "The cross-country course along the ridge in October.", hi: { alt: "अक्टूबर में रिज के साथ-साथ क्रॉस-कंट्री कोर्स।" } },
+    { src: "", alt: "Nanda Devi at sunrise, from the assembly ground.", hi: { alt: "असेंबली ग्राउंड से सूर्योदय के समय नंदा देवी।" } },
   ],
 
   /* ── STOCK photos for the Gallery chips: src and category kept on
@@ -338,6 +354,21 @@ export default defineTemplateContent("school", {
       assessment: "इंग्लिश और गणित के पेपर, और हेडमिस्ट्रेस से बातचीत, रविवार 15 नवंबर 2026 को, स्कूल में या दिल्ली सेंटर पर। कक्षा 11 के उम्मीदवार अपनी चुनी हुई स्ट्रीम का एक पेपर भी देते हैं।",
       feeNote: "फीस दो टर्म में दी जाती है, फ़रवरी और जुलाई में। यह साल में एक बार, अगले मार्च के लिए बदलती है, साल के बीच में कभी नहीं। असल लागत पर लिए गए हर ख़र्च के साथ रसीद मिलती है।",
       rteNote: "हर साल ज़रूरत के आधार पर बारह स्कॉलरशिप दी जाती हैं, बोर्डिंग समेत पूरी फीस तक। फ़ैसला एडमिशन का ऑफ़र मिलने के बाद परिवार की आमदनी पर होता है। फ़ॉर्म एडमिशन ऑफ़िस से माँगिए।",
+      ageAsOn: "1 मार्च 2027",
+      steps: [
+        "एडमिशन ऑफ़िस को लिखिए या फ़ोन कीजिए, और प्रॉस्पेक्टस और फीस की पूरी सूची माँगिए।",
+        "बच्चे के साथ आइए, एक बोर्डिंग हाउस देखिए और हाउसमास्टर या हाउसमिस्ट्रेस से मिलिए।",
+        "आपका बच्चा इंग्लिश और गणित का एंट्रेंस टेस्ट देता है और स्कूल प्रमुख से मिलता है।",
+        "ऑफ़र मिलने पर सीट पक्की कीजिए, मेडिकल फ़ॉर्म भरिए, और यूनिफ़ॉर्म और ट्रंक की सूची ले लीजिए।",
+      ],
+      documents: [
+        "जन्म प्रमाण पत्र",
+        "पिछले स्कूल का ट्रांसफ़र सर्टिफ़िकेट",
+        "पिछले स्कूल साल और इस टर्म के रिपोर्ट कार्ड",
+        "मेडिकल और टीकाकरण का रिकॉर्ड, फ़ैमिली डॉक्टर के साइन के साथ",
+        "बच्चे का और माता-पिता दोनों का आधार",
+        "बच्चे की फ़ोटो, और हर उस बड़े की फ़ोटो जिसे बच्चे को ले जाने की अनुमति है",
+      ],
     },
     /* CLEARED. One row per line; the text before the first colon heads it.
        Kathgodam is the railhead for the hills, so the escorted journeys
@@ -385,21 +416,21 @@ export default defineTemplateContent("school", {
       { label: "Middle school, Class VII and VIII", amount: "₹4,85,000", period: "annual", note: "In two terms", hi: { label: "मिडिल स्कूल, कक्षा 7 और 8", note: "दो टर्म में" } },
       { label: "ICSE, Class IX and X", amount: "₹5,10,000", period: "annual", note: "In two terms", hi: { label: "ICSE, कक्षा 9 और 10", note: "दो टर्म में" } },
       { label: "ISC, Class XI and XII", amount: "₹5,40,000", period: "annual", note: "In two terms", hi: { label: "ISC, कक्षा 11 और 12", note: "दो टर्म में" } },
-      { label: "Uniform, bedding and trunk", amount: "About ₹48,000", period: "also", note: "First year; about ₹15,000 a year after", hi: { label: "यूनिफ़ॉर्म, बिस्तर और ट्रंक", note: "पहला साल; उसके बाद लगभग ₹15,000 सालाना" } },
-      { label: "Books, treks and outings", amount: "About ₹22,000", period: "also", note: "A year, billed at cost with receipts", hi: { label: "किताबें, ट्रेक और आउटिंग", note: "सालाना, असल लागत पर, रसीद के साथ" } },
+      { label: "Uniform, bedding and trunk", amount: "About ₹48,000", period: "also", note: "First year; about ₹15,000 a year after", hi: { label: "यूनिफ़ॉर्म, बिस्तर और ट्रंक", amount: "लगभग ₹48,000", note: "पहला साल; उसके बाद लगभग ₹15,000 सालाना" } },
+      { label: "Books, treks and outings", amount: "About ₹22,000", period: "also", note: "A year, billed at cost with receipts", hi: { label: "किताबें, ट्रेक और आउटिंग", amount: "लगभग ₹22,000", note: "सालाना, असल लागत पर, रसीद के साथ" } },
       { label: "Escorted journey, Kathgodam to Delhi", amount: "₹3,800", period: "also", note: "Each way, only if you use it", hi: { label: "स्टाफ़ के साथ सफ़र, काठगोदाम से दिल्ली", note: "एक तरफ़ का, सिर्फ़ इस्तेमाल करने पर" } },
-      { label: "Pocket money", amount: "Up to ₹1,500", period: "also", note: "A month, held by the house, set by you", hi: { label: "पॉकेट मनी", note: "महीने की, हाउस के पास रहती है, रक़म आप तय करते हैं" } },
-      { label: "ICSE and ISC board fees", amount: "As CISCE sets them", period: "also", note: "Class X and XII only", hi: { label: "ICSE और ISC बोर्ड फीस", note: "सिर्फ़ कक्षा 10 और 12" } },
+      { label: "Pocket money", amount: "Up to ₹1,500", period: "also", note: "A month, held by the house, set by you", hi: { label: "पॉकेट मनी", amount: "₹1,500 तक", note: "महीने की, हाउस के पास रहती है, रक़म आप तय करते हैं" } },
+      { label: "ICSE and ISC board fees", amount: "As CISCE sets them", period: "also", note: "Class X and XII only", hi: { label: "ICSE और ISC बोर्ड फीस", amount: "CISCE जितनी तय करे", note: "सिर्फ़ कक्षा 10 और 12" } },
     ],
     feeNote: "Fees are paid in two terms, in February and July. They are revised once a year, for the next March, and never in the middle of a year. Everything billed at cost comes with the receipt.",
     ageAsOn: "1 March 2027",
     ageRules: [
-      { className: "Class IV", minAge: "8", maxAge: "10" },
-      { className: "Class V", minAge: "9", maxAge: "11" },
-      { className: "Class VI", minAge: "10", maxAge: "12" },
-      { className: "Class VII", minAge: "11", maxAge: "13" },
-      { className: "Class IX", minAge: "13", maxAge: "15" },
-      { className: "Class XI", minAge: "15", maxAge: "17" },
+      { className: "Class IV", minAge: "8", maxAge: "10", hi: { className: "कक्षा 4" } },
+      { className: "Class V", minAge: "9", maxAge: "11", hi: { className: "कक्षा 5" } },
+      { className: "Class VI", minAge: "10", maxAge: "12", hi: { className: "कक्षा 6" } },
+      { className: "Class VII", minAge: "11", maxAge: "13", hi: { className: "कक्षा 7" } },
+      { className: "Class IX", minAge: "13", maxAge: "15", hi: { className: "कक्षा 9" } },
+      { className: "Class XI", minAge: "15", maxAge: "17", hi: { className: "कक्षा 11" } },
     ],
     rteNote: "Twelve need-based bursaries are awarded each year, up to the full fee including boarding, decided on family income after an offer is made. Ask the admissions office for the form.",
   },
@@ -453,9 +484,9 @@ export default defineTemplateContent("school", {
       { title: "Winter break", date: "28 November 2027 to 27 February 2028", hi: { title: "सर्दी की छुट्टियाँ", date: "28 नवंबर 2027 से 27 फ़रवरी 2028" } },
     ],
     howToReach: [
-      { title: "By rail", body: "Kathgodam is the nearest railhead, 90 km and about three hours by road. The overnight trains from Delhi and Lucknow arrive in the morning, and the school's escorted journeys start here.", hi: { title: "ट्रेन से", body: "सबसे पास का रेलवे स्टेशन काठगोदाम है, 90 km और सड़क से लगभग तीन घंटे। दिल्ली और लखनऊ से रात की ट्रेनें सुबह पहुँचती हैं, और स्कूल का स्टाफ़ के साथ सफ़र यहीं से शुरू होता है।" } },
-      { title: "By road", body: "From Delhi, about 360 km through Haldwani and Bhowali, nine to ten hours. The last 7 km above Almora are a narrow hill road.", hi: { title: "सड़क से", body: "दिल्ली से हल्द्वानी और भोवाली होकर लगभग 360 km, नौ से दस घंटे। अल्मोड़ा के ऊपर के आख़िरी 7 km पतली पहाड़ी सड़क है।" } },
-      { title: "By air", body: "Pantnagar is the nearest airport, about 125 km away. Dehradun and Delhi have more flights.", hi: { title: "हवाई जहाज़ से", body: "सबसे पास का एयरपोर्ट पंतनगर है, लगभग 125 km दूर। देहरादून और दिल्ली से ज़्यादा फ़्लाइट हैं।" } },
+      { title: "By rail", body: "Kathgodam is the nearest railhead, 90 km and about three hours by road. The overnight trains from Delhi and Lucknow arrive in the morning, and the school's escorted journeys start here.", hi: { title: "ट्रेन से", body: "सबसे पास का रेलवे स्टेशन काठगोदाम है, 90 किमी और सड़क से लगभग तीन घंटे। दिल्ली और लखनऊ से रात की ट्रेनें सुबह पहुँचती हैं, और स्कूल का स्टाफ़ के साथ सफ़र यहीं से शुरू होता है।" } },
+      { title: "By road", body: "From Delhi, about 360 km through Haldwani and Bhowali, nine to ten hours. The last 7 km above Almora are a narrow hill road.", hi: { title: "सड़क से", body: "दिल्ली से हल्द्वानी और भोवाली होकर लगभग 360 किमी, नौ से दस घंटे। अल्मोड़ा के ऊपर के आख़िरी 7 किमी पतली पहाड़ी सड़क है।" } },
+      { title: "By air", body: "Pantnagar is the nearest airport, about 125 km away. Dehradun and Delhi have more flights.", hi: { title: "हवाई जहाज़ से", body: "सबसे पास का एयरपोर्ट पंतनगर है, लगभग 125 किमी दूर। देहरादून और दिल्ली से ज़्यादा फ़्लाइट हैं।" } },
       { title: "Staying nearby", body: "The admissions office keeps a list of guest houses in Almora for visiting weekends. We do not book them.", hi: { title: "पास में ठहरना", body: "विज़िटिंग वीकेंड के लिए एडमिशन ऑफ़िस अल्मोड़ा के गेस्ट हाउस की सूची रखता है। बुकिंग हम नहीं करते।" } },
     ],
   },
@@ -491,7 +522,7 @@ export default defineTemplateContent("school", {
       hi: {
         title: "इंटर-हाउस क्रॉस-कंट्री, शनिवार 3 अक्टूबर",
         date: "18 सितंबर 2026",
-        body: "जूनियर 3 km दौड़ते हैं, सीनियर 8 km का रिज कोर्स। पैरेंट्स सुबह 9:30 बजे से निचले मैदान पर फ़िनिश लाइन पर आ सकते हैं।",
+        body: "जूनियर 3 किमी दौड़ते हैं, सीनियर 8 किमी का रिज कोर्स। पैरेंट्स सुबह 9:30 बजे से निचले मैदान पर फ़िनिश लाइन पर आ सकते हैं।",
       },
       date: "18 September 2026",
       body: "Juniors run 3 km, seniors the 8 km ridge course. Parents are welcome at the finish on the lower field from 9:30 am.",
@@ -544,7 +575,8 @@ export default defineTemplateContent("school", {
   contact: {
     hi: {
       hours: "एडमिशन ऑफ़िस सोमवार से शनिवार, सुबह 9 से शाम 4 बजे तक खुला। बोर्डर्स से रविवार शाम 4 से 7 बजे के बीच फ़ोन पर बात हो सकती है।",
-      landmark: "अल्मोड़ा से 7 km ऊपर, Example Road पर, फ़ॉरेस्ट चेक पोस्ट के आगे",
+      landmark: "अल्मोड़ा से 7 किमी ऊपर, Example Road पर, फ़ॉरेस्ट चेक पोस्ट के आगे",
+      addressLines: ["Buransh Hill School", "Example Road, अल्मोड़ा से 7 किमी ऊपर", "ज़िला अल्मोड़ा, उत्तराखंड 263000"],
     },
     phone: "+91 00000 00000",
     whatsapp: "910000000000",
@@ -554,7 +586,7 @@ export default defineTemplateContent("school", {
     mapQuery: "Buransh Hill School, Almora",
     landmark: "7 km above Almora on the Example Road, past the forest check post",
     branches: [
-      { name: "Delhi admissions office and assessment centre", addressLines: ["Buransh Hill School city office", "22 Example Road, Lajpat Nagar", "New Delhi 110000"], phone: "+91 00000 00000", hours: "Monday to Friday, 10:00 am to 5:00 pm, October to January" },
+      { name: "Delhi admissions office and assessment centre", addressLines: ["Buransh Hill School city office", "22 Example Road, Lajpat Nagar", "New Delhi 110000"], phone: "+91 00000 00000", hours: "Monday to Friday, 10:00 am to 5:00 pm, October to January", hi: { name: "दिल्ली एडमिशन ऑफ़िस और टेस्ट सेंटर", addressLines: ["Buransh Hill School सिटी ऑफ़िस", "22 Example Road, लाजपत नगर", "नई दिल्ली 110000"], hours: "सोमवार से शुक्रवार, सुबह 10 से शाम 5 बजे तक, अक्टूबर से जनवरी" } },
     ],
   },
 

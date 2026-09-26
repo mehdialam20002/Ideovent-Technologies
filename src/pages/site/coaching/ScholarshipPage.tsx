@@ -12,7 +12,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { bi, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { PageHead } from "../kit/Hero";
@@ -41,7 +41,7 @@ export default function ScholarshipPage({ site, ctx }: SitePageProps) {
   const s = site.scholarship;
   const reg = (s?.registerUrl || "").trim();
   const fallback = ctx.href("demo-class") || ctx.href("contact");
-  const centres = (s?.centres || []).filter((c) => c.trim());
+  const centres = biList(s, "centres", lang);
   const rewards = withText(s?.rewards, "title");
   const faq = withText(s?.faq, "title");
   const rows = (["date", "mode", "eligibility", "resultDate"] as const)

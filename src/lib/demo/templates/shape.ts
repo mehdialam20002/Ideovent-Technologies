@@ -135,6 +135,23 @@
  *               in the object's own `hi` block under the same key, never in
  *               the plain field (scripts/check-demo-lang.mjs fails on it).
  *               s2 may set `defaultLang: "hi"` to open in Hindi.
+ *               THE HINDI SLOTS (26 Sep 2026). Every line a reader sees
+ *               has a Hindi twin, by one convention:
+ *                 - a site-level field X gets it at `hi.X`, in the same
+ *                   shape: a string for a string, a list in the SAME ORDER
+ *                   for a list (hi.facilities, hi.focusAreas; also
+ *                   established, establishedYear, boardOrAffiliation,
+ *                   udiseCode, city, state);
+ *                 - a field Y of a list item or a nested block goes in that
+ *                   object's own `hi` (result.hi.courseDuration, result.hi.exam,
+ *                   admissions.hi.documents, feesPolicy.hi.paymentModes,
+ *                   route.hi.stops, transport.hi.safety, course.hi.material,
+ *                   feeRow.hi.amount, disclosure row.hi.value, ...), adding the
+ *                   `hi` block where the object had none.
+ *               A list twin pairs line by line: a missing Hindi line prints
+ *               the English line. Pages read these through bi / biList /
+ *               biDate in src/lib/demo/site/bilingual.ts, and a duplicate
+ *               renames them like every other Hindi string.
  *   photos      a stock path or "" (see PHOTOGRAPHS above).
  *   founder     no photograph.
  *   results     follow CCPA 2024: courseName, courseDuration and paid on
@@ -240,6 +257,8 @@ export type TemplateFaculty = Omit<DemoFaculty, "photo" | "photoConsent"> & {
 export interface TemplateGalleryItem {
   src: "" | StockPhotoSrc;
   alt: string;
+  /** The alt's Hindi, for a caption-only entry. A stock photo's alt comes from the manifest. */
+  hi?: { alt?: string };
 }
 
 /**

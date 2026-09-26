@@ -98,7 +98,7 @@ export default function CoursesPage({ site, ctx }: SitePageProps) {
                     {!to && bi(c, "subjects", lang) && <li>{tr(COPY.subjects, lang)}: <Bi of={c} k="subjects" /></li>}
                     {!to && bi(c, "timings", lang) && <li>{tr(COPY.timings, lang)}: <Bi of={c} k="timings" /></li>}
                     {bi(c, "batchStarts", lang) && <li>{startsWithNumber(bi(c, "batchStarts", lang)) ? trf(COPY.starts, lang, { date: bi(c, "batchStarts", lang) }) : bi(c, "batchStarts", lang)}</li>}
-                    {c.seats && <li>{/^\d+$/.test(c.seats.trim()) ? trf(COPY.seats, lang, { n: c.seats }) : c.seats}</li>}
+                    {c.seats && <li>{/^\d+$/.test(c.seats.trim()) ? trf(COPY.seats, lang, { n: c.seats }) : bi(c, "seats", lang)}</li>}
                   </ul>
                   {!to && <Bi of={c} k="detail" as="p" className="mt-3 text-[hsl(var(--ds-ink-soft))]" />}
                   <div className="mt-auto pt-4">

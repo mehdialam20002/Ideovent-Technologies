@@ -204,14 +204,28 @@ const browser = await (async () => {
   }
 })()
 
-const page = await browser.newPage()
-
-// Sign in once. sessionStorage belongs to the tab, so every later navigation
-// in this page carries the flag.
+/*
+  A FRESH TAB PER ROUTE. Until 26 Sep 2026 one tab loaded every route at every
+  width, a few hundred navigations. Once the demo templates gained their HD
+  photos, that single tab's renderer ran out of memory about 17 routes in and
+  Chrome closed it ("Target page, context or browser has been closed"), which
+  failed the gate on a route that was fine. Nobody browses 300 pages in one
+  tab, so each route now gets its own, and a crashed tab is reopened and the
+  width retried once. The admin session flag goes in through an init script so
+  every new tab carries it (sessionStorage belongs to the tab).
+*/
+const context = await browser.newContext()
 if (ROUTES.some(needsLogin)) {
-  await page.goto(BASE + '/admin/login', { waitUntil: 'domcontentloaded', timeout: 20000 })
-  await page.evaluate((key) => sessionStorage.setItem(key, '1'), SESSION_KEY)
+  await context.addInitScript((key) => {
+    try { sessionStorage.setItem(key, '1') } catch {}
+  }, SESSION_KEY)
 }
+let page = await context.newPage()
+const freshPage = async () => {
+  await page.close().catch(() => {})
+  page = await context.newPage()
+}
+const crashed = (e) => /closed|crash/i.test(String(e && e.message))
 
 const failures = []
 const perWidth = new Map()
@@ -219,11 +233,20 @@ const perWidth = new Map()
 for (const route of ROUTES) {
   let ok = true
   const notes = []
+  await freshPage()
   for (const w of WIDTHS) {
-    await page.setViewportSize({ width: w, height: 900 })
-    try {
-      await page.goto(BASE + route, { waitUntil: 'domcontentloaded', timeout: 20000 })
-    } catch {
+    let loaded = false
+    for (let attempt = 0; attempt < 2 && !loaded; attempt++) {
+      try {
+        await page.setViewportSize({ width: w, height: 900 })
+        await page.goto(BASE + route, { waitUntil: 'domcontentloaded', timeout: 20000 })
+        loaded = true
+      } catch (e) {
+        if (!crashed(e)) break
+        await freshPage()
+      }
+    }
+    if (!loaded) {
       notes.push(`${w}: did not load`)
       ok = false
       continue

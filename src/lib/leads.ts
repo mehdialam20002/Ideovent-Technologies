@@ -359,6 +359,13 @@ function emailParams(doc: ContactSubmission, replyLink: string): Record<string, 
   ];
   const details = lines.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
   return {
+    // name, email and title are the variables the template in the EmailJS
+    // dashboard actually uses today ("Contact Us: {{title}}", {{name}},
+    // {{email}}); sent alongside the documented ones so the e-mail is complete
+    // whichever template body is pasted in.
+    name: doc.name || doc.website || "Website check",
+    email: doc.email || "",
+    title: `${doc.need || "New"} enquiry: ${doc.website || doc.name || "website check"}`,
     from_name: doc.name || doc.website || "Website check",
     from_email: doc.email || "",
     reply_to: doc.email || "",
@@ -512,6 +519,9 @@ function applicationParams(doc: Application, whatsappDigits: string): Record<str
   const details = lines.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
   const body = `${details}\n\nIn their words:\n${doc.notes || "(nothing written)"}`;
   return {
+    name: doc.fullName,
+    email: doc.email,
+    title: `Internship application: ${doc.fullName}${doc.college ? `, ${doc.college}` : ""}`,
     from_name: doc.fullName,
     from_email: doc.email,
     reply_to: doc.email,

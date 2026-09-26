@@ -14,11 +14,12 @@
 import { ExternalLink, Printer } from "lucide-react";
 import type { ReactNode } from "react";
 import type { DemoSite } from "@/lib/cms/types";
-import { tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
+import type { DemoLang } from "@/lib/demo/language";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { APPENDIX_IX, derivedStaffCounts } from "@/lib/demo/site/disclosure";
-import { clean, demoDateIn } from "@/lib/demo/ui/school/shared";
+import { demoDateIn } from "@/lib/demo/ui/school/shared";
 import { PageHead } from "../kit/Hero";
 import { SampleNote } from "../kit/SampleNote";
 import { Section } from "../kit/Section";
@@ -43,11 +44,11 @@ const COPY = {
 } satisfies Record<string, Bilingual>;
 
 /** Values the record already holds, for rows nobody has typed. */
-function known(site: DemoSite): Record<string, string> {
+function known(site: DemoSite, lang: DemoLang): Record<string, string> {
   const c = site.contact || {};
   return {
     "school-name": site.instituteName || "",
-    address: clean(c.addressLines).join(", "),
+    address: biList(c, "addressLines", lang).join(", "),
     principal: [site.principalName].filter(Boolean).join(""),
     "principal-staff": site.principalName || "",
     email: c.email || "",
@@ -64,7 +65,7 @@ const pct = (v?: string) => `${(v || "").trim().replace(/\s*%$/, "")}%`;
 export default function DisclosurePage({ site, ctx }: SitePageProps) {
   const { lang } = ctx;
   const rows = site.disclosure?.rows || {};
-  const fallback = known(site);
+  const fallback = known(site, lang);
   const board = (site.boardResults || []).filter((b) => (b.year || "").trim());
   const classes = ["X", "XII"].filter((c) => board.some((b) => b.className.trim().toUpperCase() === c));
   const updated = site.disclosure?.lastUpdated;
@@ -73,7 +74,7 @@ export default function DisclosurePage({ site, ctx }: SitePageProps) {
 
   const value = (id: string, shape: "text" | "document"): ReactNode => {
     const typed = rows[id];
-    const text = (typed?.value || "").trim() || (shape === "text" ? (fallback[id] || "").trim() : "");
+    const text = bi(typed, "value", lang) || (shape === "text" ? (fallback[id] || "").trim() : "");
     const url = (typed?.url || "").trim();
     if (!text && !url) return <span className="text-[hsl(var(--ds-ink-soft))]">{tr(SHELL_COPY.toBeUploaded, lang)}</span>;
     return (
@@ -128,7 +129,7 @@ export default function DisclosurePage({ site, ctx }: SitePageProps) {
                         <tr key={b.year} className="ds-num border-b border-[hsl(var(--ds-line))]">
                           <td className="py-3 pr-4">{b.year}</td><td className="py-3 pr-4">{b.registered || tr(SHELL_COPY.toBeUploaded, lang)}</td>
                           <td className="py-3 pr-4">{b.passed || tr(SHELL_COPY.toBeUploaded, lang)}</td><td className="py-3 pr-4 font-semibold">{b.passPercent ? `${pct(b.passPercent)}` : tr(SHELL_COPY.toBeUploaded, lang)}</td>
-                          <td className="py-3 pr-4 text-sm">{b.note || ""}</td>
+                          <td className="py-3 pr-4 text-sm">{bi(b, "note", lang)}</td>
                         </tr>
                       ))}
                     </tbody>

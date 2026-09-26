@@ -64,7 +64,33 @@ function useReducedMotion(): boolean {
 
 const digits = (s?: string) => (s || "").replace(/\D/g, "");
 
-export default function SiteShell({ site, basePath, rest, isPreview }: {
+/**
+ * The record as the pages read it in this language. On the Hindi page, a
+ * Hindi name (`hi.instituteName`, typed in the Duplicate dialog or the
+ * editor) replaces the English one everywhere the institute names itself:
+ * header, masthead, footer, page titles. The English short name goes too,
+ * since it would put Latin letters back in the Hindi nav. No Hindi name: the
+ * record as it is. The Ideovent ribbon and marker read this copy too, since
+ * their Hindi sentences name the institute (a Latin name there was a leak).
+ */
+function inLanguage(site: DemoSite, lang: string): DemoSite {
+  if (lang !== "hi") return site;
+  const hiName = (site.hi?.instituteName || "").trim();
+  /* The city and state print in the footer, the contact page and the "since"
+     lines; their Hindi twins replace them the same way, English kept when
+     there is no twin. Map queries read the record, not this copy. */
+  const hiCity = (site.hi?.city || "").trim();
+  const hiState = (site.hi?.state || "").trim();
+  if (!hiName && !hiCity && !hiState) return site;
+  return {
+    ...site,
+    ...(hiName ? { instituteName: hiName, shortName: "" } : {}),
+    ...(hiCity && (site.city || "").trim() ? { city: hiCity } : {}),
+    ...(hiState && (site.state || "").trim() ? { state: hiState } : {}),
+  };
+}
+
+export default function SiteShell({ site: record, basePath, rest, isPreview }: {
   site: DemoSite;
   /** "/site/<slug>" or an admin preview base, no trailing slash. */
   basePath: string;
@@ -72,8 +98,9 @@ export default function SiteShell({ site, basePath, rest, isPreview }: {
   rest: string;
   isPreview: boolean;
 }) {
-  const theme = siteThemeFor(site.kind, site.theme)!;
-  const { lang, setLang, offered } = useDemoLangControl(site);
+  const theme = siteThemeFor(record.kind, record.theme)!;
+  const { lang, setLang, offered } = useDemoLangControl(record);
+  const site = useMemo(() => inLanguage(record, lang), [record, lang]);
   const reduced = useReducedMotion();
   const today = new Date().toLocaleDateString("en-CA");
   const pages = useMemo(() => visiblePages(site, today), [site, today]);
@@ -93,7 +120,7 @@ export default function SiteShell({ site, basePath, rest, isPreview }: {
       return def.path ? `${basePath}/${def.path}` : basePath;
     };
     const c = site.contact || {};
-    const mapQuery = c.mapQuery || [site.instituteName, site.city].filter(Boolean).join(", ");
+    const mapQuery = c.mapQuery || [record.instituteName, record.city].filter(Boolean).join(", ");
     return {
       site, kind: site.kind, lang, setLang, langOffered: offered,
       theme, family: theme.family, variant: theme.variant,
@@ -107,7 +134,7 @@ export default function SiteShell({ site, basePath, rest, isPreview }: {
         map: (c.mapUrl || "").trim() || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`,
       },
     };
-  }, [match?.def, match?.param, pages, site, lang, setLang, offered, theme, reduced, today, basePath, isPreview]);
+  }, [match?.def, match?.param, pages, site, record, lang, setLang, offered, theme, reduced, today, basePath, isPreview]);
 
   if (!match || !ctx) return <Navigate to={basePath} replace />;
 

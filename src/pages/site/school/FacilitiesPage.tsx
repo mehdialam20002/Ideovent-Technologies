@@ -10,10 +10,10 @@
  *              to six gallery photos not already on the page
  */
 
-import { hasBi, tr, withText, bi, type Bilingual } from "@/lib/demo/site/bilingual";
+import { hasBi, tr, withText, bi, biPairs, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
-import { clean, schoolPhotos, Str } from "@/lib/demo/ui/school/shared";
+import { schoolPhotos, Str } from "@/lib/demo/ui/school/shared";
 import { photoAlt, PhotoBand, slotPhoto, SlotPhoto } from "@/lib/demo/ui/school/photos";
 import type { DemoPhotoSlot } from "@/lib/demo/images";
 import { PageHead } from "../kit/Hero";
@@ -52,9 +52,9 @@ export default function FacilitiesPage({ site, ctx }: SitePageProps) {
     if (g) g.items.push(d);
     else groups.push({ name, items: [d] });
   }
-  const list = clean(site.facilities);
+  const list = biPairs(site, "facilities", lang);
   const detailTitles = new Set(details.map((d) => d.title.toLowerCase()));
-  const extra = list.filter((f) => !detailTitles.has(f.toLowerCase()));
+  const extra = list.filter((p) => !detailTitles.has(p.en.toLowerCase())).map((p) => p.text);
   const campus = slotPhoto(site, "campus");
   const used = new Set<string>(campus ? [campus] : []);
   const groupPhoto = groups.map((g) => {

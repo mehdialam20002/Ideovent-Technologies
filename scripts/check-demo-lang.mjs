@@ -68,6 +68,17 @@ function walk(value, path) {
     if (k === "hi") {
       for (const hk of Object.keys(v || {})) {
         const en = value[hk];
+        // A LIST field (facilities, stops, documents) keeps its Hindi as a
+        // list in the same order (biList in bilingual.ts): fine when the
+        // English list has text; a Hindi list with fewer lines than the
+        // English would print the missing lines in English on a Hindi page.
+        if (Array.isArray(en) && en.some((x) => typeof x === "string" && x.trim())) {
+          const hiList = v[hk];
+          if (!Array.isArray(hiList)) failures.push(`${path}.hi.${hk}: English is a list but the Hindi is not`);
+          else if (en.some((x, i) => typeof x === "string" && x.trim() && !(typeof hiList[i] === "string" && hiList[i].trim())))
+            failures.push(`${path}.hi.${hk}: Hindi list is missing lines the English has (${hiList.length} of ${en.length})`);
+          continue;
+        }
         if (!(typeof en === "string" && en.trim())) failures.push(`${path}.hi.${hk}: Hindi with no English "${hk}", so the English page would show the Hindi`);
       }
       continue;

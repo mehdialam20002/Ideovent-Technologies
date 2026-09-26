@@ -53,8 +53,8 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
   const photos = (site.photos || []).filter((p) => (p.src || "").trim());
   const faculty = withText(site.faculty, "name");
   const fp = site.feesPolicy;
-  const year = (site.establishedYear || site.established || "").trim();
-  const countsYear = fp?.countsYear || "";
+  const year = bi(site, "establishedYear", lang) || bi(site, "established", lang);
+  const countsYear = bi(fp, "countsYear", lang);
   const feesHref = ctx.href("fees-and-refunds");
   let n = 0;
 
@@ -63,7 +63,7 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
       <Helmet><title>{`${trf(COPY.title, lang, { name: site.instituteName })}`}</title></Helmet>
       <PageHead
         title={trf(COPY.title, lang, { name: site.instituteName })}
-        lead={year && site.city ? trf(COPY.since, lang, { city: site.city, year }) : <Bi of={site} k="tagline" />}
+        lead={year && site.city ? trf(COPY.since, lang, { city: bi(site, "city", lang), year }) : <Bi of={site} k="tagline" />}
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(ctx.page.label, lang) }]}
       />
 

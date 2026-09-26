@@ -94,6 +94,18 @@ export default defineTemplateContent("school", {
     admissionsHeadline: "अगस्त 2027 के लिए आवेदन शुरू हैं। प्राथमिकता की आख़िरी तारीख़: शुक्रवार 15 जनवरी 2027",
     vision: "ऐसे युवा जो एक से ज़्यादा भाषा और एक से ज़्यादा विषय में सोच सकें, और अपना अगला क़दम, भारत में या विदेश में, पूरी समझ के साथ चुनें।",
     mission: "एक क्लास में बीस बच्चे और हर आठ स्टूडेंट्स पर एक टीचर। शुरुआती सालों में सवाल पूछकर सीखना, परीक्षा के सालों में पूरी मेहनत, और काउंसलिंग जो ग्रेड 12 में नहीं, ग्रेड 9 में शुरू होती है।",
+    established: "2009 में शुरू",
+    city: "बेंगलुरु",
+    state: "कर्नाटक",
+    boardOrAffiliation: "IB World School और Cambridge सेंटर, उदाहरण ऑथराइज़ेशन नं. 00000000",
+    facilities: [
+      "साइंस लैब: फिज़िक्स, केमिस्ट्री और बायोलॉजी",
+      "लाइब्रेरी: छोटे बच्चों के लिए रीडिंग रूम और बड़ों के लिए रिसर्च की जगह",
+      "स्टूडियो: आर्ट, डिज़ाइन, संगीत और ड्रामा",
+      "खेल: खेल के मैदान और एक ढका हुआ कोर्ट",
+      "डाइनिंग हॉल: हर स्कूल दिन दोपहर का खाना और नाश्ता",
+      "हेल्थ सेंटर: स्कूल के पूरे समय ड्यूटी पर एक नर्स",
+    ],
   },
   admissionsOpenUntil: "2027-01-15",
   vision: "Young people who can think in more than one language and more than one discipline, and who choose their next step, in India or abroad, with their eyes open.",
@@ -109,9 +121,9 @@ export default defineTemplateContent("school", {
 
   /* ── CLEARED: parents' words. Fiction on its face. ───────────────────── */
   reviews: [
-    { quote: "We came back from Singapore in Grade 7 and were told to expect a hard year. It was a hard term, and then it was fine. The Checkpoint report in Grade 8 told us more than any report card had.", relation: "Parents of a Grade 9 student", source: "Example review written by Ideovent", consent: true, hi: { quote: "हम ग्रेड 7 में सिंगापुर से लौटे, और कहा गया कि साल मुश्किल रहेगा। एक टर्म मुश्किल रहा, फिर सब ठीक हो गया। ग्रेड 8 की Checkpoint रिपोर्ट ने हमें किसी भी रिपोर्ट कार्ड से ज़्यादा बताया।", relation: "ग्रेड 9 के स्टूडेंट के पैरेंट्स" } },
-    { quote: "Our daughter wanted engineering in India. The counsellor sat with us in Grade 9 and mapped the IGCSE options to the Diploma subjects JEE needs. Nobody had done that for us before.", relation: "Father of a Grade 11 student", source: "Example review written by Ideovent", consent: true, hi: { quote: "हमारी बेटी भारत में इंजीनियरिंग करना चाहती थी। काउंसलर ने ग्रेड 9 में हमारे साथ बैठकर IGCSE के विकल्पों को उन Diploma विषयों से मिलाया जो JEE के लिए चाहिए। पहले किसी ने हमारे लिए ऐसा नहीं किया था।", relation: "ग्रेड 11 की स्टूडेंट के पिता" } },
-    { quote: "The fee letter lists everything, including the exam fees two years out. We budgeted once.", relation: "Mother of two, Kindergarten and Grade 5", source: "Example review written by Ideovent", consent: true, hi: { quote: "फीस की चिट्ठी में सब कुछ लिखा है, दो साल बाद की परीक्षा फीस तक। हमने बजट एक ही बार बनाया।", relation: "दो बच्चों की माँ, किंडरगार्टन और ग्रेड 5" } },
+    { quote: "We came back from Singapore in Grade 7 and were told to expect a hard year. It was a hard term, and then it was fine. The Checkpoint report in Grade 8 told us more than any report card had.", relation: "Parents of a Grade 9 student", source: "Example review written by Ideovent", consent: true, hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "हम ग्रेड 7 में सिंगापुर से लौटे, और कहा गया कि साल मुश्किल रहेगा। एक टर्म मुश्किल रहा, फिर सब ठीक हो गया। ग्रेड 8 की Checkpoint रिपोर्ट ने हमें किसी भी रिपोर्ट कार्ड से ज़्यादा बताया।", relation: "ग्रेड 9 के स्टूडेंट के पैरेंट्स" } },
+    { quote: "Our daughter wanted engineering in India. The counsellor sat with us in Grade 9 and mapped the IGCSE options to the Diploma subjects JEE needs. Nobody had done that for us before.", relation: "Father of a Grade 11 student", source: "Example review written by Ideovent", consent: true, hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "हमारी बेटी भारत में इंजीनियरिंग करना चाहती थी। काउंसलर ने ग्रेड 9 में हमारे साथ बैठकर IGCSE के विकल्पों को उन Diploma विषयों से मिलाया जो JEE के लिए चाहिए। पहले किसी ने हमारे लिए ऐसा नहीं किया था।", relation: "ग्रेड 11 की स्टूडेंट के पिता" } },
+    { quote: "The fee letter lists everything, including the exam fees two years out. We budgeted once.", relation: "Mother of two, Kindergarten and Grade 5", source: "Example review written by Ideovent", consent: true, hi: { source: "Ideovent का लिखा उदाहरण रिव्यू", quote: "फीस की चिट्ठी में सब कुछ लिखा है, दो साल बाद की परीक्षा फीस तक। हमने बजट एक ही बार बनाया।", relation: "दो बच्चों की माँ, किंडरगार्टन और ग्रेड 5" } },
   ],
 
   /* ── CLEARED: the Learning page: the programme continuum ─────────────── */
@@ -182,6 +194,7 @@ export default defineTemplateContent("school", {
       name: "Early Years",
       hi: {
         name: "अर्ली ईयर्स",
+        seats: "16 बच्चे, एक टीचर और एक असिस्टेंट",
         level: "प्री-के और किंडरगार्टन, उम्र 3 से 5 साल",
         subjects: "भाषा, शुरुआती गिनती, खेल-खेल में सीखना, संगीत, हलचल और बाहर समय",
         timings: "सुबह 8:30 से दोपहर 1 बजे",
@@ -200,6 +213,7 @@ export default defineTemplateContent("school", {
       name: "Primary Years",
       hi: {
         name: "प्राइमरी ईयर्स",
+        seats: "एक क्लास में 20",
         level: "ग्रेड 1 से 5, उम्र 6 से 10 साल",
         subjects: "इंग्लिश, गणित, साइंस और सामाजिक अध्ययन में यूनिट ऑफ़ इन्क्वायरी, हिंदी या कन्नड़, आर्ट, संगीत और फ़िज़िकल एजुकेशन",
         timings: "सुबह 8:15 से दोपहर 3:15 बजे",
@@ -218,6 +232,7 @@ export default defineTemplateContent("school", {
       name: "Lower Secondary",
       hi: {
         name: "लोअर सेकेंडरी",
+        seats: "एक क्लास में 20",
         level: "ग्रेड 6 से 8, उम्र 11 से 13 साल",
         subjects: "इंग्लिश, गणित, साइंस, ग्लोबल पर्सपेक्टिव्स, इतिहास और भूगोल, एक दूसरी भाषा, फ़्रेंच या स्पैनिश, कंप्यूटिंग और कला",
         timings: "सुबह 8:15 से दोपहर 3:30 बजे",
@@ -236,6 +251,7 @@ export default defineTemplateContent("school", {
       name: "IGCSE",
       hi: {
         level: "ग्रेड 9 से 10, उम्र 14 से 15 साल",
+        seats: "एक क्लास में 20",
         subjects: "इंग्लिश, गणित और एक दूसरी भाषा, साथ में इनमें से चार विकल्प: साइंस, इकोनॉमिक्स, बिज़नेस, कंप्यूटर साइंस, इतिहास, भूगोल, और आर्ट एंड डिज़ाइन",
         timings: "सुबह 8:15 से दोपहर 3:30 बजे",
         feeNote: "सालाना, Cambridge परीक्षा फीस असल लागत पर अलग",
@@ -253,6 +269,7 @@ export default defineTemplateContent("school", {
       name: "IB Diploma",
       hi: {
         level: "ग्रेड 11 से 12, उम्र 16 से 18 साल",
+        seats: "एक क्लास में ज़्यादा से ज़्यादा 16",
         subjects: "छह विषय, तीन Higher Level पर, साथ में Theory of Knowledge, Extended Essay, और Creativity, Activity, Service",
         timings: "सुबह 8:15 से शाम 4 बजे",
         feeNote: "सालाना, IB परीक्षा फीस असल लागत पर अलग",
@@ -279,20 +296,20 @@ export default defineTemplateContent("school", {
     { achievement: "97% awarded the Diploma", exam: "IB Diploma", year: "2026", note: "37 of 38 candidates", category: "IB Diploma", hi: { achievement: "97% को Diploma मिला", note: "38 में से 37 स्टूडेंट्स" } },
     { achievement: "63% of grades at A* or A", exam: "Cambridge IGCSE", year: "2026", note: "44 candidates", category: "IGCSE", hi: { achievement: "63% ग्रेड A* या A", note: "44 स्टूडेंट्स" } },
     { achievement: "91% of grades at A* to C", exam: "Cambridge IGCSE", year: "2026", note: "44 candidates, 308 entries", category: "IGCSE", hi: { achievement: "91% ग्रेड A* से C", note: "44 स्टूडेंट्स, 308 विषय-परीक्षाएँ" } },
-    { achievement: "34 of 38 at their first-choice university", exam: "University places", year: "2026", note: "19 in India, 8 in the UK, 4 in Canada, 3 in the Netherlands", category: "Destinations", hi: { achievement: "38 में से 34 अपनी पहली पसंद की यूनिवर्सिटी में", note: "19 भारत में, 8 UK में, 4 कनाडा में, 3 नीदरलैंड्स में" } },
+    { achievement: "34 of 38 at their first-choice university", exam: "University places", year: "2026", note: "19 in India, 8 in the UK, 4 in Canada, 3 in the Netherlands", category: "Destinations", hi: { category: "आगे की पढ़ाई", exam: "यूनिवर्सिटी में एडमिशन", achievement: "38 में से 34 अपनी पहली पसंद की यूनिवर्सिटी में", note: "19 भारत में, 8 UK में, 4 कनाडा में, 3 नीदरलैंड्स में" } },
     { achievement: "34.9 average points", exam: "IB Diploma", year: "2025", note: "35 candidates", category: "IB Diploma", hi: { achievement: "34.9 औसत पॉइंट", note: "35 स्टूडेंट्स" } },
     /* Acceptances by country: counts, never a named student. */
-    { achievement: "19 students", destination: "Universities in India, including 3 through JEE and 2 through NEET", country: "India", exam: "University places", year: "2026", category: "Destinations", hi: { achievement: "19 स्टूडेंट्स" } },
-    { achievement: "8 students", destination: "Universities in the United Kingdom", country: "United Kingdom", exam: "University places", year: "2026", category: "Destinations", hi: { achievement: "8 स्टूडेंट्स" } },
-    { achievement: "4 students", destination: "Universities in Canada", country: "Canada", exam: "University places", year: "2026", category: "Destinations", hi: { achievement: "4 स्टूडेंट्स" } },
-    { achievement: "3 students", destination: "Universities in the Netherlands", country: "Netherlands", exam: "University places", year: "2026", category: "Destinations", hi: { achievement: "3 स्टूडेंट्स" } },
-    { achievement: "2 students", destination: "Universities in the United States", country: "United States", exam: "University places", year: "2026", category: "Destinations", hi: { achievement: "2 स्टूडेंट्स" } },
+    { achievement: "19 students", destination: "Universities in India, including 3 through JEE and 2 through NEET", country: "India", exam: "University places", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "19 स्टूडेंट्स", exam: "यूनिवर्सिटी में एडमिशन", destination: "भारत की यूनिवर्सिटी, इनमें 3 JEE से और 2 NEET से", country: "भारत" } },
+    { achievement: "8 students", destination: "Universities in the United Kingdom", country: "United Kingdom", exam: "University places", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "8 स्टूडेंट्स", exam: "यूनिवर्सिटी में एडमिशन", destination: "यूनाइटेड किंगडम की यूनिवर्सिटी", country: "यूनाइटेड किंगडम" } },
+    { achievement: "4 students", destination: "Universities in Canada", country: "Canada", exam: "University places", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "4 स्टूडेंट्स", exam: "यूनिवर्सिटी में एडमिशन", destination: "कनाडा की यूनिवर्सिटी", country: "कनाडा" } },
+    { achievement: "3 students", destination: "Universities in the Netherlands", country: "Netherlands", exam: "University places", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "3 स्टूडेंट्स", exam: "यूनिवर्सिटी में एडमिशन", destination: "नीदरलैंड्स की यूनिवर्सिटी", country: "नीदरलैंड्स" } },
+    { achievement: "2 students", destination: "Universities in the United States", country: "United States", exam: "University places", year: "2026", category: "Destinations", hi: { category: "आगे की पढ़ाई", achievement: "2 स्टूडेंट्स", exam: "यूनिवर्सिटी में एडमिशन", destination: "अमेरिका की यूनिवर्सिटी", country: "अमेरिका" } },
   ],
 
   /* ── CLEARED: the results table in registered, passed, pass % columns ─── */
   boardResults: [
     { year: "2026", className: "IB Diploma", registered: "38", passed: "37", passPercent: "97.4%" },
-    { year: "2026", className: "IGCSE", registered: "44", passed: "44", passPercent: "100%", note: "Five or more passes at A* to C" },
+    { year: "2026", className: "IGCSE", registered: "44", passed: "44", passPercent: "100%", note: "Five or more passes at A* to C", hi: { note: "A* से C तक पाँच या ज़्यादा विषयों में पास" } },
     { year: "2025", className: "IB Diploma", registered: "35", passed: "34", passPercent: "97.1%" },
     { year: "2025", className: "IGCSE", registered: "41", passed: "40", passPercent: "97.6%" },
     { year: "2024", className: "IB Diploma", registered: "31", passed: "31", passPercent: "100%" },
@@ -351,12 +368,12 @@ export default defineTemplateContent("school", {
 
   /* ── CLEARED: gallery. Captions only; they are also the shot list. ───── */
   gallery: [
-    { src: "", alt: "The courtyard and the semal tree, in flower in February." },
-    { src: "", alt: "A Grade 4 unit of inquiry: mapping where the school's water comes from." },
-    { src: "", alt: "Diploma chemistry, an internal assessment in its third week." },
-    { src: "", alt: "Kindergarten in the garden, before the afternoon rain." },
-    { src: "", alt: "The library at 3:45 pm, the week Extended Essay drafts are due." },
-    { src: "", alt: "Student-led conferences: a Grade 2 child walks her parents through her work." },
+    { src: "", alt: "The courtyard and the semal tree, in flower in February.", hi: { alt: "आँगन और सेमल का पेड़, फ़रवरी में फूलों से भरा।" } },
+    { src: "", alt: "A Grade 4 unit of inquiry: mapping where the school's water comes from.", hi: { alt: "ग्रेड 4 की यूनिट ऑफ़ इन्क्वायरी: स्कूल का पानी कहाँ से आता है, इसका नक्शा।" } },
+    { src: "", alt: "Diploma chemistry, an internal assessment in its third week.", hi: { alt: "Diploma केमिस्ट्री, इंटरनल असेसमेंट का तीसरा हफ़्ता।" } },
+    { src: "", alt: "Kindergarten in the garden, before the afternoon rain.", hi: { alt: "दोपहर की बारिश से पहले बगीचे में किंडरगार्टन।" } },
+    { src: "", alt: "The library at 3:45 pm, the week Extended Essay drafts are due.", hi: { alt: "दोपहर 3:45 बजे लाइब्रेरी, जिस हफ़्ते Extended Essay के ड्राफ़्ट जमा होते हैं।" } },
+    { src: "", alt: "Student-led conferences: a Grade 2 child walks her parents through her work.", hi: { alt: "स्टूडेंट-लेड कॉन्फ़्रेंस: ग्रेड 2 की एक बच्ची अपने माता-पिता को अपना काम दिखाती है।" } },
   ],
 
   /* ── STOCK photos for the Gallery chips: src and category kept on
@@ -382,6 +399,21 @@ export default defineTemplateContent("school", {
       assessment: "प्री-के से ग्रेड 2 तक के बच्चे एक सुबह क्लास में बिताते हैं, कोई टेस्ट नहीं। ग्रेड 3 से 9 इंग्लिश और गणित के छोटे ऑनलाइन टेस्ट भी देते हैं। Diploma के आवेदक कोऑर्डिनेटर से मिलते हैं और अपने अनुमानित ग्रेड साथ लाते हैं।",
       feeNote: "फीस तीन टर्म में ली जाती है, अगस्त, जनवरी और अप्रैल में। यह साल में एक बार, नए स्कूल साल के लिए बदलती है, साल के बीच में कभी नहीं। दूसरे बच्चे की ट्यूशन फीस पाँच प्रतिशत कम।",
       rteNote: "जहाँ कर्नाटक की RTE प्रक्रिया से बच्चों को स्कूल में सीट मिलती है, वहाँ एंट्री क्लास की वे सीटें सरकार की ऑनलाइन प्रक्रिया से भरी जाती हैं, स्कूल से नहीं, और उन पर कोई ट्यूशन फीस नहीं लगती।",
+      ageAsOn: "1 जून 2027",
+      steps: [
+        "पूछताछ भेजिए, और प्रॉस्पेक्टस और फीस की पूरी सूची माँगिए।",
+        "बच्चे के साथ आइए, किसी ओपन मॉर्निंग पर या हफ़्ते के किसी दिन के टूर पर।",
+        "यहाँ लिखे डॉक्यूमेंट और मौजूदा स्कूल की रिपोर्ट के साथ ऑनलाइन आवेदन भेजिए।",
+        "आपका बच्चा उस क्लास के साथ एक सुबह बिताता है जिसमें वह आएगा। बड़े बच्चे इंग्लिश और गणित का एक छोटा असेसमेंट भी देते हैं।",
+      ],
+      documents: [
+        "जन्म प्रमाण पत्र",
+        "बच्चे और माता-पिता दोनों के पासपोर्ट, विदेश से आए परिवारों के लिए वीज़ा या OCI कार्ड के साथ",
+        "इस साल और पिछले साल की स्कूल रिपोर्ट",
+        "पिछले स्कूल का ट्रांसफ़र सर्टिफ़िकेट या लीविंग लेटर",
+        "टीकाकरण का रिकॉर्ड",
+        "लर्निंग सपोर्ट या मेडिकल की कोई भी रिपोर्ट, ताकि क्लास टीचर आपके बच्चे के लिए तैयारी कर सकें",
+      ],
     },
     /* CLEARED. One row per line; the text before the first colon heads it.
        The school year runs August to June, as it does at most international
@@ -431,17 +463,17 @@ export default defineTemplateContent("school", {
       { label: "IGCSE, Grade 9 and 10", amount: "₹8,10,000", period: "annual", note: "In three terms", hi: { label: "IGCSE, ग्रेड 9 और 10", note: "तीन टर्म में" } },
       { label: "IB Diploma, Grade 11 and 12", amount: "₹9,40,000", period: "annual", note: "In three terms", hi: { label: "IB Diploma, ग्रेड 11 और 12", note: "तीन टर्म में" } },
       { label: "School bus", amount: "₹72,000", period: "also", note: "A year, any route, only if you use it", hi: { label: "स्कूल बस", note: "सालाना, कोई भी रूट, सिर्फ़ इस्तेमाल करने पर" } },
-      { label: "Cambridge and IB examination fees", amount: "At cost", period: "also", note: "In Grade 8, 10 and 12 only", hi: { label: "Cambridge और IB परीक्षा फीस", note: "सिर्फ़ ग्रेड 8, 10 और 12 में" } },
-      { label: "Week without walls", amount: "₹18,000 to ₹42,000", period: "also", note: "A year from Grade 6, by destination", hi: { label: "वीक विदाउट वॉल्स", note: "ग्रेड 6 से सालाना, जगह के हिसाब से" } },
-      { label: "Uniform and sports kit", amount: "About ₹14,000", period: "also", note: "First year", hi: { label: "यूनिफ़ॉर्म और स्पोर्ट्स किट", note: "पहला साल" } },
+      { label: "Cambridge and IB examination fees", amount: "At cost", period: "also", note: "In Grade 8, 10 and 12 only", hi: { label: "Cambridge और IB परीक्षा फीस", amount: "असल लागत पर", note: "सिर्फ़ ग्रेड 8, 10 और 12 में" } },
+      { label: "Week without walls", amount: "₹18,000 to ₹42,000", period: "also", note: "A year from Grade 6, by destination", hi: { label: "वीक विदाउट वॉल्स", amount: "₹18,000 से ₹42,000", note: "ग्रेड 6 से सालाना, जगह के हिसाब से" } },
+      { label: "Uniform and sports kit", amount: "About ₹14,000", period: "also", note: "First year", hi: { label: "यूनिफ़ॉर्म और स्पोर्ट्स किट", amount: "लगभग ₹14,000", note: "पहला साल" } },
     ],
     feeNote: "Fees are billed in three terms, in August, January and April. They are revised once a year, for the new school year, and never mid-year. A second child pays five percent less tuition.",
     ageAsOn: "1 June 2027",
     ageRules: [
-      { className: "Pre-K", minAge: "3", maxAge: "4" },
-      { className: "Kindergarten 1", minAge: "4", maxAge: "5" },
-      { className: "Kindergarten 2", minAge: "5", maxAge: "6" },
-      { className: "Grade 1", minAge: "6", maxAge: "7" },
+      { className: "Pre-K", minAge: "3", maxAge: "4", hi: { className: "प्री-के" } },
+      { className: "Kindergarten 1", minAge: "4", maxAge: "5", hi: { className: "किंडरगार्टन 1" } },
+      { className: "Kindergarten 2", minAge: "5", maxAge: "6", hi: { className: "किंडरगार्टन 2" } },
+      { className: "Grade 1", minAge: "6", maxAge: "7", hi: { className: "ग्रेड 1" } },
     ],
     rteNote: "Where the Karnataka RTE process places children at the school, those seats at the entry class are filled through the government's online process, not by the school, and carry no tuition fee.",
   },
@@ -529,7 +561,8 @@ export default defineTemplateContent("school", {
   contact: {
     hi: {
       hours: "एडमिशन ऑफ़िस सोमवार से शुक्रवार, सुबह 8:30 से शाम 4:30 बजे तक खुला, और अक्टूबर में शनिवार सुबह भी।",
-      landmark: "सरजापुर रोड के पास, दोम्मसंद्रा सर्कल से 2 km आगे, झील के सामने",
+      landmark: "सरजापुर रोड के पास, दोम्मसंद्रा सर्कल से 2 किमी आगे, झील के सामने",
+      addressLines: ["Semal International School", "Example Road, सरजापुर रोड के पास", "बेंगलुरु, कर्नाटक 560000"],
     },
     phone: "+91 00000 00000",
     whatsapp: "910000000000",
@@ -559,15 +592,21 @@ export default defineTemplateContent("school", {
     hi: {
       intro: "छह रूट पर चौदह AC बसें, हर बस में एक ट्रेंड अटेंडेंट। हर रूट की एक ही फीस।",
       feeNote: "किसी भी रूट पर ₹72,000 सालाना, टर्म की फीस के साथ। रूट टर्म की शुरुआत में बदला जा सकता है।",
+      safety: [
+        "हर बस में, हर ट्रिप पर एक ट्रेंड अटेंडेंट",
+        "GPS से लाइव ट्रैकिंग, और फ़ैमिली पोर्टल पर बस पहुँचने की सूचना",
+        "हर बस के अंदर CCTV, और हर सीट पर सीट बेल्ट",
+        "ग्रेड 6 से छोटे बच्चे स्टॉप पर सिर्फ़ सूची वाले बड़े को सौंपे जाते हैं",
+      ],
     },
     intro: "Fourteen air-conditioned buses on six routes, each with a trained attendant. One fee for every route.",
     routes: [
-      { name: "Route 1, Koramangala", stops: ["Forum junction", "Koramangala 5th block", "St. John's signal"], pickup: "7:05 am", drop: "4:05 pm" },
-      { name: "Route 2, HSR Layout", stops: ["HSR sector 1", "HSR sector 6", "Agara lake"], pickup: "7:15 am", drop: "3:55 pm" },
-      { name: "Route 3, Bellandur and Kadubeesanahalli", stops: ["Bellandur gate", "Ecospace", "Kadubeesanahalli"], pickup: "7:20 am", drop: "3:50 pm" },
-      { name: "Route 4, Whitefield", stops: ["ITPL main road", "Brookefield", "Varthur Kodi"], pickup: "6:50 am", drop: "4:20 pm" },
-      { name: "Route 5, Electronic City", stops: ["Phase 1 toll", "Hosa Road", "Kudlu gate"], pickup: "6:55 am", drop: "4:15 pm" },
-      { name: "Route 6, Sarjapur town", stops: ["Sarjapur circle", "Chikka Kannalli", "Kodathi"], pickup: "7:25 am", drop: "3:45 pm" },
+      { name: "Route 1, Koramangala", stops: ["Forum junction", "Koramangala 5th block", "St. John's signal"], pickup: "7:05 am", drop: "4:05 pm", hi: { name: "रूट 1, कोरमंगला", stops: ["फ़ोरम जंक्शन", "कोरमंगला 5वाँ ब्लॉक", "सेंट जॉन्स सिग्नल"], pickup: "सुबह 7:05", drop: "शाम 4:05" } },
+      { name: "Route 2, HSR Layout", stops: ["HSR sector 1", "HSR sector 6", "Agara lake"], pickup: "7:15 am", drop: "3:55 pm", hi: { name: "रूट 2, HSR लेआउट", stops: ["HSR सेक्टर 1", "HSR सेक्टर 6", "अगरा झील"], pickup: "सुबह 7:15", drop: "दोपहर 3:55" } },
+      { name: "Route 3, Bellandur and Kadubeesanahalli", stops: ["Bellandur gate", "Ecospace", "Kadubeesanahalli"], pickup: "7:20 am", drop: "3:50 pm", hi: { name: "रूट 3, बेलंदूर और कडुबीसनहल्ली", stops: ["बेलंदूर गेट", "इकोस्पेस", "कडुबीसनहल्ली"], pickup: "सुबह 7:20", drop: "दोपहर 3:50" } },
+      { name: "Route 4, Whitefield", stops: ["ITPL main road", "Brookefield", "Varthur Kodi"], pickup: "6:50 am", drop: "4:20 pm", hi: { name: "रूट 4, व्हाइटफ़ील्ड", stops: ["ITPL मेन रोड", "ब्रुकफ़ील्ड", "वर्थुर कोडी"], pickup: "सुबह 6:50", drop: "शाम 4:20" } },
+      { name: "Route 5, Electronic City", stops: ["Phase 1 toll", "Hosa Road", "Kudlu gate"], pickup: "6:55 am", drop: "4:15 pm", hi: { name: "रूट 5, इलेक्ट्रॉनिक सिटी", stops: ["फ़ेज़ 1 टोल", "होसा रोड", "कुडलू गेट"], pickup: "सुबह 6:55", drop: "शाम 4:15" } },
+      { name: "Route 6, Sarjapur town", stops: ["Sarjapur circle", "Chikka Kannalli", "Kodathi"], pickup: "7:25 am", drop: "3:45 pm", hi: { name: "रूट 6, सरजापुर टाउन", stops: ["सरजापुर सर्कल", "चिक्का कन्नल्ली", "कोडती"], pickup: "सुबह 7:25", drop: "दोपहर 3:45" } },
     ],
     safety: [
       "A trained attendant on every bus, every trip",

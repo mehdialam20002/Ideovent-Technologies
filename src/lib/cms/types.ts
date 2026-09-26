@@ -1049,7 +1049,7 @@ export interface DemoCourse {
   /** Questions about this course only. */
   faq?: DemoPoint[];
   /** Hindi versions of the text fields above. See DemoHi. */
-  hi?: DemoHi<DemoCourse, "name" | "level" | "subjects" | "duration" | "timings" | "mode" | "detail" | "eligibility" | "testPlan" | "refundNote" | "feeNote" | "batchStarts" | "category">;
+  hi?: DemoHi<DemoCourse, "name" | "level" | "subjects" | "duration" | "timings" | "mode" | "detail" | "eligibility" | "testPlan" | "refundNote" | "feeNote" | "batchStarts" | "category" | "material" | "inclusions" | "seats" | "fee">;
 }
 
 /* ── BILINGUAL CONTENT (the Hindi-in-English-mode fix, 26 Sep 2026) ────────
@@ -1064,7 +1064,11 @@ export interface DemoCourse {
  * scripts/check-demo-lang.mjs fails when a template puts Devanagari in a
  * plain field, which is exactly how the leak happened.
  */
-export type DemoHi<T, K extends keyof T> = Partial<Record<K, string>>;
+export type DemoHi<T, K extends keyof T> = {
+  /* A list field (facilities, documents, stops) takes a list in the same
+     order as the English; every other field takes a string. */
+  [P in K]?: NonNullable<T[P]> extends readonly unknown[] ? string[] : string;
+};
 
 /** One row of a fee table. `amount` follows the DemoCourse.fee rule. */
 export interface DemoFeeRow {
@@ -1075,7 +1079,7 @@ export interface DemoFeeRow {
   period?: "one-time" | "annual" | "term" | "monthly" | "also";
   /** "Nursery to Class 2", or "Due at admission". */
   note?: string;
-  hi?: DemoHi<DemoFeeRow, "label" | "note">;
+  hi?: DemoHi<DemoFeeRow, "label" | "note" | "amount">;
 }
 
 /** A dated line: a timeline step, a holiday, a term date. Dates are free text. */
@@ -1144,7 +1148,7 @@ export interface DemoResult {
   /** University destination (s4, s5): "University of Toronto" and its country. */
   destination?: string;
   country?: string;
-  hi?: DemoHi<DemoResult, "achievement" | "note" | "quote" | "courseName">;
+  hi?: DemoHi<DemoResult, "achievement" | "note" | "quote" | "courseName" | "exam" | "courseDuration" | "category" | "status" | "count" | "year" | "destination" | "country">;
 }
 
 /** A teacher. In coaching the teacher IS the product, so this section is early. */
@@ -1168,7 +1172,7 @@ export interface DemoFaculty {
   batches?: string;
   /** One line on how they teach. */
   style?: string;
-  hi?: DemoHi<DemoFaculty, "subject" | "qualification" | "experience" | "note" | "role" | "style" | "group">;
+  hi?: DemoHi<DemoFaculty, "subject" | "qualification" | "experience" | "note" | "role" | "style" | "group" | "batches">;
 }
 
 /** A titled paragraph. Used by "why us" and by the method section. */
@@ -1191,7 +1195,7 @@ export interface DemoScheduleRow {
   subject?: string;
   faculty?: string;
   room?: string;
-  hi?: DemoHi<DemoScheduleRow, "label" | "days" | "time" | "subject">;
+  hi?: DemoHi<DemoScheduleRow, "label" | "days" | "time" | "subject" | "faculty" | "room">;
 }
 
 /** The free trial or demo class, which is how coaching actually converts. */
@@ -1237,7 +1241,7 @@ export interface DemoContactDetails {
   branches?: DemoBranch[];
   /** The transport desk number, never a driver. */
   transportDesk?: string;
-  hi?: DemoHi<DemoContactDetails, "hours" | "landmark">;
+  hi?: DemoHi<DemoContactDetails, "hours" | "landmark" | "addressLines">;
 }
 
 export interface DemoBranch {
@@ -1246,6 +1250,7 @@ export interface DemoBranch {
   phone?: string;
   mapQuery?: string;
   hours?: string;
+  hi?: DemoHi<DemoBranch, "name" | "addressLines" | "hours">;
 }
 
 /**
@@ -1319,7 +1324,7 @@ export interface DemoAdmissions {
   whoCanApply?: string;
   /** Entry tests (s4, s5): "Entrance test in January at Dehradun and Delhi". */
   assessment?: string;
-  hi?: DemoHi<DemoAdmissions, "dates" | "note" | "feeNote" | "rteNote" | "whoCanApply" | "assessment">;
+  hi?: DemoHi<DemoAdmissions, "dates" | "note" | "feeNote" | "rteNote" | "whoCanApply" | "assessment" | "steps" | "documents" | "ageAsOn">;
 }
 
 /** One class and its minimum age on the as-on date. */
@@ -1329,6 +1334,7 @@ export interface DemoAgeRule {
   /** Whole years, as a string: "3". */
   minAge: string;
   maxAge?: string;
+  hi?: DemoHi<DemoAgeRule, "className">;
 }
 
 /* ── MULTI-PAGE SITE DATA (26 September 2026) ─────────────────────────────
@@ -1364,7 +1370,7 @@ export interface DemoReview {
   /** A video on their own channel: rendered as a poster that loads on tap. */
   videoUrl?: string;
   category?: string;
-  hi?: DemoHi<DemoReview, "quote" | "relation">;
+  hi?: DemoHi<DemoReview, "quote" | "relation" | "source" | "category">;
 }
 
 /** A public rating, printed only with its count and a link to the profile. */
@@ -1373,6 +1379,7 @@ export interface DemoRatingSummary {
   count?: string;
   url?: string;
   source?: string;
+  hi?: DemoHi<DemoRatingSummary, "source">;
 }
 
 /** A download: a model paper, the syllabus, a TC form, the book list. */
@@ -1393,6 +1400,7 @@ export interface DemoBoardResult {
   passed?: string;
   passPercent?: string;
   note?: string;
+  hi?: DemoHi<DemoBoardResult, "className" | "note">;
 }
 
 /** The school's academic programme. */
@@ -1413,6 +1421,7 @@ export interface DemoRoute {
   stops?: string[];
   pickup?: string;
   drop?: string;
+  hi?: DemoHi<DemoRoute, "name" | "stops" | "pickup" | "drop">;
 }
 
 export interface DemoTransport {
@@ -1421,7 +1430,7 @@ export interface DemoTransport {
   /** "GPS on every bus", "A woman attendant on board". Only what is true. */
   safety?: string[];
   feeNote?: string;
-  hi?: DemoHi<DemoTransport, "intro" | "feeNote">;
+  hi?: DemoHi<DemoTransport, "intro" | "feeNote" | "safety">;
 }
 
 /** The boarding page (s4). */
@@ -1443,10 +1452,22 @@ export interface DemoBoarding {
  * keyed by row id. A missing row prints "To be uploaded".
  */
 export interface DemoDisclosure {
-  rows?: Record<string, { value?: string; url?: string }>;
+  rows?: Record<string, DemoDisclosureRow>;
   annualReportUrl?: string;
   /** ISO date. */
   lastUpdated?: string;
+}
+
+/** One disclosure row's value; `hi.value` is its Hindi ("00000000 (उदाहरण)"). */
+export interface DemoDisclosureRow {
+  value?: string;
+  url?: string;
+  hi?: DemoHi<DemoDisclosureRow, "value">;
+}
+
+/** A gallery entry: a file and its alt, with the alt's Hindi. */
+export interface DemoMedia extends Media {
+  hi?: DemoHi<Media, "alt">;
 }
 
 /** A policy: safeguarding, anti-bullying, fee refund, privacy. */
@@ -1481,7 +1502,7 @@ export interface DemoScholarship {
   registerUrl?: string;
   resultDate?: string;
   faq?: DemoPoint[];
-  hi?: DemoHi<DemoScholarship, "name" | "date" | "mode" | "eligibility" | "syllabus" | "resultDate">;
+  hi?: DemoHi<DemoScholarship, "name" | "date" | "mode" | "eligibility" | "syllabus" | "resultDate" | "centres">;
 }
 
 /** A blog post. `body` is paragraphs separated by a blank line. */
@@ -1492,7 +1513,7 @@ export interface DemoPost {
   excerpt?: string;
   body?: string;
   author?: string;
-  hi?: DemoHi<DemoPost, "title" | "excerpt" | "body">;
+  hi?: DemoHi<DemoPost, "title" | "excerpt" | "body" | "date" | "author">;
 }
 
 /** Coaching: the founder's story on About. */
@@ -1507,12 +1528,35 @@ export interface DemoFounder {
 
 /** Coaching (c5): exam calendar, previous cut-offs and eligibility, each with a source. */
 export interface DemoGovExams {
-  calendar?: { exam: string; notification?: string; examDate?: string }[];
+  calendar?: DemoExamDate[];
   calendarSource?: string;
   calendarUpdated?: string;
-  cutoffs?: { exam: string; year?: string; category: string; cutoff: string }[];
+  cutoffs?: DemoCutoff[];
   cutoffSource?: string;
-  eligibility?: { exam: string; age?: string; qualification?: string }[];
+  eligibility?: DemoExamEligibility[];
+  hi?: DemoHi<DemoGovExams, "calendarSource" | "calendarUpdated" | "cutoffSource">;
+}
+
+export interface DemoExamDate {
+  exam: string;
+  notification?: string;
+  examDate?: string;
+  hi?: DemoHi<DemoExamDate, "exam" | "notification" | "examDate">;
+}
+
+export interface DemoCutoff {
+  exam: string;
+  year?: string;
+  category: string;
+  cutoff: string;
+  hi?: DemoHi<DemoCutoff, "exam" | "category" | "cutoff">;
+}
+
+export interface DemoExamEligibility {
+  exam: string;
+  age?: string;
+  qualification?: string;
+  hi?: DemoHi<DemoExamEligibility, "exam" | "age" | "qualification">;
 }
 
 /** Coaching (c4): the Olympiad page. */
@@ -1521,7 +1565,7 @@ export interface DemoOlympiad {
   exams?: DemoPoint[];
   schedule?: DemoScheduleRow[];
   medals?: string[];
-  hi?: DemoHi<DemoOlympiad, "intro">;
+  hi?: DemoHi<DemoOlympiad, "intro" | "medals">;
 }
 
 /** Coaching: fees, refunds and the MoE 2024 disclosure. */
@@ -1538,7 +1582,7 @@ export interface DemoFeesPolicy {
   studentsCoached?: string;
   studentsSucceeded?: string;
   countsYear?: string;
-  hi?: DemoHi<DemoFeesPolicy, "intro" | "instalmentNote" | "refund" | "receipts" | "noIncrease" | "hostel">;
+  hi?: DemoHi<DemoFeesPolicy, "intro" | "instalmentNote" | "refund" | "receipts" | "noIncrease" | "hostel" | "paymentModes" | "countsYear">;
 }
 
 /** Hindi versions of DemoSite's own top-level text fields. */
@@ -1556,7 +1600,11 @@ export type DemoSiteHi = DemoHi<
   DemoSite,
   | "tagline" | "about" | "admissionsHeadline" | "principalMessage" | "principalTitle"
   | "resultsHeading" | "resultsNote" | "scheduleNote" | "vision" | "mission"
-  | "classSizePromise" | "hostel" | "sessionLabel"
+  | "classSizePromise" | "hostel" | "sessionLabel" | "instituteName"
+  /* The Hindi slots of 26 Sep 2026: lines that printed English on the Hindi
+     page. A list takes a list in the English order. */
+  | "facilities" | "focusAreas" | "established" | "establishedYear"
+  | "boardOrAffiliation" | "udiseCode" | "shortName" | "city" | "state"
 >;
 
 export interface DemoSite extends BaseDoc {
@@ -1690,7 +1738,7 @@ export interface DemoSite extends BaseDoc {
    * build on that) and never a stock photograph of somebody else's campus
    * standing in for theirs.
    */
-  gallery?: Media[];
+  gallery?: DemoMedia[];
 
   courses?: DemoCourse[];
 

@@ -9,7 +9,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { bi, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { DataTable } from "@/lib/demo/ui/coaching/Table";
@@ -36,7 +36,7 @@ export default function OlympiadPage({ site, ctx }: SitePageProps) {
   const o = site.olympiad;
   const exams = withText(o?.exams, "title");
   const schedule = withText(o?.schedule, "label");
-  const medals = (o?.medals || []).filter((m) => m.trim());
+  const medals = biList(o, "medals", lang);
   const demo = ctx.href("demo-class") || ctx.href("contact");
   let n = 0;
 

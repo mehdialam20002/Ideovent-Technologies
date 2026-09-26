@@ -121,9 +121,9 @@ export function NextUp({ courses }: { courses: DemoCourse[] }) {
         <ul className="mt-2 grid gap-3 sm:grid-cols-3">
           {exams.map((e) => (
             <li key={e.exam} className="border-l-2 border-[hsl(var(--ds-cta))] pl-3">
-              <p className="font-semibold">{e.exam}</p>
-              {e.examDate && <p className="ds-num text-sm opacity-80">{tr(COPY.examDate, lang)}: {e.examDate}</p>}
-              {e.notification && <p className="ds-num text-sm opacity-80">{tr(COPY.notification, lang)}: {e.notification}</p>}
+              <p className="font-semibold">{bi(e, "exam", lang)}</p>
+              {e.examDate && <p className="ds-num text-sm opacity-80">{tr(COPY.examDate, lang)}: {bi(e, "examDate", lang)}</p>}
+              {e.notification && <p className="ds-num text-sm opacity-80">{tr(COPY.notification, lang)}: {bi(e, "notification", lang)}</p>}
             </li>
           ))}
         </ul>

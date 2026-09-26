@@ -14,7 +14,7 @@
  */
 
 import { ArrowRight } from "lucide-react";
-import { bi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import { courseSlug, type SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { demoFee } from "@/lib/demo/record";
@@ -64,9 +64,10 @@ function More({ to, label }: { to: string | null; label: string }) {
 
 export default function HomePage({ site, ctx }: SitePageProps) {
   const { lang } = ctx;
-  const areas = (site.focusAreas || []).filter(Boolean).slice(0, 3).join(", ");
+  const areas = biList(site, "focusAreas", lang).slice(0, 3).join(", ");
+  const city = bi(site, "city", lang);
   /* An institute that is not "coaching" in its own words (c4: an after-school class, per the MoE 2024 point) sets its own headline. */
-  const title = bi(site, "admissionsHeadline", lang) || (areas && site.city ? trf(COPY.headline, lang, { areas, city: site.city }) : site.instituteName);
+  const title = bi(site, "admissionsHeadline", lang) || (areas && city ? trf(COPY.headline, lang, { areas, city }) : site.instituteName);
   const demo = ctx.href("demo-class") || ctx.href("contact") || ctx.actions.whatsapp || "";
   const coursesHref = ctx.href("courses");
   const courses = withText(site.courses, "name");
@@ -81,9 +82,9 @@ export default function HomePage({ site, ctx }: SitePageProps) {
   const steps = joining.length
     ? joining.map((j) => ({ t: bi(j, "title", lang), b: bi(j, "body", lang) }))
     : [COPY.step1, COPY.step2, COPY.step3].map((c) => ({ t: tr(c, lang), b: "" }));
-  const year = (site.establishedYear || site.established || "").trim();
+  const year = bi(site, "establishedYear", lang) || bi(site, "established", lang);
   const eyebrowIsCity = site.instituteName === title;
-  const facts = [year && trf(COPY.since, lang, { year }), !eyebrowIsCity && site.city, bi(site, "classSizePromise", lang)].filter(Boolean) as string[];
+  const facts = [year && trf(COPY.since, lang, { year }), !eyebrowIsCity && city, bi(site, "classSizePromise", lang)].filter(Boolean) as string[];
   /* The one section photo on the home page: "sit in a real class", beside the steps. */
   const joinPhoto = !!sectionPhoto(site, "admissions");
   let n = 0;
@@ -91,7 +92,7 @@ export default function HomePage({ site, ctx }: SitePageProps) {
   return (
     <>
       <CoachingHero
-        eyebrow={site.instituteName !== title ? site.instituteName : site.city}
+        eyebrow={site.instituteName !== title ? site.instituteName : city}
         title={title}
         lead={<Bi of={site} k="tagline" />}
         primary={demo ? <Action href={demo}>{tr(SHELL_COPY.bookDemo, lang)}</Action> : undefined}

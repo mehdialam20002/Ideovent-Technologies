@@ -346,7 +346,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
     }),
     /* The multi-page fields are added by withDemoPageFields, grouped by page:
        see ./DemoSitesPagesSchema.ts. */
-    fields: withDemoPageFields([
+    fields: withHindiName(withDemoPageFields([
       { name: "instituteName", label: "Institute name", type: "text", full: true, help: "Spell it exactly as they spell it. This is the masthead of what they will believe is their own website, so a wrong spelling is the first and last thing they notice." },
       { name: "shortName", label: "Short name", type: "text", help: "For the navigation bar when the full name will not fit: “HighQ” for “HighQ Classes”. Leave empty to use the full name." },
       { name: "tagline", label: "Tagline", type: "text", help: "Their own line if they have one. Left empty the template prints an obvious placeholder, which is correct: an invented motto put under a real school’s name is words in their mouth." },
@@ -510,7 +510,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
 
       { name: "preparedOn", label: "Built on", type: "text", placeholder: "YYYY-MM-DD" },
       { name: "expiresAt", label: "Expires on", type: "text", placeholder: "YYYY-MM-DD", help: "OPTIONAL, and most demos have none. After this date the link stops showing the site and shows a short, polite card with your number on it instead. Use it when you want a demo to stop being live without having to remember to close it." },
-    ]),
+    ])),
   },
 };
 
@@ -766,3 +766,22 @@ export const singletonSchemas: Record<SingletonKey, SingletonSchema> = {
     ],
   },
 };
+
+/**
+ * The institute's name in Devanagari, first in the site's "Hindi (optional)"
+ * group. The Hindi page puts it in the header, masthead, footer and page
+ * titles; empty keeps the English name there. A duplicate fills it from the
+ * Hindi name typed in the Duplicate dialog.
+ */
+function withHindiName(fields: FieldConfig[]): FieldConfig[] {
+  let done = false;
+  return fields.map((f) => {
+    if (done || f.name !== "hi" || f.type !== "group") return f;
+    done = true;
+    const name: FieldConfig = {
+      name: "instituteName", label: "Institute name in Hindi", type: "text", full: true,
+      help: "Exactly as they write it in Hindi, e.g. ज्ञान ज्योति विद्यालय. Empty shows the English name on the Hindi page too.",
+    };
+    return { ...f, fields: [name, ...(f.fields || [])] };
+  });
+}

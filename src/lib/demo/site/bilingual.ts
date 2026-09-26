@@ -154,3 +154,53 @@ export function biLabel<T extends object>(list: T[] | undefined, key: keyof T & 
   return item ? bi(item, key, lang) || value : value;
 }
 
+
+/**
+ * A LIST field in the reader's language: facilities, admission documents,
+ * payment modes, a route's stops. The Hindi lives at `obj.hi[key]` as a list
+ * in the same order as the English, so each line falls back on its own: a
+ * Hindi list one line short still prints the last line in English rather
+ * than dropping it. English mode reads the English, and the Hindi only when
+ * there is no English list at all. Empty lines are dropped after pairing.
+ *
+ *   biList(site, "facilities", lang)          reads site.hi.facilities
+ *   biList(site.admissions, "documents", lang)
+ */
+export function biList<T extends object>(obj: T | null | undefined, key: keyof T & string, lang: DemoLang): string[] {
+  if (!obj) return [];
+  const raw = (obj as Record<string, unknown>)[key];
+  const en = Array.isArray(raw) ? raw.map(clean) : [];
+  const hiRaw = (obj as { hi?: Record<string, unknown> }).hi?.[key];
+  const hi = Array.isArray(hiRaw) ? hiRaw.map(clean) : [];
+  if (!en.some(Boolean)) return hi.filter(Boolean);
+  if (lang !== "hi") return en.filter(Boolean);
+  return en.map((e, i) => (e ? hi[i] || e : "")).filter(Boolean);
+}
+
+/**
+ * Pairs of English and reader's-language lines of a list, for a filter that
+ * compares the English value but shows the translated label, or a search
+ * that should match either language.
+ */
+export function biPairs<T extends object>(obj: T | null | undefined, key: keyof T & string, lang: DemoLang): { en: string; text: string }[] {
+  if (!obj) return [];
+  const raw = (obj as Record<string, unknown>)[key];
+  const en = Array.isArray(raw) ? raw.map(clean) : [];
+  const hiRaw = (obj as { hi?: Record<string, unknown> }).hi?.[key];
+  const hi = Array.isArray(hiRaw) ? hiRaw.map(clean) : [];
+  return en
+    .map((e, i) => ({ en: e, text: lang === "hi" ? hi[i] || e : e || hi[i] || "" }))
+    .filter((p) => p.en || p.text);
+}
+
+/**
+ * A free-text date field in the reader's language: the Hindi twin when the
+ * reader chose Hindi and one was written, else `dateIn` of the English (which
+ * swaps the month name for a plain "29 August 2026").
+ */
+export function biDate<T extends object>(obj: T | null | undefined, key: keyof T & string, lang: DemoLang): string {
+  if (!obj) return "";
+  const hi = clean((obj as { hi?: Record<string, unknown> }).hi?.[key]);
+  if (lang === "hi" && hi) return hi;
+  return dateIn(clean((obj as Record<string, unknown>)[key]), lang) || hi;
+}

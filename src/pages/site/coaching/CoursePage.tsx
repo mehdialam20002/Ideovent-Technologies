@@ -19,7 +19,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { bi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biList, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import { courseSlug, type SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { demoFee } from "@/lib/demo/record";
@@ -81,9 +81,9 @@ export default function CoursePage({ site, ctx }: SitePageProps) {
     { k: "subjects" as const, label: COPY.subjects },
   ].filter((f) => bi(course, f.k, lang));
   const syllabus = withText(course.syllabus, "title");
-  const material = (course.material || []).filter((m) => m.trim());
+  const material = biList(course, "material", lang);
   const instalments = withText(course.instalments, "label");
-  const inclusions = (course.inclusions || []).filter((m) => m.trim());
+  const inclusions = biList(course, "inclusions", lang);
   const teachers = withText(site.faculty, "name").filter((f) => (course.facultyNames || []).includes(f.name));
   const results = withText(site.results, "achievement").filter((r) => r.courseName && r.courseName.trim() === course.name.trim());
   const faq = withText(course.faq, "title");
@@ -93,7 +93,7 @@ export default function CoursePage({ site, ctx }: SitePageProps) {
     <>
       <Helmet><title>{`${name} | ${site.instituteName}`}</title></Helmet>
       <PageHead
-        eyebrow={[bi(course, "level", lang), course.category].filter(Boolean).join("  ·  ") || undefined}
+        eyebrow={[...new Set([bi(course, "level", lang), bi(course, "category", lang)].filter(Boolean))].join("  ·  ") || undefined}
         title={name}
         lead={<Bi of={course} k="detail" />}
         crumbs={[
@@ -126,7 +126,7 @@ export default function CoursePage({ site, ctx }: SitePageProps) {
         <Section n={++n} title={tr(facts.some((f) => f.k === "timings") ? COPY.facts : COPY.factsNoTime, lang)}>
           <FactTable rows={[
             ...facts.map((f) => ({ label: tr(f.label, lang), value: <Bi of={course} k={f.k} /> })),
-            ...(course.seats ? [{ label: tr(COPY.batch, lang), value: course.seats }] : []),
+            ...(course.seats ? [{ label: tr(COPY.batch, lang), value: bi(course, "seats", lang) }] : []),
           ]} />
         </Section>
       )}
@@ -168,7 +168,7 @@ export default function CoursePage({ site, ctx }: SitePageProps) {
                   {instalments.map((r, i) => (
                     <li key={i} className="flex justify-between gap-4 py-2">
                       <span><Bi of={r} k="label" /> <Bi of={r} k="note" className="text-[hsl(var(--ds-ink-soft))]" /></span>
-                      <span className="ds-num font-semibold">{demoFee(r.amount, site.currency)}</span>
+                      <span className="ds-num font-semibold">{demoFee(bi(r, "amount", lang), site.currency)}</span>
                     </li>
                   ))}
                 </ul>
@@ -220,11 +220,11 @@ export default function CoursePage({ site, ctx }: SitePageProps) {
               <Reveal key={i} index={i}>
                 <Card className="h-full">
                   <Bi of={r} k="achievement" as="p" className="ds-display ds-num text-2xl" />
-                  <p className="mt-1 text-sm text-[hsl(var(--ds-ink-soft))]">{[r.exam, r.year].filter(Boolean).join(" ")}</p>
+                  <p className="mt-1 text-sm text-[hsl(var(--ds-ink-soft))]">{[bi(r, "exam", lang), bi(r, "year", lang)].filter(Boolean).join(" ")}</p>
                   {r.consent && r.studentName && <p className="mt-2 font-semibold">{r.studentName}</p>}
                   {/* CCPA 2024: course taken, its duration, and whether it was paid, at body size. */}
                   <p className="mt-2 text-sm">
-                    {[bi(r, "courseName", lang), r.courseDuration,
+                    {[bi(r, "courseName", lang), bi(r, "courseDuration", lang),
                       r.paid ? tr(r.paid === "paid" ? COPY.paid : r.paid === "scholarship" ? COPY.scholarship : COPY.free, lang) : ""]
                       .filter(Boolean).join(", ")}
                   </p>

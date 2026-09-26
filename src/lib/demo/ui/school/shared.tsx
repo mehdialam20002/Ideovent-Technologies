@@ -51,7 +51,7 @@ export function schoolPhotos(site: DemoSite, withCaptionOnly = false): SchoolPho
     if (p.src || (withCaptionOnly && (p.caption || p.alt || p.hi?.caption))) out.push({ key: `p${i}`, src: p.src || "", obj: p, width: p.width, height: p.height });
   });
   (site.gallery || []).forEach((g, i) => {
-    if (g.src || (withCaptionOnly && g.alt)) out.push({ key: `g${i}`, src: g.src || "", obj: { src: g.src || "", alt: g.alt || "" } });
+    if (g.src || (withCaptionOnly && (g.alt || g.hi?.alt))) out.push({ key: `g${i}`, src: g.src || "", obj: { src: g.src || "", alt: g.alt || "", ...(g.hi?.alt ? { hi: { alt: g.hi.alt } } : {}) } });
   });
   return out;
 }

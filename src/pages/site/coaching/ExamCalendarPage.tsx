@@ -10,7 +10,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { dateIn, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biDate, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { C_COPY } from "@/lib/demo/ui/coaching/copy";
@@ -55,14 +55,14 @@ export default function ExamCalendarPage({ site, ctx }: SitePageProps) {
           caption={tr(COPY.upcoming, lang)}
           head={[tr(COPY.exam, lang), tr(COPY.notification, lang), tr(COPY.date, lang)]}
           rows={cal.map((e) => [
-            e.exam,
-            e.notification || "",
-            <span key="d" className={past(e.examDate) ? "text-[hsl(var(--ds-ink-soft))]" : "font-semibold"}>{e.examDate}{past(e.examDate) ? ` ${tr(COPY.held, lang)}` : ""}</span>,
+            bi(e, "exam", lang),
+            bi(e, "notification", lang),
+            <span key="d" className={past(e.examDate) ? "text-[hsl(var(--ds-ink-soft))]" : "font-semibold"}>{bi(e, "examDate", lang)}{past(e.examDate) ? ` ${tr(COPY.held, lang)}` : ""}</span>,
           ])}
         />
         <div className="mt-4 max-w-[68ch] space-y-1">
-          {g?.calendarSource && <p>{trf(C_COPY.source, lang, { source: g.calendarSource })}</p>}
-          {g?.calendarUpdated && <p>{trf(C_COPY.updated, lang, { date: dateIn(g.calendarUpdated, lang) })}</p>}
+          {g?.calendarSource && <p>{trf(C_COPY.source, lang, { source: bi(g, "calendarSource", lang) })}</p>}
+          {g?.calendarUpdated && <p>{trf(C_COPY.updated, lang, { date: biDate(g, "calendarUpdated", lang) })}</p>}
           <p className="text-[hsl(var(--ds-ink-soft))]">{tr(COPY.checkOfficial, lang)}</p>
         </div>
         {coursesHref && <div className="mt-8"><Action href={coursesHref}>{tr(COPY.prepare, lang)}</Action></div>}
@@ -72,7 +72,7 @@ export default function ExamCalendarPage({ site, ctx }: SitePageProps) {
           <DataTable
             caption={tr(COPY.eligibility, lang)}
             head={[tr(COPY.exam, lang), tr(COPY.age, lang), tr(COPY.qualification, lang)]}
-            rows={elig.map((e) => [e.exam, e.age || "", e.qualification || ""])}
+            rows={elig.map((e) => [bi(e, "exam", lang), bi(e, "age", lang), bi(e, "qualification", lang)])}
           />
         </Section>
       )}

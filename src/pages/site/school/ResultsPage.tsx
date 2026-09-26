@@ -13,7 +13,7 @@
 
 import { useState } from "react";
 import type { DemoBoardResult, DemoResult } from "@/lib/cms/types";
-import { bi, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, biLabel, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { isCbseSchool } from "@/lib/demo/site/disclosure";
@@ -110,7 +110,7 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
           <div key={year} className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {figures.map((b, i) => (
               <Reveal key={rowKey(b)} index={i}>
-                <Figure value={`${pct(b.passPercent)}`} label={trf(isClassNumber(b.className) ? COPY.passLabel : COPY.passLabelNamed, lang, { c: b.className })}
+                <Figure value={`${pct(b.passPercent)}`} label={trf(isClassNumber(b.className) ? COPY.passLabel : COPY.passLabelNamed, lang, { c: isClassNumber(b.className) ? b.className : bi(b, "className", lang) })}
                   basis={b.registered && b.passed ? trf(COPY.basis, lang, { year: b.year, passed: b.passed, registered: b.registered }) : undefined} />
               </Reveal>
             ))}
@@ -123,7 +123,7 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
           {classes.length > 1 && (
             <div className="mb-5">
               <FilterChips label={tr(COPY.classes, lang)} value={cls} onChange={pickClass}
-                options={[{ id: "all", label: tr(COPY.allClasses, lang) }, ...classes.map((c) => ({ id: c, label: isClassNumber(c) ? trf(COPY.classLabel, lang, { c }) : c }))]} />
+                options={[{ id: "all", label: tr(COPY.allClasses, lang) }, ...classes.map((c) => ({ id: c, label: isClassNumber(c) ? trf(COPY.classLabel, lang, { c }) : biLabel(board, "className", c, lang) }))]} />
             </div>
           )}
           <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -138,12 +138,12 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
               <tbody ref={flip.ref}>
                 {rows.map((b) => (
                   <tr key={rowKey(b)} data-k={rowKey(b)} className="border-b border-[hsl(var(--ds-line))]">
-                    <th scope="row" className="py-3 pr-4 font-semibold">{b.className}</th>
+                    <th scope="row" className="py-3 pr-4 font-semibold">{bi(b, "className", lang)}</th>
                     <td className="ds-num py-3 pr-4">{b.year}</td>
                     <td className="ds-num py-3 pr-4 text-right">{b.registered || "-"}</td>
                     <td className="ds-num py-3 pr-4 text-right">{b.passed || "-"}</td>
                     <td className="ds-num py-3 pr-4 text-right font-semibold text-[hsl(var(--ds-brand-ink))]">{b.passPercent ? `${pct(b.passPercent)}` : "-"}</td>
-                    <td className="py-3 pr-4 text-sm text-[hsl(var(--ds-ink-soft))]">{b.note || ""}</td>
+                    <td className="py-3 pr-4 text-sm text-[hsl(var(--ds-ink-soft))]">{bi(b, "note", lang)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -159,7 +159,7 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
               <Reveal as="li" key={lineKey(r, i)} index={i} className="ds-card p-5">
                 {r.consent && r.studentName && <p className="font-semibold">{r.studentName}</p>}
                 <Bi of={r} k="achievement" as="p" className="ds-display text-xl leading-snug text-[hsl(var(--ds-brand-ink))]" />
-                <p className="ds-num mt-2 text-sm text-[hsl(var(--ds-ink-soft))]">{[r.exam, r.year].filter(Boolean).join(", ")}</p>
+                <p className="ds-num mt-2 text-sm text-[hsl(var(--ds-ink-soft))]">{[bi(r, "exam", lang), bi(r, "year", lang)].filter(Boolean).join(", ")}</p>
                 <Bi of={r} k="note" as="p" className="mt-1 text-[hsl(var(--ds-ink-soft))]" />
                 {r.consent && hasBi(r, "quote") && <blockquote className="mt-3 border-l-2 border-[hsl(var(--ds-accent))] pl-3 italic"><Bi of={r} k="quote" /></blockquote>}
               </Reveal>
@@ -173,9 +173,9 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[...byCountry.entries()].map(([country, list], i) => (
               <Reveal key={country} index={i} className="ds-card p-5">
-                {country !== "-" && <p className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--ds-accent))]">{country}</p>}
+                {country !== "-" && <p className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--ds-accent))]">{bi(list[0], "country", lang) || country}</p>}
                 <ul className="mt-2 space-y-2">
-                  {list.map((d, j) => <li key={j}><span className="font-semibold">{d.destination}</span><Bi of={d} k="achievement" as="p" className="text-sm text-[hsl(var(--ds-ink-soft))]" /></li>)}
+                  {list.map((d, j) => <li key={j}><span className="font-semibold">{bi(d, "destination", lang)}</span><Bi of={d} k="achievement" as="p" className="text-sm text-[hsl(var(--ds-ink-soft))]" /></li>)}
                 </ul>
               </Reveal>
             ))}
