@@ -77,6 +77,15 @@ export default function AdminLayout() {
   useDeferredBodies();
   const { mode, actions } = useCms();
   const { logout } = useAdminAuth();
+
+  // Content is loaded once, when the site first opens. On a visit to /admin that
+  // happens BEFORE sign-in, as a visitor, and Supabase's rules then hide leads,
+  // applications and every draft, so the panel showed "0 total" to a signed-in
+  // admin until a manual refresh (found live, 26 Sep 2026). This shell only
+  // mounts behind the sign-in, so reload here, as the admin.
+  useEffect(() => {
+    if (mode === "supabase") void actions.refresh();
+  }, [mode, actions]);
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
