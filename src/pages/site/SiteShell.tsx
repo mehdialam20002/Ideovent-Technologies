@@ -123,7 +123,10 @@ export default function SiteShell({ site, basePath, rest, isPreview }: {
         <DemoRibbon site={site} />
         <Header />
         <main id="ds-main">
-          <Suspense fallback={<div className="min-h-[70vh]" />}>
+          {/* A full screen, not 70vh: under the ribbon and header, 70vh left the
+              footer's top edge on screen at 390x844 and the page chunk then
+              pushed it out (CLS 0.053 on /site/<slug>). */}
+          <Suspense fallback={<div className="min-h-screen" />}>
             {Page ? <Page site={site} ctx={ctx} /> : <PageStub site={site} ctx={ctx} />}
           </Suspense>
         </main>

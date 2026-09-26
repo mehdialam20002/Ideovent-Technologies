@@ -10,45 +10,49 @@ import { staggerContainer, fadeUp } from "@/lib/motion";
  * (ServicesGrid itself stays on /services, untouched).
  *
  * The old section was "What we build, and what is in it": six services and
- * their deliverables, a list about us. A principal does not buy "UI/UX Design".
- * This is the same numbered-row markup as ServicesGrid (the `ol`, the 01/02/03
- * numeral, title, small-caps pill, one line, deliverable chips, the arrow
- * link), fed three rows written around who is reading: schools, coaching
- * institutes, businesses. Copy: _assets/HOMEPAGE-COPY-DECK.md section 4.
+ * their deliverables, a list about us. This is the same numbered-row markup as
+ * ServicesGrid (the `ol`, the 01/02/03 numeral, title, small-caps pill, one
+ * line, deliverable chips, the arrow link), fed three rows by the outcome the
+ * owner wants: be found and contacted, take busywork off the team, build your
+ * own product. Schools and coaching keep one chip in row 1, as one industry
+ * among many. Copy: _assets/HOMEPAGE-COPY-DECK-V2.md A4.
  *
- * Every chip is something the site itself does. Google Business Profile setup,
- * SEO rankings and WhatsApp automation are deliberately NOT here until Mehdi
- * confirms they are offered (deck decision 11). "Your address and map on every
- * page" is safe: the site does that.
+ * Every chip is something we build. Google Business Profile setup, SEO
+ * rankings and WhatsApp automation are deliberately NOT here until Mehdi
+ * confirms they are offered (deck V2 decision G2).
  *
  * Strings are inline, as the proof band's are in Index.tsx.
  */
 const ROWS = [
   {
-    title: "For schools",
-    pill: "School website",
-    line: "A parent finds fees, bus routes and admission dates without calling. Your office posts notices itself. Every enquiry reaches you by email, or on WhatsApp if you want that.",
+    title: "Be found and contacted",
+    pill: "Website or online store",
+    line: "Your customer finds you on Google and Maps, sees your prices and timings on a phone, and reaches you in one tap. Every enquiry comes to you by email, or on WhatsApp if you want that.",
     chips: [
-      "Admission enquiry form", "Fee structure page", "Bus routes", "Admission dates", "Campus photos",
-      "Faculty and results you approve", "Mandatory disclosure page", "Notices you post yourself",
+      "Google Maps location", "Call and WhatsApp buttons", "Enquiry form that reaches you",
+      "Prices and timings on a page", "Your real photos", "Pages you update yourself",
+      "Online store with Razorpay payments", "Schools and coaching: fees, batch timings, admission form",
     ],
     link: { label: "See what is included", href: "/services/website-development" },
   },
   {
-    title: "For coaching institutes",
-    pill: "Coaching website or portal",
-    line: "A student sees batch timings and fees on a phone, and asks for a demo class in one step. Enquiries from the website are kept in one list, not scattered across chats.",
+    title: "Take busywork off your team",
+    pill: "Web app or portal",
+    line: "One system in place of the Excel sheets, registers and WhatsApp groups. Your staff enter things once, and you see where everything stands.",
     chips: [
-      "Batch timings", "Fees on a page", "Demo-class request form", "One list of website enquiries",
-      "Results you can show", "Named faculty", "A page for a new batch",
+      "Lead tracker", "Staff and attendance", "Orders and stock", "Bookings", "Admin dashboard",
+      "Logins for each role", "Reports to Excel",
     ],
-    link: { label: "See what is included", href: "/services/website-development" },
+    link: { label: "Every service", href: "/services" },
   },
   {
-    title: "For businesses, in India and abroad",
-    pill: "Business website or software",
-    line: "One screen that says what you do. A simple way to enquire or book. And someone to keep it working after launch.",
-    chips: ["Enquiry or booking form", "Online store", "Custom software", "Mobile app", "Care plan"],
+    title: "Build your own product",
+    pill: "SaaS or mobile app",
+    line: "An idea for software you want to sell, or an app your customers open every day. We build the first version, then the next one.",
+    chips: [
+      "Android and iPhone app", "Accounts and logins", "Razorpay and Stripe payments", "Admin panel",
+      "Care after launch",
+    ],
     link: { label: "Every service", href: "/services" },
   },
 ];
@@ -67,8 +71,8 @@ export default function WhatWeSetUp() {
               {/* Weight contrast, no serif: the accent is spent on the hero and
                   the work section. */}
               <h2 className="mt-5 text-display font-display font-light">
-                Built around how parents choose,{" "}
-                <span className="font-extrabold">and how your office works</span>.
+                Built around how your customers choose,{" "}
+                <span className="font-extrabold">and how your team works</span>.
               </h2>
             </div>
             <p className="max-w-sm text-sm text-muted-foreground text-pretty md:pb-2">

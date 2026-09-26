@@ -14,6 +14,7 @@ import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { groupPoints, PointCards } from "@/lib/demo/ui/school/points";
 import { Timeline } from "@/lib/demo/ui/school/Timeline";
+import { slotPhoto, PhotoBand, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
 import { Section } from "../kit/Section";
@@ -21,11 +22,11 @@ import { Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Boarding", hi: "हॉस्टल" },
-  houses: { en: "The houses", hi: "Houses" },
-  routine: { en: "A boarder's day", hi: "एक boarder का दिन" },
-  topics: { en: "Life in the house", hi: "House का जीवन" },
-  terms: { en: "Term dates", hi: "Term की तारीखें" },
-  reach: { en: "How to reach the campus", hi: "Campus कैसे पहुँचें" },
+  houses: { en: "The houses", hi: "हाउस" },
+  routine: { en: "A boarder's day", hi: "हॉस्टल में रहने वाले बच्चे का दिन" },
+  topics: { en: "Life in the house", hi: "हाउस का जीवन" },
+  terms: { en: "Term dates", hi: "टर्म की तारीखें" },
+  reach: { en: "How to reach the campus", hi: "कैंपस कैसे पहुँचें" },
   visit: { en: "Visit the boarding houses", hi: "हॉस्टल देखने आइए" },
 } satisfies Record<string, Bilingual>;
 
@@ -45,11 +46,12 @@ export default function BoardingPage({ site, ctx }: SitePageProps) {
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.title, lang) }]} />
 
       {houses.length > 0 && (
-        <Section n={++n} title={tr(COPY.houses, lang)}><PointCards items={houses} /></Section>
+        <Section n={++n} title={tr(COPY.houses, lang)}><PhotoBand src={slotPhoto(site, "hostel")} /><PointCards items={houses} /></Section>
       )}
 
       {routine.length > 0 && (
         <Section n={++n} title={tr(COPY.routine, lang)}>
+          <WithPhoto src={slotPhoto(site, "dining")} flip ratio="4 / 5">
           <ol className="max-w-3xl divide-y divide-[hsl(var(--ds-line))] border-y border-[hsl(var(--ds-line))]">
             {routine.map((r, i) => (
               <Reveal as="li" key={i} index={i} className="grid grid-cols-[6.5rem_1fr] gap-4 py-3 sm:grid-cols-[9rem_1fr]">
@@ -58,6 +60,7 @@ export default function BoardingPage({ site, ctx }: SitePageProps) {
               </Reveal>
             ))}
           </ol>
+          </WithPhoto>
         </Section>
       )}
 

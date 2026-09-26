@@ -14,13 +14,13 @@
 import { ExternalLink, Printer } from "lucide-react";
 import type { ReactNode } from "react";
 import type { DemoSite } from "@/lib/cms/types";
-import { demoDate } from "@/lib/demo/record";
 import { tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { APPENDIX_IX, derivedStaffCounts } from "@/lib/demo/site/disclosure";
-import { clean } from "@/lib/demo/ui/school/shared";
+import { clean, demoDateIn } from "@/lib/demo/ui/school/shared";
 import { PageHead } from "../kit/Hero";
+import { SampleNote } from "../kit/SampleNote";
 import { Section } from "../kit/Section";
 
 const COPY = {
@@ -29,17 +29,17 @@ const COPY = {
   section: { en: "Section {id}", hi: "भाग {id}" },
   item: { en: "Information", hi: "जानकारी" },
   details: { en: "Details", hi: "विवरण" },
-  view: { en: "View document", hi: "Document देखें" },
-  print: { en: "Print this page", hi: "यह पेज print करें" },
-  results: { en: "Board results, last three years", hi: "पिछले तीन साल के board results" },
-  classResults: { en: "Class {c}", hi: "Class {c}" },
+  view: { en: "View document", hi: "डॉक्यूमेंट देखें" },
+  print: { en: "Print this page", hi: "यह पेज प्रिंट करें" },
+  results: { en: "Board results, last three years", hi: "पिछले तीन साल के बोर्ड रिज़ल्ट" },
+  classResults: { en: "Class {c}", hi: "क्लास {c}" },
   colYear: { en: "Year", hi: "साल" },
-  colReg: { en: "Registered", hi: "Registered" },
-  colPassed: { en: "Passed", hi: "Pass" },
-  colPct: { en: "Pass %", hi: "Pass %" },
+  colReg: { en: "Registered", hi: "रजिस्टर्ड" },
+  colPassed: { en: "Passed", hi: "पास" },
+  colPct: { en: "Pass %", hi: "पास %" },
   colNote: { en: "Remarks", hi: "टिप्पणी" },
-  annual: { en: "Annual report", hi: "सालाना report" },
-  annualBody: { en: "The school's annual report, published by 15 September each year.", hi: "School की सालाना report, हर साल 15 सितंबर तक प्रकाशित।" },
+  annual: { en: "Annual report", hi: "सालाना रिपोर्ट" },
+  annualBody: { en: "The school's annual report, published by 15 September each year.", hi: "स्कूल की सालाना रिपोर्ट, हर साल 15 सितंबर तक प्रकाशित।" },
 } satisfies Record<string, Bilingual>;
 
 /** Values the record already holds, for rows nobody has typed. */
@@ -94,7 +94,7 @@ export default function DisclosurePage({ site, ctx }: SitePageProps) {
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.title, lang) }]}>
         <div className="mt-5 flex flex-wrap items-center gap-4 print:hidden">
           <button type="button" onClick={() => window.print()} className="ds-btn ds-btn-ghost"><Printer className="h-4 w-4" aria-hidden="true" />{tr(COPY.print, lang)}</button>
-          {updated && <span className="ds-num text-sm opacity-80">{trf(SHELL_COPY.lastUpdated, lang, { date: demoDate(updated, site.market) })}</span>}
+          {updated && <span className="ds-num text-sm opacity-80">{trf(SHELL_COPY.lastUpdated, lang, { date: demoDateIn(updated, site.market, lang) })}</span>}
         </div>
       </PageHead>
 
@@ -114,6 +114,7 @@ export default function DisclosurePage({ site, ctx }: SitePageProps) {
               </tbody>
             </table>
           </div>
+          {sec.id === "D" && classes.length > 0 && <SampleNote block="results" className="mt-6" />}
           {sec.id === "D" && classes.length > 0 && (
             <div className="mt-10 grid gap-8 lg:grid-cols-2">
               {classes.map((c) => (

@@ -429,8 +429,13 @@ export function siteThemeFor(kind: DemoKind, id: string | undefined): SiteTheme 
 
 const SERIF =
   'ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", Times, serif';
-const SANS = '"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-const SORA = '"Sora", "Inter", ui-sans-serif, system-ui, sans-serif';
+/* Each webfont is followed by its metric-matched local fallback (src/index.css),
+   so the first frame, set before Google's file lands, occupies the same lines
+   as the webfont and the swap moves nothing. Without "Sora Fallback" here the
+   c5 hero headline went from two lines to three at 390px when Sora arrived
+   (CLS 0.19). */
+const SANS = '"Inter", "Inter Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+const SORA = '"Sora", "Sora Fallback", "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif';
 
 /** The CSS variables for one theme, set on the site root. */
 export function siteThemeStyle(theme: SiteTheme): CSSProperties {

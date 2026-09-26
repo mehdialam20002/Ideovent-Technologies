@@ -34,17 +34,17 @@ Each field is sent as a template variable. Empty fields are sent as empty string
 
 | Variable | What it holds | Example |
 |---|---|---|
-| `website` | Their website address, or their school or institute name if they have none (required, the first field on both forms) | riverbendschool.in |
+| `website` | Their website address, or their business name if they have none (required, the first field on both forms) | menonclinic.in |
 | `from_name` | Their name. Optional on the forms: when they leave it empty this holds the website instead | Kavita Menon |
 | `phone` | Phone, normalised (required) | +91 98765 43210 |
-| `need` | What they run (required): School, Coaching institute, Business, App or custom software, Something else | School |
-| `organisation` | School, institute or business | Riverbend Public School |
+| `need` | What they run (required): Shop or restaurant, Clinic or salon, Gym or fitness, Office or firm (law, CA, real estate), School or coaching, Startup or app idea, Something else. Enquiries sent before 26 Sep 2026 carry the old labels (School, Coaching institute, Business, App or custom software) | Clinic or salon |
+| `organisation` | Business or organisation | Menon Dental Clinic |
 | `city` | City | Patna |
 | `timeline` | When they want to start | In 1 to 3 months |
-| `budget` | Budget range, from the canonical table | ₹20,000-₹45,000 (school website) |
+| `budget` | Budget range, from the canonical table | ₹20,000-₹45,000 (website) |
 | `from_email` | Their email (optional now) | kavita@example.org |
 | `reply_to` | Same as `from_email`, for the Reply-To header | kavita@example.org |
-| `visitor_message` | Only what they typed in the message box | Our admission form is a PDF. |
+| `visitor_message` | Only what they typed in the message box | Our prices are only in a PDF. |
 | `message` | Everything above as plain text, their message first | (see below) |
 | `source` | Which form | Pop-up, Contact form, or Internship form |
 | `page` | The page they were on | /work/gym-map |
@@ -83,7 +83,7 @@ Website:     {{website}}
 Name:        {{from_name}}
 Phone:       {{phone}}
 Needs:       {{need}}
-Institute:   {{organisation}}
+Business:    {{organisation}}
 City:        {{city}}
 Start:       {{timeline}}
 Budget:      {{budget}}
@@ -129,7 +129,7 @@ says the application did not send and offers WhatsApp with the application writt
 The pop-up asks for only three things (need, website, phone number), and sends them right
 away. The first e-mail has no name, so `from_name` falls back to the website. A visitor who
 closes the card at that point still reaches you. After the thank-you, the card offers an
-optional second step (name, institute, city, start date, budget, email, message). If they
+optional second step (name, business, city, start date, budget, email, message). If they
 fill it in, a second e-mail arrives with `follow_up_of` set to the first one's
 `submission_id`, and that is where the name arrives. In /admin/submissions the two show as
 one lead.

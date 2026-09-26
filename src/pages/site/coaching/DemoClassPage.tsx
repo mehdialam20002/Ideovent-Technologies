@@ -17,44 +17,45 @@ import { bi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { PageHead } from "../kit/Hero";
+import { SectionPhoto } from "@/lib/demo/ui/coaching/photos";
 import { Card, Section } from "../kit/Section";
 import { Accordion, Action, Bi } from "../kit/Text";
 import "@/lib/demo/ui/coaching/coaching.css";
 
 const COPY = {
   title: { en: "Book a free demo class", hi: "फ्री डेमो क्लास बुक करें" },
-  lead: { en: "Sit in a real class, meet the teacher, then decide. It costs nothing.", hi: "असली class में बैठें, टीचर से मिलें, फिर फैसला करें। कोई फीस नहीं।" },
+  lead: { en: "Sit in a real class, meet the teacher, then decide. It costs nothing.", hi: "असली क्लास में बैठें, टीचर से मिलें, फिर फैसला करें। कोई फीस नहीं।" },
   what: { en: "What happens in the demo", hi: "डेमो में क्या होता है" },
   duration: { en: "How long", hi: "कितनी देर" },
   bring: { en: "What to bring", hi: "क्या लाना है" },
   form: { en: "Your details", hi: "आपकी जानकारी" },
-  formNote: { en: "Tapping the button opens WhatsApp with this message. Nothing is saved on this site.", hi: "Button दबाने पर यह message WhatsApp में खुलेगा। इस site पर कुछ save नहीं होता।" },
-  student: { en: "Student's name", hi: "Student का नाम" },
+  formNote: { en: "Tapping the button opens WhatsApp with this message. Nothing is saved on this site.", hi: "बटन दबाने पर यह मैसेज WhatsApp में खुलेगा। इस वेबसाइट पर कुछ सेव नहीं होता।" },
+  student: { en: "Student's name", hi: "छात्र का नाम" },
   phone: { en: "WhatsApp number", hi: "WhatsApp नंबर" },
   phoneHint: { en: "10 digits", hi: "10 अंक" },
-  klass: { en: "Class", hi: "Class" },
+  klass: { en: "Class", hi: "क्लास" },
   course: { en: "Course", hi: "कोर्स" },
   parent: { en: "Parent's name (optional)", hi: "अभिभावक का नाम (ज़रूरी नहीं)" },
   choose: { en: "Choose", hi: "चुनें" },
   send: { en: "Send on WhatsApp", hi: "WhatsApp पर भेजें" },
-  sent: { en: "WhatsApp has opened with your message. Press send there, and the institute will reply with a time.", hi: "आपका message WhatsApp में खुल गया है। वहाँ send दबाएँ, संस्थान समय बताकर जवाब देगा।" },
-  noWa: { en: "Call to book a time. The demo class is free.", hi: "समय तय करने के लिए कॉल करें। डेमो class free है।" },
-  msg: { en: "Free demo class request\nStudent: {student}\nClass: {klass}\nCourse: {course}\nWhatsApp: {phone}{parent}", hi: "फ्री डेमो class के लिए\nStudent: {student}\nClass: {klass}\nकोर्स: {course}\nWhatsApp: {phone}{parent}" },
+  sent: { en: "WhatsApp has opened with your message. Press send there, and the institute will reply with a time.", hi: "आपका मैसेज WhatsApp में खुल गया है। वहाँ सेंड दबाएँ, संस्थान समय बताकर जवाब देगा।" },
+  noWa: { en: "Call to book a time. The demo class is free.", hi: "समय तय करने के लिए कॉल करें। डेमो क्लास फ्री है।" },
+  msg: { en: "Free demo class request\nStudent: {student}\nClass: {klass}\nCourse: {course}\nWhatsApp: {phone}{parent}", hi: "फ्री डेमो क्लास के लिए\nछात्र: {student}\nक्लास: {klass}\nकोर्स: {course}\nWhatsApp: {phone}{parent}" },
   msgParent: { en: "\nParent: {parent}", hi: "\nअभिभावक: {parent}" },
   steps: { en: "After you send it", hi: "भेजने के बाद" },
-  s1: { en: "The institute replies on WhatsApp with a batch and a time.", hi: "संस्थान WhatsApp पर batch और समय बताएगा।" },
-  s2: { en: "The student sits in a real class with the regular batch.", hi: "Student regular batch के साथ असली class में बैठेगा।" },
+  s1: { en: "The institute replies on WhatsApp with a batch and a time.", hi: "संस्थान WhatsApp पर बैच और समय बताएगा।" },
+  s2: { en: "The student sits in a real class with the regular batch.", hi: "छात्र रेगुलर बैच के साथ असली क्लास में बैठेगा।" },
   s3: { en: "You meet the teacher, see the fee in writing, and decide at home.", hi: "टीचर से मिलें, फीस लिखित में देखें, और घर जाकर फैसला करें।" },
   q1: { en: "Do we have to pay anything for the demo?", hi: "क्या डेमो के लिए कुछ देना होगा?" },
-  a1: { en: "No. The demo class is free, and there is no pressure to join on the day.", hi: "नहीं। डेमो class free है, उसी दिन join करने का कोई दबाव नहीं।" },
+  a1: { en: "No. The demo class is free, and there is no pressure to join on the day.", hi: "नहीं। डेमो क्लास फ्री है, उसी दिन जॉइन करने का कोई दबाव नहीं।" },
   q2: { en: "Can a parent come along?", hi: "क्या अभिभावक साथ आ सकते हैं?" },
-  a2: { en: "Yes. A parent can meet the teacher after the class.", hi: "हाँ। Class के बाद अभिभावक टीचर से मिल सकते हैं।" },
+  a2: { en: "Yes. A parent can meet the teacher after the class.", hi: "हाँ। क्लास के बाद अभिभावक टीचर से मिल सकते हैं।" },
 } satisfies Record<string, Bilingual>;
 
 const CLASSES: Bilingual[] = [
   ...[6, 7, 8, 9, 10, 11, 12].map((c) => ({ en: `Class ${c}`, hi: `कक्षा ${c}` })),
   { en: "Class 12 passed", hi: "12वीं पास" },
-  { en: "Graduate", hi: "Graduate" },
+  { en: "Graduate", hi: "ग्रेजुएट" },
 ];
 
 export default function DemoClassPage({ site, ctx }: SitePageProps) {
@@ -137,6 +138,7 @@ export default function DemoClassPage({ site, ctx }: SitePageProps) {
             </Card>
           )}
           <div>
+            <SectionPhoto slot="admissions" ratio="3 / 2" sizes="(min-width: 1152px) 440px, (min-width: 1024px) 38vw, calc(100vw - 32px)" className="mb-8" />
             {wa && <p className="ds-display text-xl">{tr(COPY.what, lang)}</p>}
             <Bi of={trial} k="body" as="p" className="mt-2" />
             <dl className="mt-4 space-y-3">

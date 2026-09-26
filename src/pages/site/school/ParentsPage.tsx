@@ -21,11 +21,11 @@ import { Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "For parents", hi: "अभिभावकों के लिए" },
-  lead: { en: "The portal, the calendar and the forms, in one place.", hi: "Portal, calendar और forms, एक ही जगह।" },
-  portal: { en: "Portal and app", hi: "Portal और app" },
-  portalNote: { en: "These open the school's own portal in a new tab. This website never asks for your password.", hi: "ये school का अपना portal नए tab में खोलते हैं। यह website कभी आपका password नहीं माँगती।" },
-  calendar: { en: "Academic calendar", hi: "Academic calendar" },
-  downloads: { en: "Forms and downloads", hi: "Forms और downloads" },
+  lead: { en: "The portal, the calendar and the forms, in one place.", hi: "पोर्टल, कैलेंडर और फ़ॉर्म, एक ही जगह।" },
+  portal: { en: "Portal and app", hi: "पोर्टल और ऐप" },
+  portalNote: { en: "These open the school's own portal in a new tab. This website never asks for your password.", hi: "ये स्कूल का अपना पोर्टल नए टैब में खोलते हैं। यह वेबसाइट कभी आपका पासवर्ड नहीं माँगती।" },
+  calendar: { en: "Academic calendar", hi: "एकेडमिक कैलेंडर" },
+  downloads: { en: "Forms and downloads", hi: "फ़ॉर्म और डाउनलोड" },
   other: { en: "Other", hi: "अन्य" },
   more: { en: "Also useful", hi: "यह भी काम का" },
 } satisfies Record<string, Bilingual>;

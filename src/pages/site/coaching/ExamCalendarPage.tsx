@@ -10,7 +10,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
+import { dateIn, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { C_COPY } from "@/lib/demo/ui/coaching/copy";
@@ -21,16 +21,16 @@ import { Action } from "../kit/Text";
 
 const COPY = {
   title: { en: "Exam calendar", hi: "परीक्षा कैलेंडर" },
-  lead: { en: "When each exam's notification is expected and when the exam is held.", hi: "हर exam का notification कब आएगा और exam कब होगा।" },
-  upcoming: { en: "Upcoming exams", hi: "आने वाले exams" },
-  exam: { en: "Exam", hi: "Exam" },
-  notification: { en: "Notification", hi: "Notification" },
+  lead: { en: "When each exam's notification is expected and when the exam is held.", hi: "हर एग्ज़ाम का नोटिफ़िकेशन कब आएगा और एग्ज़ाम कब होगा।" },
+  upcoming: { en: "Upcoming exams", hi: "आने वाले एग्ज़ाम" },
+  exam: { en: "Exam", hi: "एग्ज़ाम" },
+  notification: { en: "Notification", hi: "नोटिफ़िकेशन" },
   date: { en: "Exam date", hi: "परीक्षा की तारीख" },
   held: { en: "(held)", hi: "(हो चुका)" },
   eligibility: { en: "Age and eligibility", hi: "उम्र और योग्यता" },
   age: { en: "Age limit", hi: "उम्र सीमा" },
   qualification: { en: "Qualification", hi: "योग्यता" },
-  checkOfficial: { en: "Always confirm dates on the official notification before you apply.", hi: "Apply करने से पहले तारीखें official notification में ज़रूर देखें।" },
+  checkOfficial: { en: "Always confirm dates on the official notification before you apply.", hi: "अप्लाई करने से पहले तारीखें आधिकारिक नोटिफ़िकेशन में ज़रूर देखें।" },
   prepare: { en: "Start preparing", hi: "तैयारी शुरू करें" },
 } satisfies Record<string, Bilingual>;
 
@@ -62,7 +62,7 @@ export default function ExamCalendarPage({ site, ctx }: SitePageProps) {
         />
         <div className="mt-4 max-w-[68ch] space-y-1">
           {g?.calendarSource && <p>{trf(C_COPY.source, lang, { source: g.calendarSource })}</p>}
-          {g?.calendarUpdated && <p>{trf(C_COPY.updated, lang, { date: g.calendarUpdated })}</p>}
+          {g?.calendarUpdated && <p>{trf(C_COPY.updated, lang, { date: dateIn(g.calendarUpdated, lang) })}</p>}
           <p className="text-[hsl(var(--ds-ink-soft))]">{tr(COPY.checkOfficial, lang)}</p>
         </div>
         {coursesHref && <div className="mt-8"><Action href={coursesHref}>{tr(COPY.prepare, lang)}</Action></div>}

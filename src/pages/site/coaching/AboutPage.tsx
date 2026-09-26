@@ -3,7 +3,8 @@
  *
  *   founder   the founder's story, typed name and role; a portrait only with
  *             consent, otherwise the family's monogram
- *   about     the institute's own paragraph
+ *   about     the institute's own paragraph, with the `about` section
+ *             photo beside it when the record has one
  *   values    vision and mission, and the class-size promise as a concrete
  *             number rather than a superlative
  *   centre    a strip of real photos with the lightbox; the Gallery page is
@@ -21,6 +22,7 @@ import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { FacultyCard, Portrait } from "@/lib/demo/ui/coaching/cards";
 import { PhotoGrid } from "@/lib/demo/ui/coaching/Lightbox";
+import { SectionPhoto, sectionPhoto } from "@/lib/demo/ui/coaching/photos";
 import { PageHead } from "../kit/Hero";
 import { SiteLink } from "../kit/motion";
 import { CardGrid, FactTable, Section } from "../kit/Section";
@@ -34,14 +36,14 @@ const COPY = {
   values: { en: "What we hold to", hi: "हमारे उसूल" },
   vision: { en: "Vision", hi: "हमारा लक्ष्य" },
   mission: { en: "Mission", hi: "हमारा मिशन" },
-  classSize: { en: "Class size", hi: "Class का साइज़" },
-  centre: { en: "The centre", hi: "हमारा centre" },
+  classSize: { en: "Class size", hi: "क्लास का साइज़" },
+  centre: { en: "The centre", hi: "हमारा सेंटर" },
   gallery: { en: "See every photograph", hi: "सभी फ़ोटो देखें" },
-  hostel: { en: "Hostel and PG", hi: "Hostel और PG" },
+  hostel: { en: "Hostel and PG", hi: "हॉस्टल और PG" },
   teachers: { en: "The teachers", hi: "टीचर्स" },
   public: { en: "Public information", hi: "सार्वजनिक जानकारी" },
-  coached: { en: "Students coached ({year})", hi: "पढ़ाए गए students ({year})" },
-  succeeded: { en: "Students who succeeded ({year})", hi: "सफल students ({year})" },
+  coached: { en: "Students coached ({year})", hi: "पढ़ाए गए छात्र ({year})" },
+  succeeded: { en: "Students who succeeded ({year})", hi: "सफल छात्र ({year})" },
   feesLink: { en: "Fees, refunds and disclosure", hi: "फीस, रिफंड और जानकारी" },
 } satisfies Record<string, Bilingual>;
 
@@ -82,7 +84,10 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
 
       {bi(site, "about", lang) && (
         <Section n={++n} title={tr(COPY.who, lang)}>
-          <Bi of={site} k="about" as="p" className="max-w-[68ch] whitespace-pre-line text-lg leading-relaxed" />
+          <div className={sectionPhoto(site, "about") ? "grid gap-8 md:grid-cols-[3fr_2fr] md:items-start lg:gap-12" : ""}>
+            <Bi of={site} k="about" as="p" className="max-w-[68ch] whitespace-pre-line text-lg leading-relaxed" />
+            <SectionPhoto slot="about" sizes="(min-width: 1152px) 440px, (min-width: 768px) 38vw, calc(100vw - 32px)" />
+          </div>
         </Section>
       )}
 
@@ -105,7 +110,10 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
 
       {bi(site, "hostel", lang) && (
         <Section n={++n} title={tr(COPY.hostel, lang)}>
-          <Bi of={site} k="hostel" as="p" className="max-w-[68ch] whitespace-pre-line" />
+          <div className={sectionPhoto(site, "hostel") ? "grid gap-8 md:grid-cols-[3fr_2fr] md:items-start" : ""}>
+            <Bi of={site} k="hostel" as="p" className="max-w-[68ch] whitespace-pre-line" />
+            <SectionPhoto slot="hostel" sizes="(min-width: 1152px) 440px, (min-width: 768px) 38vw, calc(100vw - 32px)" />
+          </div>
         </Section>
       )}
 

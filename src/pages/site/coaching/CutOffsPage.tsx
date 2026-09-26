@@ -19,14 +19,14 @@ import { PageHead } from "../kit/Hero";
 import { Section } from "../kit/Section";
 
 const COPY = {
-  title: { en: "Previous cut-offs", hi: "पिछले cut-off" },
-  lead: { en: "Final cut-offs by category from past years, to set a target score.", hi: "पिछले सालों के category-wise final cut-off, target score तय करने के लिए।" },
-  byExam: { en: "Cut-offs by exam", hi: "Exam के हिसाब से cut-off" },
-  exam: { en: "Exam", hi: "Exam" },
+  title: { en: "Previous cut-offs", hi: "पिछले कट-ऑफ" },
+  lead: { en: "Final cut-offs by category from past years, to set a target score.", hi: "पिछले सालों के कैटेगरी के हिसाब से फ़ाइनल कट-ऑफ, टारगेट स्कोर तय करने के लिए।" },
+  byExam: { en: "Cut-offs by exam", hi: "एग्ज़ाम के हिसाब से कट-ऑफ" },
+  exam: { en: "Exam", hi: "एग्ज़ाम" },
   year: { en: "Year", hi: "साल" },
-  category: { en: "Category", hi: "Category" },
-  cutoff: { en: "Cut-off", hi: "Cut-off" },
-  change: { en: "Cut-offs change every year with the number of vacancies and the paper's difficulty.", hi: "Cut-off हर साल vacancies और paper की कठिनाई के हिसाब से बदलता है।" },
+  category: { en: "Category", hi: "कैटेगरी" },
+  cutoff: { en: "Cut-off", hi: "कट-ऑफ" },
+  change: { en: "Cut-offs change every year with the number of vacancies and the paper's difficulty.", hi: "कट-ऑफ हर साल वैकेंसी और पेपर की कठिनाई के हिसाब से बदलता है।" },
 } satisfies Record<string, Bilingual>;
 
 export default function CutOffsPage({ site, ctx }: SitePageProps) {

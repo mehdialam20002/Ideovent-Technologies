@@ -25,7 +25,7 @@ export default function FaqSection({
                the home page, /services and /pricing, so an accent here would be
                charged against three pages' budget of two. */
             title={<><span className="font-light">Questions,</span> <span className="font-extrabold">answered</span></>}
-            subtitle="What principals and owners ask us first. The answers match the agreement you sign."
+            subtitle="What owners ask us first. The answers match the agreement you sign."
           />
 )}
         <Reveal>

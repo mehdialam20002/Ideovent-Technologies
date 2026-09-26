@@ -12,7 +12,7 @@ import type { Cta } from "@/lib/cms/types";
  * Mehdi, 26 Sep 2026: "ye pricing starting me hi kyu dikha rahe?" A number read
  * before the problem is a cost with nothing attached to it. So the ledger now
  * comes at section 9 of the home page (_assets/HOMEPAGE-COPY-DECK.md), after the
- * problems a parent runs into, the work, the free check and the process, and
+ * problems a customer runs into, the work, the free check and the process, and
  * before the FAQ and the form. It is a real section rather than a link because
  * Indian buyers ask "kitna lagega?" within the hour, published prices are proof
  * that competitors do not offer, and they filter out buyers below the floor.

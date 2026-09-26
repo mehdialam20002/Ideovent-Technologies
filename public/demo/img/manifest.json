@@ -1,0 +1,3243 @@
+{
+ "photos": [
+  {
+   "id": "coaching/c1-hero-study-batch",
+   "file": "coaching/c1-hero-study-batch",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 58290,
+     "src": "/demo/img/coaching/c1-hero-study-batch-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 33818,
+     "src": "/demo/img/coaching/c1-hero-study-batch-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 17988,
+     "src": "/demo/img/coaching/c1-hero-study-batch-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "Three young men in white shirts writing notes side by side at a desk",
+   "altHi": "सफ़ेद शर्ट पहने तीन युवक एक डेस्क पर साथ बैठकर नोट्स लिख रहे हैं",
+   "category": "coaching-classroom",
+   "suggestedFor": [
+    "c1",
+    "c5"
+   ],
+   "focal": {
+    "x": 0.55,
+    "y": 0.45
+   },
+   "objectPosition": "55% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-group-of-men-sitting-at-a-table-writing-on-paper-SPO0ST4nVbY",
+   "photographer": "Aswin Thomas Bony",
+   "photographerUrl": "https://unsplash.com/@aswintb",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c1-lecture-hall",
+   "file": "coaching/c1-lecture-hall",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 520,
+     "bytes": 49352,
+     "src": "/demo/img/coaching/c1-lecture-hall-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 277,
+     "bytes": 18848,
+     "src": "/demo/img/coaching/c1-lecture-hall-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 520,
+   "alt": "A large lecture hall full of students with a projector screen at the front",
+   "altHi": "छात्रों से भरा बड़ा लेक्चर हॉल, सामने प्रोजेक्टर स्क्रीन",
+   "category": "exam-hall",
+   "suggestedFor": [
+    "c1",
+    "c5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.6
+   },
+   "objectPosition": "50% 60%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-group-of-people-sitting-at-a-table-in-front-of-a-projector-screen-2uX_7L_10rM",
+   "photographer": "Adhitya Sibikumar",
+   "photographerUrl": "https://unsplash.com/@adhitya_2505",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c1-self-study",
+   "file": "coaching/c1-self-study",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 34296,
+     "src": "/demo/img/coaching/c1-self-study-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 14938,
+     "src": "/demo/img/coaching/c1-self-study-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A young man solving problems in a notebook at a desk by a sunny window",
+   "altHi": "धूप वाली खिड़की के पास डेस्क पर नोटबुक में सवाल हल करता युवक",
+   "category": "study-group",
+   "suggestedFor": [
+    "c1",
+    "c3",
+    "c5"
+   ],
+   "focal": {
+    "x": 0.45,
+    "y": 0.4
+   },
+   "objectPosition": "45% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-sitting-at-a-table-writing-on-a-piece-of-paper-FHl_80_Eejg",
+   "photographer": "Athul Krishna",
+   "photographerUrl": "https://unsplash.com/@athul_artistry",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c2-hero-village-tuition",
+   "file": "coaching/c2-hero-village-tuition",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1280,
+     "bytes": 124646,
+     "src": "/demo/img/coaching/c2-hero-village-tuition-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 853,
+     "bytes": 74016,
+     "src": "/demo/img/coaching/c2-hero-village-tuition-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 533,
+     "bytes": 39032,
+     "src": "/demo/img/coaching/c2-hero-village-tuition-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1280,
+   "alt": "Two village boys sitting on rocks outdoors with a slate and a notebook",
+   "altHi": "गाँव के दो लड़के बाहर पत्थरों पर बैठे स्लेट और कॉपी के साथ पढ़ रहे हैं",
+   "category": "study-group",
+   "suggestedFor": [
+    "c2"
+   ],
+   "focal": {
+    "x": 0.4,
+    "y": 0.55
+   },
+   "objectPosition": "40% 55%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/two-young-boys-reading-a-book-together-outdoors-_5v4rEX1cNU",
+   "photographer": "Sudhakar Chandra",
+   "photographerUrl": "https://unsplash.com/@sudhakarchandra",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c2-slate-practice",
+   "file": "coaching/c2-slate-practice",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 64028,
+     "src": "/demo/img/coaching/c2-slate-practice-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 27214,
+     "src": "/demo/img/coaching/c2-slate-practice-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A young boy writing on a slate while his friend reads a notebook",
+   "altHi": "स्लेट पर लिखता एक बच्चा, पास में कॉपी पढ़ता उसका साथी",
+   "category": "study-group",
+   "suggestedFor": [
+    "c2"
+   ],
+   "focal": {
+    "x": 0.6,
+    "y": 0.6
+   },
+   "objectPosition": "60% 60%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/two-young-boys-learning-outdoors-with-slate-and-notebook-3-MnXO83rDw",
+   "photographer": "Sudhakar Chandra",
+   "photographerUrl": "https://unsplash.com/@sudhakarchandra",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c2-small-group-class",
+   "file": "coaching/c2-small-group-class",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 984,
+     "bytes": 93854,
+     "src": "/demo/img/coaching/c2-small-group-class-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 525,
+     "bytes": 38462,
+     "src": "/demo/img/coaching/c2-small-group-class-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 984,
+   "alt": "A small class of girls in a simple room with a teacher at the blackboard",
+   "altHi": "सादे कमरे में लड़कियों की छोटी कक्षा, ब्लैकबोर्ड के पास शिक्षिका",
+   "category": "coaching-classroom",
+   "suggestedFor": [
+    "c2"
+   ],
+   "focal": {
+    "x": 0.55,
+    "y": 0.5
+   },
+   "objectPosition": "55% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/girls-in-indian-school-12199101/",
+   "photographer": "Eternal Traveler",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c2-slates-hindi",
+   "file": "coaching/c2-slates-hindi",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 900,
+     "bytes": 81488,
+     "src": "/demo/img/coaching/c2-slates-hindi-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 480,
+     "bytes": 32070,
+     "src": "/demo/img/coaching/c2-slates-hindi-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 900,
+   "alt": "Children sitting on the floor writing Hindi letters on slates",
+   "altHi": "ज़मीन पर बैठे बच्चे स्लेट पर हिंदी अक्षर लिख रहे हैं",
+   "category": "study-group",
+   "suggestedFor": [
+    "c2"
+   ],
+   "focal": {
+    "x": 0.4,
+    "y": 0.45
+   },
+   "objectPosition": "40% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-learning-at-rural-school-in-india-35558791/",
+   "photographer": "Harshad Pendse",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c2-rural-classroom",
+   "file": "coaching/c2-rural-classroom",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 114416,
+     "src": "/demo/img/coaching/c2-rural-classroom-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 45238,
+     "src": "/demo/img/coaching/c2-rural-classroom-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A crowded rural classroom with children listening at blue desks",
+   "altHi": "गाँव की भरी हुई कक्षा, नीली डेस्क पर ध्यान से सुनते बच्चे",
+   "category": "classroom",
+   "suggestedFor": [
+    "c2",
+    "c4"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.55
+   },
+   "objectPosition": "50% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-studying-in-rural-school-15119089/",
+   "photographer": "Pallav Suthar",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c3-hero-chemistry-lab",
+   "file": "coaching/c3-hero-chemistry-lab",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1440,
+     "bytes": 163552,
+     "src": "/demo/img/coaching/c3-hero-chemistry-lab-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 960,
+     "bytes": 91664,
+     "src": "/demo/img/coaching/c3-hero-chemistry-lab-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 600,
+     "bytes": 46300,
+     "src": "/demo/img/coaching/c3-hero-chemistry-lab-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1440,
+   "alt": "Glass flasks with coloured solutions lined up on a chemistry lab bench",
+   "altHi": "केमिस्ट्री लैब की बेंच पर रंगीन घोल वाले काँच के फ्लास्क",
+   "category": "lab",
+   "suggestedFor": [
+    "c3",
+    "c1"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.55
+   },
+   "objectPosition": "50% 55%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/clear-glass-bottles-on-brown-wooden-table-Q7ngZ0oKIfc",
+   "photographer": "Pawan Parihar",
+   "photographerUrl": "https://unsplash.com/@pawan_k_parihar",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c3-microscope",
+   "file": "coaching/c3-microscope",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 801,
+     "bytes": 51222,
+     "src": "/demo/img/coaching/c3-microscope-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 20982,
+     "src": "/demo/img/coaching/c3-microscope-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 801,
+   "alt": "A student in a lab coat and gloves looking through a microscope",
+   "altHi": "लैब कोट और दस्ताने पहने छात्रा माइक्रोस्कोप से देख रही है",
+   "category": "lab",
+   "suggestedFor": [
+    "c3",
+    "c1"
+   ],
+   "focal": {
+    "x": 0.6,
+    "y": 0.35
+   },
+   "objectPosition": "60% 35%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/woman-looking-on-microscope-inside-room-6q5QG8iIgRo",
+   "photographer": "Trust \"Tru\" Katsande",
+   "photographerUrl": "https://unsplash.com/@iamtru",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c3-test-tubes",
+   "file": "coaching/c3-test-tubes",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 34388,
+     "src": "/demo/img/coaching/c3-test-tubes-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 15684,
+     "src": "/demo/img/coaching/c3-test-tubes-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A student holding a test tube over a rack of glassware in a lab",
+   "altHi": "लैब में काँच के बर्तनों के ऊपर टेस्ट ट्यूब पकड़े छात्र",
+   "category": "lab",
+   "suggestedFor": [
+    "c3"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.45
+   },
+   "objectPosition": "50% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/student-conducting-chemistry-experiment-in-lab-environment-33469878/",
+   "photographer": "Elements Interactive",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c3-lab-practical",
+   "file": "coaching/c3-lab-practical",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 59126,
+     "src": "/demo/img/coaching/c3-lab-practical-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 22782,
+     "src": "/demo/img/coaching/c3-lab-practical-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A young man in a lab coat using a stereo microscope",
+   "altHi": "लैब कोट पहने युवक स्टीरियो माइक्रोस्कोप का उपयोग कर रहा है",
+   "category": "lab",
+   "suggestedFor": [
+    "c3",
+    "c1"
+   ],
+   "focal": {
+    "x": 0.55,
+    "y": 0.3
+   },
+   "objectPosition": "55% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-in-a-lab-coat-looking-through-a-microscope-TULwYHenq74",
+   "photographer": "Sina Bahar",
+   "photographerUrl": "https://unsplash.com/@sinabahar76",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c4-hero-classwork",
+   "file": "coaching/c4-hero-classwork",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1360,
+     "bytes": 184290,
+     "src": "/demo/img/coaching/c4-hero-classwork-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 907,
+     "bytes": 102794,
+     "src": "/demo/img/coaching/c4-hero-classwork-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 567,
+     "bytes": 50092,
+     "src": "/demo/img/coaching/c4-hero-classwork-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1360,
+   "alt": "Two schoolgirls in blue checked uniforms reading and writing at their desk",
+   "altHi": "नीली चेक यूनिफ़ॉर्म में दो छात्राएँ डेस्क पर पढ़ और लिख रही हैं",
+   "category": "classroom",
+   "suggestedFor": [
+    "c4"
+   ],
+   "focal": {
+    "x": 0.55,
+    "y": 0.45
+   },
+   "objectPosition": "55% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/two-young-girls-sitting-at-a-desk-in-a-classroom-TcKmus54ij0",
+   "photographer": "Swastik Arora",
+   "photographerUrl": "https://unsplash.com/@swastikarora",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c4-two-boys-desk",
+   "file": "coaching/c4-two-boys-desk",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 510,
+     "bytes": 59080,
+     "src": "/demo/img/coaching/c4-two-boys-desk-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 272,
+     "bytes": 20792,
+     "src": "/demo/img/coaching/c4-two-boys-desk-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 510,
+   "alt": "Two schoolboys in uniform working in a notebook at a shared desk",
+   "altHi": "यूनिफ़ॉर्म में दो छात्र एक डेस्क पर कॉपी में काम कर रहे हैं",
+   "category": "classroom",
+   "suggestedFor": [
+    "c4"
+   ],
+   "focal": {
+    "x": 0.45,
+    "y": 0.4
+   },
+   "objectPosition": "45% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/two-boys-are-sitting-at-a-desk-with-books-18012463/",
+   "photographer": "Swastik Arora",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c4-attentive-class",
+   "file": "coaching/c4-attentive-class",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 525,
+     "bytes": 55494,
+     "src": "/demo/img/coaching/c4-attentive-class-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 280,
+     "bytes": 21060,
+     "src": "/demo/img/coaching/c4-attentive-class-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 525,
+   "alt": "A row of schoolboys in blue uniforms listening in class",
+   "altHi": "नीली यूनिफ़ॉर्म में कतार में बैठे छात्र ध्यान से सुन रहे हैं",
+   "category": "classroom",
+   "suggestedFor": [
+    "c4",
+    "c2"
+   ],
+   "focal": {
+    "x": 0.6,
+    "y": 0.4
+   },
+   "objectPosition": "60% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-sitting-in-a-classroom-with-desks-and-chairs-18012456/",
+   "photographer": "Swastik Arora",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c4-notebook-writing",
+   "file": "coaching/c4-notebook-writing",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 68996,
+     "src": "/demo/img/coaching/c4-notebook-writing-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 24044,
+     "src": "/demo/img/coaching/c4-notebook-writing-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A girl bent over a notebook, writing with a pencil",
+   "altHi": "कॉपी पर झुककर पेंसिल से लिखती एक लड़की",
+   "category": "study-group",
+   "suggestedFor": [
+    "c4",
+    "c2"
+   ],
+   "focal": {
+    "x": 0.45,
+    "y": 0.4
+   },
+   "objectPosition": "45% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/young-girl-writing-in-a-notebook-with-a-pencil-wBzxapFHSOk",
+   "photographer": "Sudhakar Chandra",
+   "photographerUrl": "https://unsplash.com/@sudhakarchandra",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c5-hero-library-reader",
+   "file": "coaching/c5-hero-library-reader",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1280,
+     "bytes": 131540,
+     "src": "/demo/img/coaching/c5-hero-library-reader-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 853,
+     "bytes": 72886,
+     "src": "/demo/img/coaching/c5-hero-library-reader-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 533,
+     "bytes": 39066,
+     "src": "/demo/img/coaching/c5-hero-library-reader-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1280,
+   "alt": "A young man in a turban reading a book on the floor between library shelves",
+   "altHi": "लाइब्रेरी की अलमारियों के बीच फ़र्श पर बैठकर किताब पढ़ता पगड़ीधारी युवक",
+   "category": "library",
+   "suggestedFor": [
+    "c5"
+   ],
+   "focal": {
+    "x": 0.7,
+    "y": 0.4
+   },
+   "objectPosition": "70% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/man-sitting-in-front-of-bookshelf-zPqoM1Sqo7Q",
+   "photographer": "Dollar Gill",
+   "photographerUrl": "https://unsplash.com/@dollargill",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c5-library-aisle",
+   "file": "coaching/c5-library-aisle",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 64354,
+     "src": "/demo/img/coaching/c5-library-aisle-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 24284,
+     "src": "/demo/img/coaching/c5-library-aisle-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A young woman reading a book between library shelves",
+   "altHi": "लाइब्रेरी की अलमारियों के बीच किताब पढ़ती युवती",
+   "category": "library",
+   "suggestedFor": [
+    "c5",
+    "c1"
+   ],
+   "focal": {
+    "x": 0.55,
+    "y": 0.45
+   },
+   "objectPosition": "55% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/woman-in-dress-at-library-16504591/",
+   "photographer": "Shantanu Kumar",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "coaching/c5-reading-room",
+   "file": "coaching/c5-reading-room",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 900,
+     "bytes": 54322,
+     "src": "/demo/img/coaching/c5-reading-room-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 480,
+     "bytes": 21264,
+     "src": "/demo/img/coaching/c5-reading-room-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 900,
+   "alt": "A woman reading alone at a wooden table in a quiet reading room",
+   "altHi": "शांत रीडिंग रूम में लकड़ी की मेज़ पर अकेले पढ़ती महिला",
+   "category": "library",
+   "suggestedFor": [
+    "c5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/woman-reading-book-inside-the-library-YhfxJpa_Ch0",
+   "photographer": "Praveen Gupta",
+   "photographerUrl": "https://unsplash.com/@praveeeeeeeen",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c5-library-floor",
+   "file": "coaching/c5-library-floor",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 103070,
+     "src": "/demo/img/coaching/c5-library-floor-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 41544,
+     "src": "/demo/img/coaching/c5-library-floor-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A young man sitting on a library floor reading, with books stacked beside him",
+   "altHi": "लाइब्रेरी के फ़र्श पर बैठकर पढ़ता युवक, पास में किताबों का ढेर",
+   "category": "library",
+   "suggestedFor": [
+    "c5"
+   ],
+   "focal": {
+    "x": 0.6,
+    "y": 0.45
+   },
+   "objectPosition": "60% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/man-reading-book-on-the-library-Kyoshy7BJIQ",
+   "photographer": "Dollar Gill",
+   "photographerUrl": "https://unsplash.com/@dollargill",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c1-hero-focused-class",
+   "file": "coaching/c1-hero-focused-class",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 101262,
+     "src": "/demo/img/coaching/c1-hero-focused-class-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 63458,
+     "src": "/demo/img/coaching/c1-hero-focused-class-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 36908,
+     "src": "/demo/img/coaching/c1-hero-focused-class-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "Senior students in a coaching classroom listening closely, one resting his chin on his fist over a notebook of notes",
+   "altHi": "कोचिंग क्लास में ध्यान से सुनते सीनियर छात्र, एक छात्र नोट्स की कॉपी के ऊपर मुट्ठी पर ठोड़ी टिकाए हुए",
+   "category": "coaching-classroom",
+   "suggestedFor": [
+    "c1",
+    "c5"
+   ],
+   "role": "hero",
+   "retouch": "Institute name badges on three shirts cloned out (no real institution names).",
+   "focal": {
+    "x": 0.45,
+    "y": 0.35
+   },
+   "objectPosition": "45% 35%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-group-of-people-sitting-at-desks-in-a-classroom-rwmYLRgkjsE",
+   "photographer": "Faisal Qureshi",
+   "photographerUrl": "https://unsplash.com/@prayagraj_meri_jaan_",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "coaching/c4-hero-bright-class",
+   "file": "coaching/c4-hero-bright-class",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 152230,
+     "src": "/demo/img/coaching/c4-hero-bright-class-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 82574,
+     "src": "/demo/img/coaching/c4-hero-bright-class-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 39176,
+     "src": "/demo/img/coaching/c4-hero-bright-class-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "Boys in checked uniforms reading and writing at their desks in a bright classroom with a yellow wall",
+   "altHi": "पीली दीवार वाली रोशन क्लास में चेक यूनिफ़ॉर्म पहने लड़के अपनी डेस्क पर पढ़ते और लिखते हुए",
+   "category": "coaching-classroom",
+   "suggestedFor": [
+    "c4",
+    "s1"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.6
+   },
+   "objectPosition": "50% 60%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-group-of-children-sitting-at-desks-in-a-classroom-OcDJhBm8Jnc",
+   "photographer": "Haseeb Modi",
+   "photographerUrl": "https://unsplash.com/@haseebm",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "people/teacher-w01",
+   "file": "people/teacher-w01",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 16892,
+     "src": "/demo/img/people/teacher-w01-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5458,
+     "src": "/demo/img/people/teacher-w01-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling woman in an orange kurta and white dupatta",
+   "altHi": "नारंगी कुर्ता और सफ़ेद दुपट्टा पहने मुस्कुराती महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-in-an-orange-and-white-shirt-is-smiling-E2__VLxBZvA",
+   "photographer": "Parimal Jain",
+   "photographerUrl": "https://unsplash.com/@parimaljain",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/teacher-w02",
+   "file": "people/teacher-w02",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 26696,
+     "src": "/demo/img/people/teacher-w02-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 10872,
+     "src": "/demo/img/people/teacher-w02-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling woman with glasses in a checked kurta",
+   "altHi": "चश्मा और चेक कुर्ता पहने मुस्कुराती महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-wearing-glasses-and-a-black-and-white-checkered-shirt-o45-2SlbiTU",
+   "photographer": "Abhinav Roy",
+   "photographerUrl": "https://unsplash.com/@royphotography",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/teacher-w03",
+   "file": "people/teacher-w03",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 15988,
+     "src": "/demo/img/people/teacher-w03-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5288,
+     "src": "/demo/img/people/teacher-w03-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling woman with glasses in a green printed kurta",
+   "altHi": "चश्मा और हरा प्रिंटेड कुर्ता पहने मुस्कुराती महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-person-holding-a-tablet-FxcI2ZnFmRg",
+   "photographer": "SUSHMITA NAG",
+   "photographerUrl": "https://unsplash.com/@susnag",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/teacher-w04",
+   "file": "people/teacher-w04",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 15842,
+     "src": "/demo/img/people/teacher-w04-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5326,
+     "src": "/demo/img/people/teacher-w04-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a cheerful woman with glasses resting her chin on her hands",
+   "altHi": "हाथों पर ठुड्डी टिकाए चश्मा पहने खुशमिज़ाज महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-smiling-woman-with-glasses-looks-happy-AZ1Bqm1GJQ0",
+   "photographer": "Gabriel Ogulu",
+   "photographerUrl": "https://unsplash.com/@ogulu_18",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/teacher-w05",
+   "file": "people/teacher-w05",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 18140,
+     "src": "/demo/img/people/teacher-w05-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5896,
+     "src": "/demo/img/people/teacher-w05-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a senior woman with short dark hair and a calm smile",
+   "altHi": "छोटे काले बालों और हल्की मुस्कान वाली वरिष्ठ महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/woman-wearing-blue-top-1CoyeOsvqG4",
+   "photographer": "Ashwin Vaswani",
+   "photographerUrl": "https://unsplash.com/@ashwinv11",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/teacher-w06",
+   "file": "people/teacher-w06",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 26092,
+     "src": "/demo/img/people/teacher-w06-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 7294,
+     "src": "/demo/img/people/teacher-w06-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling young woman in a denim shirt at her desk",
+   "altHi": "डेनिम शर्ट पहने अपनी डेस्क पर मुस्कुराती युवती का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/woman-in-blue-button-up-shirt-smiling-tnUp0OLSkDg",
+   "photographer": "Coqui Chang",
+   "photographerUrl": "https://unsplash.com/@coqui_chang",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/teacher-w07",
+   "file": "people/teacher-w07",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 15910,
+     "src": "/demo/img/people/teacher-w07-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5128,
+     "src": "/demo/img/people/teacher-w07-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a woman in a pink saree with a bindi and gold earrings",
+   "altHi": "गुलाबी साड़ी, बिंदी और सोने के झुमके पहने महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/an-elderly-indian-woman-wearing-traditional-jewelry-and-ornate-jewelry-wxOlFToHPEY",
+   "photographer": "Tanmay Abhay Mahajan",
+   "photographerUrl": "https://unsplash.com/@mr_bond1999",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/teacher-m01",
+   "file": "people/teacher-m01",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 12976,
+     "src": "/demo/img/people/teacher-m01-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5020,
+     "src": "/demo/img/people/teacher-m01-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling man with glasses in a dark blazer",
+   "altHi": "चश्मा और गहरा ब्लेज़र पहने मुस्कुराते पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-smiling-man-wearing-glasses-and-a-suit-jacket-zXR0fNWHDDQ",
+   "photographer": "Kamal Dharma Teja Dasari",
+   "photographerUrl": "https://unsplash.com/@dharma632",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/teacher-m02",
+   "file": "people/teacher-m02",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 11264,
+     "src": "/demo/img/people/teacher-m02-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 3684,
+     "src": "/demo/img/people/teacher-m02-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a bearded man in a checked shirt against a dark wall",
+   "altHi": "गहरी दीवार के सामने चेक शर्ट पहने दाढ़ी वाले पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/man-in-white-and-brown-plaid-dress-shirt-NWP0AyT0VbY",
+   "photographer": "Uvais Ur Rehman",
+   "photographerUrl": "https://unsplash.com/@uvaisurrehman",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/teacher-m03",
+   "file": "people/teacher-m03",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 9788,
+     "src": "/demo/img/people/teacher-m03-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 4194,
+     "src": "/demo/img/people/teacher-m03-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a bearded man in a light blue shirt",
+   "altHi": "हल्की नीली शर्ट पहने दाढ़ी वाले पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-with-a-beard-and-a-blue-shirt-ET38skjK7_Y",
+   "photographer": "Levi Meir Clancy",
+   "photographerUrl": "https://unsplash.com/@levimeirclancy",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/teacher-m04",
+   "file": "people/teacher-m04",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 11062,
+     "src": "/demo/img/people/teacher-m04-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 4184,
+     "src": "/demo/img/people/teacher-m04-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a young man with glasses and a beard in a black shirt",
+   "altHi": "काली शर्ट, चश्मा और दाढ़ी वाले युवक का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-sitting-at-a-desk-with-a-laptop-and-a-globe-O-1eWnY5_xk",
+   "photographer": "Fotos",
+   "photographerUrl": "https://unsplash.com/@fotospk",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/teacher-m05",
+   "file": "people/teacher-m05",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 17792,
+     "src": "/demo/img/people/teacher-m05-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 3578,
+     "src": "/demo/img/people/teacher-m05-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a man with a moustache in a pale pink shirt",
+   "altHi": "हल्की गुलाबी शर्ट पहने मूँछों वाले पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/man-in-white-dress-shirt-fvm4bFVK7qM",
+   "photographer": "Ashwini Chaudhary(Monty)",
+   "photographerUrl": "https://unsplash.com/@suicide_chewbacca",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/teacher-m06",
+   "file": "people/teacher-m06",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 28630,
+     "src": "/demo/img/people/teacher-m06-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 8226,
+     "src": "/demo/img/people/teacher-m06-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a senior man with glasses laughing warmly",
+   "altHi": "चश्मा पहने खुलकर हँसते वरिष्ठ पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/older-man-in-light-blue-shirt-_qsNSM2HAb0",
+   "photographer": "litoon dev",
+   "photographerUrl": "https://unsplash.com/@litoondev",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/teacher-m07",
+   "file": "people/teacher-m07",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 15928,
+     "src": "/demo/img/people/teacher-m07-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5514,
+     "src": "/demo/img/people/teacher-m07-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling man with thick glasses in front of a chalkboard",
+   "altHi": "चॉकबोर्ड के सामने मोटे चश्मे वाले मुस्कुराते पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/confident-teacher-in-classroom-with-chalkboard-36781271/",
+   "photographer": "Anil Sharma",
+   "licence": "Pexels License (https://www.pexels.com/license/)",
+   "gender": "male"
+  },
+  {
+   "id": "people/teacher-w08",
+   "file": "people/teacher-w08",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 14374,
+     "src": "/demo/img/people/teacher-w08-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 4676,
+     "src": "/demo/img/people/teacher-w08-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a woman with her hair in a bun, in a navy blazer against a white wall",
+   "altHi": "सफ़ेद दीवार के सामने नेवी ब्लेज़र में जूड़ा बाँधे महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "female",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/woman-in-blue-blazer-smiling-7580837/",
+   "photographer": "RDNE Stock project",
+   "photographerUrl": "https://www.pexels.com/@rdne/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-w09",
+   "file": "people/teacher-w09",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 12386,
+     "src": "/demo/img/people/teacher-w09-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 4922,
+     "src": "/demo/img/people/teacher-w09-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a woman with glasses and a pearl necklace in a dark blazer",
+   "altHi": "गहरे ब्लेज़र और मोतियों की माला में चश्मा पहने महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "female",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/elegant-businesswoman-in-formal-attire-32358666/",
+   "photographer": "M Kamran Arvi",
+   "photographerUrl": "https://www.pexels.com/@m-kamran-arvi-513966029/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-w10",
+   "file": "people/teacher-w10",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 12432,
+     "src": "/demo/img/people/teacher-w10-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 4556,
+     "src": "/demo/img/people/teacher-w10-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a woman with glasses and a bindi in a red and cream saree",
+   "altHi": "लाल और क्रीम साड़ी में बिंदी और चश्मा लगाए महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "female",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/portrait-of-an-indian-woman-in-red-sari-17450830/",
+   "photographer": "Mouli Ghosh",
+   "photographerUrl": "https://www.pexels.com/@mouli-ghosh-615183603/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-w11",
+   "file": "people/teacher-w11",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 34634,
+     "src": "/demo/img/people/teacher-w11-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 11794,
+     "src": "/demo/img/people/teacher-w11-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of an older woman with sindoor in a green checked kurta",
+   "altHi": "हरे चेक वाले कुर्ते में सिंदूर लगाए बुज़ुर्ग महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "female",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/33415615/",
+   "photographer": "RAHUL SINGH",
+   "photographerUrl": "https://www.pexels.com/@rahul-singh-233480806/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-w12",
+   "file": "people/teacher-w12",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 25122,
+     "src": "/demo/img/people/teacher-w12-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 9242,
+     "src": "/demo/img/people/teacher-w12-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a woman with glasses in a brown shawl, standing in a garden",
+   "altHi": "बगीचे में भूरे शॉल में चश्मा पहने खड़ी महिला का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "female",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/portrait-of-a-woman-outdoors-in-sunlight-39468389/",
+   "photographer": "Ravinder Ravi",
+   "photographerUrl": "https://www.pexels.com/@ravinder-ravi-108844465/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-m08",
+   "file": "people/teacher-m08",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 15398,
+     "src": "/demo/img/people/teacher-m08-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5196,
+     "src": "/demo/img/people/teacher-m08-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a grey-haired man with glasses in a navy suit",
+   "altHi": "नेवी सूट में चश्मा पहने सफ़ेद बालों वाले पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "male",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/professional-portrait-of-businessman-in-office-setting-37894130/",
+   "photographer": "Vishal Kampani",
+   "photographerUrl": "https://www.pexels.com/@vishal-kampani-2159325334/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-m09",
+   "file": "people/teacher-m09",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 13832,
+     "src": "/demo/img/people/teacher-m09-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5288,
+     "src": "/demo/img/people/teacher-m09-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a man in a cream half-sleeve shirt against a grey wall",
+   "altHi": "धूसर दीवार के सामने क्रीम हाफ़-स्लीव शर्ट में पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "male",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/confident-adult-man-with-arms-crossed-portrait-31695306/",
+   "photographer": "Anil Sharma",
+   "photographerUrl": "https://www.pexels.com/@shootsaga/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-m10",
+   "file": "people/teacher-m10",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 11416,
+     "src": "/demo/img/people/teacher-m10-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 4228,
+     "src": "/demo/img/people/teacher-m10-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a Sikh man in a navy turban and blazer beside a whiteboard",
+   "altHi": "व्हाइटबोर्ड के पास नेवी पगड़ी और ब्लेज़र में सिख पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "male",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/portrait-of-a-teacher-writing-on-a-whiteboard-18870261/",
+   "photographer": "World Sikh Organization of Canada",
+   "photographerUrl": "https://www.pexels.com/@worldsikhorg/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-m11",
+   "file": "people/teacher-m11",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 12742,
+     "src": "/demo/img/people/teacher-m11-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 4576,
+     "src": "/demo/img/people/teacher-m11-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a bearded man with glasses in a white shirt in front of a chalkboard",
+   "altHi": "चॉकबोर्ड के सामने सफ़ेद शर्ट में चश्मा पहने दाढ़ी वाले पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "male",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/confident-man-standing-in-front-of-blackboard-36781276/",
+   "photographer": "Anil Sharma",
+   "photographerUrl": "https://www.pexels.com/@shootsaga/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-m12",
+   "file": "people/teacher-m12",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 15966,
+     "src": "/demo/img/people/teacher-m12-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 5054,
+     "src": "/demo/img/people/teacher-m12-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a man with a moustache in a dark suit and blue shirt",
+   "altHi": "गहरे सूट और नीली शर्ट में मूँछों वाले पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "male",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/man-wearing-black-suit-over-his-blue-shirt-14559537/",
+   "photographer": "Elangovan Srinivasan",
+   "photographerUrl": "https://www.pexels.com/@elangovan-srinivasan-346903513/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "people/teacher-m13",
+   "file": "people/teacher-m13",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 480,
+     "h": 480,
+     "bytes": 26968,
+     "src": "/demo/img/people/teacher-m13-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 240,
+     "bytes": 9006,
+     "src": "/demo/img/people/teacher-m13-240.webp"
+    }
+   ],
+   "width": 480,
+   "height": 480,
+   "alt": "Portrait of a smiling older man with a moustache in a cream shirt",
+   "altHi": "क्रीम शर्ट में मूँछों वाले मुस्कुराते बुज़ुर्ग पुरुष का पोर्ट्रेट",
+   "category": "teacher-portrait",
+   "suggestedFor": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5"
+   ],
+   "gender": "male",
+   "focal": {
+    "x": 0.5,
+    "y": 0.4
+   },
+   "objectPosition": "50% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/a-portrait-of-an-elderly-man-with-mustache-16447736/",
+   "photographer": "Lisa and everlast jorney",
+   "photographerUrl": "https://www.pexels.com/@llizzk/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/hero-urban-senior-girls-class",
+   "file": "school/hero-urban-senior-girls-class",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1280,
+     "bytes": 112758,
+     "src": "/demo/img/school/hero-urban-senior-girls-class-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 853,
+     "bytes": 66976,
+     "src": "/demo/img/school/hero-urban-senior-girls-class-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 533,
+     "bytes": 35342,
+     "src": "/demo/img/school/hero-urban-senior-girls-class-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1280,
+   "alt": "Senior schoolgirls in white and red uniforms listening in a full classroom",
+   "altHi": "सफ़ेद और लाल यूनिफ़ॉर्म में सीनियर छात्राएँ भरी कक्षा में ध्यान से सुन रही हैं",
+   "category": "hero-urban-school",
+   "suggestedFor": [
+    "s1",
+    "s2"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.6
+   },
+   "objectPosition": "50% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/photograph-of-girls-wearing-uniform-3231359/",
+   "photographer": "Yogendra Singh",
+   "photographerUrl": "https://www.pexels.com/@yogendras31/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/hero-rural-girls-writing",
+   "file": "school/hero-rural-girls-writing",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 145150,
+     "src": "/demo/img/school/hero-rural-girls-writing-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 81802,
+     "src": "/demo/img/school/hero-rural-girls-writing-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 39696,
+     "src": "/demo/img/school/hero-rural-girls-writing-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "Two girls in blue checked uniforms writing in their notebooks in a village classroom",
+   "altHi": "नीली चेक यूनिफ़ॉर्म में दो लड़कियाँ गाँव की कक्षा में कॉपी में लिख रही हैं",
+   "category": "hero-rural-school",
+   "suggestedFor": [
+    "s2"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.55,
+    "y": 0.55
+   },
+   "objectPosition": "55% 55%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/two-young-girls-sitting-at-a-desk-in-a-classroom-TcKmus54ij0",
+   "photographer": "Swastik Arora",
+   "photographerUrl": "https://unsplash.com/@swastikarora",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "school/hero-playschool-drawing",
+   "file": "school/hero-playschool-drawing",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1280,
+     "bytes": 65440,
+     "src": "/demo/img/school/hero-playschool-drawing-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 853,
+     "bytes": 39428,
+     "src": "/demo/img/school/hero-playschool-drawing-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 533,
+     "bytes": 21298,
+     "src": "/demo/img/school/hero-playschool-drawing-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1280,
+   "alt": "Two young girls drawing with crayons at a table in a bright classroom",
+   "altHi": "रोशन कक्षा में दो छोटी लड़कियाँ मेज़ पर क्रेयॉन से चित्र बना रही हैं",
+   "category": "playschool",
+   "suggestedFor": [
+    "s3"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.6
+   },
+   "objectPosition": "72% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/two-girls-doing-school-works-1720186/",
+   "photographer": "Pragyan Bezbaruah",
+   "photographerUrl": "https://www.pexels.com/@pragyanbezbo/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/hero-residential-campus",
+   "file": "school/hero-residential-campus",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1210,
+     "bytes": 198502,
+     "src": "/demo/img/school/hero-residential-campus-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 806,
+     "bytes": 107694,
+     "src": "/demo/img/school/hero-residential-campus-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 504,
+     "bytes": 42380,
+     "src": "/demo/img/school/hero-residential-campus-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1210,
+   "alt": "Red brick school buildings, lawns and a tree-lined drive on a large campus",
+   "altHi": "बड़े कैंपस में लाल ईंट की इमारतें, लॉन और पेड़ों वाला रास्ता",
+   "category": "residential",
+   "suggestedFor": [
+    "s4",
+    "s5"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.6,
+    "y": 0.45
+   },
+   "objectPosition": "60% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/modern-educational-campus-in-india-at-daytime-37145891/",
+   "photographer": "Mohammad Rashid Raza",
+   "photographerUrl": "https://www.pexels.com/@mohammad-rashid-raza-439663678/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/hero-international-library",
+   "file": "school/hero-international-library",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1282,
+     "bytes": 124160,
+     "src": "/demo/img/school/hero-international-library-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 855,
+     "bytes": 70236,
+     "src": "/demo/img/school/hero-international-library-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 534,
+     "bytes": 34054,
+     "src": "/demo/img/school/hero-international-library-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1282,
+   "alt": "Two senior students reading between tall bookshelves in a library",
+   "altHi": "लाइब्रेरी में ऊँची किताबों की अलमारियों के बीच पढ़ते दो सीनियर विद्यार्थी",
+   "category": "international",
+   "suggestedFor": [
+    "s5",
+    "s1"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.45,
+    "y": 0.5
+   },
+   "objectPosition": "45% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/two-types-of-people-in-frame-1st-one-is-reading-book-other-one-is-using-smartphone-16504390/",
+   "photographer": "Shantanu Kumar",
+   "photographerUrl": "https://www.pexels.com/@theshantanukr/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/sports-basketball",
+   "file": "school/sports-basketball",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 76652,
+     "src": "/demo/img/school/sports-basketball-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 30022,
+     "src": "/demo/img/school/sports-basketball-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Teenage boys playing basketball on a colourful outdoor court",
+   "altHi": "रंगीन आउटडोर कोर्ट पर बास्केटबॉल खेलते किशोर लड़के",
+   "category": "sports",
+   "suggestedFor": [
+    "s1",
+    "s5",
+    "s4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.55
+   },
+   "objectPosition": "55% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/youth-basketball-game-on-colorful-outdoor-court-31091356/",
+   "photographer": "Kalistro",
+   "photographerUrl": "https://www.pexels.com/@kalistro666/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/lab-microscopes",
+   "file": "school/lab-microscopes",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 801,
+     "bytes": 25894,
+     "src": "/demo/img/school/lab-microscopes-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 11774,
+     "src": "/demo/img/school/lab-microscopes-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 801,
+   "alt": "A row of microscopes on a clean science lab bench",
+   "altHi": "साफ़ साइंस लैब की बेंच पर एक कतार में रखे माइक्रोस्कोप",
+   "category": "lab",
+   "suggestedFor": [
+    "s1",
+    "s5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.6
+   },
+   "objectPosition": "45% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/microscopes-on-the-floor-15290006/",
+   "photographer": "Vladimir Srajber",
+   "photographerUrl": "https://www.pexels.com/@vladimirsrajber/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/library-reading-hall",
+   "file": "school/library-reading-hall",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 876,
+     "bytes": 72870,
+     "src": "/demo/img/school/library-reading-hall-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 467,
+     "bytes": 29622,
+     "src": "/demo/img/school/library-reading-hall-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 876,
+   "alt": "A bright library with bookshelves and rows of reading tables",
+   "altHi": "किताबों की अलमारियों और पढ़ने की मेज़ों वाली रोशन लाइब्रेरी",
+   "category": "library",
+   "suggestedFor": [
+    "s1",
+    "s5",
+    "s4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.55
+   },
+   "objectPosition": "50% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/modern-library-interior-with-bookshelves-and-seating-38452124/",
+   "photographer": "Zaonar Saizainalin",
+   "photographerUrl": "https://www.pexels.com/@zaonar-saizainalin-547935324/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/yoga-group",
+   "file": "school/yoga-group",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 67152,
+     "src": "/demo/img/school/yoga-group-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 30072,
+     "src": "/demo/img/school/yoga-group-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Children and teenagers doing yoga together outdoors on mats",
+   "altHi": "बाहर चटाई पर एक साथ योग करते बच्चे और किशोर",
+   "category": "sports",
+   "suggestedFor": [
+    "s1",
+    "s4",
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.55
+   },
+   "objectPosition": "50% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-practicing-yoga-outdoors-in-india-38366608/",
+   "photographer": "Arghadeep Sain",
+   "photographerUrl": "https://www.pexels.com/@nev3r21/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/transport-school-van",
+   "file": "school/transport-school-van",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 792,
+     "bytes": 170438,
+     "src": "/demo/img/school/transport-school-van-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 423,
+     "bytes": 63714,
+     "src": "/demo/img/school/transport-school-van-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 792,
+   "alt": "A yellow school van with a green stripe parked under a tree",
+   "altHi": "पेड़ के नीचे खड़ी हरी पट्टी वाली पीली स्कूल वैन",
+   "category": "transport",
+   "suggestedFor": [
+    "s2",
+    "s1",
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.65
+   },
+   "objectPosition": "55% 65%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/yellow-bus-parked-under-a-tree-10363169/",
+   "photographer": "Yugal Srivastava",
+   "photographerUrl": "https://www.pexels.com/@yugalsrivastava/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/classroom-rural-boys",
+   "file": "school/classroom-rural-boys",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 675,
+     "bytes": 74088,
+     "src": "/demo/img/school/classroom-rural-boys-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 360,
+     "bytes": 25286,
+     "src": "/demo/img/school/classroom-rural-boys-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 675,
+   "alt": "Two boys in blue checked uniforms listening at their desk in a village classroom",
+   "altHi": "गाँव की कक्षा में नीली चेक यूनिफ़ॉर्म में दो लड़के अपनी डेस्क पर ध्यान से सुन रहे हैं",
+   "category": "classroom",
+   "suggestedFor": [
+    "s2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.65,
+    "y": 0.45
+   },
+   "objectPosition": "65% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/two-young-boys-sitting-at-a-desk-in-a-classroom-34H2OZ5YphA",
+   "photographer": "Swastik Arora",
+   "photographerUrl": "https://unsplash.com/@swastikarora",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "school/classroom-hindi-alphabet-wall",
+   "file": "school/classroom-hindi-alphabet-wall",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 88870,
+     "src": "/demo/img/school/classroom-hindi-alphabet-wall-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 34620,
+     "src": "/demo/img/school/classroom-hindi-alphabet-wall-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Smiling children sitting in front of a wall painted with Hindi and English letters",
+   "altHi": "हिंदी और अंग्रेज़ी अक्षरों से रंगी दीवार के सामने बैठे मुस्कुराते बच्चे",
+   "category": "classroom",
+   "suggestedFor": [
+    "s2",
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.65
+   },
+   "objectPosition": "45% 65%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/smiling-girl-and-boys-sitting-under-walls-with-letters-at-school-20556421/",
+   "photographer": "Kunal Lakhotia",
+   "photographerUrl": "https://www.pexels.com/@kunal-lakhotia-781256899/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/midday-meal",
+   "file": "school/midday-meal",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 93558,
+     "src": "/demo/img/school/midday-meal-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 39782,
+     "src": "/demo/img/school/midday-meal-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Three schoolboys in blue uniforms eating a meal on leaf plates",
+   "altHi": "नीली यूनिफ़ॉर्म में तीन स्कूली लड़के पत्तल पर खाना खा रहे हैं",
+   "category": "dining",
+   "suggestedFor": [
+    "s2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.65,
+    "y": 0.6
+   },
+   "objectPosition": "65% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/schoolboys-sitting-crossed-legged-on-a-ground-and-eating-lunch-20059284/",
+   "photographer": "Rajesh S Balouria",
+   "photographerUrl": "https://www.pexels.com/@rajesh-s-balouria-1289088/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/classroom-slates",
+   "file": "school/classroom-slates",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 900,
+     "bytes": 86138,
+     "src": "/demo/img/school/classroom-slates-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 480,
+     "bytes": 34714,
+     "src": "/demo/img/school/classroom-slates-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 900,
+   "alt": "Young children practising Hindi letters on slates while sitting on the floor",
+   "altHi": "ज़मीन पर बैठकर स्लेट पर हिंदी अक्षर लिखना सीखते छोटे बच्चे",
+   "category": "classroom",
+   "suggestedFor": [
+    "s2",
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-learning-at-rural-school-in-india-35558791/",
+   "photographer": "Harshad Pendse",
+   "photographerUrl": "https://www.pexels.com/@harshad-pendse-2158718535/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/classroom-rural-group",
+   "file": "school/classroom-rural-group",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 126558,
+     "src": "/demo/img/school/classroom-rural-group-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 50998,
+     "src": "/demo/img/school/classroom-rural-group-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "Children at blue desks looking up at the lesson in a simple village classroom",
+   "altHi": "गाँव की सादी कक्षा में नीली डेस्क पर बैठे बच्चे पाठ की ओर देख रहे हैं",
+   "category": "classroom",
+   "suggestedFor": [
+    "s2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.72
+   },
+   "objectPosition": "50% 72%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-studying-in-rural-school-15119089/",
+   "photographer": "Pallav Suthar",
+   "photographerUrl": "https://www.pexels.com/@pallav-suthar-420903511/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/campus-rural-school-fields",
+   "file": "school/campus-rural-school-fields",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 900,
+     "bytes": 101334,
+     "src": "/demo/img/school/campus-rural-school-fields-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 480,
+     "bytes": 30076,
+     "src": "/demo/img/school/campus-rural-school-fields-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 900,
+   "alt": "A school building standing among green fields under a cloudy sky",
+   "altHi": "बादलों वाले आसमान के नीचे हरे खेतों के बीच खड़ी स्कूल की इमारत",
+   "category": "campus",
+   "suggestedFor": [
+    "s2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.62,
+    "y": 0.55
+   },
+   "objectPosition": "62% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/lush-green-fields-and-building-under-blue-sky-39198174/",
+   "photographer": "Avinash Vishwakarma",
+   "photographerUrl": "https://www.pexels.com/@imavinash17/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/playschool-kindergarten-group",
+   "file": "school/playschool-kindergarten-group",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 675,
+     "bytes": 79644,
+     "src": "/demo/img/school/playschool-kindergarten-group-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 360,
+     "bytes": 34198,
+     "src": "/demo/img/school/playschool-kindergarten-group-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 675,
+   "alt": "Kindergarten children in checked uniforms sitting close together",
+   "altHi": "चेक यूनिफ़ॉर्म में पास-पास बैठे नर्सरी के बच्चे",
+   "category": "playschool",
+   "suggestedFor": [
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.5
+   },
+   "objectPosition": "45% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/children-sitting-on-the-ground-in-the-classroom-5636692/",
+   "photographer": "suresh boddu",
+   "photographerUrl": "https://www.pexels.com/@suresh-boddu-3771224/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/playschool-room",
+   "file": "school/playschool-room",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 660,
+     "bytes": 26902,
+     "src": "/demo/img/school/playschool-room-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 352,
+     "bytes": 11966,
+     "src": "/demo/img/school/playschool-room-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 660,
+   "alt": "An empty bright play room with small wooden chairs, toys and a green rug",
+   "altHi": "छोटी लकड़ी की कुर्सियों, खिलौनों और हरे कालीन वाला खाली रोशन प्ले रूम",
+   "category": "playschool",
+   "suggestedFor": [
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.55
+   },
+   "objectPosition": "55% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/brown-wooden-table-with-chairs-8088099/",
+   "photographer": "Artem Podrez",
+   "photographerUrl": "https://www.pexels.com/@artempodrez/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/playschool-floor-circle",
+   "file": "school/playschool-floor-circle",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 77824,
+     "src": "/demo/img/school/playschool-floor-circle-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 34922,
+     "src": "/demo/img/school/playschool-floor-circle-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "Young children sitting in a circle on the classroom floor",
+   "altHi": "कक्षा के फ़र्श पर घेरा बनाकर बैठे छोटे बच्चे",
+   "category": "playschool",
+   "suggestedFor": [
+    "s3",
+    "s2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.75
+   },
+   "objectPosition": "50% 75%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/group-of-listening-little-children-sitting-on-the-floor-1895114/",
+   "photographer": "Balljinder Singh",
+   "photographerUrl": "https://www.pexels.com/@balljinder-singh-666149/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/playschool-playground",
+   "file": "school/playschool-playground",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 154990,
+     "src": "/demo/img/school/playschool-playground-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 52270,
+     "src": "/demo/img/school/playschool-playground-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A colourful playground with slides next to a school building",
+   "altHi": "स्कूल की इमारत के पास फिसलपट्टी वाला रंगीन खेल का मैदान",
+   "category": "playschool",
+   "suggestedFor": [
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.6
+   },
+   "objectPosition": "55% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/colorful-playground-equipment-in-bengaluru-29271886/",
+   "photographer": "Naveed Basapur",
+   "photographerUrl": "https://www.pexels.com/@naveed-basapur-454790677/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/hostel-courtyard",
+   "file": "school/hostel-courtyard",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 900,
+     "bytes": 236230,
+     "src": "/demo/img/school/hostel-courtyard-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 480,
+     "bytes": 74260,
+     "src": "/demo/img/school/hostel-courtyard-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 900,
+   "alt": "A quiet courtyard with a big tree between two hostel buildings",
+   "altHi": "दो हॉस्टल इमारतों के बीच बड़े पेड़ वाला शांत आँगन",
+   "category": "hostel",
+   "suggestedFor": [
+    "s4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.55
+   },
+   "objectPosition": "50% 55%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/green-trees-near-yellow-concrete-building-during-daytime-cg-9u4h5Lzs",
+   "photographer": "Anjoe Paul",
+   "photographerUrl": "https://unsplash.com/@anjoepaul",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "school/dining-hall",
+   "file": "school/dining-hall",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 106478,
+     "src": "/demo/img/school/dining-hall-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 42062,
+     "src": "/demo/img/school/dining-hall-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A sunlit dining hall with wooden tables and large windows",
+   "altHi": "लकड़ी की मेज़ों और बड़ी खिड़कियों वाला धूप से भरा डाइनिंग हॉल",
+   "category": "dining",
+   "suggestedFor": [
+    "s4",
+    "s5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.6
+   },
+   "objectPosition": "45% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/sunlit-hall-with-windows-13871340/",
+   "photographer": "Matheus Bertelli",
+   "photographerUrl": "https://www.pexels.com/@bertellifotografia/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/prep-study-night",
+   "file": "school/prep-study-night",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 23896,
+     "src": "/demo/img/school/prep-study-night-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 11410,
+     "src": "/demo/img/school/prep-study-night-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A student studying at a desk under a lamp at night",
+   "altHi": "रात में लैंप की रोशनी में मेज़ पर पढ़ता विद्यार्थी",
+   "category": "hostel",
+   "suggestedFor": [
+    "s4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.35,
+    "y": 0.55
+   },
+   "objectPosition": "35% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/a-woman-with-eyeglasses-writing-on-white-paper-under-a-light-8921700/",
+   "photographer": "Bikram Bezbaruah",
+   "photographerUrl": "https://www.pexels.com/@bikibez/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/sports-cricket-coaching",
+   "file": "school/sports-cricket-coaching",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 163418,
+     "src": "/demo/img/school/sports-cricket-coaching-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 48994,
+     "src": "/demo/img/school/sports-cricket-coaching-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A coach guiding young cricketers during practice at the nets",
+   "altHi": "नेट्स पर अभ्यास के दौरान युवा क्रिकेटरों को सिखाते कोच",
+   "category": "sports",
+   "suggestedFor": [
+    "s4",
+    "s1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.65
+   },
+   "objectPosition": "55% 65%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/cricket-27907317/",
+   "photographer": "Phalansh Eeshev",
+   "photographerUrl": "https://www.pexels.com/@phalansheeshev/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/sports-day-race",
+   "file": "school/sports-day-race",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 101486,
+     "src": "/demo/img/school/sports-day-race-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 38896,
+     "src": "/demo/img/school/sports-day-race-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Young athletes at the start line of a race on a running track",
+   "altHi": "रनिंग ट्रैक पर दौड़ की शुरुआती रेखा पर खड़े युवा धावक",
+   "category": "sports",
+   "suggestedFor": [
+    "s4",
+    "s1",
+    "s5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.6
+   },
+   "objectPosition": "50% 60%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-group-of-people-standing-on-top-of-a-race-track-EkjpYkVAQn8",
+   "photographer": "jebin ephrimraj",
+   "photographerUrl": "https://unsplash.com/@jebinephrimraj_",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "school/campus-hill-walk",
+   "file": "school/campus-hill-walk",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 165040,
+     "src": "/demo/img/school/campus-hill-walk-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 65490,
+     "src": "/demo/img/school/campus-hill-walk-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "Students with school bags walking on a hill path among pine trees",
+   "altHi": "चीड़ के पेड़ों के बीच पहाड़ी रास्ते पर स्कूल बैग लिए चलते विद्यार्थी",
+   "category": "residential",
+   "suggestedFor": [
+    "s4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.7
+   },
+   "objectPosition": "50% 70%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/people-walking-on-pathway-near-trees-3342245/",
+   "photographer": "Yogendra Singh",
+   "photographerUrl": "https://www.pexels.com/@yogendras31/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/activity-art-session",
+   "file": "school/activity-art-session",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 63062,
+     "src": "/demo/img/school/activity-art-session-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 27608,
+     "src": "/demo/img/school/activity-art-session-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Girls painting on paper while sitting on the floor in an art session",
+   "altHi": "आर्ट सेशन में फ़र्श पर बैठकर काग़ज़ पर पेंटिंग करती लड़कियाँ",
+   "category": "activities",
+   "suggestedFor": [
+    "s5",
+    "s1",
+    "s3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.6
+   },
+   "objectPosition": "55% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/woman-in-red-shirt-writing-on-white-paper-4643352/",
+   "photographer": "Yogendra Singh",
+   "photographerUrl": "https://www.pexels.com/@yogendras31/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/field-trip-museum",
+   "file": "school/field-trip-museum",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 58696,
+     "src": "/demo/img/school/field-trip-museum-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 27574,
+     "src": "/demo/img/school/field-trip-museum-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A guide explaining an exhibit to a group of schoolboys in a museum",
+   "altHi": "संग्रहालय में स्कूली लड़कों के समूह को एक प्रदर्शनी समझाते गाइड",
+   "category": "activities",
+   "suggestedFor": [
+    "s5",
+    "s4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.5
+   },
+   "objectPosition": "55% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/a-man-talking-to-a-group-of-kids-in-a-museum-22616346/",
+   "photographer": "Fahad Puthawala",
+   "photographerUrl": "https://www.pexels.com/@fahadputhawala/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/lab-microscope-flask",
+   "file": "school/lab-microscope-flask",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 900,
+     "bytes": 28962,
+     "src": "/demo/img/school/lab-microscope-flask-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 480,
+     "bytes": 12216,
+     "src": "/demo/img/school/lab-microscope-flask-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 900,
+   "alt": "A microscope and a flask of red liquid on a white lab table",
+   "altHi": "सफ़ेद लैब टेबल पर माइक्रोस्कोप और लाल तरल से भरा फ़्लास्क",
+   "category": "lab",
+   "suggestedFor": [
+    "s5",
+    "s1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.55
+   },
+   "objectPosition": "55% 55%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/a-microscope-and-laboratory-equipments-8325750/",
+   "photographer": "Kindel Media",
+   "photographerUrl": "https://www.pexels.com/@kindelmedia/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "school/hero-hill-campus",
+   "file": "school/hero-hill-campus",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 234756,
+     "src": "/demo/img/school/hero-hill-campus-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 134002,
+     "src": "/demo/img/school/hero-hill-campus-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 67358,
+     "src": "/demo/img/school/hero-hill-campus-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "A long low building with green roofs on a meadow below forested hills",
+   "altHi": "जंगल से ढकी पहाड़ियों के नीचे घास के मैदान पर हरी छतों वाली लंबी इमारत",
+   "category": "residential",
+   "suggestedFor": [
+    "s4"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.6
+   },
+   "objectPosition": "50% 60%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/charming-lodge-amidst-pine-forested-mountains-33049637/",
+   "photographer": "Shahid Sultan",
+   "photographerUrl": "https://www.pexels.com/@ishahidsultan/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  }
+ ],
+ "note": "Demo photos. Pexels/Unsplash licence, free for commercial use, no attribution required. Credits kept here anyway."
+}

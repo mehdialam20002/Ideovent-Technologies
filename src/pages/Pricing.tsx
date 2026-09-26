@@ -74,8 +74,9 @@ interface ServiceLine {
 }
 
 /* FACTS.md India table, as corrected on 24 Sep 2026: landing / single page
- * 8,000-20,000 · school website 20,000-45,000 · coaching or school portal
- * 40,000-85,000 · custom SaaS from 90,000. Middle tiers are the R1 geometric
+ * 8,000-20,000 · website 20,000-45,000 (FACTS: "school website") · portal or web
+ * app 40,000-85,000 (FACTS: "coaching or school portal"). Relabelled for any
+ * business per HOMEPAGE-COPY-DECK-V2.md F, figures unchanged · custom SaaS from 90,000. Middle tiers are the R1 geometric
  * mean of each band. The lines are ordered cheapest first: that ordering is the
  * FACTS.md presentation rule, not a layout preference. */
 const SERVICE_LINES: ServiceLine[] = [
@@ -136,17 +137,18 @@ const SERVICE_LINES: ServiceLine[] = [
           "A second design stage for the admin screens, with its own two revision rounds",
         ],
         excludes:
-          "Student or member records, fee collection, role-based logins. That is the portal line below.",
+          "Customer or member records, online payments, logins for each role. That is the portal line below.",
       },
     ],
   },
   {
+    // The id stays "school-website" so old #school-website links keep working.
     id: "school-website",
     eyebrow: "Service line 02",
-    title: "School website",
+    title: "Website",
     range: "₹20,000-₹45,000",
     intro:
-      "3-5 weeks from the advance and your content. Built around admission season, because that is the week it has to work.",
+      "3-5 weeks from the advance and your content. For a business that needs more than one page, and wants to run it itself.",
     tiers: [
       {
         name: "Essential",
@@ -154,14 +156,14 @@ const SERVICE_LINES: ServiceLine[] = [
         meta: "One-time · non-GST · 3 weeks",
         features: [
           "Up to 8 pages",
-          "Admission enquiry form to e-mail",
-          "Notices and circulars area you update",
+          "Enquiry form to e-mail",
+          "News, notices or offers area you update",
           "Photo gallery",
-          "Faculty or staff listing",
+          "Team or staff listing",
           "Mobile-first, SSL, analytics",
           "Two revision rounds at the design stage",
         ],
-        excludes: "Enquiry tracking, multi-campus, parent logins.",
+        excludes: "Enquiry tracking, more than one branch, customer logins.",
       },
       {
         name: "Professional",
@@ -171,13 +173,13 @@ const SERVICE_LINES: ServiceLine[] = [
         features: [
           "Everything in Essential",
           "Up to 15 pages, custom design",
-          "You manage notices, circulars, gallery and results yourself",
+          "You manage news, gallery, prices and offers yourself",
           "Downloadable forms and documents",
           "Every enquiry stored and exportable to a spreadsheet",
           "Speed pass before launch",
           "Training session for two staff members",
         ],
-        excludes: "Fee collection, attendance, report cards.",
+        excludes: "Online payments, staff attendance, customer records.",
       },
       {
         name: "Premium",
@@ -185,20 +187,20 @@ const SERVICE_LINES: ServiceLine[] = [
         meta: "One-time · non-GST · 5 weeks",
         features: [
           "Everything in Professional",
-          "Admission enquiries with status tracking, so the front desk knows who followed up",
-          "Multi-campus or multi-branch structure",
+          "Enquiries with status tracking, so the front desk knows who followed up",
+          "Multi-branch structure",
           "SMS or WhatsApp notification hooks, message credits billed at cost",
           "Existing content migrated for you",
           "A second design stage for the admin screens, with its own two revision rounds",
         ],
-        excludes: "Fees, attendance and marks. That is the portal line below.",
+        excludes: "Records, payments and staff logins. That is the portal line below.",
       },
     ],
   },
   {
     id: "portal",
     eyebrow: "Service line 03",
-    title: "Coaching or school portal",
+    title: "Portal or web app",
     range: "₹40,000-₹85,000",
     intro:
       "6-10 weeks from the advance and your content. A system that runs the office, not a website with a login on it.",
@@ -208,8 +210,8 @@ const SERVICE_LINES: ServiceLine[] = [
         price: "₹40,000",
         meta: "One-time · non-GST · 6 weeks",
         features: [
-          "Student and batch records",
-          "Fee records with printable receipts",
+          "Customer, student or member records",
+          "Payment records with printable receipts",
           "Daily attendance marking",
           "One admin role",
           "Enquiry capture",
@@ -223,11 +225,11 @@ const SERVICE_LINES: ServiceLine[] = [
         popular: true,
         features: [
           "Everything in Essential",
-          "Separate logins for admin, teacher and accounts",
-          "Online fee collection via Razorpay, gateway charges are billed to you by them",
-          "Automatic fee reminders",
-          "Timetable, marks and report cards",
-          "Parent view of fees, attendance and notices",
+          "Separate logins for admin, staff and accounts",
+          "Online payments via Razorpay, gateway charges are billed to you by them",
+          "Automatic payment reminders",
+          "Schedules, bookings or timetables",
+          "A customer or parent view of payments and updates",
           "Dashboard with collections and dues",
         ],
       },
@@ -238,7 +240,7 @@ const SERVICE_LINES: ServiceLine[] = [
         features: [
           "Everything in Professional",
           "Multiple branches under one account",
-          "Transport, hostel, library or inventory, choose one module",
+          "One extra module you choose, such as inventory, transport or bookings",
           "SMS and WhatsApp messaging built in",
           "Your existing spreadsheets or software migrated",
           "Staging environment and priority response during the build",
@@ -490,13 +492,13 @@ export default function Pricing() {
           on a page it cannot annotate. */}
       <Seo
         title="Pricing"
-        description="What it costs to work with Ideovent Technologies: business websites from ₹8,000, school websites from ₹20,000, coaching and school portals from ₹40,000, custom platforms from ₹90,000, and care plans from ₹1,000 a month. Indicative starting prices, fixed in writing after one call."
+        description="What it costs to work with Ideovent Technologies: landing pages from ₹8,000, websites from ₹20,000, portals and web apps from ₹40,000, custom software from ₹90,000, and care plans from ₹1,000 a month. Indicative starting prices, fixed in writing after one call."
         path="/pricing"
         keywords={[
           "website development cost India",
           "web design pricing New Delhi",
           "custom software development cost Delhi NCR",
-          "school website price India",
+          "business website price India",
         ]}
         breadcrumbs={[{ name: "Pricing", path: "/pricing" }]}
       />

@@ -24,7 +24,7 @@ import { staggerContainer, fadeUp } from "@/lib/motion";
  *
  * WHAT IS DELIBERATELY NOT HERE:
  *   - No price per service. The canonical price table in _assets/FACTS.md is
- *     organised by OFFER (landing page, school website, portal, SaaS, care
+ *     organised by OFFER (landing page, website, portal or web app, SaaS, care
  *     plan), not by service, so there is no true figure to put on a "UI/UX
  *     Design" row and a plausible one would be invented. /pricing is linked
  *     instead, at the foot, where the mapping is done properly.

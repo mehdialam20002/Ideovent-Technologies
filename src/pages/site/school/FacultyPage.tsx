@@ -21,12 +21,12 @@ const COPY = {
   title: { en: "Our teachers", hi: "हमारे शिक्षक" },
   lead: { en: "Who teaches here, what they teach and for how long.", hi: "यहाँ कौन पढ़ाता है, क्या पढ़ाता है और कितने समय से।" },
   all: { en: "Everyone", hi: "सभी" },
-  filter: { en: "Show teachers by group", hi: "Group के हिसाब से शिक्षक" },
+  filter: { en: "Show teachers by group", hi: "ग्रुप के हिसाब से शिक्षक" },
   people: { en: "The staff", hi: "शिक्षक" },
   countLine: { en: "{n} teachers listed", hi: "{n} शिक्षक" },
   other: { en: "Other staff", hi: "अन्य" },
-  admissions: { en: "Meet them at a school visit", hi: "School visit पर मिलें" },
-  groupNames: { en: "PGT: post-graduate teachers, Class XI and XII. TGT: trained graduate teachers, Class VI to X. PRT: primary teachers, Class I to V.", hi: "PGT: Class XI-XII के शिक्षक। TGT: Class VI-X के शिक्षक। PRT: Class I-V के शिक्षक।" },
+  admissions: { en: "Meet them at a school visit", hi: "स्कूल विज़िट पर मिलें" },
+  groupNames: { en: "PGT: post-graduate teachers, Class XI and XII. TGT: trained graduate teachers, Class VI to X. PRT: primary teachers, Class I to V.", hi: "PGT: क्लास XI-XII के शिक्षक। TGT: क्लास VI-X के शिक्षक। PRT: क्लास I-V के शिक्षक।" },
 } satisfies Record<string, Bilingual>;
 
 const ORDER = ["LEADERSHIP", "PGT", "TGT", "PRT"];

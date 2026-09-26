@@ -21,7 +21,7 @@
 
 import { useState, type FormEvent } from "react";
 import type { DemoFeeRow } from "@/lib/cms/types";
-import { demoDate, demoFee } from "@/lib/demo/record";
+import { demoFee } from "@/lib/demo/record";
 import { bi, hasBi, tr, trf, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
@@ -30,46 +30,47 @@ import { Reveal } from "../kit/motion";
 import { Card, CardGrid, Section } from "../kit/Section";
 import { Accordion, Action, Bi } from "../kit/Text";
 import { Timeline } from "@/lib/demo/ui/school/Timeline";
-import { Str } from "@/lib/demo/ui/school/shared";
+import { demoDateIn, Str } from "@/lib/demo/ui/school/shared";
+import { slotPhoto, WithPhoto } from "@/lib/demo/ui/school/photos";
 
 const COPY = {
-  title: { en: "Admissions", hi: "Admission" },
-  titleSession: { en: "Admissions {session}", hi: "Admission {session}" },
-  openUntil: { en: "Admissions {session} open until {date}", hi: "Admission {session} {date} तक खुले हैं" },
+  title: { en: "Admissions", hi: "एडमिशन" },
+  titleSession: { en: "Admissions {session}", hi: "एडमिशन {session}" },
+  openUntil: { en: "Admissions {session} open until {date}", hi: "एडमिशन {session} {date} तक खुले हैं" },
   triadTitle: { en: "Three ways to begin", hi: "शुरू करने के तीन तरीके" },
   enquire: { en: "Enquire", hi: "जानकारी लें" },
-  enquireBody: { en: "Ask about seats, fees and the process.", hi: "सीट, fees और process के बारे में पूछें।" },
-  visit: { en: "Visit the school", hi: "School देखने आएँ" },
+  enquireBody: { en: "Ask about seats, fees and the process.", hi: "सीट, फीस और प्रोसेस के बारे में पूछें।" },
+  visit: { en: "Visit the school", hi: "स्कूल देखने आएँ" },
   visitBody: { en: "See an ordinary school day before you decide.", hi: "फैसला करने से पहले एक आम दिन देखें।" },
-  apply: { en: "Apply", hi: "Apply करें" },
-  applyBody: { en: "Start the application for your child.", hi: "अपने बच्चे का application शुरू करें।" },
-  whoTitle: { en: "Who can apply", hi: "कौन apply कर सकता है" },
-  ageTitle: { en: "Check your child's class", hi: "बच्चे की class देखें" },
+  apply: { en: "Apply", hi: "अप्लाई करें" },
+  applyBody: { en: "Start the application for your child.", hi: "अपने बच्चे का आवेदन शुरू करें।" },
+  whoTitle: { en: "Who can apply", hi: "कौन अप्लाई कर सकता है" },
+  ageTitle: { en: "Check your child's class", hi: "बच्चे की क्लास देखें" },
   ageLead: { en: "Enter the date of birth. Ages are counted as on {asOn}.", hi: "जन्म तिथि डालें। उम्र {asOn} के हिसाब से गिनी जाती है।" },
   dob: { en: "Date of birth", hi: "जन्म तिथि" },
   ageResult: { en: "Eligible for {cls}", hi: "{cls} के लिए योग्य" },
-  ageNone: { en: "No class matches this date of birth. Please call the office.", hi: "इस जन्म तिथि के लिए कोई class नहीं मिली। Office से बात करें।" },
-  ageRelax: { en: "The school may allow a relaxation of up to one month. Ask the office.", hi: "School एक महीने तक की छूट दे सकता है। Office से पूछें।" },
-  stepsTitle: { en: "How admission works", hi: "Admission कैसे होता है" },
-  docsTitle: { en: "Documents to bring", hi: "साथ लाने वाले documents" },
-  feesTitle: { en: "Fees", hi: "Fees" },
-  periods: { en: "One-time|Annual|Per term|Monthly|Also payable", hi: "एक बार|सालाना|हर term|महीने की|अलग से" },
+  ageNone: { en: "No class matches this date of birth. Please call the office.", hi: "इस जन्म तिथि के लिए कोई क्लास नहीं मिली। ऑफिस से बात करें।" },
+  ageRelax: { en: "The school may allow a relaxation of up to one month. Ask the office.", hi: "स्कूल एक महीने तक की छूट दे सकता है। ऑफिस से पूछें।" },
+  stepsTitle: { en: "How admission works", hi: "एडमिशन कैसे होता है" },
+  docsTitle: { en: "Documents to bring", hi: "साथ लाने वाले डॉक्यूमेंट" },
+  feesTitle: { en: "Fees", hi: "फीस" },
+  periods: { en: "One-time|Annual|Per term|Monthly|Also payable", hi: "एक बार|सालाना|हर टर्म|महीने की|अलग से" },
   rteTitle: { en: "RTE seats", hi: "RTE सीटें" },
-  officialTitle: { en: "Official channels only", hi: "सिर्फ़ official तरीके" },
+  officialTitle: { en: "Official channels only", hi: "सिर्फ़ आधिकारिक तरीके" },
   officialBody: {
     en: "Admission is decided by the school office alone. Nobody can promise a seat for a payment. Pay fees only at the school or through the channels on this page.",
-    hi: "Admission का फैसला सिर्फ़ school office करता है। पैसे लेकर seat का वादा कोई नहीं कर सकता। Fees सिर्फ़ school में या इस पेज पर दिए तरीकों से भरें।",
+    hi: "एडमिशन का फैसला सिर्फ़ स्कूल ऑफिस करता है। पैसे लेकर सीट का वादा कोई नहीं कर सकता। फीस सिर्फ़ स्कूल में या इस पेज पर दिए तरीकों से भरें।",
   },
-  formTitle: { en: "Send an enquiry", hi: "Enquiry भेजें" },
-  formLeadWa: { en: "This opens WhatsApp with your message. Nothing is stored on this site.", hi: "यह आपका message WhatsApp में खोलेगा। इस site पर कुछ save नहीं होता।" },
-  formLeadMail: { en: "This opens your email app with your message. Nothing is stored on this site.", hi: "यह आपका message email app में खोलेगा। इस site पर कुछ save नहीं होता।" },
+  formTitle: { en: "Send an enquiry", hi: "पूछताछ भेजें" },
+  formLeadWa: { en: "This opens WhatsApp with your message. Nothing is stored on this site.", hi: "यह आपका मैसेज WhatsApp में खोलेगा। इस वेबसाइट पर कुछ सेव नहीं होता।" },
+  formLeadMail: { en: "This opens your email app with your message. Nothing is stored on this site.", hi: "यह आपका मैसेज ईमेल ऐप में खोलेगा। इस वेबसाइट पर कुछ सेव नहीं होता।" },
   parent: { en: "Parent's name", hi: "अभिभावक का नाम" },
   child: { en: "Child's name", hi: "बच्चे का नाम" },
-  classSought: { en: "Class sought", hi: "कौन सी class" },
+  classSought: { en: "Class sought", hi: "कौन सी क्लास" },
   phone: { en: "Phone number", hi: "फ़ोन नंबर" },
-  message: { en: "Message (optional)", hi: "Message (ज़रूरी नहीं)" },
-  send: { en: "Send enquiry", hi: "Enquiry भेजें" },
-  msgIntro: { en: "Admission enquiry", hi: "Admission enquiry" },
+  message: { en: "Message (optional)", hi: "मैसेज (ज़रूरी नहीं)" },
+  send: { en: "Send enquiry", hi: "पूछताछ भेजें" },
+  msgIntro: { en: "Admission enquiry", hi: "एडमिशन के लिए पूछताछ" },
   faqTitle: { en: "Questions parents ask", hi: "अभिभावकों के सवाल" },
 } satisfies Record<string, Bilingual>;
 
@@ -111,7 +112,7 @@ export default function AdmissionsPage({ site, ctx }: SitePageProps) {
       >
         {open && (
           <p className="mt-5 inline-flex rounded-full border border-current px-3 py-1 text-sm font-semibold">
-            {trf(COPY.openUntil, lang, { session, date: demoDate(site.admissionsOpenUntil, site.market) })}
+            {trf(COPY.openUntil, lang, { session, date: demoDateIn(site.admissionsOpenUntil, site.market, lang) })}
           </p>
         )}
       </PageHead>
@@ -159,11 +160,13 @@ export default function AdmissionsPage({ site, ctx }: SitePageProps) {
       {(timeline.length > 0 || steps.length > 0) && (
         <Section n={++n} title={tr(COPY.stepsTitle, lang)}>
           {/* The connecting line draws once as the steps enter (ui/school/Timeline). */}
+          <WithPhoto src={slotPhoto(site, "admissions")} ratio="4 / 5">
           <div className="max-w-2xl">
             <Timeline numbered steps={timeline.length > 0
               ? timeline.map((t, i) => ({ key: String(i), date: hasBi(t, "date") ? <Bi of={t} k="date" /> : undefined, title: <Bi of={t} k="title" />, body: hasBi(t, "body") ? <Bi of={t} k="body" /> : undefined }))
               : steps.map((st, i) => ({ key: String(i), title: <Str text={st} /> }))} />
           </div>
+          </WithPhoto>
         </Section>
       )}
 
@@ -251,7 +254,10 @@ function AgeChecker({ rules, year, asOn, lang }: {
     const fit = sorted.filter((r) => age >= Number(r.minAge) && (!r.maxAge || age < Number(r.maxAge))).pop();
     result = fit ? trf(COPY.ageResult, lang, { cls: fit.className }) : tr(COPY.ageNone, lang);
   }
-  const asOnText = typedYear ? asOn : `${asOn} ${year}`;
+  /* In Hindi, the parsed date is printed with Hindi month names ("31 मार्च 2027"). */
+  const asOnText = lang === "hi" && m && month >= 0
+    ? on.toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" })
+    : typedYear ? asOn : `${asOn} ${year}`;
   return (
     <div className="max-w-xl">
       <p className="text-[hsl(var(--ds-ink-soft))]">{trf(COPY.ageLead, lang, { asOn: asOnText })}</p>

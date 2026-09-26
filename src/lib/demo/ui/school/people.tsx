@@ -4,29 +4,43 @@
  *
  *   classic  a ruled index: name in the display face, subject in small caps,
  *            qualification and experience on one line; a small square
- *            portrait when a consented photo exists
+ *            portrait when the row has a photo
  *   modern   4:5 portrait tiles; the photo sits desaturated and takes its
  *            colour on hover (hover devices only)
  *   warm     round portraits, centred, people first
  *
- * A photograph prints only with `photoConsent`. Without one the tile carries
- * the person's initials, never a stock face.
+ * A teacher's own photograph prints only with `photoConsent`. A stock
+ * portrait (public/demo/img/people, a licensed model the template set) needs
+ * no consent and gets its srcset and focal point. Without a photo the tile
+ * carries the person's initials. The name sits beside the photo, so its alt
+ * is empty.
  */
 
 import type { Ref } from "react";
 import type { DemoFaculty } from "@/lib/cms/types";
+import { facultyPhotoSrc, getStockPhoto } from "@/lib/demo/images";
 import { useSite } from "@/lib/demo/site/context";
+import { stockImgProps } from "@/pages/site/kit/DemoPhoto";
 import { Reveal } from "@/pages/site/kit/motion";
 import { Bi, initials } from "@/pages/site/kit/Text";
 
+/* What each frame gives the image, for the srcset: a 64px square, a 112px
+   circle, or a quarter-column tile. */
+const SIZES = { square: "64px", round: "112px", portrait: "(min-width: 1024px) 260px, 45vw", band: "100vw" } as const;
+
 function Face({ person, shape }: { person: DemoFaculty; shape: "square" | "portrait" | "round" | "band" }) {
-  const photo = person.photoConsent && (person.photo || "").trim() ? person.photo : "";
+  const { lang } = useSite();
+  const photo = facultyPhotoSrc(person) || "";
+  const stock = getStockPhoto(photo);
   const box =
     shape === "band" ? "h-20 w-full !justify-start px-4 border-b border-[hsl(var(--ds-line))]" : shape === "round" ? "h-28 w-28 rounded-full" : shape === "square" ? "h-16 w-16 rounded-[2px]" : "aspect-[4/5] w-full rounded-[calc(var(--ds-radius)-2px)]";
   if (photo) {
     return (
       <div className={`ds-face overflow-hidden bg-[hsl(var(--ds-surface-2))] ${box}`}>
-        <img src={photo} alt="" loading="lazy" decoding="async" className={`h-full w-full object-cover ${shape === "portrait" ? "transition-[filter] duration-200 [@media(hover:hover)]:grayscale-[60%] [@media(hover:hover)]:group-hover:grayscale-0" : ""}`} />
+        <img
+          {...(stock ? stockImgProps(stock, { lang, sizes: SIZES[shape], decorative: true }) : { src: photo, alt: "", loading: "lazy" as const, decoding: "async" as const })}
+          style={stock ? { objectPosition: stock.objectPosition } : undefined}
+          className={`h-full w-full object-cover ${shape === "portrait" ? "transition-[filter] duration-200 [@media(hover:hover)]:grayscale-[60%] [@media(hover:hover)]:group-hover:grayscale-0" : ""}`} />
       </div>
     );
   }
@@ -59,7 +73,7 @@ export const personKey = (p: DemoFaculty, i: number) => `${p.name}-${i}`;
 export function People({ people, listRef, keys }: { people: DemoFaculty[]; listRef?: Ref<HTMLUListElement>; keys?: string[] }) {
   const { family } = useSite();
   if (!people.length) return null;
-  const anyPhoto = people.some((p) => p.photoConsent && (p.photo || "").trim());
+  const anyPhoto = people.some((p) => facultyPhotoSrc(p));
   const k = (p: DemoFaculty, i: number) => (keys ? keys[i] : personKey(p, i));
 
   if (family === "classic") {

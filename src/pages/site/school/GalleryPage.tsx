@@ -15,6 +15,7 @@ import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { FilterChips, useFlipList } from "@/lib/demo/ui/school/filter";
 import { Lightbox } from "@/lib/demo/ui/school/Lightbox";
 import { photoCategory, schoolPhotos } from "@/lib/demo/ui/school/shared";
+import { largestSrc, photoAlt, photoCaption } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Section } from "../kit/Section";
 import { Action, Bi, Photo } from "../kit/Text";
@@ -23,7 +24,7 @@ const COPY = {
   title: { en: "Gallery", hi: "गैलरी" },
   lead: { en: "Ordinary days and a few special ones.", hi: "आम दिन, और कुछ खास दिन।" },
   all: { en: "All", hi: "सभी" },
-  filter: { en: "Show photographs by category", hi: "Category के हिसाब से तस्वीरें" },
+  filter: { en: "Show photographs by category", hi: "कैटेगरी के हिसाब से तस्वीरें" },
   photos: { en: "Photographs", hi: "तस्वीरें" },
   count: { en: "{n} photographs", hi: "{n} तस्वीरें" },
   open: { en: "Open photograph: {alt}", hi: "तस्वीर खोलें: {alt}" },
@@ -33,7 +34,7 @@ const COPY = {
   next: { en: "Next photograph", hi: "अगली तस्वीर" },
   of: { en: "of", hi: "में से" },
   dialog: { en: "Photograph viewer", hi: "तस्वीर देखें" },
-  visit: { en: "See the school in person", hi: "School खुद आकर देखें" },
+  visit: { en: "See the school in person", hi: "स्कूल खुद आकर देखें" },
 } satisfies Record<string, Bilingual>;
 
 export default function GalleryPage({ site, ctx }: SitePageProps) {
@@ -48,7 +49,8 @@ export default function GalleryPage({ site, ctx }: SitePageProps) {
     if (c === cat) return;
     flip.run(() => setCat(c), (k) => photos.some((p) => p.key === k && (c === "all" || photoCategory(p, lang) === c)));
   };
-  const items = shown.map((p) => ({ src: p.src, alt: bi(p.obj, "alt", lang), caption: bi(p.obj, "caption", lang) || bi(p.obj, "alt", lang) }));
+  /* The lightbox shows a stock photo's largest file; the grid uses its srcset. */
+  const items = shown.map((p) => ({ src: largestSrc(p.src), alt: photoAlt(p, lang), caption: photoCaption(p, lang) }));
   const grid = family === "classic" ? "grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-3" : "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3";
   let n = 0;
 
@@ -69,13 +71,13 @@ export default function GalleryPage({ site, ctx }: SitePageProps) {
             <li key={p.key} data-k={p.key}>
               <figure className={family === "warm" ? "ds-card overflow-hidden p-0" : ""}>
                 <button type="button" className={`ds-card group block w-full overflow-hidden p-0 text-left ${family === "classic" ? "border-0" : ""}`} data-interactive=""
-                  aria-label={trf(COPY.open, lang, { alt: bi(p.obj, "alt", lang) })}
+                  aria-label={trf(COPY.open, lang, { alt: photoAlt(p, lang) })}
                   onClick={(e) => setOpen({ i, el: e.currentTarget })}>
-                  <Photo src={p.src} alt={bi(p.obj, "alt", lang)} ratio={family === "classic" ? "3 / 2" : "4 / 3"} />
+                  <Photo src={p.src} alt={photoAlt(p, lang)} ratio={family === "classic" ? "3 / 2" : "4 / 3"} sizes="(min-width: 1024px) 360px, 50vw" />
                 </button>
                 <figcaption className={family === "warm" ? "p-4 text-sm" : "mt-2 text-sm text-[hsl(var(--ds-ink-soft))]"}>
                   {family === "classic" && <span className="ds-smallcaps ds-num mr-2 text-[hsl(var(--ds-accent))]">{trf(COPY.plate, lang, { n: String(i + 1) })}.</span>}
-                  <Bi of={p.obj} k={bi(p.obj, "caption", lang) ? "caption" : "alt"} />
+                  {bi(p.obj, "caption", lang) ? <Bi of={p.obj} k="caption" /> : photoCaption(p, lang)}
                 </figcaption>
               </figure>
             </li>

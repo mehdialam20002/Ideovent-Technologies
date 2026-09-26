@@ -22,17 +22,18 @@ import { C_COPY } from "@/lib/demo/ui/coaching/copy";
 import { distinct, useFilter } from "@/lib/demo/ui/coaching/filter";
 import { ResultsBand } from "@/lib/demo/ui/coaching/home";
 import { PageHead } from "../kit/Hero";
+import { SampleNote } from "../kit/SampleNote";
 import { CardGrid, Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Results and toppers", hi: "रिज़ल्ट और टॉपर्स" },
-  lead: { en: "Filter by year and exam. Each result says which course the student took, for how long, and whether it was paid.", hi: "साल और exam से filter करें। हर रिज़ल्ट में लिखा है कि student ने कौन सा कोर्स, कितने समय तक लिया और फीस दी या नहीं।" },
+  lead: { en: "Filter by year and exam. Each result says which course the student took, for how long, and whether it was paid.", hi: "साल और एग्ज़ाम से फ़िल्टर करें। हर रिज़ल्ट में लिखा है कि छात्र ने कौन सा कोर्स, कितने समय तक लिया और फीस दी या नहीं।" },
   summary: { en: "At a glance", hi: "एक नज़र में" },
   byYear: { en: "Results by year", hi: "साल के हिसाब से रिज़ल्ट" },
-  selections: { en: "Selections by exam and year", hi: "Exam और साल के हिसाब से selections" },
+  selections: { en: "Selections by exam and year", hi: "एग्ज़ाम और साल के हिसाब से सिलेक्शन" },
   year: { en: "Year", hi: "साल" },
-  exam: { en: "Exam", hi: "Exam" },
+  exam: { en: "Exam", hi: "एग्ज़ाम" },
   join: { en: "Want to be on this page next year?", hi: "अगले साल इस पेज पर आना है?" },
 } satisfies Record<string, Bilingual>;
 
@@ -58,9 +59,11 @@ export default function ResultsPage({ site, ctx }: SitePageProps) {
         title={tr(COPY.title, lang)}
         lead={tr(COPY.lead, lang)}
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.title, lang) }]}
-      />
+      >
+        <SampleNote block="results" className="mt-4" />
+      </PageHead>
 
-      {stats.length > 0 && <ResultsBand n={++n} title={tr(COPY.summary, lang)} stats={stats} />}
+      {stats.length > 0 && <ResultsBand n={++n} title={tr(COPY.summary, lang)} stats={stats} sample={false} />}
 
       <Section n={++n} title={tr(counts.length && !people.length ? COPY.selections : COPY.byYear, lang)}>
         <div className="flex flex-col gap-1 lg:flex-row lg:items-start lg:gap-6">

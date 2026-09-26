@@ -7,7 +7,9 @@
  *                course taken, its duration and whether it was paid, at body
  *                size. A name or photo only with consent.
  *   CountCard    selection counts per exam per year (c5, Veranda pattern).
- *   FacultyCard  portrait (4:5 tile, circle, or square row) plus facts.
+ *   FacultyCard  portrait (square tile, circle, or the classic ruled row
+ *                with a small photo) plus facts; stock portraits need no
+ *                consent flag, an own photo still does.
  *   ReviewCard   a quote with the person's relation; a video is a poster
  *                that loads only on tap.
  */
@@ -19,6 +21,8 @@ import { bi, tr, trf } from "@/lib/demo/site/bilingual";
 import { useSite } from "@/lib/demo/site/context";
 import { Card } from "@/pages/site/kit/Section";
 import { Bi, initials } from "@/pages/site/kit/Text";
+import { DemoPhoto } from "@/pages/site/kit/DemoPhoto";
+import { facultyPhotoSrc } from "@/lib/demo/images";
 import { C_COPY } from "./copy";
 import "./coaching.css";
 
@@ -28,16 +32,22 @@ export function paidLabel(r: DemoResult, lang: "en" | "hi"): string {
   return tr(r.paid === "paid" ? C_COPY.paid : r.paid === "scholarship" ? C_COPY.scholarship : C_COPY.free, lang);
 }
 
-/** A square, round or 4:5 portrait, or the initials of the person. */
-export function Portrait({ name, src, consent, ratio = "4 / 5", className }: {
-  name: string; src?: string; consent?: boolean; ratio?: string; className?: string;
+/**
+ * A square or round portrait, or the initials of the person. Shown only with
+ * `consent`; FacultyCard passes it for a stock portrait (a licensed model,
+ * see facultyPhotoSrc). A stock photo gets its srcset and the manifest's alt;
+ * an own file keeps the person's name as alt.
+ */
+export function Portrait({ name, src, consent, ratio = "1 / 1", sizes, className }: {
+  name: string; src?: string; consent?: boolean; ratio?: string; sizes?: string; className?: string;
 }) {
-  const show = !!(src && consent);
+  const shown = src && consent ? src : undefined;
+  const badge = <span aria-hidden="true" className="ds-display text-2xl text-[hsl(var(--ds-brand-ink))]">{initials(name)}</span>;
   return (
     <div className={`dsc-portrait flex items-center justify-center ${className || ""}`} style={{ aspectRatio: ratio }}>
-      {show
-        ? <img src={src} alt={name} loading="lazy" decoding="async" width={320} height={400} className="h-full w-full object-cover" />
-        : <span aria-hidden="true" className="ds-display text-2xl text-[hsl(var(--ds-brand-ink))]">{initials(name)}</span>}
+      {shown
+        ? <DemoPhoto src={shown} alt={name} ratio="auto" sizes={sizes} fallback={badge} />
+        : badge}
     </div>
   );
 }
@@ -60,6 +70,12 @@ export function ResultCard({ r, showQuote }: { r: DemoResult; showQuote?: boolea
   );
 }
 
+/** "Final" / "Provisional" is our fixed vocabulary, so it follows the reader's language; anything else prints as typed. */
+function statusLabel(status: string, lang: "en" | "hi"): string {
+  const k = status.trim().toLowerCase();
+  return k === "final" ? tr(C_COPY.final, lang) : k === "provisional" ? tr(C_COPY.provisional, lang) : status;
+}
+
 export function CountCard({ r }: { r: DemoResult }) {
   const { lang } = useSite();
   /* "23 selected" under a big 23 says the number twice: drop an achievement that only repeats the count. */
@@ -69,7 +85,7 @@ export function CountCard({ r }: { r: DemoResult }) {
     <Card className="h-full">
       <p className="text-sm font-semibold text-[hsl(var(--ds-accent))]">{[r.exam, r.year].filter(Boolean).join("  ·  ")}</p>
       <p className="ds-display ds-num mt-1 text-4xl">{r.count}</p>
-      <p className="text-[hsl(var(--ds-ink-soft))]">{tr(C_COPY.selections, lang)}{r.status ? `  ·  ${r.status}` : ""}</p>
+      <p className="text-[hsl(var(--ds-ink-soft))]">{tr(C_COPY.selections, lang)}{r.status ? `  ·  ${statusLabel(r.status, lang)}` : ""}</p>
       {!echo && <Bi of={r} k="achievement" as="p" className="mt-2" />}
       {(r.courseName || r.courseDuration || r.paid) && (
         <p className="mt-2 text-sm">{[bi(r, "courseName", lang), r.courseDuration, paidLabel(r, lang)].filter(Boolean).join(", ")}</p>
@@ -80,16 +96,21 @@ export function CountCard({ r }: { r: DemoResult }) {
 
 export function FacultyCard({ f, detail, footer }: { f: DemoFaculty; detail?: boolean; footer?: ReactNode }) {
   const { family } = useSite();
-  /* No consented photo: a compact initials badge beside the name, never a big empty tile. */
-  const row = family === "classic" || !(f.photo && f.photoConsent);
+  const photo = facultyPhotoSrc(f);
+  /* Classic: the ruled index, a small square photo beside the name. Modern: a
+     square tile. Warm: a round portrait. No photo: an initials badge beside
+     the name, never a big empty tile. */
+  const row = family === "classic" || !photo;
+  const small = family === "classic" && photo ? "h-20 w-20 shrink-0" : "h-16 w-16 shrink-0";
   return (
     <Card interactive className={`h-full ${row ? "flex gap-5" : ""}`}>
       <Portrait
         name={f.name}
-        src={f.photo}
-        consent={f.photoConsent}
-        ratio={family === "warm" ? "1 / 1" : row ? "1 / 1" : "4 / 5"}
-        className={row ? "h-16 w-16 shrink-0" : family === "warm" ? "mx-auto h-28 w-28" : "w-full"}
+        src={photo}
+        consent
+        ratio="1 / 1"
+        sizes={row ? "80px" : family === "warm" ? "128px" : "(min-width: 1024px) 260px, (min-width: 640px) 45vw, calc(100vw - 64px)"}
+        className={row ? small : family === "warm" ? "mx-auto h-32 w-32" : "w-full"}
       />
       <div className={row ? "min-w-0" : family === "warm" ? "mt-4 text-center" : "mt-4"}>
         <p className="ds-display text-lg">{f.name}</p>

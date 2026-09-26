@@ -52,25 +52,25 @@ export function markerCopy(lang: DemoLang): MarkerCopy {
     return {
       /* "demo", not "demonstration": the English word a Delhi reader actually
          uses. "demonstration" in Hindi running text reads as a translation. */
-      ribbonBefore: "यह एक demo website है, जिसे ",
+      ribbonBefore: "यह एक डेमो वेबसाइट है, जिसे ",
       ribbonBuiltBy: "Ideovent Technologies",
       ribbonFor: " ने ",
-      ribbonAfter: " के लिए बनाया है। यह उनकी live site नहीं है।",
+      ribbonAfter: " के लिए बनाया है। यह उनकी असली वेबसाइट नहीं है।",
       ribbonLink: "किसने बनाई",
       exampleClause: "नीचे लिखा हर नाम, आँकड़ा और तारीख़ उदाहरण है।",
 
-      eyebrow: "इस website के बारे में",
-      titleBefore: "यह site ",
+      eyebrow: "इस वेबसाइट के बारे में",
+      titleBefore: "यह वेबसाइट ",
       titleFirm: "Ideovent Technologies",
-      titleFor: (institute) => ` ने ${institute} के लिए demo के तौर पर बनाई है।`,
+      titleFor: (institute) => ` ने ${institute} के लिए डेमो के तौर पर बनाई है।`,
       body: (institute) =>
-        `यह एक working demo है, ${institute} की live website नहीं। हर page असली है और उस पर सब कुछ बदला, जोड़ा या हटाया जा सकता है। यहाँ कुछ भी institute ने ख़ुद publish नहीं किया, और जिस हिस्से में अब भी placeholder दिख रहा है, वह उनके अपने शब्दों का इंतज़ार कर रहा है।`,
-      officialLead: "उनकी असली website है ",
+        `यह पूरी तरह काम करने वाला डेमो है, ${institute} की असली वेबसाइट नहीं। हर पेज असली है और उस पर सब कुछ बदला, जोड़ा या हटाया जा सकता है। यहाँ कुछ भी संस्थान ने ख़ुद पब्लिश नहीं किया, और जिस हिस्से में अभी खाली जगह दिख रही है, वह उनके अपने शब्दों का इंतज़ार कर रहा है।`,
+      officialLead: "उनकी असली वेबसाइट है ",
       talkToMehdi: "Mehdi से WhatsApp पर बात कीजिए",
       seeMore: "हम और क्या बनाते हैं, देखिए",
 
       openerFor: (institute, place) =>
-        `नमस्ते Ideovent team। ${institute}${place}। आपने जो website बनाई है वह देखी। इसके बारे में बात करनी है।`,
+        `नमस्ते Ideovent टीम। ${institute}${place}। आपने जो वेबसाइट बनाई है वह देखी। इसके बारे में बात करनी है।`,
     };
   }
 

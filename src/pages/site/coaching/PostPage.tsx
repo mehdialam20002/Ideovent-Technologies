@@ -7,7 +7,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { bi, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, dateIn, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import { postSlug, type SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { PageHead } from "../kit/Hero";
@@ -37,7 +37,7 @@ export default function PostPage({ site, ctx }: SitePageProps) {
     <>
       <Helmet><title>{`${title} | ${site.instituteName}`}</title></Helmet>
       <PageHead
-        eyebrow={[post.date, post.author && tr(COPY.by, lang).replace("{author}", post.author)].filter(Boolean).join("  ·  ") || undefined}
+        eyebrow={[dateIn(post.date, lang), post.author && tr(COPY.by, lang).replace("{author}", post.author)].filter(Boolean).join("  ·  ") || undefined}
         title={title}
         crumbs={[
           { label: tr(SHELL_COPY.home, lang), href: ctx.href("home") },
@@ -58,7 +58,7 @@ export default function PostPage({ site, ctx }: SitePageProps) {
                 <li key={to}>
                   <SiteLink to={to} className="flex min-h-[52px] items-baseline justify-between gap-4 py-3">
                     <span className="font-semibold">{bi(p, "title", lang)}</span>
-                    <span className="ds-num shrink-0 text-sm text-[hsl(var(--ds-ink-soft))]">{p.date}</span>
+                    <span className="ds-num shrink-0 text-sm text-[hsl(var(--ds-ink-soft))]">{dateIn(p.date, lang)}</span>
                   </SiteLink>
                 </li>
               ) : null;

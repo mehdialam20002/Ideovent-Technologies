@@ -160,6 +160,40 @@
   descent-override: 40.18%;
   line-gap-override: 0%;
 }
+/* INTER, FOR THE DEMO SITES (src/lib/demo/site/themes.ts, SANS and SORA).
+   The demo body stack used to fall from Inter straight to the system face,
+   which on Windows is Segoe UI, about 8 per cent narrower than Inter. When
+   Inter landed late on a cold cache (2 to 8 s on a slow link) every line of
+   body copy re-wrapped: the hero's ghost button grew 12px, the nav widened,
+   and the demo ribbon's sentence moved a word to its second line. Same
+   method as the Sora faces above, measured 26 Sep 2026 with canvas
+   TextMetrics on the same 114-character string at 100px:
+     Inter 400 5898.78  500 5951.95  600 6005.13  700 6057.77
+     Arial 400 5597.56              Arial 700 5929.74
+     regular face  mean(400,500)/Arial 400 = 1.0586
+     bold face     mean(600,700)/Arial 700 = 1.0172
+   Inter's hhea: unitsPerEm 2048, ascender 1984 (96.875%), descender -494
+   (24.12%), lineGap 0, each divided by its own size-adjust. */
+@font-face {
+  font-family: "Inter Fallback";
+  font-style: normal;
+  font-weight: 100 500;
+  src: local("Arial"), local("Helvetica"), local("Liberation Sans");
+  size-adjust: 105.86%;
+  ascent-override: 91.51%;
+  descent-override: 22.79%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Inter Fallback";
+  font-style: normal;
+  font-weight: 501 900;
+  src: local("Arial Bold"), local("Arial"), local("Liberation Sans Bold");
+  size-adjust: 101.72%;
+  ascent-override: 95.24%;
+  descent-override: 23.71%;
+  line-gap-override: 0%;
+}
 
 @layer base {
   :root,

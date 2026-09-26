@@ -25,7 +25,7 @@ import { Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Fees, refunds and disclosure", hi: "फीस, रिफंड और जानकारी" },
-  lead: { en: "The fee for every course, how to pay it, and how a refund works, in writing before you join.", hi: "हर कोर्स की फीस, भरने का तरीका और refund कैसे मिलता है, join करने से पहले लिखित में।" },
+  lead: { en: "The fee for every course, how to pay it, and how a refund works, in writing before you join.", hi: "हर कोर्स की फीस, भरने का तरीका और रिफंड कैसे मिलता है, जॉइन करने से पहले लिखित में।" },
   fees: { en: "Course fees", hi: "कोर्स की फीस" },
   course: { en: "Course", hi: "कोर्स" },
   duration: { en: "Duration", hi: "अवधि" },
@@ -38,10 +38,10 @@ const COPY = {
   receipts: { en: "Receipts", hi: "रसीद" },
   noIncrease: { en: "During the course", hi: "कोर्स के दौरान" },
   refund: { en: "Refunds", hi: "रिफंड" },
-  hostel: { en: "Hostel and mess", hi: "Hostel और mess" },
-  counts: { en: "Students coached and succeeded", hi: "पढ़ाए गए और सफल students" },
-  coached: { en: "Students coached", hi: "पढ़ाए गए students" },
-  succeeded: { en: "Students who succeeded", hi: "सफल students" },
+  hostel: { en: "Hostel and mess", hi: "हॉस्टल और मेस" },
+  counts: { en: "Students coached and succeeded", hi: "पढ़ाए गए और सफल छात्र" },
+  coached: { en: "Students coached", hi: "पढ़ाए गए छात्र" },
+  succeeded: { en: "Students who succeeded", hi: "सफल छात्र" },
   year: { en: "Year", hi: "साल" },
   teachers: { en: "Teachers' qualifications", hi: "टीचर्स की योग्यता" },
   name: { en: "Teacher", hi: "टीचर" },

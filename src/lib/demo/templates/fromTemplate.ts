@@ -1,273 +1,144 @@
 /**
- * DUPLICATING A TEMPLATE INTO A REAL DEMO.
+ * DUPLICATING A TEMPLATE INTO A DEMO FOR A NAMED INSTITUTE.
  *
- * ── THE RULE ──────────────────────────────────────────────────────────────
- * Never invent a real institute's facts. A template is fiction written to
- * show a segment well. A duplicate becomes a REAL institute's website the
- * moment Mehdi types their name into it, and anything left over from the
- * fiction is then a claim made on their page, under their name, to their own
- * parents. So the copy CLEARS every field that is a fact about a specific
- * institute and KEEPS only what is structure or generic copy. When a field
- * could be read either way it is cleared: a blank renders as the designed
- * empty state both templates already have, and an invented fact renders as a
- * fact.
+ * ── THE RULE (26 September 2026, Mehdi's brief) ───────────────────────────
+ * A demo is a sales mock-up shown to one institute's director: "this is what
+ * your website could look like". So a duplicate carries THE WHOLE TEMPLATE,
+ * already filled, and Mehdi edits only what he wants before he sends it.
+ * Pressing Duplicate asks for the institute's name (and optionally its city
+ * and its Hindi name); every occurrence of the template's fictional name, in
+ * every English and Hindi string of the copy, becomes that name.
+ *
+ * What keeps it honest is not emptiness but labelling, in four layers:
+ *   1. every demo page already carries the top banner "A demonstration
+ *      website, built by Ideovent Technologies for <name>. Not their live
+ *      site. Every name, number and date below is example content", is
+ *      noindex, and opens only by its link;
+ *   2. CONTACT IS CLEARED, the one exception to "keep everything": a phone,
+ *      WhatsApp, email, street address, map or social link that is not the
+ *      institute's would route a real parent's call to a stranger. Every page
+ *      renders cleanly without them, and the editor marks them "Add from
+ *      their own website";
+ *   3. RESULTS AND REVIEWS CARRY A "SAMPLE" LINE on the page (results, toppers,
+ *      pass percentages, selections, trust figures, testimonials, rating)
+ *      until Mehdi edits that block or ticks "Results and reviews on this demo
+ *      are the institute's real ones". See src/lib/demo/site/sample.ts;
+ *   4. THE EDITOR'S CHECKLIST lists every block still identical to the
+ *      template (faculty, results, fees, reviews, timings, photos) and every
+ *      empty contact field, under "Carried from template <name>: review
+ *      before you mark it sent".
  *
  * ── THE TABLE ─────────────────────────────────────────────────────────────
  *
- *   field                  rule       why
+ *   field                  rule       what the copy gets
  *   ─────────────────────  ─────────  ──────────────────────────────────────
  *   id                     NEW        a fresh document id
- *   slug                   NEW        unique, via uniqueDemoSlug; provisional
- *                                     ("draft-<template>") until named, and
- *                                     the editor re-derives it from the name
- *   status                 NEW        "draft": the link does not open
- *   templateId             NEW        the template's id, so the admin can say
- *                                     which design this demo started as
+ *   slug                   NEW        from the new name, unique against every
+ *                                     demo and pitch page (uniqueDemoSlug)
+ *   status                 NEW        "draft": the public link is the 404
+ *                                     until Mark sent
+ *   templateId             NEW        the template's id, as provenance; the
+ *                                     list shows "From template: <label>"
  *   preparedOn             NEW        today
- *   isExample              NEW        false: it is no longer an example
+ *   createdAt, updatedAt   NEW        left off; the store stamps them on save
+ *   isExample              NEW        false
  *   order                  NEW        the end of the list
- *   createdAt, updatedAt   CLEAR      stamped by the store on save
+ *   expiresAt              NEW        none
+ *   sample                 NEW        fingerprints of the carried blocks, so
+ *                                     the page and the checklist can tell
+ *                                     "still the template's" from "edited"
  *
- *   kind                   KEEP       structure: which renderer
- *   theme                  KEEP       design family and palette
- *   market                 KEEP       language settings (drives the Hindi
- *                                     toggle) and the section vocabulary
- *   currency               KEEP       follows the market
- *   country                KEEP       follows the market; the city and state,
- *                                     which ARE facts, are cleared
- *   focusAreas             KEEP       the segment: what is taught, not a claim
- *   principalTitle         KEEP       the role's name ("Principal"), generic
- *   facilities             KEEP       the list, word for word. Templates must
- *                                     write it generic; the test fails on a
- *                                     digit or a number word in it
+ *   instituteName          IDENTITY   the name typed in the dialog
+ *   shortName              IDENTITY   empty: the nav uses the full name
+ *   city                   IDENTITY   the city typed, else the template's
+ *   state                  IDENTITY   the template's; emptied when a
+ *                                     different city is typed, because the
+ *                                     template's state no longer follows
  *
- *   courses                STRUCTURE  name, level (class range), subjects,
- *                                     duration, timings pattern and mode are
- *                                     kept; batchStarts, seats, fee, feeNote
- *                                     and detail are cleared. A start date, a
- *                                     batch size and a fee are the institute's
- *                                     numbers; `detail` is a claim about how
- *                                     they run the batch
- *   schedule               STRUCTURE  label, days, time and subject kept (the
- *                                     timings pattern); faculty and room
- *                                     cleared, because they name people and
- *                                     places
- *   admissions             STRUCTURE  steps and documents kept, generic by
- *                                     the same rule as facilities; dates and
- *                                     note cleared
- *   faq                    STRUCTURE  only entries the template marked
- *                                     `generic: true` are kept, without the
- *                                     flag; the fee question never is
+ *   contact                CONTACT    phone, WhatsApp, email, address lines,
+ *                                     landmark, map link, map search,
+ *                                     branches and the transport desk are
+ *                                     CLEARED; office hours are kept
+ *   officialWebsite        CONTACT    cleared: their site, or nothing
+ *   disclosure rows        CONTACT    the address, email and phone rows of
+ *                                     the CBSE disclosure are removed, so the
+ *                                     page reads them from `contact`
  *
- *   instituteName          CLEAR      the name
- *   shortName              CLEAR      the name
- *   tagline                CLEAR      their own line, or a placeholder
- *   city, state            CLEAR      where they are
- *   contact                CLEAR      phone, WhatsApp, email, address lines,
- *                                     office hours, map link, map search
- *   officialWebsite        CLEAR      their site, or nothing
- *   logo, heroImage        CLEAR      their files, or nothing
- *   palette                CLEAR      superseded by theme
- *   principalName          CLEAR      a real person
- *   principalMessage       CLEAR      a real person's words
- *   established,
- *   establishedYear        CLEAR      their history
- *   boardOrAffiliation     CLEAR      carries the affiliation NUMBER, which is
- *                                     checkable in a public register; the
- *                                     board survives in the course subjects
- *   about                  CLEAR      their prose, full of their facts
- *   admissionsHeadline     CLEAR      a session and a date
- *   notices                CLEAR      dated, institute-specific
- *   results                CLEAR      results, toppers, ranks, selections
- *   resultsHeading,
- *   resultsNote            CLEAR      name a year, and the note is the
- *                                     template's own "example content" label
- *   faculty                CLEAR      named people
- *   method                 CLEAR      each block is a promise about how this
- *                                     institute teaches ("the same teacher for
- *                                     two years"), which is a fact about them
- *   trial                  CLEAR      a promise that a free class exists, and
- *                                     its terms
- *   scheduleNote           CLEAR      a claim about their week
- *   gallery                CLEAR      captions describe a place and its
- *                                     people; with no photograph behind them
- *                                     every caption is a claim about their
- *                                     campus, and no function can tell which
- *                                     ones name a place, so all are cleared
- *   expiresAt              CLEAR      belonged to no conversation yet
+ *   EVERY OTHER FIELD      KEEP       deep-copied from the template, then
+ *                                     renamed (below): tagline, about,
+ *                                     principal and message, courses with
+ *                                     fees, timings, batches, syllabus and
+ *                                     faculty names; faculty with portraits;
+ *                                     results and toppers; stats; reviews and
+ *                                     rating; facilities; admissions steps,
+ *                                     dates and fees; notices; FAQs;
+ *                                     downloads; gallery, photos, hero and
+ *                                     section photos with their captions;
+ *                                     schedule rows; every section intro;
+ *                                     every Hindi twin; the look (theme),
+ *                                     market, language settings and pages
  *
- * ── THE MULTI-PAGE FIELDS (26 September 2026) ─────────────────────────────
+ * ── RENAMING ──────────────────────────────────────────────────────────────
+ * Every string anywhere in the copy is rewritten, English and Hindi alike.
+ * The template's fictional name in all its written forms (TEMPLATE_NAMES
+ * below: the full name, the short form the copy uses, and the Devanagari
+ * form in the Hindi twins) becomes, in an English string, the new name, and
+ * inside a `hi` block, the Hindi name if one was typed, else the new English
+ * name. Nothing stores initials or a monogram: the pages derive them from
+ * the name. With a city typed, the template's city (and "City, State")
+ * becomes it, in both languages. After this no string in the copy contains
+ * the template's fictional name; scripts/test-from-template.mjs checks it
+ * for all ten templates.
  *
- *   sitePages              KEEP       which pages the design offers, by id:
- *                                     structure. A page whose data is empty
- *                                     still leaves the nav on its own
- *   defaultLang            KEEP       a language setting, like market
- *   hi                     STRUCTURE  the Hindi versions of top-level text;
- *                                     a Hindi key survives only when its
- *                                     English field is KEEP (principalTitle).
- *                                     The same rule runs inside every kept
- *                                     object: courses[].hi keeps only the
- *                                     Hindi of kept course fields, and so on
- *   sessionLabel,
- *   admissionsOpenUntil    CLEAR      a session and a date
- *   vision, mission,
- *   udiseCode,
- *   classSizePromise,
- *   hostel, founder        CLEAR      their words, their numbers, a person
- *   stats                  CLEAR      trust figures
- *   reviews, rating        CLEAR      testimonials and a rating are claims
- *                                     made by named people about THIS place
- *   photos                 CLEAR      the same reason as gallery
- *   portalLinks,
- *   downloads, policies    CLEAR      their URLs and their documents
- *   joining                CLEAR      a promise about their process; empty
- *                                     prints our own generic three steps
- *   academics,
- *   facilityDetails,
- *   boardResults,
- *   transport, boarding,
- *   studentLife, safety,
- *   dayPlan, disclosure    CLEAR      every one is a fact about a campus
- *   testSeries,
- *   scholarship, posts,
- *   govExams, olympiad,
- *   feesPolicy             CLEAR      dates, fees, cut-offs, their writing
- *
- *   courses[]  also KEEP slug and category (structure: the URL and the goal
- *              chip) and CLEAR eligibility, syllabus, material, testPlan,
- *              instalments, inclusions, refundNote, facultyNames and faq.
- *   schedule[] and admissions: every new key is CLEAR except `hi` (the rule
- *              above). The new admissions keys (timeline, fees, ageRules,
- *              rteNote, applyUrl, whoCanApply, assessment) are all CLEAR:
- *              the age checker's NEP defaults live in code, not the record.
- *   faq[]      a generic entry keeps its group and its Hindi title and body.
- *
- * Fields the brief also names that DemoSite does not have (testimonials,
- * toppers, social handles, student names outside `results`) have nowhere to
- * survive. A field added to DemoSite later cannot slip through either:
- * `DUPLICATE_POLICY` below is typed as a Record over every key of DemoSite,
- * so the build fails until the new field is classified.
+ * `DUPLICATE_POLICY` is typed as a Record over every key of DemoSite, so a
+ * field added to DemoSite later is a compile error here until it is
+ * classified.
  *
  * ── PURE ──────────────────────────────────────────────────────────────────
- * No store, no clock and no randomness unless the caller passes none: `now`
- * and `newId` are injectable, the inputs are never mutated, and nothing is
- * saved. The caller saves. scripts/test-from-template.mjs runs every template
- * through this and asserts every CLEAR field is empty and every KEEP field is
- * equal.
+ * No store, and no clock or randomness unless the caller passes none: `now`
+ * and `newId` are injectable, the inputs are never mutated, nothing is saved
+ * and the copy shares no object with the template module. The caller saves.
  */
 
-import type {
-  DemoAdmissions,
-  DemoCourse,
-  DemoScheduleRow,
-  DemoSite,
-  PitchPage,
-} from "@/lib/cms/types";
+import type { DemoContactDetails, DemoSite, PitchPage } from "@/lib/cms/types";
 import { uniqueDemoSlug } from "../reservedRoutes";
+import { samplePrints } from "../site/sample";
+import type { TemplateId } from "./ids";
 import type { LoadedTemplate } from "./shape";
 
 /* ── The policy, as data ─────────────────────────────────────────────────── */
 
-export type DuplicateRule = "new" | "keep" | "structure" | "clear";
+export type DuplicateRule = "new" | "identity" | "contact" | "keep";
 
 /** The table above, one entry per DemoSite field. Exhaustive by type. */
 export const DUPLICATE_POLICY = {
-  id: "new",
-  slug: "new",
-  status: "new",
-  templateId: "new",
-  preparedOn: "new",
-  isExample: "new",
-  order: "new",
-  createdAt: "clear",
-  updatedAt: "clear",
+  id: "new", slug: "new", status: "new", templateId: "new", preparedOn: "new",
+  createdAt: "new", updatedAt: "new", isExample: "new", order: "new",
+  expiresAt: "new", sample: "new",
 
-  kind: "keep",
-  theme: "keep",
-  market: "keep",
-  currency: "keep",
-  country: "keep",
-  focusAreas: "keep",
-  principalTitle: "keep",
-  facilities: "keep",
+  instituteName: "identity", shortName: "identity", city: "identity", state: "identity",
 
-  courses: "structure",
-  schedule: "structure",
-  admissions: "structure",
-  faq: "structure",
+  contact: "contact", officialWebsite: "contact",
 
-  instituteName: "clear",
-  shortName: "clear",
-  tagline: "clear",
-  city: "clear",
-  state: "clear",
-  contact: "clear",
-  officialWebsite: "clear",
-  logo: "clear",
-  heroImage: "clear",
-  palette: "clear",
-  principalName: "clear",
-  principalMessage: "clear",
-  established: "clear",
-  establishedYear: "clear",
-  boardOrAffiliation: "clear",
-  about: "clear",
-  admissionsHeadline: "clear",
-  notices: "clear",
-  results: "clear",
-  resultsHeading: "clear",
-  resultsNote: "clear",
-  faculty: "clear",
-  method: "clear",
-  trial: "clear",
-  scheduleNote: "clear",
-  gallery: "clear",
-  expiresAt: "clear",
-
-  /* Multi-page fields: see the second half of the table above. */
-  sitePages: "keep",
-  defaultLang: "keep",
-  hi: "structure",
-  sessionLabel: "clear",
-  admissionsOpenUntil: "clear",
-  vision: "clear",
-  mission: "clear",
-  udiseCode: "clear",
-  classSizePromise: "clear",
-  hostel: "clear",
-  founder: "clear",
-  stats: "clear",
-  reviews: "clear",
-  rating: "clear",
-  photos: "clear",
-  portalLinks: "clear",
-  downloads: "clear",
-  policies: "clear",
-  joining: "clear",
-  academics: "clear",
-  facilityDetails: "clear",
-  boardResults: "clear",
-  transport: "clear",
-  boarding: "clear",
-  studentLife: "clear",
-  safety: "clear",
-  dayPlan: "clear",
-  disclosure: "clear",
-  testSeries: "clear",
-  scholarship: "clear",
-  posts: "clear",
-  govExams: "clear",
-  olympiad: "clear",
-  feesPolicy: "clear",
+  kind: "keep", theme: "keep", palette: "keep", market: "keep", currency: "keep",
+  country: "keep", logo: "keep", heroImage: "keep", focusAreas: "keep",
+  established: "keep", establishedYear: "keep", boardOrAffiliation: "keep",
+  about: "keep", principalName: "keep", principalTitle: "keep",
+  principalMessage: "keep", facilities: "keep", admissionsHeadline: "keep",
+  admissions: "keep", notices: "keep", gallery: "keep", courses: "keep",
+  resultsHeading: "keep", resultsNote: "keep", results: "keep", faculty: "keep",
+  method: "keep", faq: "keep", trial: "keep", schedule: "keep",
+  scheduleNote: "keep", tagline: "keep",
+  sitePages: "keep", defaultLang: "keep", hi: "keep", sessionLabel: "keep",
+  admissionsOpenUntil: "keep", vision: "keep", mission: "keep", udiseCode: "keep",
+  classSizePromise: "keep", hostel: "keep", founder: "keep", stats: "keep",
+  reviews: "keep", rating: "keep", photos: "keep", portalLinks: "keep",
+  downloads: "keep", policies: "keep", joining: "keep", academics: "keep",
+  facilityDetails: "keep", boardResults: "keep", transport: "keep",
+  boarding: "keep", studentLife: "keep", safety: "keep", dayPlan: "keep",
+  disclosure: "keep", testSeries: "keep", scholarship: "keep", posts: "keep",
+  govExams: "keep", olympiad: "keep", feesPolicy: "keep", sectionPhotos: "keep",
 } as const satisfies Record<keyof DemoSite, DuplicateRule>;
-
-type Policy = typeof DUPLICATE_POLICY;
-type KeysWith<R extends DuplicateRule> = {
-  [K in keyof Policy]: Policy[K] extends R ? K : never;
-}[keyof Policy];
-
-export type ClearedField = KeysWith<"clear">;
-export type KeptField = KeysWith<"keep">;
 
 /** Every field under a rule, for the test and for anybody reading the table. */
 export function fieldsWithRule(rule: DuplicateRule): (keyof DemoSite)[] {
@@ -276,242 +147,134 @@ export function fieldsWithRule(rule: DuplicateRule): (keyof DemoSite)[] {
   );
 }
 
+/** The contact keys the copy loses. Office hours (and their Hindi) stay. */
+export const CLEARED_CONTACT_KEYS = [
+  "phone", "whatsapp", "email", "addressLines", "landmark", "mapUrl", "mapQuery",
+  "branches", "transportDesk",
+] as const satisfies readonly (keyof DemoContactDetails)[];
+
+/** The disclosure rows that are contact details in another table. */
+export const CLEARED_DISCLOSURE_ROWS = ["address", "email", "phone"] as const;
+
+/* ── The template's fictional name, in every form the copy writes it ────── */
+
+export interface TemplateNameForms {
+  /** Latin forms, the full name first. Short forms are the ones the prose uses. */
+  en: string[];
+  /** Devanagari forms used in the Hindi twins. */
+  hi: string[];
+  /** The template city in Devanagari, as the Hindi twins write it. */
+  cityHi: string[];
+}
+
 /**
- * What each cleared field becomes. The same empty values the admin's own
- * "New demo site" defaults use (src/admin/schemas.ts), so the form opens on
- * empty inputs rather than on undefined, and every renderer already has a
- * designed empty state for each of them. `Required<>` makes a missing entry a
- * compile error.
+ * Written out by hand from the ten content files, because a short form
+ * ("Harsingar opened in 2004") or a Devanagari form cannot be derived from
+ * the full name. A new template is a compile error here until it is added,
+ * and the test fails if any form the copy still carries was missed.
  */
-const CLEARED: Required<Pick<DemoSite, ClearedField>> = {
-  createdAt: undefined,
-  updatedAt: undefined,
-  instituteName: "",
-  shortName: "",
-  tagline: "",
-  city: "",
-  state: "",
-  contact: {
-    phone: "",
-    whatsapp: "",
-    email: "",
-    addressLines: [],
-    hours: "",
-    mapUrl: "",
-    mapQuery: "",
-  },
-  officialWebsite: "",
-  logo: "",
-  heroImage: "",
-  palette: undefined,
-  principalName: "",
-  principalMessage: "",
-  established: "",
-  establishedYear: "",
-  boardOrAffiliation: "",
-  about: "",
-  admissionsHeadline: "",
-  notices: [],
-  results: [],
-  resultsHeading: "",
-  resultsNote: "",
-  faculty: [],
-  method: [],
-  trial: { heading: "", body: "", duration: "", bring: "", howToBook: "" },
-  scheduleNote: "",
-  gallery: [],
-  expiresAt: "",
-  /* Multi-page fields clear to nothing at all: the key is dropped, which is
-     what a record typed by hand before these fields existed looks like. */
-  sessionLabel: undefined,
-  admissionsOpenUntil: undefined,
-  vision: undefined,
-  mission: undefined,
-  udiseCode: undefined,
-  classSizePromise: undefined,
-  hostel: undefined,
-  founder: undefined,
-  stats: undefined,
-  reviews: undefined,
-  rating: undefined,
-  photos: undefined,
-  portalLinks: undefined,
-  downloads: undefined,
-  policies: undefined,
-  joining: undefined,
-  academics: undefined,
-  facilityDetails: undefined,
-  boardResults: undefined,
-  transport: undefined,
-  boarding: undefined,
-  studentLife: undefined,
-  safety: undefined,
-  dayPlan: undefined,
-  disclosure: undefined,
-  testSeries: undefined,
-  scholarship: undefined,
-  posts: undefined,
-  govExams: undefined,
-  olympiad: undefined,
-  feesPolicy: undefined,
+export const TEMPLATE_NAMES: Record<TemplateId, TemplateNameForms> = {
+  "s1-urban-cbse": { en: ["Harsingar Senior Secondary School", "Harsingar"], hi: ["हरसिंगार"], cityHi: ["गुरुग्राम"] },
+  "s2-rural-state-board": { en: ["Kachnar Vidya Niketan", "Kachnar"], hi: ["कचनार विद्या निकेतन", "कचनार"], cityHi: ["सण्डीला", "संडीला"] },
+  "s3-play-school": { en: ["Gilhari House Play School", "Gilhari House"], hi: ["गिलहरी हाउस"], cityHi: ["इंदौर"] },
+  "s4-residential": { en: ["Buransh Hill School", "Buransh Hill", "Buransh"], hi: ["बुरांश हिल स्कूल", "बुरांश"], cityHi: ["अल्मोड़ा"] },
+  "s5-international": { en: ["Semal International School"], hi: ["सेमल इंटरनेशनल स्कूल"], cityHi: ["बेंगलुरु"] },
+  "c1-jee-neet-urban": { en: ["Parallax Academy", "Parallax"], hi: ["पैरेलैक्स अकादमी"], cityHi: ["कोटा"] },
+  "c2-rural-tuition": { en: ["Nav Prabhat Coaching Centre", "Nav Prabhat"], hi: ["नव प्रभात कोचिंग सेंटर", "नव प्रभात"], cityHi: ["मुसाफ़िरख़ाना", "मुसाफिरखाना"] },
+  "c3-science": { en: ["Meniscus Science Classes", "Meniscus"], hi: ["मेनिस्कस साइंस क्लासेज़", "मेनिस्कस"], cityHi: ["भोपाल"] },
+  "c4-foundation": { en: ["Tangram Foundation Classes", "Tangram"], hi: ["टैंग्राम फ़ाउंडेशन क्लासेज़", "टैंग्राम"], cityHi: ["पुणे"] },
+  "c5-government-jobs": { en: ["Kasauti Competition Classes", "Kasauti"], hi: ["कसौटी कॉम्पिटिशन क्लासेज़", "कसौटी"], cityHi: ["सासाराम"] },
 };
 
-/* ── The three STRUCTURE fields that are objects, field by field ─────────── */
+/** What the Duplicate dialog asks. Only the name is required. */
+export interface DuplicateIdentity {
+  name: string;
+  city?: string;
+  /** The name in Devanagari, for the Hindi twins. Empty: the English name is used there too. */
+  hiName?: string;
+}
+
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** One regex for a set of forms, longest first, matched as whole words in any script. */
+function formsRe(forms: string[]): RegExp | null {
+  const list = [...new Set(forms.map((f) => f.trim()).filter(Boolean))].sort((a, b) => b.length - a.length);
+  if (!list.length) return null;
+  return new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])(?:${list.map(esc).join("|")})(?![\\p{L}\\p{M}\\p{N}])`, "gu");
+}
+
+/** The name forms for a template: the table's, plus the content's own name. */
+export function templateNameForms(template: LoadedTemplate): TemplateNameForms {
+  const row = TEMPLATE_NAMES[template.meta.id] || { en: [], hi: [], cityHi: [] };
+  const own = [template.content.instituteName, template.content.shortName || ""];
+  return { en: [...own, ...row.en].filter(Boolean), hi: row.hi, cityHi: row.cityHi };
+}
 
 /**
- * The rule for one key of a kept object: keep it, clear it, or ("hi") keep
- * only the Hindi of the keys that are themselves kept. See keptHi.
+ * The rewrite applied to every string of the copy. `inHindi` is true inside
+ * a `hi` block. Exported so the test computes the expected copy with it.
  */
-export type SubRule = "keep" | "clear" | "hi";
+export function makeRenamer(template: LoadedTemplate, who: DuplicateIdentity) {
+  const forms = templateNameForms(template);
+  const name = who.name.trim();
+  const hiName = (who.hiName || "").trim() || name;
+  const city = (who.city || "").trim();
+  const oldCity = (template.content.city || "").trim();
+  const oldState = (template.content.state || "").trim();
+  const moving = Boolean(city) && city.toLowerCase() !== oldCity.toLowerCase();
 
-/** A batch keeps its shape and loses its numbers. Exhaustive by type. */
-export const COURSE_POLICY = {
-  name: "keep",
-  level: "keep",
-  subjects: "keep",
-  duration: "keep",
-  timings: "keep",
-  mode: "keep",
-  batchStarts: "clear",
-  seats: "clear",
-  fee: "clear",
-  feeNote: "clear",
-  detail: "clear",
-  slug: "keep",
-  category: "keep",
-  eligibility: "clear",
-  syllabus: "clear",
-  material: "clear",
-  testPlan: "clear",
-  instalments: "clear",
-  inclusions: "clear",
-  refundNote: "clear",
-  facultyNames: "clear",
-  faq: "clear",
-  hi: "hi",
-} as const satisfies Record<keyof DemoCourse, SubRule>;
+  const enRe = formsRe(forms.en);
+  const hiRe = formsRe(forms.hi);
+  const pairRe = moving && oldCity && oldState ? formsRe([`${oldCity}, ${oldState}`]) : null;
+  const cityRe = moving && oldCity ? formsRe([oldCity, ...forms.cityHi]) : null;
 
-/** A timetable row keeps its pattern and loses its people and rooms. */
-export const SCHEDULE_POLICY = {
-  label: "keep",
-  days: "keep",
-  time: "keep",
-  subject: "keep",
-  faculty: "clear",
-  room: "clear",
-  hi: "hi",
-} as const satisfies Record<keyof DemoScheduleRow, SubRule>;
+  return (s: string, inHindi: boolean): string => {
+    const newName = () => (inHindi ? hiName : name);
+    let out = s;
+    /* The city first, so a new name that happens to hold the old city's
+       word ("Kota Classes" moving to Patna) is never rewritten. */
+    if (pairRe) out = out.replace(pairRe, () => city);
+    if (cityRe) out = out.replace(cityRe, () => city);
+    if (enRe) out = out.replace(enRe, newName);
+    if (hiRe) out = out.replace(hiRe, newName);
+    return out;
+  };
+}
 
-/** Admissions keeps its steps and papers and loses its dates and terms. */
-export const ADMISSIONS_POLICY = {
-  steps: "keep",
-  documents: "keep",
-  dates: "clear",
-  note: "clear",
-  timeline: "clear",
-  fees: "clear",
-  feeNote: "clear",
-  ageRules: "clear",
-  ageAsOn: "clear",
-  rteNote: "clear",
-  applyUrl: "clear",
-  whoCanApply: "clear",
-  assessment: "clear",
-  hi: "hi",
-} as const satisfies Record<keyof DemoAdmissions, SubRule>;
-
-/**
- * The Hindi block of a kept object, reduced to the Hindi of its KEPT fields.
- * A Hindi fee note must not survive when the English one is cleared. Returns
- * undefined when nothing is left, so the key is dropped.
- */
-export function keptHi(
-  hi: Record<string, unknown> | undefined,
-  policy: Record<string, string>,
-): Record<string, string> | undefined {
-  if (!hi || typeof hi !== "object") return undefined;
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(hi)) {
-    if (policy[k] === "keep" && typeof v === "string" && v.trim()) out[k] = v;
+/** A deep copy of plain data with every string rewritten. Keys are never touched. */
+function renameAll(v: unknown, fn: (s: string, inHindi: boolean) => string, inHindi = false): unknown {
+  if (typeof v === "string") return fn(v, inHindi);
+  if (Array.isArray(v)) return v.map((x) => renameAll(x, fn, inHindi));
+  if (v && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, x] of Object.entries(v)) out[k] = renameAll(x, fn, inHindi || k === "hi");
+    return out;
   }
-  return Object.keys(out).length ? out : undefined;
+  return v;
 }
 
-function pick<T extends object>(
-  source: T | undefined,
-  policy: Record<keyof T, SubRule>,
-  empty: Partial<Record<keyof T, unknown>>,
-): T {
-  const out = {} as Record<keyof T, unknown>;
-  for (const key of Object.keys(policy) as (keyof T)[]) {
-    const rule = policy[key];
-    const value =
-      rule === "keep"
-        ? copyValue(source?.[key])
-        : rule === "hi"
-          ? keptHi(source?.[key] as Record<string, unknown>, policy as Record<string, string>)
-          : empty[key];
-    /* A cleared multi-page key has no entry in `empty` and is dropped, which
-       is what a record made before the field existed looks like. */
-    if (value !== undefined) out[key] = value;
-  }
-  return out as T;
+/** The template's contact block without anything that routes a call, a mail or a visit. */
+export function clearedContact(c: DemoContactDetails | undefined): DemoContactDetails {
+  const out: DemoContactDetails = {
+    phone: "", whatsapp: "", email: "", addressLines: [], hours: c?.hours || "", mapUrl: "", mapQuery: "",
+  };
+  if (c?.hi?.hours) out.hi = { hours: c.hi.hours };
+  return out;
 }
 
-/* The original fields clear to "" or [], as before; the new ones are absent. */
-const EMPTY_COURSE: Partial<Record<keyof DemoCourse, unknown>> = {
-  name: "", level: "", subjects: "", duration: "", timings: "", mode: "",
-  batchStarts: "", seats: "", fee: "", feeNote: "", detail: "",
-};
-const EMPTY_SCHEDULE: Partial<Record<keyof DemoScheduleRow, unknown>> = {
-  label: "", days: "", time: "", subject: "", faculty: "", room: "",
-};
-const EMPTY_ADMISSIONS: Partial<Record<keyof DemoAdmissions, unknown>> = {
-  steps: [], documents: [], dates: "", note: "",
-};
+/* ── The provisional link, for demos duplicated before the name dialog ──── */
 
-/** A deep copy of plain data, so the copy never shares an array with the template. */
-function copyValue<V>(v: V): V {
-  return v === undefined ? v : (JSON.parse(JSON.stringify(v)) as V);
-}
-
-/* ── The provisional link ────────────────────────────────────────────────── */
-
-/**
- * What a fresh duplicate's link is built from, before it has a name.
- *
- * The copy has no name yet, so its link cannot be the institute's. It gets
- * "draft-s1-urban-cbse" (or "-2", "-3" on a clash), which says what it is in
- * the list and cannot be mistaken for a real institute's address. The editor
- * treats this pattern as "not chosen by hand yet", so the link follows the
- * name the moment Mehdi types one, exactly as it does on a brand new demo.
- */
+/** The link base a nameless duplicate used to get: "draft-s1-urban-cbse". */
 export function templateDraftSlugBase(templateId: string): string {
   return `draft-${templateId}`;
 }
 
-/** True while a duplicate still wears its provisional link. */
+/** True while an older duplicate still wears that provisional link. */
 export function hasProvisionalTemplateSlug(site: Pick<DemoSite, "slug" | "templateId">): boolean {
   if (!site.templateId) return false;
   const base = templateDraftSlugBase(site.templateId);
   const s = (site.slug || "").toLowerCase();
   return s === base || new RegExp(`^${base}-\\d+$`).test(s);
-}
-
-/**
- * A generic FAQ as it lands on the copy: its title and body, its group, and
- * the Hindi of those three. Exported so the test computes the expected value
- * with the same rule instead of a second copy of it.
- */
-export function genericFaqCopy(f: { title: string; body?: string; group?: string; hi?: Record<string, string> }) {
-  const out: { title: string; body: string; group?: string; hi?: Record<string, string> } = {
-    title: f.title,
-    body: f.body || "",
-  };
-  if (f.group) out.group = f.group;
-  const hi = keptHi(f.hi, { title: "keep", body: "keep", group: "keep" });
-  if (hi) out.hi = hi;
-  return out;
 }
 
 /* ── The function ────────────────────────────────────────────────────────── */
@@ -532,44 +295,55 @@ function defaultId(now: Date): string {
 }
 
 /**
- * A new, fully editable draft demo, made from a template by the table above.
+ * A new draft demo for `who`, carrying the whole template by the table above.
  *
  * It is an ordinary `demoSites` document once saved: the edit lock, the slot,
  * Mark sent and every other rule apply to it exactly as to a demo typed in by
- * hand. Nothing links it back to the template except `templateId`, which is a
- * label; editing the template (in code) never changes a demo already made.
+ * hand. Nothing links it back to the template except `templateId` and the
+ * fingerprints in `sample`; editing the template (in code) never changes a
+ * demo already made.
  */
-export function fromTemplate(template: LoadedTemplate, ctx: FromTemplateContext): DemoSite {
+export function fromTemplate(
+  template: LoadedTemplate,
+  ctx: FromTemplateContext,
+  who: DuplicateIdentity,
+): DemoSite {
+  const name = (who?.name || "").trim();
+  if (!name) throw new Error("An institute name is required.");
   const { meta, content } = template;
   const now = ctx.now || new Date();
   const sites = ctx.sites || [];
   const pitchPages = ctx.pitchPages || [];
+  const rename = makeRenamer(template, who);
 
   /* The template seen as a record: the content file plus the two fields the
-     registry owns. Only KEEP fields are read from it. */
-  const source = { ...content, kind: meta.kind, theme: meta.theme } as Partial<DemoSite>;
-
+     registry owns. */
+  const source = { ...content, kind: meta.kind, theme: meta.theme } as Record<string, unknown>;
   const copy = {} as DemoSite;
   const write = copy as unknown as Record<string, unknown>;
 
+  /* KEEP: a renamed deep copy, so nothing is shared with the template module. */
   for (const key of Object.keys(DUPLICATE_POLICY) as (keyof DemoSite)[]) {
-    const rule = DUPLICATE_POLICY[key];
-    if (rule === "keep") write[key] = copyValue(source[key]);
-    else if (rule === "clear") write[key] = copyValue(CLEARED[key as ClearedField]);
+    if (DUPLICATE_POLICY[key] === "keep" && source[key] !== undefined) {
+      /* The top-level `hi` block is Hindi too, so it starts in Hindi. */
+      write[key] = renameAll(source[key], rename, key === "hi");
+    }
   }
 
-  /* STRUCTURE */
-  copy.courses = (content.courses || []).map((c) => pick(c, COURSE_POLICY, EMPTY_COURSE));
-  copy.schedule = (content.schedule || []).map((r) => pick(r, SCHEDULE_POLICY, EMPTY_SCHEDULE));
-  copy.admissions = pick(content.admissions, ADMISSIONS_POLICY, EMPTY_ADMISSIONS);
-  copy.faq = (content.faq || [])
-    .filter((f) => f.generic === true)
-    .map((f) => genericFaqCopy(f));
+  /* CONTACT */
+  copy.contact = clearedContact(content.contact);
+  copy.officialWebsite = "";
+  if (copy.disclosure?.rows) {
+    for (const k of CLEARED_DISCLOSURE_ROWS) delete copy.disclosure.rows[k];
+  }
 
-  /* STRUCTURE: the top-level Hindi block keeps only the Hindi of KEEP fields. */
-  const hi = keptHi(content.hi as Record<string, unknown>, DUPLICATE_POLICY as Record<string, string>);
-  if (hi) copy.hi = hi;
-  else delete write.hi;
+  /* IDENTITY */
+  const city = (who.city || "").trim();
+  const moving = Boolean(city) && city.toLowerCase() !== (content.city || "").trim().toLowerCase();
+  copy.instituteName = name;
+  copy.shortName = "";
+  copy.city = city || content.city;
+  copy.state = moving ? "" : content.state;
 
   /* NEW */
   const taken = new Set(sites.map((s) => s.id));
@@ -581,11 +355,12 @@ export function fromTemplate(template: LoadedTemplate, ctx: FromTemplateContext)
   copy.templateId = meta.id;
   copy.preparedOn = now.toISOString().slice(0, 10);
   copy.order = sites.length;
-  copy.slug = uniqueDemoSlug(templateDraftSlugBase(meta.id), { sites, pitchPages, currentId: id });
+  copy.expiresAt = "";
+  copy.slug = uniqueDemoSlug(name, { sites, pitchPages, currentId: id });
 
-  /* Keys the store stamps on save are not carried as `undefined` properties,
-     so the document written is exactly what a hand-made draft looks like. */
+  /* Last, so each print is of the block exactly as it landed. */
+  copy.sample = { from: meta.id, prints: samplePrints(copy) };
+
   for (const k of Object.keys(write)) if (write[k] === undefined) delete write[k];
-
   return copy;
 }

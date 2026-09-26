@@ -50,7 +50,7 @@ const KIND_HEADING: Record<DemoKind, string> = {
 export default function AdminTemplates() {
   const [segment, setSegment] = useState<Filter<TemplateSegment>>("all");
   const [family, setFamily] = useState<Filter<DesignFamily>>("all");
-  const { duplicate, busy, error } = useDuplicateTemplate();
+  const { request, busy, error, dialog } = useDuplicateTemplate();
 
   const visible = useMemo(
     () =>
@@ -92,11 +92,12 @@ export default function AdminTemplates() {
         <p className="flex gap-2.5">
           <Files className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden="true" />
           <span>
-            <strong className="text-foreground">A duplicate keeps the design, not the fiction.</strong>{" "}
-            It keeps the look, the section order, the course and batch structure with fees blank,
-            the facilities, the admission steps and the general questions. It clears the name, city,
-            contact details, principal, results, fees, dates, people and notices, so you type the
-            institute’s own.
+            <strong className="text-foreground">A duplicate arrives already filled.</strong>{" "}
+            Duplicate asks for the institute’s name (and, if you like, its city and Hindi name) and
+            puts it everywhere the example name was, in English and Hindi. Everything else comes
+            across: courses, fees, timings, teachers, results, reviews, notices, FAQs and photos.
+            Only the contact details are left empty, to add from their own website. Results and
+            reviews show a small “Sample” line until you edit them or mark them as real.
           </span>
         </p>
       </div>
@@ -131,7 +132,9 @@ export default function AdminTemplates() {
         />
       </div>
 
-      {error && (
+      {dialog}
+
+      {error && !dialog && (
         <div role="alert" className="mb-6 flex gap-3 rounded-2xl border border-destructive/50 bg-destructive/10 p-4 text-sm">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
           <p>{error}</p>
@@ -160,7 +163,7 @@ export default function AdminTemplates() {
                       t={t}
                       busy={busy === t.id}
                       disabled={busy !== null}
-                      onDuplicate={() => duplicate(t.id)}
+                      onDuplicate={() => request(t.id)}
                     />
                   </li>
                 ))}

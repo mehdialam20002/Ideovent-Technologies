@@ -15,23 +15,24 @@ import { hasBi, tr, trf, type Bilingual } from "@/lib/demo/site/bilingual";
 import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { clean, Str } from "@/lib/demo/ui/school/shared";
+import { slotPhoto, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
 import { Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
 const COPY = {
-  title: { en: "School transport", hi: "School transport" },
-  routes: { en: "Routes and stops", hi: "Routes और stops" },
-  search: { en: "Type your area or stop", hi: "अपना इलाका या stop लिखें" },
-  found: { en: "{n} of {total} routes stop near \"{q}\"", hi: "\"{q}\" के पास {total} में से {n} routes रुकते हैं" },
-  none: { en: "No route lists \"{q}\" yet. Ask the transport desk: new stops are added each session.", hi: "\"{q}\" अभी किसी route में नहीं है। Transport desk से पूछें।" },
-  pickup: { en: "Morning pickup", hi: "सुबह pickup" },
-  drop: { en: "Afternoon drop", hi: "दोपहर drop" },
-  safety: { en: "Safety on the bus", hi: "Bus में सुरक्षा" },
-  fees: { en: "Transport fees", hi: "Transport fees" },
-  desk: { en: "Transport desk", hi: "Transport desk" },
-  deskLead: { en: "For a seat, a change of stop or a timing question.", hi: "Seat, stop बदलने या समय के सवाल के लिए।" },
+  title: { en: "School transport", hi: "स्कूल ट्रांसपोर्ट" },
+  routes: { en: "Routes and stops", hi: "रूट और स्टॉप" },
+  search: { en: "Type your area or stop", hi: "अपना इलाका या स्टॉप लिखें" },
+  found: { en: "{n} of {total} routes stop near \"{q}\"", hi: "\"{q}\" के पास {total} में से {n} रूट रुकते हैं" },
+  none: { en: "No route lists \"{q}\" yet. Ask the transport desk: new stops are added each session.", hi: "\"{q}\" अभी किसी रूट में नहीं है। ट्रांसपोर्ट डेस्क से पूछें।" },
+  pickup: { en: "Morning pickup", hi: "सुबह पिकअप" },
+  drop: { en: "Afternoon drop", hi: "दोपहर ड्रॉप" },
+  safety: { en: "Safety on the bus", hi: "बस में सुरक्षा" },
+  fees: { en: "Transport fees", hi: "ट्रांसपोर्ट फीस" },
+  desk: { en: "Transport desk", hi: "ट्रांसपोर्ट डेस्क" },
+  deskLead: { en: "For a seat, a change of stop or a timing question.", hi: "सीट, स्टॉप बदलने या समय के सवाल के लिए।" },
 } satisfies Record<string, Bilingual>;
 
 export default function TransportPage({ site, ctx }: SitePageProps) {
@@ -93,13 +94,15 @@ export default function TransportPage({ site, ctx }: SitePageProps) {
 
       {safety.length > 0 && (
         <Section n={++n} title={tr(COPY.safety, lang)}>
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <WithPhoto src={slotPhoto(site, "transport")} ratio="3 / 2">
+          <ul className={`grid gap-3 ${slotPhoto(site, "transport") ? "" : "sm:grid-cols-2"}`}>
             {safety.map((s, i) => (
               <Reveal as="li" key={s} index={i} className="ds-card flex items-start gap-3 p-4">
                 <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--ds-accent))]" /><Str text={s} />
               </Reveal>
             ))}
           </ul>
+          </WithPhoto>
         </Section>
       )}
 

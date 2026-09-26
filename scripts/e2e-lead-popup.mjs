@@ -206,12 +206,12 @@ async function visitor({ base = BASE, width = 1280, height = 900, reducedMotion,
 }
 
 /**
- * Choose a need, type the website (or the institute name) and a number, wait out
+ * Choose a need, type the website (or the business name) and a number, wait out
  * the 3 second guard, send. Since 26 Sep the first step asks for the website and
  * the number; the name moved to the optional second step.
  */
 async function fillQuick(v, { site = "riverbend.example.in", phone = "98765 43210" } = {}) {
-  await v.page.locator("label[for='lp-need-school']").click();
+  await v.page.locator("label[for='lp-need-clinic']").click();
   await v.page.fill("#lp-website", site);
   await v.page.fill("#lp-phone", phone);
   await v.advance(4000);
@@ -366,31 +366,31 @@ async function t(fn) {
     // Expected strings come from the source, not from memory:
     //   thank-you   LeadPopup.tsx: `Sent. Thank you${firstName ? ...}.` and the
     //               quick step no longer asks for a name, so no name follows.
-    //   need        NEEDS in src/components/lead/core.ts: id "school", label "School".
+    //   need        NEEDS in src/components/lead/core.ts: id "clinic", label "Clinic or salon".
     //   reply link  whatsappToLead() in src/lib/leads.ts: "a free website check".
     //   promise     contact.responseTimePromise in src/lib/cms/seed.ts.
     check(/Sent\. Thank you\./.test(thanks), "success shows the thank-you", thanks.slice(0, 80));
     check(/Mehdi Alam/.test(thanks) && /on WhatsApp/.test(thanks) && /two working days/.test(thanks) && /\+91 98765 43210/.test(thanks), "it says who replies, how, and how fast");
     const p = v.emails[0]?.template_params || {};
     check(
-      v.emails.length === 1 && p.need === "School" && p.website === "riverbend.example.in" && p.phone === "+91 98765 43210" && p.source === "Pop-up" && p.page === "/",
+      v.emails.length === 1 && p.need === "Clinic or salon" && p.website === "riverbend.example.in" && p.phone === "+91 98765 43210" && p.source === "Pop-up" && p.page === "/",
       "the e-mail carries need, website, phone, source and page",
       JSON.stringify({ need: p.need, website: p.website, phone: p.phone, source: p.source, page: p.page }),
     );
-    check(/Website to check: riverbend\.example\.in/.test(p.message || "") && /Runs: School/.test(p.message || ""), "the plain-text message carries the website and what they run", (p.message || "").replace(/\n/g, " | ").slice(0, 90));
+    check(/Website to check: riverbend\.example\.in/.test(p.message || "") && /Runs: Clinic or salon/.test(p.message || ""), "the plain-text message carries the website and what they run", (p.message || "").replace(/\n/g, " | ").slice(0, 90));
     check(/wa\.me\/919876543210\?text=/.test(p.whatsapp_link || "") && /free website check/i.test(decodeURIComponent(p.whatsapp_link || "")), "the e-mail carries a one-tap WhatsApp reply about the website check");
     check(JSON.parse((await v.memory()) || "{}").state === "sent", "a delivered enquiry is remembered as sent");
 
     // The optional second step.
     await v.page.getByRole("button", { name: "Add a few details" }).click();
-    await v.page.fill("#lp-organisation", "Riverbend Public School");
+    await v.page.fill("#lp-organisation", "Riverbend Dental Clinic");
     await v.page.fill("#lp-city", "Patna");
     await v.page.locator("label[for='lp-timeline-1-3-months']").click();
     await v.page.selectOption("#lp-budget", "20k-45k");
     await v.page.getByRole("button", { name: "Send details" }).click();
     await v.page.waitForTimeout(1500);
     const p2 = v.emails[1]?.template_params || {};
-    check(/Details added/.test((await v.page.locator(CARD).textContent()) || "") && p2.organisation === "Riverbend Public School" && p2.city === "Patna" && p2.timeline === "In 1 to 3 months" && /₹20,000-₹45,000/.test(p2.budget || "") && Boolean(p2.follow_up_of), "the optional second step sends and points at the first", JSON.stringify({ org: p2.organisation, city: p2.city, timeline: p2.timeline, budget: p2.budget, followUp: Boolean(p2.follow_up_of) }));
+    check(/Details added/.test((await v.page.locator(CARD).textContent()) || "") && p2.organisation === "Riverbend Dental Clinic" && p2.city === "Patna" && p2.timeline === "In 1 to 3 months" && /₹20,000-₹45,000/.test(p2.budget || "") && Boolean(p2.follow_up_of), "the optional second step sends and points at the first", JSON.stringify({ org: p2.organisation, city: p2.city, timeline: p2.timeline, budget: p2.budget, followUp: Boolean(p2.follow_up_of) }));
 
     await v.reload();
     await v.advance(125000);
@@ -411,7 +411,7 @@ async function t(fn) {
     const alertText = (await alert.count()) ? (await alert.first().textContent()) || "" : "";
     check(/did not send/i.test(alertText), "a 412 shows a plain failure", alertText.slice(0, 70));
     check(!/Thank you/.test((await v.page.locator(CARD).textContent()) || ""), "and no thank-you anywhere in the card");
-    const kept = { site: await v.page.inputValue("#lp-website"), phone: await v.page.inputValue("#lp-phone"), need: await v.page.isChecked("#lp-need-school") };
+    const kept = { site: await v.page.inputValue("#lp-website"), phone: await v.page.inputValue("#lp-phone"), need: await v.page.isChecked("#lp-need-clinic") };
     check(kept.site === "riverbend.example.in" && kept.phone === "98765 43210" && kept.need, "the fields keep what was typed", JSON.stringify(kept));
     const order = await v.page.evaluate((sel) => {
       const links = [...document.querySelectorAll(`${sel} a, ${sel} button`)].filter((e) => e.offsetParent !== null);
@@ -421,7 +421,7 @@ async function t(fn) {
     check(/WhatsApp/.test(order.first || "") && /wa\.me\/917761921786\?text=/.test(order.href), "the WhatsApp link comes first", order.first);
     const msg = decodeURIComponent(order.href.split("text=")[1] || "");
     // whatsappToUs() in core.ts: "please check my website: <site>." then "We are <phrase>."
-    check(/check my website: riverbend\.example\.in/i.test(msg) && /We are a school\./.test(msg), "and it is prefilled with what they typed", msg.slice(0, 90));
+    check(/check my website: riverbend\.example\.in/i.test(msg) && /We are a clinic or salon\./.test(msg), "and it is prefilled with what they typed", msg.slice(0, 90));
     check((await v.memory()) === null, "a failed send does not retire the card");
     await v.ctx.close();
   });
@@ -435,7 +435,7 @@ async function t(fn) {
     const summary = (await v.page.locator("#contact [role=alert]").first().textContent()) || "";
     const focused = await v.page.evaluate(() => document.activeElement?.id);
     check(/3 fields/.test(summary) && focused === "cf-website", "empty submit: error summary of 3 fields, focus on the first", `${summary.slice(0, 50)} / focus ${focused}`);
-    await v.page.locator("label[for='cf-need-coaching']").click();
+    await v.page.locator("label[for='cf-need-gym']").click();
     await v.page.fill("#cf-website", "riverbend.example.in");
     await v.page.fill("#cf-name", "Arjun Rao");
     await v.page.fill("#cf-phone", "+91 91234 56789");
@@ -446,7 +446,7 @@ async function t(fn) {
     await v.page.waitForTimeout(1500);
     const done = (await v.page.locator("#contact").textContent()) || "";
     const p = v.emails[0]?.template_params || {};
-    check(/Sent\. Thank you, Arjun\./.test(done) && p.source === "Contact form" && p.need === "Coaching institute" && p.website === "riverbend.example.in" && p.city === "Lucknow", "contact form success: thank-you, and the e-mail has the fields", JSON.stringify({ need: p.need, website: p.website, city: p.city, source: p.source }));
+    check(/Sent\. Thank you, Arjun\./.test(done) && p.source === "Contact form" && p.need === "Gym or fitness" && p.website === "riverbend.example.in" && p.city === "Lucknow", "contact form success: thank-you, and the e-mail has the fields", JSON.stringify({ need: p.need, website: p.website, city: p.city, source: p.source }));
     check(JSON.parse((await v.memory()) || "{}").state === "sent", "a contact-form enquiry retires the pop-up");
     await v.go("/");
     await v.advance(125000);
@@ -456,18 +456,19 @@ async function t(fn) {
   await t(async () => {
     const v = await visitor({ emailStatus: 412 });
     await v.go("/contact?for=school");
-    check(await v.page.isChecked("#cf-need-school"), "/contact?for=school preselects School");
+    // prefillFromQuery in core.ts: for=school and for=coaching both map to "education".
+    check(await v.page.isChecked("#cf-need-education"), "/contact?for=school preselects School or coaching");
     await v.page.fill("#cf-website", "riverbend.example.in");
     await v.page.fill("#cf-name", "Arjun Rao");
     await v.page.fill("#cf-phone", "91234 56789");
-    await v.page.fill("#cf-message", "Our admission form is a PDF.");
+    await v.page.fill("#cf-message", "Our prices are only in a PDF.");
     await v.advance(4000);
     await v.page.locator("#contact button[type=submit]").click();
     await v.page.waitForTimeout(1500);
     const alert = (await v.page.locator("#contact [role=alert]").first().textContent()) || "";
     const wa = await v.page.locator("#contact [role=alert] a[href*='wa.me']").first().getAttribute("href");
     const kept = await v.page.inputValue("#cf-message");
-    check(/did not send/.test(alert) && /wa\.me\/917761921786/.test(wa || "") && kept === "Our admission form is a PDF.", "contact form 412: plain failure, WhatsApp offered, message kept");
+    check(/did not send/.test(alert) && /wa\.me\/917761921786/.test(wa || "") && kept === "Our prices are only in a PDF.", "contact form 412: plain failure, WhatsApp offered, message kept");
     check(!/Thank you/.test((await v.page.locator("#contact").textContent()) || ""), "contact form 412: no thank-you");
     await v.ctx.close();
   });
@@ -476,7 +477,7 @@ async function t(fn) {
   await t(async () => {
     const v = await visitor({ emailStatus: 200 });
     await v.go("/contact");
-    await v.page.locator("label[for='cf-need-business']").click();
+    await v.page.locator("label[for='cf-need-firm']").click();
     await v.page.fill("#cf-website", "riverbend.example.in");
     await v.page.fill("#cf-name", "Bot");
     await v.page.fill("#cf-phone", "98765 43210");
@@ -505,7 +506,7 @@ async function t(fn) {
     // (Suspense reveals on a timer), and the form's clock starts at its own
     // first render, so the send below is still well inside 3 seconds.
     check(await v.appears("#cf-name"), "the contact form renders after an in-app navigation");
-    await v.page.locator("label[for='cf-need-business']").click();
+    await v.page.locator("label[for='cf-need-firm']").click();
     await v.page.fill("#cf-website", "riverbend.example.in");
     await v.page.fill("#cf-name", "Quick Fingers");
     await v.page.fill("#cf-phone", "98765 43210");
@@ -539,10 +540,14 @@ async function t(fn) {
     await v.advance(62000);
     await v.cardAppears();
     const h1 = (await v.page.locator(`${CARD} [role=dialog]`).boundingBox())?.height || 0;
-    await v.page.locator("label[for='lp-need-school']").click();
+    await v.page.locator("label[for='lp-need-clinic']").click();
     await v.page.waitForTimeout(200);
     const h2 = (await v.page.locator(`${CARD} [role=dialog]`).boundingBox())?.height || 0;
-    check(h1 > 0 && h1 <= 844 * 0.45 && h2 <= 844 * 0.75 + 1, "390x844: opens at under 45% of the screen, never over 75%", `${Math.round(h1)}px then ${Math.round(h2)}px`);
+    // 26 Sep 2026 (HOMEPAGE-COPY-DECK-V2.md B2): "What do you run?" went from
+    // five short answers (two rows of chips) to seven business types (four
+    // rows at 390px), which adds two 44px rows. Measured: 466px, 55% of 844.
+    // The bound moved from 45% to 56% with it; the 75% cap after a tap stays.
+    check(h1 > 0 && h1 <= 844 * 0.56 && h2 <= 844 * 0.75 + 1, "390x844: opens at under 56% of the screen, never over 75%", `${Math.round(h1)}px then ${Math.round(h2)}px`);
     const targets = await v.page.evaluate((sel) =>
       [...document.querySelectorAll(`${sel} button, ${sel} a, ${sel} input:not([type=radio]):not([tabindex='-1'])`)]
         .filter((e) => e.offsetParent !== null)
@@ -563,7 +568,7 @@ async function t(fn) {
       await v.go("/");
       await v.advance(62000);
       await v.cardAppears();
-      await v.page.locator("label[for='lp-need-school']").click();
+      await v.page.locator("label[for='lp-need-clinic']").click();
       await v.page.waitForTimeout(300);
       const s = await v.page.evaluate((sel) => {
         const d = document.querySelector(`${sel} [role=dialog]`);
@@ -592,7 +597,8 @@ async function t(fn) {
 
 /* ───────────────────────────── Negative control ───────────────────────────── */
 if (RUN_NEGATIVE) {
-  const port = 5196;
+  // LEAD_E2E_NEG_PORT: another run (or a concurrent agent) may already hold 5196.
+  const port = Number(process.env.LEAD_E2E_NEG_PORT) || 5196;
   console.log(`\nNEGATIVE CONTROL: dev server on ${port} with VITE_LEAD_POPUP_FORGET_DISMISSAL=1`);
   const server = spawn(process.execPath, [resolve(root, "node_modules/vite/bin/vite.js"), "--port", String(port), "--strictPort"], {
     cwd: root,

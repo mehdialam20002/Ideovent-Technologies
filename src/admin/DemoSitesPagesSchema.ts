@@ -76,7 +76,7 @@ export const DEMO_SITE_PAGE_FIELDS: FieldConfig[] = [
       text("source", "Source"), text("videoUrl", "Video link"), { name: "consent", label: "Written consent held", type: "boolean" }, hi([["quote", "Quote", "textarea"], ["relation", "Relation"]])] },
   { name: "rating", label: "Public rating", type: "group", full: true, help: "Printed only with the count and the link.",
     fields: [text("value", "Rating"), text("count", "Number of reviews"), text("url", "Profile link", { full: true }), text("source", "Source")] },
-  { name: "photos", label: "Photographs (with categories)", type: "array", full: true, help: "Only files you actually hold.",
+  { name: "photos", label: "Photographs (with categories)", type: "array", full: true, help: "The Gallery page. Files you hold, or stock photos from the library (add them in the Photos panel above; their alt text comes from the library, so leave “What it shows” empty). Never caption a stock photo as their campus.",
     itemFields: [{ name: "src", label: "Photograph", type: "image", full: true }, text("alt", "What it shows", { full: true }), text("category", "Category"), text("caption", "Caption"),
       hi([["alt", "What it shows"], ["caption", "Caption"], ["category", "Category"]])] },
   links("portalLinks", "Portal and app links", "Links to THEIR real portal. Never a login form here."),

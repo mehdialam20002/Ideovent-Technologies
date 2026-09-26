@@ -101,18 +101,16 @@ export default function ContactForm({ sourcePage = "contact" }: { sourcePage?: s
           title={
             <>
               Send us your website address.{" "}
-              <span className="text-muted-foreground">We will tell you what a parent sees.</span>
+              <span className="text-muted-foreground">We will tell you what your customers see.</span>
             </>
           }
           subtitle={contact.responseTimePromise}
         />
-        {/* The only urgency on the page is the real admission calendar, as
-            arithmetic, not pressure (HOMEPAGE-COPY-DECK.md section 12). The
-            3 to 5 weeks is the school-website timeline in FAQ f2 and
-            Pricing.tsx; Mehdi to confirm it (deck decision 5). */}
+        {/* No urgency on the page. The admission-calendar line was true only
+            for schools, so it went (HOMEPAGE-COPY-DECK-V2.md A12). This line
+            lowers the risk of the first step instead. */}
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground text-pretty">
-          Admissions open in December. A school website takes 3 to 5 weeks once we have your
-          content, so count back from there.
+          The check is free, and there is nothing to sign. No website yet? Send your business name.
         </p>
 
         <div className="mt-12 grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">

@@ -77,8 +77,8 @@ export type PhoneResult =
  *   +44 20 7946 0958   +1 (415) 555-0100
  *
  * Mobile numbers in India are 10 digits starting 6, 7, 8 or 9. A landline
- * with its STD code is 0 plus 10 digits; it is accepted because a school
- * office number is a real way to reach a principal, but it gets no WhatsApp
+ * with its STD code is 0 plus 10 digits; it is accepted because an office
+ * number is a real way to reach an owner, but it gets no WhatsApp
  * link, because WhatsApp cannot reach it.
  */
 export function normalisePhone(input: string): PhoneResult {
@@ -139,10 +139,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export function validateLead(lead: Lead, scope: "quick" | "full" = "full"): Partial<Record<LeadField, string>> {
   const e: Partial<Record<LeadField, string>> = {};
   // 26 Sep 2026: the form is the free website check. Required: the website
-  // (or the institute name), a phone, and what they run. The name is optional
+  // (or the business name), a phone, and what they run. The name is optional
   // (HOMEPAGE-COPY-DECK.md decision 9, the recommended default).
   const website = (lead.website || "").trim();
-  if (!website) e.website = "Enter your website address, or your school or institute name";
+  if (!website) {
+    e.website = lead.need === "software"
+      ? "Enter your business or idea, in a few words"
+      : "Enter your website address, or your business name";
+  }
   if (!lead.need) e.need = "Choose what you run";
   const phone = normalisePhone(lead.phone);
   if ("error" in phone) e.phone = phone.error;
@@ -344,7 +348,7 @@ function emailParams(doc: ContactSubmission, replyLink: string): Record<string, 
     ["Website to check", doc.website],
     ["Runs", doc.need],
     ["Phone / WhatsApp", doc.phone],
-    ["Institute or business", doc.organisation],
+    ["Business or organisation", doc.organisation],
     ["City", doc.city],
     ["Wants to start", doc.timeline],
     ["Budget", doc.budget],

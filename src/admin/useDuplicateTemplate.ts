@@ -1,41 +1,49 @@
-import { useCallback, useState } from "react";
+import { createElement, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { DemoSite, PitchPage } from "@/lib/cms/types";
 import { useCms } from "@/lib/cms/context";
-import { loadTemplate, type TemplateId } from "@/lib/demo/templates";
-import { fromTemplate } from "@/lib/demo/templates/fromTemplate";
+import { loadTemplate, templateMeta, type TemplateId } from "@/lib/demo/templates";
+import { fromTemplate, type DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
+import { DuplicateTemplateDialog } from "./DuplicateTemplateDialog";
 
 /**
  * THE ONE WRITE A TEMPLATE ALLOWS: make a new draft demo from it.
  *
  * Shared by the Templates tab and the template preview, so both do exactly
- * the same thing. Loads the template's own chunk, runs it through
- * `fromTemplate` (which clears every fact about the fictional institute),
- * saves the result as an ordinary `demoSites` document, and opens it in the
- * demo-sites editor, because the next thing that happens is always typing
- * the real institute's name.
+ * the same thing. `request(id)` opens a small dialog asking for the
+ * institute's name (required), city and Hindi name; submitting it loads the
+ * template's own chunk, runs it through `fromTemplate` (which carries the
+ * whole template under the new name and clears the contact details), saves
+ * the result as an ordinary `demoSites` draft, and opens it in the
+ * demo-sites editor.
  *
  * Nothing here can write to a template. Templates are modules; the only
- * document this touches is the new copy.
+ * document this touches is the new copy. The caller renders `dialog`.
  */
 export function useDuplicateTemplate() {
   const { data, actions } = useCms();
   const navigate = useNavigate();
   const [busy, setBusy] = useState<TemplateId | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [asking, setAsking] = useState<TemplateId | null>(null);
 
   const duplicate = useCallback(
-    async (id: TemplateId) => {
+    async (id: TemplateId, who: DuplicateIdentity) => {
       setBusy(id);
       setError(null);
       try {
         const template = await loadTemplate(id);
         if (!template) throw new Error(`There is no template called ${id}.`);
-        const copy = fromTemplate(template, {
-          sites: (data.demoSites as DemoSite[]) || [],
-          pitchPages: (data.pitchPages as PitchPage[]) || [],
-        });
+        const copy = fromTemplate(
+          template,
+          {
+            sites: (data.demoSites as DemoSite[]) || [],
+            pitchPages: (data.pitchPages as PitchPage[]) || [],
+          },
+          who,
+        );
         await actions.saveDoc("demoSites", copy);
+        setAsking(null);
         navigate(`/admin/c/demoSites?edit=${encodeURIComponent(copy.id)}`);
       } catch (e) {
         setError(
@@ -48,5 +56,21 @@ export function useDuplicateTemplate() {
     [actions, data.demoSites, data.pitchPages, navigate],
   );
 
-  return { duplicate, busy, error };
+  const request = useCallback((id: TemplateId) => {
+    setError(null);
+    setAsking(id);
+  }, []);
+
+  const meta = asking ? templateMeta(asking) : undefined;
+  const dialog = asking
+    ? createElement(DuplicateTemplateDialog, {
+        templateLabel: meta?.label || asking,
+        busy: busy !== null,
+        error,
+        onCancel: () => setAsking(null),
+        onSubmit: (who: DuplicateIdentity) => duplicate(asking, who),
+      })
+    : null;
+
+  return { request, duplicate, busy, error, dialog };
 }

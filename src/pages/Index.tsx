@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Seo } from "@/components/seo/Seo";
 import Hero from "@/components/sections/Hero";
-import ParentProblems from "@/components/sections/ParentProblems";
+import CustomerProblems from "@/components/sections/CustomerProblems";
 import WhatWeSetUp from "@/components/sections/WhatWeSetUp";
 import FreeCheck from "@/components/sections/FreeCheck";
 import PriceSummary from "@/components/sections/PriceSummary";
@@ -17,35 +17,53 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Marquee } from "@/components/ui/marquee";
 
 /*
-  The strip: what a parent looks for on a school website.
+  The strip: what any growing business needs online.
 
-  It used to be sixteen framework names (React, Next.js, Supabase and so on).
-  That list was about us, and a principal is not choosing between frameworks.
-  Mehdi, 26 Sep 2026: the page must be about their business, not our product.
-  So the strip now carries the buyer’s words, from the 25 Sep measurement of
-  twenty Delhi school and coaching sites (04-sales-kit/PROSPECTS-DELHI-NCR.md).
-  The tech stack now lives on /services. Copy: _assets/HOMEPAGE-COPY-DECK.md
-  section 2.
+  It used to be sixteen framework names (React, Next.js, Supabase and so on),
+  then a list of school-site items. Mehdi, 26 Sep 2026: the page must be about
+  the buyer's business, and the studio builds for every kind of business, not
+  only schools. So the strip carries what we set up, in the owner's words, with
+  one trust item last and no rupee figure. The tech stack lives on /services.
+  Copy: _assets/HOMEPAGE-COPY-DECK-V2.md A2.
 */
-const PARENT_LOOKS_FOR = [
-  "Fee structure", "Admission form", "Bus routes", "Batch timings", "Results",
-  "Faculty", "Campus photos", "Location on Google Maps", "Notices and circulars",
-  "Demo-class booking",
+const WHAT_WE_SET_UP = [
+  "Found on Google Maps", "Opens fast on a phone", "WhatsApp button",
+  "Enquiry form that reaches you", "Online payments", "Bookings", "Orders",
+  "Staff dashboard", "Your own app", "Fixed price in writing",
 ];
+
+/*
+  The proof band's links. Client sites from _assets/FACTS.md (VERIFIED CLIENT
+  PROJECTS, HTTP 200 on 24 Sep 2026), same addresses as the seed records. The
+  certificate check used to sit here; it lives on /verify and the internship
+  pages, because on the home page it told a buyer about interns, not about
+  client work.
+*/
+const LIVE_SITES = [
+  { label: "GYM MAP", href: "https://gym-map-customer-web.vercel.app" },
+  { label: "WedArt Films", href: "https://wedart.vercel.app" },
+  { label: "Atelier Co.", href: "https://eccom2.vercel.app" },
+  { label: "Tamkuhi Bazaar", href: "https://tamkuhibazaar-online.vercel.app" },
+];
+
+const PROOF_PILL =
+  "inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4 text-xs font-medium " +
+  "transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70";
 
 /**
  * The home page.
  *
- * ORDER (26 Sep 2026, _assets/HOMEPAGE-COPY-DECK.md section 14). Mehdi: the
+ * ORDER (26 Sep 2026, _assets/HOMEPAGE-COPY-DECK.md section 14; copy from
+ * _assets/HOMEPAGE-COPY-DECK-V2.md). Mehdi: the
  * page must be about the buyer's business, not about our product, and the price
  * does not belong in the first screen. The order follows Sell Like Crazy (read
  * as what he meant by "Sell Like a Crow"): diagnose before you prescribe, give
  * value before the pitch, price after value.
  *
  *      1. Hero            who it is for, what they want, one free next step
- *      2. Strip           what a parent looks for (was framework names)
- *      3. ParentProblems  what a parent runs into, and what the fix does
- *      4. WhatWeSetUp     schools / coaching / businesses (was ServicesGrid)
+ *      2. Strip           what we set up for any business (was framework names)
+ *      3. CustomerProblems what stops a customer, what slows a team, and the fix
+ *      4. WhatWeSetUp     be found / take busywork off / build your product
  *      5. WorkShowcase    proof anyone can open
  *      6. Proof band      you do not have to take our word for it
  *      7. FreeCheck       the offer: the free website check, and the terms
@@ -63,7 +81,7 @@ const PARENT_LOOKS_FOR = [
  *
  *     hero            its own top padding, tight bottom
  *     strip           a 24px band, a rule rather than a section
- *     parent problems pt-12 pb-2 → lg pt-20           a box, the next opens on a rule
+ *     problems        pt-12 pb-2 → lg pt-20           a box, the next opens on a rule
  *     what we set up  pt-16 pb-4 → lg pt-24 pb-8      opens on a gold rule; short
  *                                                     bottom, the work brings its own top
  *     work            pt-20 pb-12 → lg pt-32 pb-16    opens on a gold rule
@@ -106,7 +124,7 @@ export default function Index() {
       <Seo path="/" />
       <Hero />
 
-      {/* Decorative strip (what a parent looks for). A band, not a section: it is a hairline rule with
+      {/* Decorative strip (what we set up for your business). A band, not a section: it is a hairline rule with
           words in it, and it is what separates the hero from the work without
           spending a screen height on nothing.
 
@@ -117,16 +135,16 @@ export default function Index() {
           on the navy-and-gold palette: #A3B3D1 on #081738 is 8.34:1 in dark and
           #48566A on #F8FAFC is 7.13:1 in light. Do not put an opacity back on it. */}
       <div className="border-y border-border/60 py-6">
-        <Marquee duration={40} label="What parents look for on a school website">
-          {PARENT_LOOKS_FOR.map((t) => (
+        <Marquee duration={40} label="What we set up for your business">
+          {WHAT_WE_SET_UP.map((t) => (
             <span key={t} className="mx-8 font-display text-lg font-medium text-muted-foreground">{t}</span>
           ))}
         </Marquee>
       </div>
 
-      {/* Value before the pitch: what a parent runs into, then what the site
-          does about it, for schools, coaching institutes and businesses. */}
-      <ParentProblems />
+      {/* Value before the pitch: what stops a customer and what slows a team,
+          then what we set up about it, for any growing business. */}
+      <CustomerProblems />
       <WhatWeSetUp />
 
       {/* The proof anyone can check, and the page's one deliberate break in the
@@ -140,7 +158,7 @@ export default function Index() {
 
         Every sentence is checkable against _assets/FACTS.md: seven client
         projects are listed there with live URLs that returned HTTP 200 on 24 Sep
-        2026, two LaunchPad certificates exist and both resolve at /verify, and
+        2026, HRMS Lite and Lead CRM have case studies at /work, and
         the WTF Go build carries its "built by our founder at Witness The Fitness
         Pvt. Ltd." attribution wherever it appears. No number of clients, no
         satisfaction score, no years-of-experience claim: none of those are
@@ -158,43 +176,48 @@ export default function Index() {
               <dl className="mt-7 grid gap-x-8 gap-y-7 sm:grid-cols-3">
                 <div>
                   <dt className="font-display text-sm font-semibold uppercase tracking-wider text-primary">
-                    Open the work
+                    Open the live sites
                   </dt>
                   <dd className="mt-2 text-sm text-muted-foreground text-pretty">
-                    Every project above is a real site at a real address. Open it yourself.
-                    Nothing here is a mock-up.
+                    These four client sites are live. Open one on your phone and use it the way
+                    a customer would. Nothing here is a mock-up.
+                  </dd>
+                  <dd className="mt-3 flex flex-wrap gap-2">
+                    {LIVE_SITES.map((site) => (
+                      <a
+                        key={site.href}
+                        href={site.href}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className={PROOF_PILL}
+                      >
+                        {site.label}
+                        <ArrowUpRight className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
+                      </a>
+                    ))}
                   </dd>
                 </div>
 
                 <div>
                   <dt className="font-display text-sm font-semibold uppercase tracking-wider text-primary">
-                    Check a certificate
+                    Read how the software works
                   </dt>
+                  {/* No "open it and click around": signed out, both apps are a
+                      login box (FACTS.md, screenshots table), so the checkable
+                      thing is the case study, which lists what each does and
+                      what we will not claim. */}
                   <dd className="mt-2 text-sm text-muted-foreground text-pretty">
-                    {/* No QR claim: the printed QR points at ideovent.com/verify,
-                        which is unregistered (FACTS.md, 25 Sep night). The ID
-                        works: /verify has an ID box. */}
-                    We have issued two internship certificates. Each carries an ID. Enter it on
-                    this site and the record opens.
+                    HRMS Lite and Lead CRM are client software, deployed and behind a login.
+                    Each case study says what the product does and what we cannot claim.
                   </dd>
-                  {/*
-                    A block link rather than an ID inline in the sentence. An
-                    inline <a> takes its box from the font's em square, not from
-                    line-height, so it measured 85x17 and no amount of `leading-6`
-                    changes that: the only ways to a 24px target are to make it
-                    inline-block (which makes one line of the paragraph taller
-                    than its neighbours) or to lift it out, which is also the
-                    more tappable design.
-                  */}
-                  <dd className="mt-3">
-                    <Link
-                      to="/verify/INT2025A73"
-                      className="group inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4
-                                 font-mono text-xs font-medium tracking-wider transition-colors duration-200
-                                 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
-                    >
-                      Verify INT2025A73
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" aria-hidden="true" />
+                  <dd className="mt-3 flex flex-wrap gap-2">
+                    <Link to="/work/hrms-lite" className={PROOF_PILL}>
+                      HRMS Lite
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Link>
+                    <Link to="/work/lead-crm" className={PROOF_PILL}>
+                      Lead CRM
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </Link>
                   </dd>
                 </div>

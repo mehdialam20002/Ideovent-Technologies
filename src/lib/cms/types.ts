@@ -1542,6 +1542,16 @@ export interface DemoFeesPolicy {
 }
 
 /** Hindi versions of DemoSite's own top-level text fields. */
+/** See `DemoSite.sample` and src/lib/demo/site/sample.ts. */
+export interface DemoSampleMarks {
+  /** The template id the content came from. */
+  from: string;
+  /** Block name to fingerprint, as the block landed on the copy. */
+  prints: Partial<Record<"faculty" | "results" | "fees" | "reviews" | "timings" | "photos", string>>;
+  /** Ticked in the admin: the results and reviews are the institute's own. */
+  real?: boolean;
+}
+
 export type DemoSiteHi = DemoHi<
   DemoSite,
   | "tagline" | "about" | "admissionsHeadline" | "principalMessage" | "principalTitle"
@@ -1738,6 +1748,16 @@ export interface DemoSite extends BaseDoc {
    * as. Templates themselves are code, not records; see that folder.
    */
   templateId?: string;
+
+  /**
+   * What a template duplicate carried across, so the page can say so. Set
+   * once by `fromTemplate`; see src/lib/demo/site/sample.ts. `prints` holds a
+   * fingerprint of each carried block as it landed: while a block still
+   * matches its print it is the template's sample content, and the results
+   * and reviews on the page carry a small "Sample" line. `real` is the admin
+   * switch "Results and reviews on this demo are the institute's real ones".
+   */
+  sample?: DemoSampleMarks;
 
   /* ── MULTI-PAGE FIELDS (26 September 2026) ─────────────────────────────
      All optional. The table in src/lib/demo/templates/fromTemplate.ts says

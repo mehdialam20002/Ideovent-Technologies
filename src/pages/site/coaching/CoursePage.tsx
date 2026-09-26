@@ -26,6 +26,7 @@ import { demoFee } from "@/lib/demo/record";
 import { PageHead } from "../kit/Hero";
 import { PageStub } from "../kit/PageStub";
 import { Reveal, SiteLink } from "../kit/motion";
+import { SampleNote } from "../kit/SampleNote";
 import { Card, CardGrid, FactTable, Section } from "../kit/Section";
 import { Accordion, Action, Bi, Monogram } from "../kit/Text";
 
@@ -34,29 +35,31 @@ const COPY = {
   who: { en: "Who this course is for", hi: "यह कोर्स किसके लिए है" },
   eligibility: { en: "Eligibility", hi: "योग्यता" },
   facts: { en: "Duration and timings", hi: "अवधि और समय" },
+  /* When the course has no timings (a duplicate before they are typed in). */
+  factsNoTime: { en: "Course details", hi: "कोर्स की जानकारी" },
   duration: { en: "Duration", hi: "अवधि" },
   timings: { en: "Timings", hi: "समय" },
   mode: { en: "Mode", hi: "तरीका" },
   subjects: { en: "Subjects", hi: "विषय" },
-  batch: { en: "Batch size", hi: "Batch size" },
-  nextBatch: { en: "Next batch: {date}", hi: "अगला batch: {date}" },
-  syllabus: { en: "Syllabus", hi: "Syllabus" },
-  material: { en: "Study material", hi: "Study material" },
+  batch: { en: "Batch size", hi: "बैच का साइज़" },
+  nextBatch: { en: "Next batch: {date}", hi: "अगला बैच: {date}" },
+  syllabus: { en: "Syllabus", hi: "सिलेबस" },
+  material: { en: "Study material", hi: "स्टडी मटीरियल" },
   tests: { en: "Tests", hi: "टेस्ट" },
   fee: { en: "Fee", hi: "फीस" },
   feeTotal: { en: "Course fee", hi: "कोर्स की फीस" },
   feeOnCall: { en: "Fee on call, printed on the receipt", hi: "फीस फ़ोन पर बताई जाएगी, रसीद पर लिखी होगी" },
   instalments: { en: "Instalments", hi: "किस्तें" },
   includes: { en: "Included in the fee", hi: "फीस में शामिल" },
-  refundPolicy: { en: "Full refund policy", hi: "पूरी refund policy" },
+  refundPolicy: { en: "Full refund policy", hi: "पूरी रिफंड पॉलिसी" },
   faculty: { en: "Who teaches this course", hi: "इस कोर्स के टीचर्स" },
   results: { en: "Results from this course", hi: "इस कोर्स के रिज़ल्ट" },
-  paid: { en: "Paid course", hi: "Paid कोर्स" },
-  scholarship: { en: "On scholarship", hi: "Scholarship पर" },
-  free: { en: "Free course", hi: "Free कोर्स" },
+  paid: { en: "Paid course", hi: "पेड कोर्स" },
+  scholarship: { en: "On scholarship", hi: "स्कॉलरशिप पर" },
+  free: { en: "Free course", hi: "फ्री कोर्स" },
   faq: { en: "Questions about this course", hi: "इस कोर्स के बारे में सवाल" },
   more: { en: "Other courses", hi: "दूसरे कोर्स" },
-  demoMsg: { en: "I would like a free demo class for {course}", hi: "मुझे {course} की free demo class चाहिए" },
+  demoMsg: { en: "I would like a free demo class for {course}", hi: "मुझे {course} की फ्री डेमो क्लास चाहिए" },
 } satisfies Record<string, Bilingual>;
 
 export default function CoursePage({ site, ctx }: SitePageProps) {
@@ -120,7 +123,7 @@ export default function CoursePage({ site, ctx }: SitePageProps) {
       )}
 
       {(facts.length > 0 || course.seats) && (
-        <Section n={++n} title={tr(COPY.facts, lang)}>
+        <Section n={++n} title={tr(facts.some((f) => f.k === "timings") ? COPY.facts : COPY.factsNoTime, lang)}>
           <FactTable rows={[
             ...facts.map((f) => ({ label: tr(f.label, lang), value: <Bi of={course} k={f.k} /> })),
             ...(course.seats ? [{ label: tr(COPY.batch, lang), value: course.seats }] : []),
@@ -211,6 +214,7 @@ export default function CoursePage({ site, ctx }: SitePageProps) {
 
       {results.length > 0 && (
         <Section n={++n} title={tr(COPY.results, lang)}>
+          <SampleNote block="results" className="mb-6" />
           <CardGrid cols={3}>
             {results.map((r, i) => (
               <Reveal key={i} index={i}>

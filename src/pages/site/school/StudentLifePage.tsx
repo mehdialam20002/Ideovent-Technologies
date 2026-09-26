@@ -9,6 +9,7 @@ import type { SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { groupPoints, PointCards } from "@/lib/demo/ui/school/points";
 import { schoolPhotos } from "@/lib/demo/ui/school/shared";
+import { photoAlt, slotPhoto, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
 import { Section } from "../kit/Section";
@@ -16,17 +17,18 @@ import { Action, Photo } from "../kit/Text";
 
 const COPY = {
   title: { en: "Student life", hi: "छात्र जीवन" },
-  lead: { en: "What happens after the last period, and at weekends.", hi: "आखिरी period के बाद और छुट्टी के दिन क्या होता है।" },
+  lead: { en: "What happens after the last period, and at weekends.", hi: "आखिरी पीरियड के बाद और छुट्टी के दिन क्या होता है।" },
   group: { en: "Activities", hi: "गतिविधियाँ" },
   photos: { en: "In pictures", hi: "तस्वीरों में" },
-  gallery: { en: "Open the gallery", hi: "Gallery खोलें" },
+  gallery: { en: "Open the gallery", hi: "गैलरी खोलें" },
   next: { en: "Come and see", hi: "आकर देखें" },
 } satisfies Record<string, Bilingual>;
 
 export default function StudentLifePage({ site, ctx }: SitePageProps) {
   const { lang } = ctx;
   const groups = groupPoints(site.studentLife, lang, tr(COPY.group, lang));
-  const photos = schoolPhotos(site).filter((p) => p.src && /sport|club|life|event|trip|activit|house/i.test(p.obj.category || "")).slice(0, 6);
+  const used = new Set([slotPhoto(site, "sports"), slotPhoto(site, "activities")]);
+  const photos = schoolPhotos(site).filter((p) => p.src && !used.has(p.src) && /sport|club|life|event|trip|activit|house|outdoor|art/i.test(p.obj.category || "")).slice(0, 6);
   let n = 0;
 
   return (
@@ -34,14 +36,20 @@ export default function StudentLifePage({ site, ctx }: SitePageProps) {
       <PageHead title={tr(COPY.title, lang)} lead={tr(COPY.lead, lang)}
         crumbs={[{ label: tr(SHELL_COPY.home, lang), href: ctx.href("home") }, { label: tr(COPY.title, lang) }]} />
 
-      {groups.map((g) => (
-        <Section key={g.name} n={++n} title={g.name}><PointCards items={g.items} /></Section>
-      ))}
+      {groups.map((g, gi) => {
+        /* One photo each for the first two groups, on alternating sides. */
+        const src = gi < 2 ? slotPhoto(site, gi === 0 ? "sports" : "activities") : undefined;
+        return (
+          <Section key={g.name} n={++n} title={g.name}>
+            <WithPhoto src={src} flip={gi === 1} ratio="3 / 2"><PointCards items={g.items} /></WithPhoto>
+          </Section>
+        );
+      })}
 
       {photos.length >= 2 && (
         <Section n={++n} title={tr(COPY.photos, lang)}>
           <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-            {photos.map((p, i) => <Reveal as="li" key={p.key} index={i}><Photo src={p.src} alt={bi(p.obj, "alt", lang)} className="rounded-[var(--ds-radius)]" /></Reveal>)}
+            {photos.map((p, i) => <Reveal as="li" key={p.key} index={i}><Photo src={p.src} alt={photoAlt(p, lang)} sizes="(min-width: 1024px) 360px, 50vw" className="rounded-[var(--ds-radius)]" /></Reveal>)}
           </ul>
           {ctx.href("gallery") && <div className="mt-6"><Action href={ctx.href("gallery")!} tone="ghost">{tr(COPY.gallery, lang)}</Action></div>}
         </Section>

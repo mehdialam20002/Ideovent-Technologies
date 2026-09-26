@@ -8,11 +8,11 @@
  * has loaded instead; it sits at the foot of the page and nobody can type into
  * it in the first second.
  *
- * WHO FILLS IT IN. A school principal or a coaching owner in India, usually on
+ * WHO FILLS IT IN. The owner of a growing business in India, usually on
  * a phone. They give a phone number before an email, and Mehdi replies on
  * WhatsApp. Since 26 Sep 2026 the form is the FREE WEBSITE CHECK
- * (HOMEPAGE-COPY-DECK.md section 12), so the required fields are the three the
- * check needs: the website address (or the institute name), a number, and what
+ * (HOMEPAGE-COPY-DECK.md section 12; words from HOMEPAGE-COPY-DECK-V2.md B4), so the required fields are the three the
+ * check needs: the website address (or the business name), a number, and what
  * they run. The name went optional. Every other field is optional and says so
  * in its label. Email went from required to optional:
  * it was the field most likely to make this visitor stop.
@@ -29,6 +29,7 @@ import { unbreakable } from "@/lib/typography";
 import {
   BUDGETS,
   LIMITS,
+  leadCopyFor,
   NEEDS,
   TIMELINES,
   normalisePhone,
@@ -114,6 +115,7 @@ export default function ContactFormBody() {
   const phone = normalisePhone(form.phone);
   const firstName = form.name.trim().split(/\s+/)[0];
   const wa = whatsappToUs(contact.whatsappNumber, form);
+  const copy = leadCopyFor(form.need);
 
   if (status === "done") {
     return (
@@ -122,7 +124,7 @@ export default function ContactFormBody() {
           Sent. Thank you{firstName ? `, ${firstName}` : ""}.
         </h3>
         <p className="mt-3 text-[16px] leading-relaxed text-muted-foreground">
-          Mehdi Alam, the founder, will look at your site and reply {phone.ok && phone.kind === "landline" ? "by phone on " : "on WhatsApp to "}
+          Mehdi Alam, the founder, will {form.need === "software" ? "read what you sent" : "look at your site"} and reply {phone.ok && phone.kind === "landline" ? "by phone on " : "on WhatsApp to "}
           <span className="font-medium text-foreground">{phone.ok ? unbreakable(phone.display) : form.phone}</span>.{" "}
           {contact.responseTimePromise}
         </p>
@@ -148,13 +150,13 @@ export default function ContactFormBody() {
       <div className="grid gap-5 sm:grid-cols-2">
         <TextField
           id={`${P}-website`}
-          label="Your website address"
-          autoComplete="url"
+          label={copy.websiteLabel}
+          autoComplete={form.need === "software" ? "off" : "url"}
           autoCapitalize="none"
           spellCheck={false}
           maxLength={LIMITS.website}
-          placeholder="Website address, or your school's name"
-          hint="No website yet? Write your school or institute name."
+          placeholder={copy.websitePlaceholder}
+          hint={copy.websiteHint}
           value={form.website}
           onChange={(e) => set("website", e.target.value)}
           error={errors.website}
@@ -201,7 +203,7 @@ export default function ContactFormBody() {
         />
         <TextField
           id={`${P}-organisation`}
-          label="School, institute or business"
+          label="Business or organisation"
           optional
           autoComplete="organization"
           maxLength={LIMITS.organisation}
@@ -222,7 +224,7 @@ export default function ContactFormBody() {
       <ChoiceChips
         idPrefix={P}
         name="timeline"
-        legend="When do you want a new site?"
+        legend="When do you want to start?"
         optional
         options={TIMELINES}
         value={form.timeline}
@@ -262,7 +264,7 @@ export default function ContactFormBody() {
         optional
         rows={4}
         maxLength={LIMITS.message}
-        placeholder="What is not working today, or what you want parents to find"
+        placeholder="What is not working today, or what you want your customers to find"
         value={form.message}
         onChange={(e) => set("message", e.target.value)}
       />
@@ -305,14 +307,14 @@ export default function ContactFormBody() {
           ) : status === "error" ? (
             "Try sending again"
           ) : (
-            "Check my website"
+            copy.submit
           )}
         </button>
         <span className="text-[13px] text-muted-foreground">Used only to reply to you. No mailing list.</span>
       </div>
       <p id={`${P}-intro`} className="text-[13px] text-muted-foreground">
-        Three things are needed: your website address or name, a phone or WhatsApp number, and what
-        you run. Everything else is optional.
+        Three things are needed: what you run, your website (or your business name or idea), and a
+        phone or WhatsApp number. Everything else is optional.
       </p>
       {/* The required note above is also the form's aria-describedby. */}
       {/* Progress is announced, not just drawn. */}

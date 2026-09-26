@@ -73,7 +73,7 @@ export default function Footer() {
                   every page offers the free website check, the small first step,
                   instead of "Start a project". */}
               <p className="mt-3 text-muted-foreground text-pretty">
-                Send us your website address. We check it on a phone, the way a parent or a
+                Send us your website address. We check it on a phone, the way your
                 customer does, and tell you what we found in plain words. If it is fine, we say
                 so. {contact.responseTimePromise}
               </p>

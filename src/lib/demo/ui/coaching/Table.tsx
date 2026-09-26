@@ -8,6 +8,15 @@ import "./coaching.css";
 
 export function DataTable({ head, rows, caption }: { head: ReactNode[]; rows: ReactNode[][]; caption?: ReactNode }) {
   if (!rows.length) return null;
+  /* A column that is blank in every row is dropped, head and all, so a
+     timetable with no times (a duplicate before they are typed in) never
+     shows an empty "Time" column. The first column always stays. */
+  const blank = (c: ReactNode) => c === null || c === undefined || c === false || (typeof c === "string" && !c.trim());
+  const keep = head.map((_, j) => j === 0 || rows.some((r) => !blank(r[j])));
+  if (keep.some((k) => !k)) {
+    head = head.filter((_, j) => keep[j]);
+    rows = rows.map((r) => r.filter((_, j) => keep[j]));
+  }
   return (
     <div className="dsc-table-wrap" tabIndex={0} role="region" aria-label={typeof caption === "string" ? caption : undefined}>
       <table className="dsc-table">

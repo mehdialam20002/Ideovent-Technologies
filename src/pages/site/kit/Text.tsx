@@ -11,6 +11,8 @@ import { biLang, tr, type Bilingual } from "@/lib/demo/site/bilingual";
 import { useSite } from "@/lib/demo/site/context";
 import { EMPTY_COPY } from "@/lib/demo/site/copy";
 import { SiteLink } from "./motion";
+import { isStockPhoto } from "@/lib/demo/images";
+import { DemoPhoto } from "./DemoPhoto";
 
 /**
  * An institute field in the reader's language. When the text had to fall
@@ -75,15 +77,31 @@ export function Monogram({ className, size = "lg", name }: { className?: string;
  * A photograph, lazy and sized, or the family's designed no-photo panel.
  * `priority` is for the hero only: eager and fetchpriority high.
  */
-export function Photo({ src, alt, ratio = "4 / 3", priority, className }: {
+export function Photo({ src, alt, ratio = "4 / 3", priority, className, sizes }: {
   src?: string;
   alt: string;
   ratio?: string;
   priority?: boolean;
   className?: string;
+  /** The sizes attribute for a stock photo's srcset. Defaults by its role. */
+  sizes?: string;
 }) {
   const { kind, lang } = useSite();
   const [failed, setFailed] = useState(false);
+  /* A stock photo (public/demo/img) gets the full srcset, the focal point and
+     the manifest's alt from DemoPhoto; the empty state below is its fallback. */
+  if (src && !failed && isStockPhoto(src)) {
+    return (
+      <DemoPhoto
+        src={src}
+        ratio={ratio}
+        priority={priority}
+        sizes={sizes}
+        className={`ds-card-img ${className || ""}`}
+        fallback={<Photo alt={alt} ratio={ratio} className={className} />}
+      />
+    );
+  }
   if (!src || failed) {
     return (
       <div className={`flex flex-col items-center justify-center gap-3 bg-[hsl(var(--ds-surface-2))] p-6 text-center text-sm text-[hsl(var(--ds-ink-soft))] ${className || ""}`} style={{ aspectRatio: ratio }}>
@@ -153,8 +171,9 @@ export function Accordion({ title, children }: { title: ReactNode; children: Rea
 
 /** Home > Courses > JEE two year. Each crumb is a page the record shows. */
 export function Breadcrumb({ items }: { items: { label: string; href?: string | null }[] }) {
+  const { lang } = useSite();
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-[hsl(var(--ds-ink-soft))]">
+    <nav aria-label={lang === "hi" ? "पेज का रास्ता" : "Breadcrumb"} className="text-sm text-[hsl(var(--ds-ink-soft))]">
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((it, i) => (
           <li key={i} className="flex items-center gap-1.5">

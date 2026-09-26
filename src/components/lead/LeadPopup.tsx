@@ -52,13 +52,14 @@
  * the timer fires, so the 99% of page views that never see it never download
  * it, and it cannot move LCP or CLS.
  */
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Loader2, MessageCircle, X } from "lucide-react";
 import { useCms, useSingleton } from "@/lib/cms/context";
 import { unbreakable } from "@/lib/typography";
 import {
   BUDGETS,
   LIMITS,
+  leadCopyFor,
   NEEDS,
   TIMELINES,
   normalisePhone,
@@ -158,6 +159,25 @@ export default function LeadPopup({ heading, subheading, onDismiss, onFinish }: 
     setLead({ ...draft.lead, [k]: v });
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }));
   };
+
+  // 26 Sep 2026: "What do you run?" has seven answers now (four rows of chips
+  // on a phone, HOMEPAGE-COPY-DECK-V2.md B2), so on a short phone the fields a
+  // tap opens start below the sticky send row. On the first tap, scroll the
+  // card (never the page) just far enough that the phone field sits above the
+  // send row. Nothing moves when the fields already fit.
+  const hadNeed = useRef(Boolean(draft.lead.need));
+  // A layout effect, not a timer: it runs once the fields are in the DOM and
+  // before paint, so the card never shows the unscrolled frame.
+  useLayoutEffect(() => {
+    if (!lead.need || hadNeed.current) return;
+    hadNeed.current = true;
+    const box = boxRef.current;
+    const phone = refs.current.phone;
+    const send = box?.querySelector<HTMLElement>("button[type=submit]");
+    if (!box || !phone || !send) return;
+    const over = phone.getBoundingClientRect().bottom - (send.getBoundingClientRect().top - 16);
+    if (over > 0) box.scrollTop += over;
+  }, [lead.need]);
 
   // Announce, do not grab focus. The live region is rendered empty first and
   // filled a beat later, because a region that arrives already holding text
@@ -312,7 +332,7 @@ export default function LeadPopup({ heading, subheading, onDismiss, onFinish }: 
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1 pt-0.5">
             <h3 id={headingId} className="font-display text-[18px] font-medium leading-[1.3] tracking-[-0.01em]">
-              {heading}
+              {(!sent && leadCopyFor(lead.need).heading) || heading}
             </h3>
             {/* On a short phone, once the visitor has tapped a need, the three
                 lines of offer give way to the fields they just asked for: at
@@ -326,7 +346,7 @@ export default function LeadPopup({ heading, subheading, onDismiss, onFinish }: 
                 lead.need && !sent ? "[@media(max-width:639px)_and_(max-height:760px)]:hidden" : ""
               }`}
             >
-              {subheading}
+              {(!sent && leadCopyFor(lead.need).subheading) || subheading}
             </span>
           </div>
           <button
@@ -380,12 +400,12 @@ export default function LeadPopup({ heading, subheading, onDismiss, onFinish }: 
                     second step (HOMEPAGE-COPY-DECK.md section 13). */}
                 <TextField
                   id={`${P}-website`}
-                  label="Your website address"
-                  autoComplete="url"
+                  label={leadCopyFor(lead.need).websiteLabel}
+                  autoComplete={lead.need === "software" ? "off" : "url"}
                   autoCapitalize="none"
                   spellCheck={false}
                   maxLength={LIMITS.website}
-                  placeholder="Website address, or your school's name"
+                  placeholder={leadCopyFor(lead.need).websitePlaceholder}
                   value={lead.website}
                   onChange={(e) => set("website", e.target.value)}
                   error={errors.website}
@@ -423,7 +443,7 @@ export default function LeadPopup({ heading, subheading, onDismiss, onFinish }: 
                   ) : stage === "failed" ? (
                     "Try again"
                   ) : (
-                    "Check my website"
+                    leadCopyFor(lead.need).submit
                   )}
                 </button>
               )}
@@ -479,7 +499,7 @@ export default function LeadPopup({ heading, subheading, onDismiss, onFinish }: 
                 />
                 <TextField
                   id={`${P}-organisation`}
-                  label="School, institute or business"
+                  label="Business or organisation"
                   optional
                   autoComplete="organization"
                   maxLength={LIMITS.organisation}

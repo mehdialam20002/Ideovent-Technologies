@@ -6,7 +6,7 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { bi, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
+import { bi, dateIn, tr, withText, type Bilingual } from "@/lib/demo/site/bilingual";
 import { postSlug, type SitePageProps } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { PageHead } from "../kit/Hero";
@@ -16,7 +16,7 @@ import { Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Blog", hi: "ब्लॉग" },
-  lead: { en: "Study plans, exam updates and advice from the teachers.", hi: "पढ़ाई के plan, exam की खबरें और टीचर्स की सलाह।" },
+  lead: { en: "Study plans, exam updates and advice from the teachers.", hi: "पढ़ाई के प्लान, एग्ज़ाम की खबरें और टीचर्स की सलाह।" },
   latest: { en: "Latest", hi: "नया" },
   more: { en: "More articles", hi: "और लेख" },
   read: { en: "Read the article", hi: "लेख पढ़ें" },
@@ -39,7 +39,7 @@ export default function BlogPage({ site, ctx }: SitePageProps) {
       {first && (
         <Section n={1} title={tr(COPY.latest, lang)}>
           <article className="max-w-3xl">
-            <p className="ds-num text-sm text-[hsl(var(--ds-ink-soft))]">{[first.date, first.author].filter(Boolean).join("  ·  ")}</p>
+            <p className="ds-num text-sm text-[hsl(var(--ds-ink-soft))]">{[dateIn(first.date, lang), first.author].filter(Boolean).join("  ·  ")}</p>
             <h3 className="ds-display mt-2 text-2xl sm:text-3xl">
               {link(first) ? <SiteLink to={link(first)!} className="underline-offset-4 hover:underline">{bi(first, "title", lang)}</SiteLink> : bi(first, "title", lang)}
             </h3>
@@ -55,7 +55,7 @@ export default function BlogPage({ site, ctx }: SitePageProps) {
               const to = link(p);
               const card = (
                 <Card interactive={!!to} as="article" className="h-full">
-                  <p className="ds-num text-sm text-[hsl(var(--ds-ink-soft))]">{p.date}</p>
+                  <p className="ds-num text-sm text-[hsl(var(--ds-ink-soft))]">{dateIn(p.date, lang)}</p>
                   <Bi of={p} k="title" as="h3" className="ds-display mt-1 text-lg" />
                   <Bi of={p} k="excerpt" as="p" className="mt-2 text-[hsl(var(--ds-ink-soft))]" />
                 </Card>

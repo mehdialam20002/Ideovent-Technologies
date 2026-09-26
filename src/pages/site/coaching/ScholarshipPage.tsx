@@ -22,17 +22,17 @@ import { Accordion, Action, Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Scholarship test", hi: "स्कॉलरशिप टेस्ट" },
-  lead: { en: "Sit the test, and the score decides the fee waiver. Registration is free.", hi: "टेस्ट दें, score से फीस में छूट तय होगी। Registration free है।" },
-  register: { en: "Register for the test", hi: "टेस्ट के लिए register करें" },
-  ask: { en: "Ask about registration", hi: "Registration के बारे में पूछें" },
+  lead: { en: "Sit the test, and the score decides the fee waiver. Registration is free.", hi: "टेस्ट दें, स्कोर से फीस में छूट तय होगी। रजिस्ट्रेशन फ्री है।" },
+  register: { en: "Register for the test", hi: "टेस्ट के लिए रजिस्टर करें" },
+  ask: { en: "Ask about registration", hi: "रजिस्ट्रेशन के बारे में पूछें" },
   details: { en: "Test details", hi: "टेस्ट की जानकारी" },
   date: { en: "Test date", hi: "टेस्ट की तारीख" },
   mode: { en: "Mode", hi: "तरीका" },
   eligibility: { en: "Who can sit", hi: "कौन दे सकता है" },
   result: { en: "Result", hi: "रिज़ल्ट" },
-  centres: { en: "Test centres", hi: "टेस्ट centres" },
-  syllabus: { en: "Syllabus", hi: "Syllabus" },
-  rewards: { en: "What the score earns", hi: "Score से क्या मिलेगा" },
+  centres: { en: "Test centres", hi: "टेस्ट सेंटर" },
+  syllabus: { en: "Syllabus", hi: "सिलेबस" },
+  rewards: { en: "What the score earns", hi: "स्कोर से क्या मिलेगा" },
   faq: { en: "Questions about the test", hi: "टेस्ट के बारे में सवाल" },
 } satisfies Record<string, Bilingual>;
 

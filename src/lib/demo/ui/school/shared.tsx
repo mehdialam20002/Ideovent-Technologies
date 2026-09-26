@@ -93,6 +93,18 @@ export function freshNotices(site: DemoSite, today: string, days = 60): DemoNoti
   return sortedNotices(site, today).filter((x) => !x.posted || x.posted >= since);
 }
 
+/**
+ * An ISO date in the reader's language: "15 December 2026" in English,
+ * "15 दिसंबर 2026" in Hindi. Only dates WE format from an ISO field go through
+ * this; a date the institute typed as text is printed as typed.
+ */
+export function demoDateIn(iso: string | undefined, market: DemoSite["market"], lang: DemoLang): string {
+  if (lang !== "hi" || market === "international" || !iso) return demoDate(iso, market);
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" });
+}
+
 /** The newest ISO date on the board, for the "Last updated" line. */
 export function lastPosted(list: DemoNotice[]): string {
   return list.reduce((m, x) => (x.posted && x.posted > m ? x.posted : m), "");
@@ -101,8 +113,8 @@ export function lastPosted(list: DemoNotice[]): string {
 /* ── The dated admissions status chip ── */
 
 const STATUS: Record<string, Bilingual> = {
-  openUntil: { en: "Admissions {session} open until {date}", hi: "Admission {session} {date} तक खुले हैं" },
-  session: { en: "Admissions {session}", hi: "Admission {session}" },
+  openUntil: { en: "Admissions {session} open until {date}", hi: "एडमिशन {session} {date} तक खुले हैं" },
+  session: { en: "Admissions {session}", hi: "एडमिशन {session}" },
 };
 
 /**
@@ -114,7 +126,7 @@ export function admissionStatus(site: DemoSite, lang: DemoLang, today: string): 
   if (!session) return { text: "", open: false };
   const open = !!site.admissionsOpenUntil && site.admissionsOpenUntil >= today;
   return open
-    ? { text: trf(STATUS.openUntil, lang, { session, date: demoDate(site.admissionsOpenUntil, site.market) }), open }
+    ? { text: trf(STATUS.openUntil, lang, { session, date: demoDateIn(site.admissionsOpenUntil, site.market, lang) }), open }
     : { text: trf(STATUS.session, lang, { session }), open };
 }
 

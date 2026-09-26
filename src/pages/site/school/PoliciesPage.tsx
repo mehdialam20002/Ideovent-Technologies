@@ -17,12 +17,12 @@ import { Bi } from "../kit/Text";
 
 const COPY = {
   title: { en: "Policies", hi: "नीतियाँ" },
-  lead: { en: "The rules the school holds itself to, in plain words.", hi: "School जिन नियमों का पालन करता है, सीधे शब्दों में।" },
+  lead: { en: "The rules the school holds itself to, in plain words.", hi: "स्कूल जिन नियमों का पालन करता है, सीधे शब्दों में।" },
   contents: { en: "On this page", hi: "इस पेज पर" },
-  email: { en: "Email the office", hi: "Office को email करें" },
+  email: { en: "Email the office", hi: "ऑफिस को ईमेल करें" },
   full: { en: "Read the full policy", hi: "पूरी नीति पढ़ें" },
   questions: { en: "Questions about a policy", hi: "किसी नीति पर सवाल" },
-  questionsBody: { en: "Write to or call the school office. The office will answer in writing when you ask.", hi: "School office को लिखें या call करें। आप माँगें तो office लिखकर जवाब देगा।" },
+  questionsBody: { en: "Write to or call the school office. The office will answer in writing when you ask.", hi: "स्कूल ऑफिस को लिखें या कॉल करें। आप माँगें तो ऑफिस लिखकर जवाब देगा।" },
 } satisfies Record<string, Bilingual>;
 
 export default function PoliciesPage({ site, ctx }: SitePageProps) {

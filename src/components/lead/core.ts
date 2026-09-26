@@ -20,24 +20,57 @@
 /* ───────────────────────────── The choices ───────────────────────────── */
 
 /**
- * What they need. The order is the order a principal or a coaching owner
- * recognises themselves in: the two institute answers first, because they are
- * who the site is written for, then business, then software, then an escape.
- */
-/*
- * 26 Sep 2026 (HOMEPAGE-COPY-DECK.md section 12): the question is now "What do
- * you run?", not "What do you need?". The form is the free website check, and a
- * principal knows what they run before they know what they need. The phrase
- * completes "We are ..." in the WhatsApp message to us.
+ * What they run. Neutral business types first, so any owner finds themselves
+ * in the list: shop, clinic, gym, firm, then schools and coaching fifth, then
+ * software sixth, then an escape. Copy: _assets/HOMEPAGE-COPY-DECK-V2.md B2.
+ * The label is what EmailJS sends as `need`, what Supabase stores and what
+ * the enquiry e-mail prints in its "Runs" row. The phrase completes "We are
+ * ..." in the WhatsApp message to us ("I am ..." for software).
+ * Keep the id "software": whatsappToLead in src/lib/leads.ts keys on it.
+ * Old rows keep their old labels ("School", "Coaching institute", "Business",
+ * "App or custom software"); whatsappToLead falls back to its generic reply.
  */
 export const NEEDS = [
-  { id: "school", label: "School", phrase: "a school" },
-  { id: "coaching", label: "Coaching institute", phrase: "a coaching institute" },
-  { id: "business", label: "Business", phrase: "a business" },
-  { id: "software", label: "App or custom software", phrase: "looking for an app or custom software" },
+  { id: "shop", label: "Shop or restaurant", phrase: "a shop or restaurant" },
+  { id: "clinic", label: "Clinic or salon", phrase: "a clinic or salon" },
+  { id: "gym", label: "Gym or fitness", phrase: "a gym or fitness business" },
+  { id: "firm", label: "Office or firm (law, CA, real estate)", phrase: "an office or firm" },
+  { id: "education", label: "School or coaching", phrase: "a school or coaching institute" },
+  { id: "software", label: "Startup or app idea", phrase: "working on a startup or an app idea" },
   { id: "other", label: "Something else", phrase: "" },
 ] as const;
 export type NeedId = (typeof NEEDS)[number]["id"];
+
+/**
+ * The words on the first field and the submit button, by need. The form is
+ * the free website check, but a visitor who picks "Startup or app idea" has an
+ * idea, not a website, and "Check my website" reads as a form for somebody
+ * else. Only the words change: the field id, the validation and the EmailJS
+ * variable (`website`) stay exactly the same.
+ */
+export function leadCopyFor(need: Lead["need"]) {
+  if (need === "software") {
+    return {
+      websiteLabel: "Your business or idea, in a few words",
+      websitePlaceholder: "For example: an app for tuition fees",
+      websiteHint: "Have a website already? Paste the address instead.",
+      submit: "Send it to us",
+      // The pop-up's own heading and offer are about checking a website. A
+      // visitor who says they have an idea is asking a different question.
+      heading: "Tell us the idea.",
+      subheading:
+        "Leave your number and a line about the app or software. We reply on WhatsApp with what it would take. The first call is free.",
+    };
+  }
+  return {
+    websiteLabel: "Your website address",
+    websitePlaceholder: "Website address, or your business name",
+    websiteHint: "No website yet? Write your business name.",
+    submit: "Check my website",
+    heading: undefined as string | undefined,
+    subheading: undefined as string | undefined,
+  };
+}
 
 export const TIMELINES = [
   { id: "this-month", label: "This month" },
@@ -50,13 +83,13 @@ export type TimelineId = (typeof TIMELINES)[number]["id"];
  * Budget options. EVERY FIGURE IS FROM THE CURRENT TABLE IN _assets/FACTS.md
  * ("CORRECTIONS CONFIRMED BY MEHDI, 24 Sep 2026", §2) and matches /pricing.
  * Cheapest first, per the presentation rule in the same section. The ranges
- * overlap (a school website and a portal share 40,000 to 45,000) because the
+ * overlap (a website and a portal share 40,000 to 45,000) because the
  * canonical ranges do; the hint says which offer each one is.
  */
 export const BUDGETS = [
   { id: "8k-20k", label: "₹8,000-₹20,000", hint: "landing page or single page" },
-  { id: "20k-45k", label: "₹20,000-₹45,000", hint: "school website" },
-  { id: "40k-85k", label: "₹40,000-₹85,000", hint: "school or coaching portal" },
+  { id: "20k-45k", label: "₹20,000-₹45,000", hint: "website" },
+  { id: "40k-85k", label: "₹40,000-₹85,000", hint: "portal or web app" },
   { id: "90k-plus", label: "From ₹90,000", hint: "custom software" },
   { id: "usd", label: "Outside India, from $300", hint: "priced in US dollars" },
   { id: "not-sure", label: "Not sure yet", hint: "" },
@@ -71,16 +104,15 @@ export const budgetLabel = (id?: string) => {
 };
 
 /**
- * `/contact?for=school|coaching|business|abroad` comes from the home hero's
- * "I run a ..." switch. Map it onto the form's own answers so the visitor does
- * not answer the same question twice. "abroad" is a market, not a need, so it
- * preselects the dollar budget instead.
+ * `/contact?for=school|coaching|business|abroad` can still arrive from older
+ * links and pitch pages. School and coaching both map to "education" so the
+ * visitor does not answer the same question twice. "business" is too broad to
+ * pick a type for them, so it preselects nothing. "abroad" is a market, not a
+ * need, so it preselects the dollar budget instead.
  */
 export function prefillFromQuery(search: string): { need?: NeedId; budget?: BudgetId } {
   const v = new URLSearchParams(search).get("for");
-  if (v === "school") return { need: "school" };
-  if (v === "coaching") return { need: "coaching" };
-  if (v === "business") return { need: "business" };
+  if (v === "school" || v === "coaching") return { need: "education" };
   if (v === "abroad") return { budget: "usd" };
   return {};
 }
@@ -88,7 +120,7 @@ export function prefillFromQuery(search: string): { need?: NeedId; budget?: Budg
 /* ───────────────────────────── The lead ───────────────────────────── */
 
 export interface Lead {
-  /** Their website address, or their school or institute name if they have none. Required. */
+  /** Their website address, or their business name if they have none. Required. */
   website: string;
   /** Optional since 26 Sep 2026: the check needs the site and a number, not a name. */
   name: string;
@@ -201,7 +233,7 @@ export const LEAD_POPUP_DEFAULTS = {
   enabled: true,
   delaySeconds: 60,
   // Keep identical to settings.leadPopup in src/lib/cms/seed.ts.
-  heading: "Want to know what a parent sees on your site?",
+  heading: "Want to know what your customers see on your site?",
   subheading: "Leave your website address and number. We check it on a phone and reply on WhatsApp with what we found. Free.",
 };
 
@@ -209,7 +241,7 @@ export const LEAD_POPUP_DEFAULTS = {
  * Where the card may appear. An ALLOWLIST, so a route added later is excluded
  * until somebody decides otherwise. Everything not listed is out, which covers
  * /contact (the form is already on screen), /admin/**, /site/** (a demo is the
- * institute's own website), /pitch/** and every bare /:slug pitch (a proposal
+ * client's own website), /pitch/** and every bare /:slug pitch (a proposal
  * is somebody else's page), /verify/** (a certificate check), the four legal
  * pages, /internship (students, not buyers) and the 404. Detail routes that
  * fall through to a "not found" page are caught at run time by their noindex
