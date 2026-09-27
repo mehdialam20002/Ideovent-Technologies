@@ -42,3 +42,6 @@ scripts/.tmp/
 screenshots-src/
 *.tmp.mjs
 *.tsbuildinfo
+
+# Built from a real prospect list (institute names, sources, contact notes): local only, never in the public repo.
+scripts/build-outreach-demos.mjs

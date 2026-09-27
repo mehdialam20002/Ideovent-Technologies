@@ -21,9 +21,13 @@
     "test:from-template": "node scripts/test-from-template.mjs",
     "gate": "node scripts/gate.mjs",
     "test:share": "node scripts/test-share-fn.mjs",
-    "test:snapshot": "node scripts/e2e-cms-snapshot.mjs"
+    "test:snapshot": "node scripts/e2e-cms-snapshot.mjs",
+    "test:poster": "node scripts/test-poster-fn.mjs",
+    "test:from-poster": "node scripts/test-from-poster.mjs",
+    "test:poster-e2e": "node scripts/e2e-poster-import.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "@emailjs/browser": "^4.4.1",
     "@hookform/resolvers": "^3.9.0",
     "@number-flow/react": "^0.6.1",

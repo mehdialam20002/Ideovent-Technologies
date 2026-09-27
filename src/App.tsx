@@ -36,6 +36,8 @@ const AdminApplications = lazy(() => import("./pages/admin/AdminApplications"));
 const AdminDemoPreview = lazy(() => import("./pages/admin/AdminDemoPreview"));
 const AdminTemplates = lazy(() => import("./pages/admin/AdminTemplates"));
 const AdminTemplatePreview = lazy(() => import("./pages/admin/AdminTemplatePreview"));
+const AdminAiKeys = lazy(() => import("./pages/admin/AdminAiKeys"));
+const AdminOutreach = lazy(() => import("./pages/admin/AdminOutreach"));
 
 function PageLoader() {
   return (
@@ -137,6 +139,13 @@ const App = () => (
             {/* The ten fixed templates: preview and duplicate, nothing else.
                 They are code, not records; see src/lib/demo/templates. */}
             <Route path="templates" element={<AdminTemplates />} />
+            {/* Keys for the poster reader (/api/poster). Stored in Supabase under
+                admin-only RLS, never in the content store; see src/lib/ai/keys.ts. */}
+            <Route path="ai-keys" element={<AdminAiKeys />} />
+            {/* Cold outreach: leads, follow-ups, and one tap to Gmail or WhatsApp
+                with the message typed. Own tables (0007_outreach.sql), never
+                the content store; see src/pages/admin/AdminOutreach.tsx. */}
+            <Route path="outreach" element={<AdminOutreach />} />
           </Route>
           {/*
             A template rendered by the real demo page, full width rather than

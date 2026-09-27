@@ -7,6 +7,7 @@ import { getIcon } from "@/lib/icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { collectionSchemas, singletonSchemas } from "./schemas";
 import { cn } from "@/lib/utils";
+import { useOutreachDueCount } from "./outreach/badge";
 
 const NAV = [
   { title: "Overview", items: [{ label: "Dashboard", to: "/admin", icon: "LayoutDashboard", end: true }] },
@@ -37,6 +38,9 @@ const NAV = [
       /* The ten fixed templates, in their own tab so the Demo sites list holds
          only real demos. Preview and duplicate only: see AdminTemplates.tsx. */
       { label: "Templates", to: "/admin/templates", icon: "LayoutGrid" },
+      /* Leads, follow-ups and the compose panel that opens Gmail or WhatsApp
+         typed and ready. The badge is today's due follow-ups. */
+      { label: "Outreach", to: "/admin/outreach", icon: "Send", badge: "outreachDue" },
     ],
   },
   { title: "Certificates", items: [{ label: "Certificates & QR", to: "/admin/certificates", icon: "Award" }] },
@@ -63,6 +67,9 @@ const NAV = [
        * Without this row that instruction pointed at a door with no handle. */
       { label: "EduFlow", to: "/admin/s/eduflow", icon: singletonSchemas.eduflow.icon },
       { label: "Legal", to: "/admin/s/legal", icon: "Scale" },
+      /* Keys for reading posters with AI. Under Settings because it is set once
+         and left alone, not something touched per demo. */
+      { label: "AI keys", to: "/admin/ai-keys", icon: "Lock" },
     ],
   },
 ];
@@ -77,6 +84,7 @@ export default function AdminLayout() {
   useDeferredBodies();
   const { mode, actions } = useCms();
   const { logout } = useAdminAuth();
+  const outreachDue = useOutreachDueCount();
 
   // Content is loaded once, when the site first opens. On a visit to /admin that
   // happens BEFORE sign-in, as a visitor, and Supabase's rules then hide leads,
@@ -150,6 +158,11 @@ export default function AdminLayout() {
                     >
                       <Icon className="h-4 w-4" aria-hidden="true" />
                       {item.label}
+                      {(item as any).badge === "outreachDue" && outreachDue > 0 && (
+                        <span className="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground" aria-label={`${outreachDue} follow-ups due today`}>
+                          {outreachDue}
+                        </span>
+                      )}
                     </NavLink>
                   </li>
 );

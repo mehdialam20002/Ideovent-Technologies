@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   AlertTriangle, Archive, Check, Copy, ExternalLink, Eye, Files, MonitorSmartphone,
-  Pencil, Plus, Save, Search, Star, Trash2, X,
+  Pencil, Plus, Save, ScanText, Search, Star, Trash2, X,
 } from "lucide-react";
 import type {
   DemoSite, DemoSiteSlot, DemoSiteOpen, DemoStatus, DemoKind, PitchPage,
@@ -28,6 +28,7 @@ import { templateMeta } from "@/lib/demo/templates";
 import { hasProvisionalTemplateSlug } from "@/lib/demo/templates/fromTemplate";
 import { AdminField } from "./fields";
 import { DemoCarriedPanel } from "./DemoCarriedPanel";
+import { usePosterImport } from "./poster/usePosterImport";
 import { LinkNotes } from "./DemoLinkNotes";
 import { DemoPhotoSlots } from "./DemoPhotoSlots";
 import type { CollectionSchema } from "./schemas";
@@ -128,6 +129,8 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
   const host = data.settings?.defaultSeo?.canonicalHost || "";
 
   const slotsById = useMemo(() => slotIndex(slots), [slots]);
+  /* "New demo from poster": the same dialog as the Templates tab. */
+  const poster = usePosterImport();
 
   const [filters, setFilters] = useState<DemoFilters>(EMPTY_FILTERS);
   const [editing, setEditing] = useState<DemoSite | null>(null);
@@ -325,13 +328,23 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
             </p>
           </div>
         </div>
-        <button
-          onClick={startNew}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" /> New demo site
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => poster.open()}
+            className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/5 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+          >
+            <ScanText className="h-4 w-4" aria-hidden="true" /> New demo from poster
+          </button>
+          <button
+            onClick={startNew}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" /> New demo site
+          </button>
+        </div>
       </div>
+      {poster.dialog}
 
       {localOnly && (
         <div

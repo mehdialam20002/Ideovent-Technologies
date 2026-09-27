@@ -226,6 +226,8 @@ export const seed: ContentData = {
       heading: "Want to know what your customers see on your site?",
       subheading: "Leave your website address and number. We check it on a phone and reply on WhatsApp with what we found. Free.",
     },
+    // E-mail Mehdi when a sent demo is opened. See src/lib/demo/opens.ts.
+    demoOpenAlerts: true,
   },
 
   contact: {

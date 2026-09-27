@@ -81,7 +81,8 @@ export default function DemoSiteRoute() {
     rendering the 404 for one frame is only a flicker, and the 404 itself is
     what a genuinely unknown slug should show once loading is done.
   */
-  const { loading } = useCms();
+  const { loading, data } = useCms();
+  const alertsEnabled = data.settings?.demoOpenAlerts;
   /*
     A TEMPLATE IS NEVER SERVED HERE. Templates are code, not records, so there
     is no document for this lookup to find; this line makes it explicit and
@@ -100,8 +101,13 @@ export default function DemoSiteRoute() {
 
   const trackedId = reachability === "ok" && site ? site.id : null;
   useEffect(() => {
-    if (loading || !trackedId) return;
-    void recordDemoOpen(trackedId);
+    if (loading || !trackedId || !site) return;
+    // The alert context rides along; opens.ts decides whether to e-mail.
+    void recordDemoOpen(trackedId, {
+      site: { id: site.id, slug: site.slug, status: site.status, instituteName: site.instituteName, city: site.city },
+      enabled: alertsEnabled,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, trackedId]);
 
   if (loading && !site) {
