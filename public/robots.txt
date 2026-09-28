@@ -5,11 +5,13 @@
 User-agent: *
 Allow: /
 
-# The admin panel is a login wall over the CMS. Nothing behind it belongs in an
+# The admin panel (and the CRM at /crm, same sign-in) is a login wall. Nothing behind it belongs in an
 # index, and every route under it renders the login page to a signed-out client
 # which sends robots noindex, nofollow.
 Disallow: /admin
 Disallow: /admin/
+Disallow: /crm
+Disallow: /crm/
 
 # Social and messaging scrapers do not run JavaScript, so they only ever see the
 # fallback tags in index.html. Listed explicitly so nothing blocks them.
@@ -25,25 +27,35 @@ User-agent: Twitterbot
 Allow: /
 Disallow: /admin
 Disallow: /admin/
+Disallow: /crm
+Disallow: /crm/
 
 User-agent: facebookexternalhit
 Allow: /
 Disallow: /admin
 Disallow: /admin/
+Disallow: /crm
+Disallow: /crm/
 
 User-agent: LinkedInBot
 Allow: /
 Disallow: /admin
 Disallow: /admin/
+Disallow: /crm
+Disallow: /crm/
 
 User-agent: WhatsApp
 Allow: /
 Disallow: /admin
 Disallow: /admin/
+Disallow: /crm
+Disallow: /crm/
 
 User-agent: Slackbot-LinkExpanding
 Allow: /
 Disallow: /admin
 Disallow: /admin/
+Disallow: /crm
+Disallow: /crm/
 
 Sitemap: https://ideovent.vercel.app/sitemap.xml

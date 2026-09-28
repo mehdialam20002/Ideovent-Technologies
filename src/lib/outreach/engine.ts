@@ -411,13 +411,21 @@ export function promisedPage(template: Pick<MessageTemplate, "id" | "channel" | 
   return null;
 }
 
+/** The daily WhatsApp limit, or null for none (the default). */
+export function dailyWhatsappLimit(settings: Partial<OutreachSettings> | null | undefined): number | null {
+  const n = Number(settings?.whatsappDailyLimit);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
+}
+
 /**
  * Checks one send against the sales-kit rules before the compose window opens.
  * Blockers stop the send; warnings are shown and the sender decides.
  *
  * `sentTodayCount` is the number of WhatsApp first-contact messages already sent
- * today: the playbook's hard cap (10) is on cold first contacts, so reaching it
- * blocks a "first" WhatsApp message and only warns for a reply to a warm lead.
+ * today. There is NO daily limit by default (Mehdi, 28 Sep 2026: "remove the
+ * WhatsApp limit of 10, keep it unlimited"). Only when settings carry a
+ * limit (`whatsappDailyLimit` > 0) does reaching it block a "first" WhatsApp
+ * message and warn for a reply to a warm lead.
  */
 export function checkSend(
   lead: Partial<OutreachLead> & Pick<OutreachLead, "instituteName">,
@@ -431,7 +439,7 @@ export function checkSend(
   const blockers: string[] = [];
   const warnings: string[] = [];
   const text = `${template.subject ?? ""}\n${template.body}`;
-  const cap = settings?.whatsappDailyCap && settings.whatsappDailyCap > 0 ? settings.whatsappDailyCap : 10;
+  const cap = dailyWhatsappLimit(settings);
 
   // Who they are
   if (lead.status === "do_not_contact") blockers.push("This lead asked not to be contacted. Nothing may be sent.");
@@ -469,10 +477,10 @@ export function checkSend(
     blockers.push("This message needs a real observation about their site. Pick one or type it, or call instead.");
   }
 
-  // Volume (WHATSAPP-PLAYBOOK.md 1.2: hard cap of 10 cold first contacts a day)
-  if (channel === "whatsapp" && sentTodayCount >= cap) {
-    if (template.stage === "first") blockers.push(`Daily WhatsApp cap reached (${sentTodayCount} of ${cap} first messages today). Call or e-mail instead.`);
-    else warnings.push(`${sentTodayCount} first WhatsApp messages already sent today (cap ${cap}).`);
+  // Volume: only when Mehdi has set a daily limit (blank means no limit).
+  if (channel === "whatsapp" && cap !== null && sentTodayCount >= cap) {
+    if (template.stage === "first") blockers.push(`Daily WhatsApp limit reached (${sentTodayCount} of ${cap} first messages today). Call or e-mail instead.`);
+    else warnings.push(`${sentTodayCount} first WhatsApp messages already sent today (limit ${cap}).`);
   }
 
   // Timing (never before 09:00 or after 21:00; no first contact on Sunday)

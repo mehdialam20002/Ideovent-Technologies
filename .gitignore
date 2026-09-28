@@ -45,3 +45,6 @@ screenshots-src/
 
 # Built from a real prospect list (institute names, sources, contact notes): local only, never in the public repo.
 scripts/build-outreach-demos.mjs
+
+# e2e-poster-import screenshot (test artifact)
+/poster-review-390.png

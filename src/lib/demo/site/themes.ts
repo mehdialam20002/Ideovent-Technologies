@@ -20,6 +20,16 @@
  *   coaching  podium (Modern a, c1)  timetable (Modern b, c5)
  *             register (Classic a, c2)  folio (Classic b, c3)
  *             courtyard (Warm a, c4)
+ *   dental    haven (Clinical a, d1)  meridian (Clinical a, d2)
+ *             ivory (Luxury a, d3)    anchor (Calm a, d4)
+ *             mint (Clinical b, d5)   sprout (Clinical c = Kids, d6)
+ *             harbour (Calm b, d7)
+ *   Dental tables come from E:/myagency/_assets/DENTAL-DESIGN.md, contrast
+ *   measured there and again by scripts/check-demo-contrast.mjs. Two dental
+ *   rules the table cannot say: ivory's heroAccent (gold) is for display
+ *   words 24px and up only (4.45:1); on anchor and harbour the sand
+ *   heroAccent is the HERO's primary button fill with heroBg as its label,
+ *   and `cta` (the brand teal) is the button everywhere else.
  *
  * ── THE TOKENS ─────────────────────────────────────────────────────────────
  * Emitted as `--ds-*` custom properties (the same names the single-page school
@@ -38,10 +48,14 @@ import type { DesignFamily } from "../templates/families";
 
 import { isSiteThemeId, type SiteThemeId } from "./ids";
 export { isSiteThemeId };
-export type { SiteSchoolThemeId, SiteCoachingThemeId, SiteThemeId } from "./ids";
+export type { SiteSchoolThemeId, SiteCoachingThemeId, SiteDentalThemeId, SiteThemeId } from "./ids";
 
-/** a or b: the two first-screen shapes each family has. */
-export type HeroVariant = "a" | "b";
+/**
+ * a or b: the two first-screen shapes each family has. c exists only on the
+ * dental Clinical family: the Kids variant (sprout), same grammar as Clinical
+ * with its own colour, shape and voice (DENTAL-DESIGN.md section 6).
+ */
+export type HeroVariant = "a" | "b" | "c";
 
 /** serif: device serif display over Inter. sora: Sora display over Inter. sans: Inter only. */
 export type SiteFace = "serif" | "sora" | "sans";
@@ -408,6 +422,210 @@ export const SITE_THEMES: Record<SiteThemeId, SiteTheme> = {
       onCta: "288 29.3% 19.4%",       /* #3A2340 */
     },
   },
+  /* ── Dental (28 Sep 2026). Hex values and measured ratios: DENTAL-DESIGN.md. ── */
+  haven: {
+    id: "haven",
+    kind: "dental",
+    family: "clinical",
+    variant: "a",
+    paletteName: "Teal and cream",
+    face: "sora",
+    radius: "14px",
+    motion: "full",
+    tokens: {
+      bg: "32 100% 97.5%",           /* #FFF9F2 */
+      surface: "0 0% 100%",          /* #FFFFFF */
+      surface2: "165 28.6% 94.5%",   /* #EDF5F3 */
+      ink: "214 68.1% 13.5%",        /* #0B1F3A */
+      inkSoft: "215 19.3% 34.5%",    /* #475569 */
+      brand: "175 77.4% 26.1%",      /* #0F766E */
+      onBrand: "0 0% 100%",          /* #FFFFFF */
+      brandInk: "175 79% 20.6%",     /* #0B5E57 */
+      accent: "175 79% 20.6%",       /* #0B5E57 */
+      line: "32 57.7% 79.6%",        /* hairline, darkened to 1.4:1 */
+      rule: "42 54% 53.9%",          /* #C9A24A */
+      heroBg: "32 100% 97.5%",       /* #FFF9F2 */
+      heroInk: "214 68.1% 13.5%",    /* #0B1F3A */
+      heroSoft: "215 19.3% 34.5%",   /* #475569 */
+      heroAccent: "175 77.4% 26.1%", /* #0F766E */
+      cta: "175 77.4% 26.1%",        /* #0F766E */
+      onCta: "0 0% 100%",            /* #FFFFFF */
+    },
+  },
+  meridian: {
+    id: "meridian",
+    kind: "dental",
+    family: "clinical",
+    variant: "a",
+    paletteName: "Navy, teal and royal blue",
+    face: "sora",
+    radius: "14px",
+    motion: "full",
+    tokens: {
+      bg: "216 38.5% 97.5%",         /* #F6F8FB */
+      surface: "0 0% 100%",          /* #FFFFFF */
+      surface2: "208 44.8% 94.3%",   /* #EAF1F7 */
+      ink: "214 68.1% 13.5%",        /* #0B1F3A */
+      inkSoft: "215 19.3% 34.5%",    /* #475569 */
+      brand: "214 68.1% 13.5%",      /* #0B1F3A */
+      onBrand: "0 0% 100%",          /* #FFFFFF */
+      brandInk: "214 68.1% 13.5%",   /* #0B1F3A */
+      accent: "224 76.3% 48%",       /* #1D4ED8 */
+      line: "218 23.5% 84.1%",       /* hairline, darkened to 1.4:1 */
+      rule: "42 54% 53.9%",          /* #C9A24A */
+      heroBg: "216 38.5% 97.5%",     /* #F6F8FB */
+      heroInk: "214 68.1% 13.5%",    /* #0B1F3A */
+      heroSoft: "215 19.3% 34.5%",   /* #475569 */
+      heroAccent: "175 77.4% 26.1%", /* #0F766E */
+      cta: "175 77.4% 26.1%",        /* #0F766E */
+      onCta: "0 0% 100%",            /* #FFFFFF */
+    },
+  },
+  ivory: {
+    id: "ivory",
+    kind: "dental",
+    family: "luxury",
+    variant: "a",
+    paletteName: "Cream, espresso and antique gold",
+    face: "serif",
+    radius: "20px",
+    motion: "full",
+    tokens: {
+      bg: "38 57.9% 96.3%",          /* #FBF7F0 */
+      surface: "0 0% 100%",          /* #FFFFFF */
+      surface2: "38 47.8% 91%",      /* #F3EBDD */
+      ink: "33 21.6% 10%",           /* #1F1A14 */
+      inkSoft: "35 14.6% 32.2%",     /* #5E5446 */
+      brand: "28 28.4% 13.1%",       /* #2B2118 */
+      onBrand: "38 57.9% 96.3%",     /* #FBF7F0 */
+      brandInk: "28 28.4% 13.1%",    /* #2B2118 */
+      accent: "38 62.4% 33.3%",      /* #8A6420 */
+      line: "38 34.7% 80.2%",        /* hairline, darkened to 1.4:1 */
+      rule: "41 59.4% 63.3%",        /* #D9B56A */
+      heroBg: "38 57.9% 96.3%",      /* #FBF7F0 */
+      heroInk: "33 21.6% 10%",       /* #1F1A14 */
+      heroSoft: "35 14.6% 32.2%",    /* #5E5446 */
+      heroAccent: "40 70.4% 33.1%",     /* #906919, 4.66 on bg (DENTAL-DESIGN had #946C1C, 4.45) */
+      cta: "38 62.4% 33.3%",         /* #8A6420 */
+      onCta: "0 0% 100%",            /* #FFFFFF */
+    },
+  },
+  anchor: {
+    id: "anchor",
+    kind: "dental",
+    family: "calm",
+    variant: "a",
+    paletteName: "Deep teal, sea glass and sand",
+    face: "sora",
+    radius: "6px",
+    motion: "full",
+    tokens: {
+      bg: "160 15.8% 96.3%",         /* #F4F7F6 */
+      surface: "0 0% 100%",          /* #FFFFFF */
+      surface2: "169 24.4% 91.2%",   /* #E3EEEC */
+      ink: "177 42.3% 10.2%",        /* #0F2524 */
+      inkSoft: "175 15.7% 32.5%",    /* #46605E */
+      brand: "179 61.6% 14.3%",      /* #0E3B3A */
+      onBrand: "160 37.5% 96.9%",    /* #F4FAF8 */
+      brandInk: "179 61.6% 14.3%",   /* #0E3B3A */
+      accent: "34 66.3% 32.5%",      /* #8A5A1C */
+      line: "158 11.3% 81%",         /* hairline, darkened to 1.4:1 */
+      rule: "164 34.9% 74.7%",       /* #A8D5C9 */
+      heroBg: "179 61.6% 14.3%",     /* #0E3B3A */
+      heroInk: "160 37.5% 96.9%",    /* #F4FAF8 */
+      heroSoft: "168 25.5% 80%",     /* #BFD9D4 */
+      heroAccent: "40 68.1% 72.9%",  /* #E9C98B */
+      cta: "179 61.6% 14.3%",        /* #0E3B3A */
+      onCta: "160 37.5% 96.9%",      /* #F4FAF8 */
+    },
+  },
+  mint: {
+    id: "mint",
+    kind: "dental",
+    family: "clinical",
+    variant: "b",
+    paletteName: "Navy and mint",
+    face: "sora",
+    radius: "14px",
+    motion: "full",
+    tokens: {
+      bg: "216 38.5% 97.5%",         /* #F6F8FB */
+      surface: "0 0% 100%",          /* #FFFFFF */
+      surface2: "171 46.7% 94.1%",   /* #E9F7F5 */
+      ink: "214 68.1% 13.5%",        /* #0B1F3A */
+      inkSoft: "215 19.3% 34.5%",    /* #475569 */
+      brand: "214 68.1% 13.5%",      /* #0B1F3A */
+      onBrand: "0 0% 100%",          /* #FFFFFF */
+      brandInk: "214 68.1% 13.5%",   /* #0B1F3A */
+      accent: "175 81.4% 23.1%",     /* #0B6B63 */
+      line: "218 23.5% 84.1%",       /* hairline, darkened to 1.4:1 */
+      rule: "171 76.9% 64.3%",       /* #5EEAD4 */
+      heroBg: "216 38.5% 97.5%",     /* #F6F8FB */
+      heroInk: "214 68.1% 13.5%",    /* #0B1F3A */
+      heroSoft: "215 19.3% 34.5%",   /* #475569 */
+      heroAccent: "175 77.4% 26.1%", /* #0F766E */
+      cta: "175 77.4% 26.1%",        /* #0F766E */
+      onCta: "0 0% 100%",            /* #FFFFFF */
+    },
+  },
+  sprout: {
+    id: "sprout",
+    kind: "dental",
+    family: "clinical",
+    variant: "c",
+    paletteName: "Sky, coral and sunshine",
+    face: "sora",
+    radius: "28px",
+    motion: "full",
+    tokens: {
+      bg: "40 100% 97.6%",           /* #FFFBF3 */
+      surface: "0 0% 100%",          /* #FFFFFF */
+      surface2: "203 75% 95.3%",     /* #EAF5FC */
+      ink: "212 30.2% 16.9%",        /* #1E2A38 */
+      inkSoft: "210 16.1% 36.5%",    /* #4E5D6C */
+      brand: "205 70.6% 38.6%",      /* #1D6FA8 */
+      onBrand: "0 0% 100%",          /* #FFFFFF */
+      brandInk: "204 72.3% 32.5%",   /* #17608F */
+      accent: "122 39.9% 30%",       /* #2E6B30 */
+      line: "40 60.7% 79%",          /* hairline, darkened to 1.4:1 */
+      rule: "42 100% 64.5%",         /* #FFC94A */
+      heroBg: "40 100% 97.6%",       /* #FFFBF3 */
+      heroInk: "212 30.2% 16.9%",    /* #1E2A38 */
+      heroSoft: "210 16.1% 36.5%",   /* #4E5D6C */
+      heroAccent: "10 63.3% 42.7%",  /* #B23F28 */
+      cta: "10 73.4% 60.2%",         /* #E4674F */
+      onCta: "11 47.8% 9%",          /* #22100C */
+    },
+  },
+  harbour: {
+    id: "harbour",
+    kind: "dental",
+    family: "calm",
+    variant: "b",
+    paletteName: "Deep teal and sand",
+    face: "sora",
+    radius: "6px",
+    motion: "light",
+    tokens: {
+      bg: "180 15.8% 96.3%",         /* #F4F7F7 */
+      surface: "0 0% 100%",          /* #FFFFFF */
+      surface2: "190 28.6% 91.8%",   /* #E4EEF0 */
+      ink: "191 49.1% 10.8%",        /* #0E2429 */
+      inkSoft: "190 17.2% 33.1%",    /* #465E63 */
+      brand: "195 67% 17.8%",        /* #0F3D4C */
+      onBrand: "180 37.5% 96.9%",    /* #F4FAFA */
+      brandInk: "195 67% 17.8%",     /* #0F3D4C */
+      accent: "34 66.3% 32.5%",      /* #8A5A1C */
+      line: "180 11.3% 81%",         /* hairline, darkened to 1.4:1 */
+      rule: "189 35.9% 74.9%",       /* #A8CFD6 */
+      heroBg: "195 67% 17.8%",       /* #0F3D4C */
+      heroInk: "180 37.5% 96.9%",    /* #F4FAFA */
+      heroSoft: "191 28% 80.4%",     /* #BFD6DB */
+      heroAccent: "40 68.1% 72.9%",  /* #E9C98B */
+      cta: "195 67% 17.8%",          /* #0F3D4C */
+      onCta: "180 37.5% 96.9%",      /* #F4FAFA */
+    },
+  },
 };
 
 /* ── Lookups ─────────────────────────────────────────────────────────────── */
@@ -424,7 +642,15 @@ export function siteThemeFor(kind: DemoKind, id: string | undefined): SiteTheme 
   if (!isSiteThemeId(id)) return null;
   const t = SITE_THEMES[id];
   if (t.kind === kind) return t;
-  return SITE_THEMES[kind === "school" ? "metro" : "podium"];
+  return SITE_THEMES[kind === "school" ? "metro" : kind === "dental" ? "meridian" : "podium"];
+}
+
+/**
+ * The theme a DENTAL record wears. Never null: a dental record has no
+ * single-page renderer, so an empty or foreign theme id gets meridian.
+ */
+export function dentalThemeFor(id: string | undefined): SiteTheme {
+  return siteThemeFor("dental", id) || SITE_THEMES.meridian;
 }
 
 const SERIF =

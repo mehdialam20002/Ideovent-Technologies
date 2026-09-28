@@ -237,13 +237,15 @@ const ADMISSION_SEASON: Benefit[] = [
 
 /**
  * The people. Roles exactly as `_assets/FACTS.md` fixes them, after the
- * corrections of 24 Sep 2026: three partners, and Abhilasha Kumari is a
- * Developer and not a partner. No photographs, and no headcount anywhere.
+ * corrections of 24 Sep 2026 and 27 Sep 2026 (Animesh Raturi hidden) and of
+ * 28 Sep 2026: no Founder / Co-Founder title on anybody, Mehdi Alam is
+ * Software Developer, Abhishek Tiwari is Product Manager, Saif Ali (new) is
+ * Senior App Developer. Abhilasha Kumari is a Developer. Neither is a partner. No photographs, and no headcount anywhere.
  */
 const TEAM = [
   {
     name: "Mehdi Alam",
-    role: "Founder & SDE",
+    role: "Software Developer",
     /* No out-of-hours promise here. The response targets Ideovent has actually
        committed to are per care-plan tier (48 hours, 24 hours, same working
        day), and the rate card prices an out-of-hours call-out separately. A
@@ -253,14 +255,19 @@ const TEAM = [
   },
   {
     name: "Abhishek Tiwari",
-    role: "Co-Founder & Product Manager",
+    role: "Product Manager",
     line: "Holds the scope and the written change note, so what was agreed in the first meeting is what gets built.",
   },
-  {
-    name: "Animesh Raturi",
-    role: "Co-Founder & Marketing Lead",
-    line: "Runs how the site is found once it is live: your Google listing, your search results, your first page.",
-  },
+  // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+  // {
+  //   name: "Animesh Raturi",
+  //   role: "Co-Founder & Marketing Lead",
+  //   line: "Runs how the site is found once it is live: your Google listing, your search results, your first page.",
+  // },
+  // Added 28 Sep 2026 (Mehdi). A team member, not a partner. No line under
+  // his title on purpose: nothing about his work is on record yet beyond the
+  // title, and this page does not guess. The card renders without it.
+  { name: "Saif Ali", role: "Senior App Developer" },
   {
     name: "Abhilasha Kumari",
     role: "Developer",
@@ -530,7 +537,7 @@ function ProofCard({ entry, featured = false }: { entry: ProofEntry; featured?: 
           <h3 className="font-display text-base font-semibold tracking-tight sm:text-lg">{entry.name}</h3>
           {/* From the data, via proofKindLabel, not from a branch written here.
               This card used to print the words "Our own product" for anything
-              that was not a client, which is false for the founder's employer
+              that was not a client, which is false for a partner's employer
               work and was one careless ordering change away from being on the
               page. */}
           <span className="text-[0.66rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -1235,7 +1242,7 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
                   <div className="min-w-0">
                     <h3 className="font-display text-base font-semibold tracking-tight">{m.name}</h3>
                     <p className="text-sm font-medium text-[hsl(var(--primary))]">{m.role}</p>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{m.line}</p>
+                    {m.line && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{m.line}</p>}
                   </div>
                 </li>
               ))}

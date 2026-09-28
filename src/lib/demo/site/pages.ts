@@ -23,8 +23,8 @@ import type { DemoKind, DemoScheduleRow, DemoSite } from "@/lib/cms/types";
 import type { Bilingual } from "./bilingual";
 import { hasBi, withText } from "./bilingual";
 import { isCbseSchool } from "./disclosure";
-import type { CoachingPageId, SchoolPageId, SitePageId } from "./pageSets";
-import { COACHING_PAGE_SETS, SCHOOL_PAGE_SETS } from "./pageSets";
+import type { CoachingPageId, DentalPageId, SchoolPageId, SitePageId } from "./pageSets";
+import { COACHING_PAGE_SETS, DENTAL_PAGE_SETS, SCHOOL_PAGE_SETS } from "./pageSets";
 import type { SitePageProps } from "./context";
 
 /** Where a page is linked from. "main": the header nav. "footer": footer only. */
@@ -180,16 +180,79 @@ export const COACHING_PAGES: SitePageDef<CoachingPageId>[] = [
     has: () => true, load: () => import("@/pages/site/SitemapPage") },
 ];
 
+/* ── Dental (28 Sep 2026) ────────────────────────────────────────────────── */
+
+/* Footer groups are shared names; the dental footer labels them Clinic,
+   Treatments and booking, Patients, Legal (src/pages/site/dental/shell). */
+
+/** A doctor with a bio gets a page of their own. */
+export const doctorHasPage = (d: { name?: string; bio?: string; hi?: { bio?: string } }) =>
+  !!(d.name || "").trim() && hasBi(d, "bio");
+
+const dn = (s: DemoSite) => s.dental || {};
+const consentedReviews = (s: DemoSite) => (s.reviews || []).filter((r) => r.consent && hasBi(r, "quote")).length;
+
+export const DENTAL_PAGES: SitePageDef<DentalPageId>[] = [
+  { id: "home", path: "", label: L("Home", "होम"), nav: "main", footer: "institute", built: true,
+    has: () => true, load: () => import("@/pages/site/dental/HomePage") },
+  { id: "clinics", path: "clinics", label: L("Find a clinic", "क्लिनिक खोजें"), nav: "main", footer: "institute", built: true,
+    has: (s) => n(withText(dn(s).branches, "name")) >= 2, load: () => import("@/pages/site/dental/ClinicsPage") },
+  { id: "clinic", path: "clinics/:clinic", label: L("Clinic", "क्लिनिक"), nav: "footer", footer: "institute", built: true,
+    has: (s) => n(withText(dn(s).branches, "name")) >= 2, load: () => import("@/pages/site/dental/ClinicPage") },
+  { id: "treatments", path: "treatments", label: L("Treatments", "इलाज"), nav: "main", footer: "admissions", built: true,
+    has: (s) => n(withText(dn(s).treatments, "name")) > 0, load: () => import("@/pages/site/dental/TreatmentsPage") },
+  { id: "treatment", path: "treatments/:treatment", label: L("Treatment", "इलाज"), nav: "footer", footer: "admissions", built: true,
+    has: (s) => n(withText(dn(s).treatments, "name")) > 0, load: () => import("@/pages/site/dental/TreatmentPage") },
+  { id: "doctors", path: "doctors", label: L("Doctors", "डॉक्टर"), nav: "main", footer: "institute", built: true,
+    has: (s) => n(withText(dn(s).doctors, "name")) > 0, load: () => import("@/pages/site/dental/DoctorsPage") },
+  { id: "doctor", path: "doctors/:doctor", label: L("Doctor", "डॉक्टर"), nav: "footer", footer: "institute", built: true,
+    has: (s) => (dn(s).doctors || []).some(doctorHasPage), load: () => import("@/pages/site/dental/DoctorPage") },
+  { id: "before-after", path: "before-after", label: L("Before and after", "पहले और बाद"), nav: "main", footer: "resources", built: true,
+    has: (s) => n(withText(dn(s).cases, "title")) > 0, load: () => import("@/pages/site/dental/BeforeAfterPage") },
+  { id: "kids", path: "kids", label: L("Kids dentistry", "बच्चों के दाँत"), nav: "main", footer: "admissions", built: true,
+    has: (s) => n(dn(s).kids?.firstVisit) + n(dn(s).kids?.ageBands) > 0, load: () => import("@/pages/site/dental/KidsPage") },
+  { id: "reviews", path: "reviews", label: L("Reviews", "रिव्यू"), nav: "main", footer: "resources", built: true,
+    has: (s) => consentedReviews(s) >= 3, load: () => import("@/pages/site/dental/ReviewsPage") },
+  { id: "fees", path: "fees", label: L("Fees and EMI", "फीस और EMI"), nav: "main", footer: "admissions", built: true,
+    has: (s) => n(withText(dn(s).fees, "treatment")) > 0, load: () => import("@/pages/site/dental/FeesPage") },
+  { id: "technology", path: "technology", label: L("Technology", "तकनीक"), nav: "footer", footer: "institute", built: true,
+    has: (s) => n(withText(dn(s).technology, "title")) >= 2, load: () => import("@/pages/site/dental/TechnologyPage") },
+  { id: "emergency", path: "emergency", label: L("Emergency", "इमरजेंसी"), nav: "footer", footer: "admissions", built: true,
+    has: (s) => hasBi(dn(s).emergency, "headline") || n(dn(s).emergency?.firstAid) > 0,
+    load: () => import("@/pages/site/dental/EmergencyPage") },
+  { id: "about", path: "about", label: L("About", "हमारे बारे में"), nav: "footer", footer: "institute", built: true,
+    has: (s) => hasBi(s, "about") || n(dn(s).sterilisation) > 0, load: () => import("@/pages/site/dental/AboutPage") },
+  { id: "international", path: "international", label: L("International patients", "विदेश से आने वाले मरीज़"), nav: "footer", footer: "resources", built: true,
+    has: (s) => n(dn(s).international?.steps) > 0, load: () => import("@/pages/site/dental/InternationalPage") },
+  { id: "blog", path: "blog", label: L("Guides", "जानकारी"), nav: "footer", footer: "resources", built: true,
+    has: (s) => n(withText(s.posts, "title")) > 0, load: () => import("@/pages/site/dental/BlogPage") },
+  { id: "post", path: "blog/:post", label: L("Guide", "जानकारी"), nav: "footer", footer: "resources", built: true,
+    has: (s) => n(withText(s.posts, "title")) > 0, load: () => import("@/pages/site/dental/PostPage") },
+  { id: "faq", path: "faq", label: L("FAQs", "सवाल-जवाब"), nav: "footer", footer: "resources", built: true,
+    has: (s) => n(withText(s.faq, "title")) >= 4, load: () => import("@/pages/site/dental/FaqPage") },
+  { id: "book", path: "book", label: L("Book appointment", "अपॉइंटमेंट बुक करें"), nav: "footer", footer: "admissions", built: true, still: true,
+    has: () => true, load: () => import("@/pages/site/dental/BookPage") },
+  { id: "contact", path: "contact", label: L("Contact", "संपर्क"), nav: "main", footer: "institute", built: true, still: true,
+    has: () => true, load: () => import("@/pages/site/dental/ContactPage") },
+  /* Every dental demo carries a privacy notice (DENTAL-COMPLIANCE.md s4, s5):
+     the booking consent line and the footer's Legal group link to it. It is a
+     labelled TEMPLATE the clinic replaces with its own reviewed notice. */
+  { id: "privacy", path: "privacy", label: L("Privacy notice", "प्राइवेसी नोटिस"), nav: "footer", footer: "legal", built: true, still: true,
+    has: () => true, load: () => import("@/pages/site/dental/PrivacyPage") },
+  { id: "sitemap", path: "sitemap", label: L("Sitemap", "साइटमैप"), nav: "footer", footer: "legal", built: true, still: true,
+    has: () => true, load: () => import("@/pages/site/SitemapPage") },
+];
+
 /* ── Lookups ─────────────────────────────────────────────────────────────── */
 
 export function pagesOfKind(kind: DemoKind): SitePageDef[] {
-  return kind === "coaching" ? COACHING_PAGES : SCHOOL_PAGES;
+  return kind === "dental" ? DENTAL_PAGES : kind === "coaching" ? COACHING_PAGES : SCHOOL_PAGES;
 }
 
 /** The segment's page list for a record: its own `sitePages`, else its template's, else all. */
 export function pageSetFor(site: DemoSite): readonly string[] | null {
   if (site.sitePages && site.sitePages.length) return site.sitePages;
-  const sets = { ...SCHOOL_PAGE_SETS, ...COACHING_PAGE_SETS } as Record<string, readonly string[]>;
+  const sets = { ...SCHOOL_PAGE_SETS, ...COACHING_PAGE_SETS, ...DENTAL_PAGE_SETS } as Record<string, readonly string[]>;
   return (site.templateId && sets[site.templateId]) || null;
 }
 
@@ -201,10 +264,12 @@ export function pageSetFor(site: DemoSite): readonly string[] | null {
 export function visiblePages(site: DemoSite, today: string): SitePageDef[] {
   const all = pagesOfKind(site.kind);
   const set = pageSetFor(site);
-  const allowed = (d: SitePageDef) => d.id === "home" || d.id === "sitemap" || !set || set.includes(d.id);
+  /* Home, the sitemap and (dental) the privacy notice show whatever the page set says. */
+  const always = (d: SitePageDef) => d.id === "home" || d.id === "sitemap" || d.id === "privacy";
+  const allowed = (d: SitePageDef) => always(d) || !set || set.includes(d.id);
   const list = all.filter((d) => d.built && allowed(d) && d.has(site, today));
   if (!set) return list;
-  const rank = (d: SitePageDef) => (d.id === "sitemap" ? 999 : set.indexOf(d.id) < 0 ? 0 : set.indexOf(d.id));
+  const rank = (d: SitePageDef) => (d.id === "sitemap" ? 999 : d.id === "privacy" ? 998 : set.indexOf(d.id) < 0 ? 0 : set.indexOf(d.id));
   return [...list].sort((a, b) => rank(a) - rank(b));
 }
 

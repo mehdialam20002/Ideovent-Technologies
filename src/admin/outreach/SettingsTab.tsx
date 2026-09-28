@@ -7,9 +7,10 @@ import { useOutreach } from "./useOutreach";
 import { Field, btnPrimary, cardCls, inputCls, textareaCls } from "./ui";
 
 /**
- * SETTINGS: which Google account Gmail opens in, the signature, the WhatsApp
- * cap and quiet hours, and demo-open alerts. Saved in the outreach store,
- * not the CMS.
+ * SETTINGS: which Google account Gmail opens in, the signature, an optional
+ * daily WhatsApp limit (blank, the default, is no limit) and quiet hours,
+ * demo-open alerts, and whether new demos are added to the CRM. Saved in the
+ * outreach store, not the CMS.
  */
 export function SettingsTab() {
   const { settings, saveSettings } = useOutreach();
@@ -30,13 +31,17 @@ export function SettingsTab() {
     setForm((f) => ({ ...f, [k]: v }));
   };
 
-  const capOk = Number.isFinite(form.whatsappDailyCap) && form.whatsappDailyCap >= 1 && form.whatsappDailyCap <= 50;
+  /* The limit box is text so it can be blank; blank means no limit. */
+  const [limitText, setLimitText] = useState(settings.whatsappDailyLimit ? String(settings.whatsappDailyLimit) : "");
+  useEffect(() => setLimitText(settings.whatsappDailyLimit ? String(settings.whatsappDailyLimit) : ""), [settings.whatsappDailyLimit]);
+  const limitNum = limitText.trim() === "" ? 0 : Number(limitText.trim());
+  const capOk = Number.isInteger(limitNum) && limitNum >= 0 && limitNum <= 10000;
   const gmailOk = !form.senderGmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.senderGmail.trim()) || /^\d$/.test(form.senderGmail.trim());
 
   const save = async () => {
     setErr(null);
     try {
-      await saveSettings({ ...form, senderGmail: (form.senderGmail || "").trim(), alertEmail: (form.alertEmail || "").trim() });
+      await saveSettings({ ...form, whatsappDailyLimit: limitNum > 0 ? limitNum : 0, senderGmail: (form.senderGmail || "").trim(), alertEmail: (form.alertEmail || "").trim() });
       if (data.settings && (data.settings.demoOpenAlerts !== false) !== form.alertOnDemoOpen) {
         await actions.saveSingleton("settings", { ...data.settings, demoOpenAlerts: form.alertOnDemoOpen });
       }
@@ -64,7 +69,7 @@ export function SettingsTab() {
           <input id="set-gmail" type="email" inputMode="email" autoComplete="email" className={inputCls} value={form.senderGmail || ""} onChange={(e) => set("senderGmail", e.target.value)} placeholder="you@gmail.com" />
         </Field>
         {!gmailOk && <p className="text-xs text-destructive">That does not look like an email address.</p>}
-        <Field id="set-sig" label="Email signature" hint="Added under every email. Real name, company, city and phone (EMAIL-RULES.md).">
+        <Field id="set-sig" label="Email signature" hint="Added under every email: your real name, company, city and phone.">
           <textarea id="set-sig" rows={5} className={textareaCls} value={form.signature} onChange={(e) => set("signature", e.target.value)} />
         </Field>
         <button type="button" className="text-xs text-primary underline underline-offset-2" onClick={() => set("signature", DEFAULT_SIGNATURE)}>
@@ -73,11 +78,11 @@ export function SettingsTab() {
       </section>
 
       <section className={cardCls + " space-y-4"}>
-        <h2 className="font-display text-lg font-semibold">WhatsApp safeguards</h2>
-        <Field id="set-cap" label="Daily cap on WhatsApp messages" hint="The playbook's hard cap is 10 cold first messages a day, typed one at a time. Past the cap the WhatsApp buttons are blocked.">
-          <input id="set-cap" type="number" inputMode="numeric" min={1} max={50} className={inputCls + " max-w-[10rem]"} value={form.whatsappDailyCap} onChange={(e) => set("whatsappDailyCap", Number(e.target.value))} />
+        <h2 className="font-display text-lg font-semibold">WhatsApp and quiet hours</h2>
+        <Field id="set-cap" label="Daily WhatsApp limit, blank for no limit" hint="Leave it blank to send as many WhatsApp messages as you like. Type a number only if you want the first-message buttons to stop at that many a day.">
+          <input id="set-cap" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="No limit" className={inputCls + " max-w-[10rem]"} value={limitText} onChange={(e) => { setSaved(false); setLimitText(e.target.value); }} />
         </Field>
-        {!capOk && <p className="text-xs text-destructive">Choose a number from 1 to 50.</p>}
+        {!capOk && <p className="text-xs text-destructive">Type a whole number, or leave it blank for no limit.</p>}
         <div className="grid grid-cols-2 gap-3 sm:max-w-md">
           <Field id="set-qs" label="Quiet from">
             <input id="set-qs" type="time" className={inputCls} value={form.quietStart} onChange={(e) => set("quietStart", e.target.value)} />
@@ -103,6 +108,19 @@ export function SettingsTab() {
         <Field id="set-alert" label="Your alert email (for reference)" hint="Kept with your settings. Delivery goes to the EmailJS enquiry inbox; change that inbox in EmailJS if it should be a different address.">
           <input id="set-alert" type="email" inputMode="email" className={inputCls} value={form.alertEmail || ""} onChange={(e) => set("alertEmail", e.target.value)} placeholder="you@gmail.com" disabled={!form.alertOnDemoOpen} />
         </Field>
+      </section>
+
+      <section className={cardCls + " space-y-3"}>
+        <h2 className="font-display text-lg font-semibold">Demos and the CRM</h2>
+        <label className="flex min-h-11 items-center gap-3 text-sm">
+          <input type="checkbox" className="h-5 w-5" data-testid="set-auto-demos" checked={form.autoAddDemos !== false} onChange={(e) => set("autoAddDemos", e.target.checked)} />
+          Add every new demo to the CRM
+        </label>
+        <p className="text-xs text-muted-foreground">
+          When you make a demo from a template or a poster, a lead is added for it with the demo linked, so you can track who
+          opened it. If a lead with the same name and city, or the same phone or email, already exists, the demo is linked to
+          that lead instead. The poster screen has its own switch for each demo.
+        </p>
       </section>
 
       {err && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">{err}</p>}

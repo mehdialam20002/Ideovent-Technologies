@@ -13,6 +13,6 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  if (!authed) return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
+  if (!authed) return <Navigate to="/admin/login" state={{ from: location.pathname + location.search }} replace />;
   return <>{children}</>;
 }

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ADMIN_DEVICE_KEY } from "@/lib/demo/opens";
-import { AlertTriangle, CalendarClock, List, Plus, Send, Settings, Upload } from "lucide-react";
+import { AlertTriangle, Plus } from "lucide-react";
 import { OutreachProvider, useOutreach } from "@/admin/outreach/useOutreach";
 import { TodayTab } from "@/admin/outreach/TodayTab";
 import { LeadsTab } from "@/admin/outreach/LeadsTab";
@@ -31,10 +31,10 @@ import { cn } from "@/lib/utils";
  * CMS content, so they are not in the Export button's JSON either.
  */
 const TABS = [
-  { id: "today", label: "Today", icon: CalendarClock },
-  { id: "leads", label: "Leads", icon: List },
-  { id: "import", label: "Import", icon: Upload },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "today", label: "Today" },
+  { id: "leads", label: "Leads" },
+  { id: "import", label: "Import" },
+  { id: "settings", label: "Settings" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -65,22 +65,16 @@ function OutreachScreen() {
   const go = (next: Record<string, string>) => setParams(next);
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Send className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div>
-            <h1 className="font-display text-2xl font-semibold">Outreach</h1>
-            <p className="text-sm text-muted-foreground">
-              Lead, demo, message, one tap to Gmail or WhatsApp. You press Send.
-              {mode === "local" && " Local mode: leads stay in this browser."}
-            </p>
-          </div>
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-semibold">Outreach</h1>
+          {/* One short line at most: the tabs and the list are what this screen is
+              for. How sending works is said once, next to the Send button. */}
+          {mode === "local" && <p className="text-xs text-muted-foreground">Leads stay in this browser (local mode).</p>}
         </div>
         {!isNew && (
-          <button type="button" className={btnPrimary} onClick={() => go({ new: "1" })}>
+          <button type="button" className={btnPrimary + " shrink-0"} onClick={() => go({ new: "1" })}>
             <Plus className="h-4 w-4" aria-hidden="true" /> New lead
           </button>
         )}
@@ -100,12 +94,12 @@ function OutreachScreen() {
       ) : isNew ? (
         <NewLeadForm onCancel={() => go({ tab: "leads" })} onCreated={(id) => go({ lead: id })} onOpen={(id) => go({ lead: id })} />
       ) : leadId ? (
-        <LeadPage leadId={leadId} onBack={() => go({ tab: "leads" })} />
+        // key: a new lead is a new screen. Nothing typed for one lead may survive into another.
+        <LeadPage key={leadId} leadId={leadId} onBack={() => go({ tab: "leads" })} onOpen={(id) => go({ lead: id })} />
       ) : (
         <>
-          <div role="tablist" aria-label="Outreach views" className="mb-5 grid grid-cols-4 gap-1 rounded-2xl border border-border bg-card/40 p-1">
+          <div role="tablist" aria-label="Outreach views" className="mb-5 flex gap-1 overflow-x-auto border-b border-border/70">
             {TABS.map((t) => {
-              const Icon = t.icon;
               const active = t.id === tab;
               return (
                 <button
@@ -115,17 +109,14 @@ function OutreachScreen() {
                   aria-selected={active}
                   onClick={() => go({ tab: t.id })}
                   className={cn(
-                    "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-xs font-medium sm:flex-row sm:gap-2 sm:text-sm",
-                    active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    "-mb-px inline-flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    active ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  <span>
-                    {t.label}
-                    {t.id === "today" && due > 0 && (
-                      <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{due}</span>
-                    )}
-                  </span>
+                  {t.label}
+                  {t.id === "today" && due > 0 && (
+                    <span className="rounded-full bg-primary px-1.5 text-[11px] font-semibold leading-5 text-primary-foreground">{due}</span>
+                  )}
                 </button>
               );
             })}

@@ -38,11 +38,11 @@ export const DEFAULT_SIGNATURE = [
 export const DEFAULT_OUTREACH_SETTINGS: OutreachSettings = {
   senderGmail: "",
   signature: DEFAULT_SIGNATURE,
-  whatsappDailyCap: 10,
   quietStart: "20:00",
   quietEnd: "09:00",
   alertOnDemoOpen: true,
   alertEmail: "",
+  autoAddDemos: true,
 };
 
 export interface OutreachStore {
@@ -50,6 +50,8 @@ export interface OutreachStore {
   listLeads(): Promise<OutreachLead[]>;
   getLead(id: string): Promise<OutreachLead | null>;
   upsertLead(lead: LeadInput): Promise<OutreachLead>;
+  /** Several leads in ONE write: all are saved, or none (CRM clean-ups). */
+  upsertLeads(leads: LeadInput[]): Promise<OutreachLead[]>;
   /** Deletes the lead and its events. */
   deleteLead(id: string): Promise<void>;
   /** All events, newest first; only one lead's when leadId is given. */
@@ -331,6 +333,48 @@ export function mapCsvRow(row: Record<string, string>): { lead: LeadInput } | { 
   return { lead };
 }
 
+/* ── Import template ───────────────────────────────────────────────────── */
+
+/** Column order of the downloadable template: LEAD-SHEET-TEMPLATE order, then the extras. */
+const TEMPLATE_ORDER: (keyof typeof COLS)[] = [
+  "leadId", "createdAt", "source", "segment", "instituteName", "city", "state", "contactName",
+  "phone", "whatsapp", "whatsappOk", "email", "website", "observation", "stage", "lastContactedAt",
+  "nextActionAt", "pitchUrl", "demoUrl", "doNotContact", "language", "notes",
+];
+
+/** Header of the template: the first (LEAD-SHEET-TEMPLATE) name of every column mapCsvRow reads. */
+export const LEAD_TEMPLATE_COLUMNS: string[] = TEMPLATE_ORDER.map((k) => COLS[k][0]);
+
+/** The one example row. Clearly fictional: example.org and a made-up name. */
+const TEMPLATE_EXAMPLE: Partial<Record<keyof typeof COLS, string>> = {
+  source: "Example",
+  segment: "SCHOOL_CBSE",
+  instituteName: "Example Public School",
+  city: "Saket, New Delhi",
+  state: "Delhi",
+  contactName: "Principal (example)",
+  phone: "+91 98765 43210",
+  whatsappOk: "YES",
+  email: "office@example.org",
+  website: "https://example.org",
+  observation: "Example: the enquiry form on their site does not send",
+  stage: "NEW",
+  doNotContact: "NO",
+  language: "en",
+  notes: "Example row. Replace it with your own leads, one per line.",
+};
+
+/**
+ * The CSV the Import tab offers as "Download import template": every column
+ * the importer understands and ONE fictional example row. CSV has no comment
+ * syntax, so the guidance lives in the file name and the Import tab's hint.
+ */
+export function leadImportTemplateCsv(): string {
+  const q = (v: string) => (/[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v);
+  const row = TEMPLATE_ORDER.map((k) => q(TEMPLATE_EXAMPLE[k] || ""));
+  return LEAD_TEMPLATE_COLUMNS.join(",") + "\r\n" + row.join(",") + "\r\n";
+}
+
 /** Existing lead with its EMPTY fields filled from the incoming one (never overwrites). */
 export function fillEmpty(existing: OutreachLead, incoming: LeadInput): LeadInput {
   const out: Record<string, unknown> = { ...existing };
@@ -342,17 +386,25 @@ export function fillEmpty(existing: OutreachLead, incoming: LeadInput): LeadInpu
 }
 
 /**
- * Shared import algorithm: the store supplies the current leads and a saver.
+ * Shared import algorithm, PURE: nothing is saved here. It returns the result
+ * to show and every lead to write, fully prepared (ids, timestamps,
+ * normalised contacts), so each store can save the whole file in ONE write.
+ *
+ * WHY ONE WRITE (27 Sep 2026). The import used to save row by row. Leaving the
+ * page mid-import stopped it at 23 of 30 and left a partial import behind.
+ * Now either every row is saved or, if the single write fails, none is.
+ *
  * Duplicates are matched against existing leads AND earlier rows of the same file.
  */
-async function runImport(
+export function planImport(
   rows: Record<string, string>[],
   existing: OutreachLead[],
-  save: (l: LeadInput, prev?: OutreachLead) => Promise<OutreachLead>,
   opts: ImportOptions = {},
-): Promise<ImportResult> {
+  now = new Date(),
+): { result: ImportResult; toSave: OutreachLead[] } {
   const result: ImportResult = { added: [], duplicates: [], skipped: [] };
   const known = [...existing];
+  const toSave = new Map<string, OutreachLead>();
   for (let i = 0; i < rows.length; i++) {
     const rowNo = i + 2; // 1-based, after the header line
     const mapped = mapCsvRow(rows[i]);
@@ -364,16 +416,20 @@ async function runImport(
     if (dup) {
       result.duplicates.push({ row: rowNo, instituteName: l.instituteName, existingId: dup.id });
       if (opts.onDuplicate === "merge") {
-        const saved = await save(fillEmpty(dup, l), dup);
+        const saved = prepareLead({ ...fillEmpty(dup, l), id: dup.id }, dup, now);
         known[known.indexOf(dup)] = saved;
+        toSave.set(saved.id, saved);
+        const j = result.added.findIndex((a) => a.id === saved.id);
+        if (j >= 0) result.added[j] = saved;
       }
       continue;
     }
-    const saved = await save(l);
+    const saved = prepareLead(l, null, now);
     known.push(saved);
+    toSave.set(saved.id, saved);
     result.added.push(saved);
   }
-  return result;
+  return { result, toSave: [...toSave.values()] };
 }
 
 const byUpdatedDesc = (a: OutreachLead, b: OutreachLead) => (b.updatedAt || "").localeCompare(a.updatedAt || "");
@@ -386,7 +442,12 @@ function prepareEvent(e: EventInput, now = new Date()): OutreachEvent {
 function mergeSettings(s?: Partial<OutreachSettings> | null): OutreachSettings {
   const m = { ...DEFAULT_OUTREACH_SETTINGS, ...(s || {}) };
   if (!m.signature) m.signature = DEFAULT_SIGNATURE;
-  if (!(Number(m.whatsappDailyCap) > 0)) m.whatsappDailyCap = DEFAULT_OUTREACH_SETTINGS.whatsappDailyCap;
+  /* Blank, 0, or anything that is not a positive number: no limit. The retired
+     whatsappDailyCap (a forced 10 on every old row) is never read. */
+  const lim = Number(m.whatsappDailyLimit);
+  if (Number.isFinite(lim) && lim > 0) m.whatsappDailyLimit = Math.floor(lim);
+  else delete m.whatsappDailyLimit;
+  if (typeof m.autoAddDemos !== "boolean") m.autoAddDemos = true;
   return m;
 }
 
@@ -464,6 +525,22 @@ export class LocalOutreachStore implements OutreachStore {
     return lead;
   }
 
+  async upsertLeads(inputs: LeadInput[]) {
+    const d = this.read();
+    const at = new Map(d.leads.map((l, i) => [l.id, i]));
+    const saved = inputs.map((input) => {
+      const i = input.id ? at.get(input.id) : undefined;
+      const lead = prepareLead(input, i === undefined ? null : d.leads[i]);
+      if (i === undefined) {
+        at.set(lead.id, d.leads.length);
+        d.leads.push(lead);
+      } else d.leads[i] = lead;
+      return lead;
+    });
+    if (saved.length) this.write(d);
+    return saved;
+  }
+
   async deleteLead(id: string) {
     const d = this.read();
     d.leads = d.leads.filter((l) => l.id !== id);
@@ -500,8 +577,19 @@ export class LocalOutreachStore implements OutreachStore {
     return this.read().leads.find((l) => l.id !== q.excludeId && sameContact(l, q)) || null;
   }
 
+  /** The whole file in ONE storage write: all rows are saved, or none. */
   async importLeads(rows: Record<string, string>[], opts?: ImportOptions) {
-    return runImport(rows, this.read().leads, (l, prev) => this.upsertLead(prev ? { ...l, id: prev.id } : l), opts);
+    const d = this.read();
+    const { result, toSave } = planImport(rows, d.leads, opts);
+    if (!toSave.length) return result;
+    const at = new Map(d.leads.map((l, i) => [l.id, i]));
+    for (const l of toSave) {
+      const i = at.get(l.id);
+      if (i === undefined) d.leads.push(l);
+      else d.leads[i] = l;
+    }
+    this.write(d);
+    return result;
   }
 }
 
@@ -561,6 +649,17 @@ export class SupabaseOutreachStore implements OutreachStore {
     return lead;
   }
 
+  async upsertLeads(inputs: LeadInput[]) {
+    if (!inputs.length) return [];
+    const before = new Map((await this.listLeads()).map((l) => [l.id, l]));
+    const saved = inputs.map((input) => prepareLead(input, input.id ? before.get(input.id) : null));
+    const { error } = await (await sb())
+      .from(T_LEADS)
+      .upsert(saved.map((l) => ({ id: l.id, data: l, updated_at: l.updatedAt })), { onConflict: "id" });
+    if (error) fail(`save the ${saved.length} leads (nothing was saved)`, error);
+    return saved;
+  }
+
   async deleteLead(id: string) {
     const client = await sb();
     const ev = await client.from(T_EVENTS).delete().eq("lead_id", id);
@@ -603,8 +702,19 @@ export class SupabaseOutreachStore implements OutreachStore {
     return (await this.listLeads()).find((l) => l.id !== q.excludeId && sameContact(l, q)) || null;
   }
 
+  /**
+   * The whole file in ONE upsert: PostgREST runs a single statement, so either
+   * every row is saved or, on an error, none is. An import creates no history
+   * events, so there is no second write.
+   */
   async importLeads(rows: Record<string, string>[], opts?: ImportOptions) {
-    return runImport(rows, await this.listLeads(), (l, prev) => this.upsertLead(prev ? { ...l, id: prev.id } : l), opts);
+    const { result, toSave } = planImport(rows, await this.listLeads(), opts);
+    if (!toSave.length) return result;
+    const { error } = await (await sb())
+      .from(T_LEADS)
+      .upsert(toSave.map((l) => ({ id: l.id, data: l, updated_at: l.updatedAt })), { onConflict: "id" });
+    if (error) fail(`save the ${toSave.length} imported leads (nothing was saved)`, error);
+    return result;
   }
 }
 
@@ -630,6 +740,7 @@ export const outreachStore: OutreachStore = {
   listLeads: () => getOutreachStore().listLeads(),
   getLead: (id) => getOutreachStore().getLead(id),
   upsertLead: (l) => getOutreachStore().upsertLead(l),
+  upsertLeads: (l) => getOutreachStore().upsertLeads(l),
   deleteLead: (id) => getOutreachStore().deleteLead(id),
   listEvents: (id) => getOutreachStore().listEvents(id),
   addEvent: (e) => getOutreachStore().addEvent(e),

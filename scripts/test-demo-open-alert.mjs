@@ -146,9 +146,18 @@ const alert = NEGATIVE
   : (ctx, now) => M.maybeAlertDemoOpen(ctx, now);
 
 const site = (id, extra = {}) => ({ id, slug: id, status: "sent", instituteName: `Sunrise Public School ${id}`, city: "Patna", ...extra });
-const DAY1 = new Date("2026-09-27T10:00:00+05:30");
-const DAY1_LATER = new Date("2026-09-27T18:00:00+05:30");
-const DAY2 = new Date("2026-09-28T10:00:00+05:30");
+// Built from TODAY's local date, not fixed dates: recordDemoOpen() alerts with
+// the real clock, so a hard-coded day made the "same demo twice" check pass only
+// on the day the test was written (it failed on 28 Sep 2026 for that reason).
+const atLocal = (dayOffset, hour) => {
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  d.setHours(hour, 0, 0, 0);
+  return d;
+};
+const DAY1 = atLocal(0, 10);
+const DAY1_LATER = atLocal(0, 18);
+const DAY2 = atLocal(1, 10);
 
 function freshBrowser() {
   globalThis.sessionStorage = memoryStorage();

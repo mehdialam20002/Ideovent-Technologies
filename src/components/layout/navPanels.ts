@@ -64,7 +64,7 @@ const PROJECT_BANDS: { key: string; heading: string }[] = [
  */
 function employerLine(clientName: string): string {
   const company = (clientName.split(",")[0] || clientName).trim();
-  return company ? `Built by our founder at ${company}.` : "";
+  return company ? `Built by Mehdi Alam at ${company}.` : "";
 }
 
 export function useResolvedNav(items: NavItem[]): ResolvedNavItem[] {

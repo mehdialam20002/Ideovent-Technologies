@@ -7,7 +7,7 @@
  * THE RULE UNDER TEST (26 September 2026, Mehdi's brief). A duplicate carries
  * THE WHOLE TEMPLATE, already filled, under the institute's name. The table
  * is at the top of src/lib/demo/templates/fromTemplate.ts; this file asserts
- * it for all ten templates and several names (one with an apostrophe, one
+ * it for every template (five school, five coaching, seven dental) and several names (one with an apostrophe, one
  * with a Hindi name, one with a new city):
  *
  *   1. CONTENT: every kept field has the template's exact shape, every
@@ -56,7 +56,9 @@ const NEGATIVE = Boolean(process.env.FROM_TEMPLATE_NEGATIVE);
 
 const entry = `
 export * from "@/lib/demo/templates/fromTemplate";
-export { TEMPLATES, TEMPLATE_IDS, loadTemplate, templatePreviewSite, DESIGN_FAMILIES, DESIGN_FAMILY_IDS, TEMPLATE_SEGMENTS, isTemplateSlug } from "@/lib/demo/templates";
+export { TEMPLATES, TEMPLATE_IDS, loadTemplate, templatePreviewSite, DESIGN_FAMILIES, DESIGN_FAMILY_IDS, KIND_FAMILY_IDS, TEMPLATE_SEGMENTS, isTemplateSlug } from "@/lib/demo/templates";
+export { visiblePages, matchPage, pagesOfKind } from "@/lib/demo/site/pages";
+export { DENTAL_PAGE_SETS } from "@/lib/demo/site/pageSets";
 export { demoSlugIssue } from "@/lib/demo/reservedRoutes";
 export { resolveDemoSite, isWellFormedDemoSlug } from "@/lib/demo/record";
 export { samplePrints, showSampleLine, isCarried } from "@/lib/demo/site/sample";
@@ -105,6 +107,8 @@ const bundled = await build({
   write: false,
   logLevel: "silent",
   plugins: [aliasAndRaw],
+  /* The page registry's lazy imports reach page components and their CSS. */
+  loader: { ".css": "empty" },
   define: { "import.meta.env": JSON.stringify({ BASE_URL: "/", DEV: false }) },
 });
 writeFileSync(out, bundled.outputFiles[0].text);
@@ -138,24 +142,28 @@ function isEmpty(v) {
 
 /* ── 1. The registry ─────────────────────────────────────────────────────── */
 
-const { TEMPLATES, TEMPLATE_IDS, DESIGN_FAMILIES, DESIGN_FAMILY_IDS, TEMPLATE_SEGMENTS } = M;
+const { TEMPLATES, TEMPLATE_IDS, DESIGN_FAMILIES, KIND_FAMILY_IDS, TEMPLATE_SEGMENTS } = M;
 
-check(TEMPLATES.length === 10, `the registry lists 10 templates (found ${TEMPLATES.length})`);
+/* Five school, five coaching, and (28 Sep 2026) seven dental. */
+const PER_KIND = { school: 5, coaching: 5, dental: 7 };
+const TOTAL = Object.values(PER_KIND).reduce((a, b) => a + b, 0);
+check(TEMPLATES.length === TOTAL, `the registry lists ${TOTAL} templates (found ${TEMPLATES.length})`);
 check(new Set(TEMPLATES.map((t) => t.id)).size === TEMPLATES.length, "every registry id is unique");
 check(
   TEMPLATE_IDS.every((id) => TEMPLATES.some((t) => t.id === id)),
   "every id in ids.ts has a registry entry",
 );
-for (const kind of ["school", "coaching"]) {
+for (const kind of Object.keys(PER_KIND)) {
   const of = TEMPLATES.filter((t) => t.kind === kind);
-  check(of.length === 5, `five ${kind} templates (found ${of.length})`);
+  check(of.length === PER_KIND[kind], `${PER_KIND[kind]} ${kind} templates (found ${of.length})`);
   check(
     new Set(of.map((t) => t.theme)).size === of.length,
     `no two ${kind} templates share a theme`,
   );
-  for (const f of DESIGN_FAMILY_IDS) {
+  for (const f of KIND_FAMILY_IDS[kind]) {
     check(of.some((t) => t.designFamily === f), `the ${f} family has a ${kind} template`);
   }
+  check(of.every((t) => KIND_FAMILY_IDS[kind].includes(t.designFamily)), `every ${kind} template is filed under a ${kind} family`);
 }
 for (const seg of TEMPLATE_SEGMENTS) {
   check(TEMPLATES.some((t) => t.segment === seg), `the ${seg} segment has a template`);
@@ -199,7 +207,29 @@ const NAME_WORDS = {
   "c3-science": ["Meniscus", "मेनिस्कस"],
   "c4-foundation": ["Tangram", "टैंग्राम"],
   "c5-government-jobs": ["Kasauti", "कसौटी"],
+  "d1-family-dentist": ["Sheesham", "शीशम"],
+  "d2-multispeciality": ["Palash", "पलाश"],
+  "d3-smile-studio": ["Mogra", "मोगरा"],
+  "d4-implant-centre": ["Deodar", "देवदार"],
+  "d5-ortho-aligners": ["Bakul", "बकुल"],
+  "d6-kids-dental": ["Tesu", "टेसू"],
+  "d7-dental-chain": ["Mahua", "महुआ"],
 };
+
+/* The dental block as a duplicate must hold it: a second implementation of
+   clearedDental in fromTemplate.ts, written here from DENTAL-ARCHITECTURE.md. */
+const BRANCH_CLEARED = ["addressLines", "phone", "whatsapp", "mapQuery", "mapUrl", "landmark", "access", "parking", "transit"];
+function expectedDental(d) {
+  if (!d) return d;
+  const w = structuredClone(d);
+  for (const b of w.branches || []) {
+    for (const k of BRANCH_CLEARED) delete b[k];
+    if (b.hi) for (const k of ["addressLines", "landmark", "access", "parking", "transit"]) delete b.hi[k];
+  }
+  if (w.emergency) { delete w.emergency.phone; delete w.emergency.whatsapp; }
+  delete w.reach;
+  return w;
+}
 
 const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /** Whole-word regex over any script: no letter, mark or digit on either side. */
@@ -263,7 +293,7 @@ function objectsIn(v, set = new Set()) {
 }
 
 /* Fields that are not compared leaf by leaf, because the policy changes them. */
-const NOT_CONTENT = new Set(["instituteName", "shortName", "city", "state", "contact", "officialWebsite", "disclosure"]);
+const NOT_CONTENT = new Set(["instituteName", "shortName", "city", "state", "contact", "officialWebsite", "disclosure", "dental"]);
 
 /* The expected copy is computed from this snapshot, taken before any sabotage. */
 const TABLE = structuredClone(M.TEMPLATE_NAMES);
@@ -318,6 +348,7 @@ for (const meta of TEMPLATES) {
       compare(want, copy.disclosure, "disclosure", false, expect, diffs);
     }
     compare(c.contact?.hours || "", copy.contact?.hours || "", "contact.hours", false, expect, diffs);
+    if (c.dental) compare(expectedDental(c.dental), copy.dental, "dental", false, expect, diffs);
     tcheck((copy.hi?.instituteName || "") === (who.hiName || "").trim(), "hi.instituteName holds the Hindi name typed, and only that");
     tcheck(diffs.length === 0, `content equals the template's with the name replaced${diffs.length ? "\n      " + diffs.join("\n      ") : ""}`);
 
@@ -328,7 +359,15 @@ for (const meta of TEMPLATES) {
     tcheck(!(ct.branches || []).length && !ct.transportDesk, "branches and the transport desk are gone");
     tcheck(!copy.officialWebsite, "their website is empty");
     tcheck(!["address", "email", "phone"].some((r) => copy.disclosure?.rows?.[r]), "the disclosure's contact rows are gone");
-    const leaks = [c.contact?.phone, c.contact?.email, c.contact?.whatsapp, ...(c.contact?.addressLines || []).slice(0, 1)]
+    if (meta.kind === "dental") {
+      const d = copy.dental || {};
+      tcheck(!d.emergency?.phone && !d.emergency?.whatsapp, "the emergency line is empty");
+      tcheck(!d.reach, "how-to-reach is gone");
+      tcheck((d.branches || []).every((b) => BRANCH_CLEARED.every((k) => b[k] === undefined)), "every branch's address, phone, map and access are gone");
+      tcheck((d.branches || []).length === (c.dental?.branches || []).length, "branch names are kept");
+    }
+    const dentalLeaks = [c.dental?.emergency?.phone, c.dental?.emergency?.whatsapp, ...(c.dental?.branches || []).flatMap((b) => [b.phone, b.whatsapp, (b.addressLines || [])[0]])];
+    const leaks = [c.contact?.phone, c.contact?.email, c.contact?.whatsapp, ...(c.contact?.addressLines || []).slice(0, 1), ...dentalLeaks]
       .map((s) => (s || "").trim()).filter((s) => s.length >= 6);
     const leaked = leaks.filter((s) => cj.includes(JSON.stringify(s).slice(1, -1)));
     tcheck(leaked.length === 0, `no template contact detail survives anywhere (${leaked.join(", ")})`);
@@ -366,6 +405,8 @@ for (const meta of TEMPLATES) {
     tcheck(equal((copy.gallery || []).map((g) => g.src), (c.gallery || []).map((g) => g.src)), "gallery photos are carried");
     tcheck(equal((copy.photos || []).map((g) => g.src), (c.photos || []).map((g) => g.src)), "library photos are carried");
     tcheck(equal(Object.keys(copy.sectionPhotos || {}), Object.keys(c.sectionPhotos || {})), "section photos are carried");
+    tcheck(equal((copy.dental?.doctors || []).map((d) => d.photo || ""), (c.dental?.doctors || []).map((d) => d.photo || "")), "doctor portraits are carried");
+    tcheck((c.dental?.cases || []).every((x) => !x.before && !x.after && !x.consent), "no template case carries a photo or a consent flag");
     const shared = [...objectsIn(copy)].filter((o) => templateObjects.has(o));
     tcheck(shared.length === 0, `shares no object with the template module (${shared.length} shared)`);
     tcheck(json(c) === before, "the template is not mutated");
@@ -383,6 +424,15 @@ for (const meta of TEMPLATES) {
       tcheck(!M.showSampleLine(edited, "results"), "editing the results removes the line");
     }
     if (hasReviews) tcheck(M.showSampleLine(copy, "reviews"), "reviews carry the sample line");
+    /* Dental: the trust row, the cases and the doctors each carry their own line. */
+    if ((c.stats || []).length) tcheck(M.showSampleLine(copy, "stats"), "the trust row carries the sample line");
+    if ((c.dental?.cases || []).length) {
+      tcheck(M.showSampleLine(copy, "cases"), "before-after cases carry the sample line");
+      const e2 = structuredClone(copy);
+      e2.dental.cases[0].title += " (edited)";
+      tcheck(!M.showSampleLine(e2, "cases"), "editing the cases removes their line");
+    }
+    if ((c.dental?.doctors || []).length) tcheck(M.showSampleLine(copy, "doctors"), "doctors carry the sample line");
     const real = { ...copy, sample: { ...copy.sample, real: true } };
     tcheck(!M.showSampleLine(real, "results") && !M.showSampleLine(real, "reviews"), "marking them real removes both lines");
     tcheck(!M.showSampleLine(JSON.parse(cj), "results") === !M.showSampleLine(copy, "results"), "a store round trip does not read as an edit");
@@ -397,7 +447,14 @@ for (const meta of TEMPLATES) {
       const t2 = structuredClone(t);
       const k2 = t2.content;
       const planted = [];
-      if (meta.kind === "school") {
+      if (meta.kind === "dental") {
+        /* dental.treatments[0].hi.name, a nested Hindi twin inside the dental block. */
+        k2.dental = k2.dental || {};
+        if (!k2.dental.treatments?.length) k2.dental.treatments = [{ slug: "check-up", name: "Check-up", summary: "A full check-up." }];
+        const tr0 = k2.dental.treatments[0];
+        tr0.hi = { ...(tr0.hi || {}), name: `${hiOld} में जाँच` };
+        planted.push(["dental.treatments[0].hi.name", (x) => x.dental?.treatments?.[0]?.hi?.name, tr0.hi.name]);
+      } else if (meta.kind === "school") {
         const en = k2.facilities?.length ? k2.facilities : (k2.facilities = ["Library"]);
         const hi = [...(k2.hi?.facilities || [])];
         while (hi.length < en.length) hi.push("");
@@ -468,9 +525,49 @@ if (NEGATIVE) {
   check(M.STOCK_PHOTOS.filter((p) => p.role === "portrait").length >= 10, "photos: at least ten teacher portraits");
 }
 
+/* ── 2d. Dental page registry ────────────────────────────────────────────── */
+{
+  const ids = new Set(M.pagesOfKind("dental").map((p) => p.id));
+  for (const [tid, set] of Object.entries(M.DENTAL_PAGE_SETS)) {
+    check(set.every((id) => ids.has(id)), `${tid}: every page in its set is a dental page`);
+    const t = await M.loadTemplate(tid);
+    const site = M.templatePreviewSite(t);
+    const shown = M.visiblePages(site, "2026-09-28").map((p) => p.id);
+    for (const must of ["home", "book", "contact"]) check(shown.includes(must), `${tid}: ${must} is always shown`);
+  }
+  check(M.matchPage("dental", "treatments/root-canal")?.def.id === "treatment" && M.matchPage("dental", "treatments/root-canal")?.param === "root-canal", "dental: treatments/<slug> routes to the treatment page");
+  check(M.matchPage("dental", "doctors/aditi-rao")?.def.id === "doctor", "dental: doctors/<slug> routes to the doctor page");
+  check(M.matchPage("dental", "clinics/dwarka")?.def.id === "clinic", "dental: clinics/<slug> routes to the branch page");
+  check(M.matchPage("dental", "before-after")?.def.id === "before-after", "dental: before-after routes");
+  check(M.matchPage("school", "treatments") === null, "a school record has no treatments page");
+}
+
+/* ── 2e. Dental contact clearing, on planted data ────────────────────────── */
+/* Holds whatever the content files have filled so far: a branch, an
+   emergency line and how-to-reach are planted in a clone of d7. */
+{
+  const t = structuredClone(await M.loadTemplate("d7-dental-chain"));
+  t.content.dental = {
+    ...(t.content.dental || {}),
+    branches: [{ slug: "dwarka", name: "Dwarka Sector 12", phone: "+91 00000 00011", whatsapp: "910000000011", addressLines: ["Example Road, Mahua Dental"], mapQuery: "Mahua Dental Dwarka", landmark: "Near the metro", hours: "Mon to Sat", hi: { name: "द्वारका", addressLines: ["उदाहरण रोड"], landmark: "मेट्रो के पास", hours: "सोम से शनि" } }],
+    emergency: { headline: "Tooth pain?", phone: "+91 00000 00022", whatsapp: "910000000022" },
+    reach: { parking: "Basement parking", transit: "Dwarka metro, 5 minutes" },
+    doctors: [{ name: "Dr. Example", qualification: "BDS", regNo: "Reg. no. A-00000 (sample)" }],
+  };
+  const copy = M.fromTemplate(t, { sites: [], pitchPages: [], now: NOW }, { name: "Apex Dental", hiName: "एपेक्स डेंटल" });
+  const b = copy.dental.branches[0];
+  check(!b.phone && !b.whatsapp && !b.addressLines && !b.mapQuery && !b.landmark, "dental fixture: a branch loses phone, WhatsApp, address, map and landmark");
+  check(b.name === "Dwarka Sector 12" && b.hours === "Mon to Sat" && b.hi?.name === "द्वारका" && b.hi?.hours === "सोम से शनि" && !b.hi?.addressLines && !b.hi?.landmark, "dental fixture: branch name and hours are kept in both languages, the Hindi address goes");
+  check(!copy.dental.emergency.phone && !copy.dental.emergency.whatsapp && copy.dental.emergency.headline === "Tooth pain?", "dental fixture: the emergency line is cleared, its headline kept");
+  check(copy.dental.reach === undefined, "dental fixture: how-to-reach is cleared");
+  check(!JSON.stringify(copy).includes("00000 00011") && !JSON.stringify(copy).includes("910000000022"), "dental fixture: no planted number survives");
+  check(M.showSampleLine(copy, "doctors"), "dental fixture: the doctors carry the sample line");
+  check(t.content.dental.branches[0].phone === "+91 00000 00011", "dental fixture: the template clone is not mutated");
+}
+
 /* ── 3. Names a real demo can never take ─────────────────────────────────── */
 
-for (const s of ["s1-urban-cbse", "c5-government-jobs", "template-c1-jee-neet-urban"]) {
+for (const s of ["s1-urban-cbse", "c5-government-jobs", "template-c1-jee-neet-urban", "d3-smile-studio", "template-d7-dental-chain"]) {
   check(M.isTemplateSlug(s), `"${s}" is recognised as a template name`);
   check(M.demoSlugIssue(s, {}) !== null, `the admin refuses "${s}" as a demo link`);
 }

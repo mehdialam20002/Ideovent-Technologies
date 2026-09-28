@@ -84,7 +84,7 @@ const BANDS: {
   {
     key: "employer work",
     eyebrow: "Elsewhere",
-    title: "Built by our founder, ",
+    title: "Built by Mehdi Alam, ",
     accent: "for someone else",
     pad: "pt-8 pb-10 md:pt-10 md:pb-14",
     intro:
@@ -322,7 +322,7 @@ function EmployerWorkCard({ project: p }: { project: Project }) {
 
         <div className="lg:col-span-7 p-7 md:p-10">
           <p className="text-[0.6875rem] uppercase tracking-[0.18em] text-muted-foreground">
-            Built by our founder while employed at
+            Built by Mehdi Alam while employed at
           </p>
           <p className="mt-2 font-display text-2xl font-semibold leading-tight md:text-3xl">
             {employer || p.clientName}
@@ -513,7 +513,10 @@ export default function Work() {
                   If you would like to speak to someone we have worked for, ask us. We will ask
                   them. They may say no, and that is entirely their right.
                 </p>
-                <p className="text-foreground/80">Mehdi Alam, Founder, Ideovent Technologies</p>
+                {/* NO SIGNATURE LINE. This note was signed "Mehdi Alam, Founder,
+                    Ideovent Technologies" until 28 Sep 2026, when Mehdi asked
+                    for the founder's message to stay and carry nobody's name.
+                    It speaks as "we" throughout, so it stands as the firm's. */}
               </div>
             </div>
           </Reveal>

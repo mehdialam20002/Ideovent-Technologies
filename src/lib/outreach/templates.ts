@@ -279,7 +279,8 @@ Kaam ka lage to reply kar dijiye. Na lage to bhi ek line likh dijiye, main hata 
     kind: "any",
     language: "en",
     label: "Follow-up 1: did the link open for you",
-    note: "A few days after the first e-mail. Asks for a correction, not 'did you see it' (DEMO-SITE-PLAYBOOK 8.3).",
+    // Source: DEMO-SITE-PLAYBOOK 8.3. Kept out of the note, which Mehdi sees on the compose screen.
+    note: "A few days after the first e-mail. Asks for a correction, not 'did you see it'.",
     subject: "{instituteName}: the website I sent",
     body: `Dear {contactName},
 
@@ -635,7 +636,8 @@ ${WA_OPT_OUT_EN}`,
     kind: "any",
     language: "hinglish",
     label: "Pehla message: aapke liye ek page likha hai (pitch page)",
-    note: "For a lead with a pitch page. PITCH-PAGE-PLAYBOOK.md 4.2. No link in this message.",
+    // Source: PITCH-PAGE-PLAYBOOK.md 4.2. Kept out of the note, which Mehdi sees on the compose screen.
+    note: "For a lead with a pitch page. No link in this message.",
     body: `${WA_INTRO_HINGLISH}
 
 Aaj {instituteName} ki website apne phone pe kholi thi. Kuch cheezein aisi mili jo enquiry karne se pehle hi rok deti hain.
@@ -745,7 +747,7 @@ Padh kar bata dijiye main sahi hoon ya galat.`,
     kind: "any",
     language: "hinglish",
     label: "Follow-up 1: ek chhota sawaal",
-    note: "Day 2 on the ladder. Carries a question, never a bare 'following up'.",
+    note: "Two days after the first message. Asks a question, never a bare 'following up'.",
     body: `{contactName} ji, ek chhota sa sawaal, jawab ek line mein kaafi hai.
 
 {instituteName} ke liye jo website banayi hai, wo dekhna chahenge? "Haan" likh dijiye, link bhej dunga. Aur agar dekh li hai, to bas itna bata dijiye ki usme sabse pehle kya badalna chahiye.
@@ -761,7 +763,7 @@ Koi jaldi nahi hai. Kaam ka na ho to *nahi* likh dijiye, dobara message nahi kar
     kind: "any",
     language: "en",
     label: "Follow-up 1: one small question",
-    note: "Day 2 on the ladder. Carries a question, never a bare 'following up'.",
+    note: "Two days after the first message. Asks a question, never a bare 'following up'.",
     body: `{contactName}, one small question, a one-line answer is enough.
 
 Would you like to see the website we made for {instituteName}? Reply "yes" and I will send the link. And if you have already seen it, just tell me the first thing you would change.

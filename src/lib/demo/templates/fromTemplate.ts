@@ -63,6 +63,12 @@
  *   disclosure rows        CONTACT    the address, email and phone rows of
  *                                     the CBSE disclosure are removed, so the
  *                                     page reads them from `contact`
+ *   dental (part)          CONTACT    each branch's address, phone,
+ *                                     WhatsApp, map and landmark, access,
+ *                                     parking and transit; the emergency
+ *                                     phone and WhatsApp; the whole `reach`
+ *                                     block (see clearedDental). Branch
+ *                                     names, hours and sessions are kept
  *
  *   EVERY OTHER FIELD      KEEP       deep-copied from the template, then
  *                                     renamed (below): tagline, about,
@@ -88,7 +94,7 @@
  * the name. With a city typed, the template's city (and "City, State")
  * becomes it, in both languages. After this no string in the copy contains
  * the template's fictional name; scripts/test-from-template.mjs checks it
- * for all ten templates.
+ * for every template, dental included.
  *
  * `DUPLICATE_POLICY` is typed as a Record over every key of DemoSite, so a
  * field added to DemoSite later is a compile error here until it is
@@ -100,7 +106,7 @@
  * and the copy shares no object with the template module. The caller saves.
  */
 
-import type { DemoContactDetails, DemoSite, PitchPage } from "@/lib/cms/types";
+import type { DemoContactDetails, DemoSite, DentalBranch, DentalContent, PitchPage } from "@/lib/cms/types";
 import { uniqueDemoSlug } from "../reservedRoutes";
 import { samplePrints } from "../site/sample";
 import type { TemplateId } from "./ids";
@@ -138,6 +144,9 @@ export const DUPLICATE_POLICY = {
   boarding: "keep", studentLife: "keep", safety: "keep", dayPlan: "keep",
   disclosure: "keep", testSeries: "keep", scholarship: "keep", posts: "keep",
   govExams: "keep", olympiad: "keep", feesPolicy: "keep", sectionPhotos: "keep",
+  /* Kept and renamed like everything else, then its contact parts are
+     cleared by clearedDental below. */
+  dental: "keep",
 } as const satisfies Record<keyof DemoSite, DuplicateRule>;
 
 /** Every field under a rule, for the test and for anybody reading the table. */
@@ -152,6 +161,11 @@ export const CLEARED_CONTACT_KEYS = [
   "phone", "whatsapp", "email", "addressLines", "landmark", "mapUrl", "mapQuery",
   "branches", "transportDesk",
 ] as const satisfies readonly (keyof DemoContactDetails)[];
+
+/** A branch's keys that route a call or a visit: cleared on a duplicate. */
+export const CLEARED_BRANCH_KEYS = [
+  "addressLines", "phone", "whatsapp", "mapQuery", "mapUrl", "landmark", "access", "parking", "transit",
+] as const satisfies readonly (keyof DentalBranch)[];
 
 /** The disclosure rows that are contact details in another table. */
 export const CLEARED_DISCLOSURE_ROWS = ["address", "email", "phone"] as const;
@@ -184,6 +198,14 @@ export const TEMPLATE_NAMES: Record<TemplateId, TemplateNameForms> = {
   "c3-science": { en: ["Meniscus Science Classes", "Meniscus"], hi: ["मेनिस्कस साइंस क्लासेज़", "मेनिस्कस"], cityHi: ["भोपाल"] },
   "c4-foundation": { en: ["Tangram Foundation Classes", "Tangram"], hi: ["टैंग्राम फ़ाउंडेशन क्लासेज़", "टैंग्राम"], cityHi: ["पुणे"] },
   "c5-government-jobs": { en: ["Kasauti Competition Classes", "Kasauti"], hi: ["कसौटी कॉम्पिटिशन क्लासेज़", "कसौटी"], cityHi: ["सासाराम"] },
+  /* Dental (28 Sep 2026). Content files must use exactly these forms. */
+  "d1-family-dentist": { en: ["Sheesham Family Dental Clinic", "Sheesham Dental", "Sheesham"], hi: ["शीशम फ़ैमिली डेंटल क्लिनिक", "शीशम डेंटल", "शीशम"], cityHi: ["लखनऊ"] },
+  "d2-multispeciality": { en: ["Palash Multispeciality Dental Centre", "Palash Dental", "Palash"], hi: ["पलाश मल्टीस्पेशलिटी डेंटल सेंटर", "पलाश डेंटल", "पलाश"], cityHi: ["हैदराबाद"] },
+  "d3-smile-studio": { en: ["Mogra Smile Studio", "Mogra"], hi: ["मोगरा स्माइल स्टूडियो", "मोगरा"], cityHi: ["मुंबई"] },
+  "d4-implant-centre": { en: ["Deodar Dental Implant Centre", "Deodar Implant Centre", "Deodar"], hi: ["देवदार डेंटल इम्प्लांट सेंटर", "देवदार"], cityHi: ["पुणे"] },
+  "d5-ortho-aligners": { en: ["Bakul Orthodontic Clinic", "Bakul Ortho", "Bakul"], hi: ["बकुल ऑर्थोडॉन्टिक क्लिनिक", "बकुल"], cityHi: ["जयपुर"] },
+  "d6-kids-dental": { en: ["Tesu Children's Dental Clinic", "Tesu Kids Dental", "Tesu"], hi: ["टेसू चिल्ड्रन्स डेंटल क्लिनिक", "टेसू"], cityHi: ["चंडीगढ़"] },
+  "d7-dental-chain": { en: ["Mahua Dental Clinics", "Mahua Dental", "Mahua"], hi: ["महुआ डेंटल क्लिनिक्स", "महुआ डेंटल", "महुआ"], cityHi: ["नई दिल्ली"] },
 };
 
 /** What the Duplicate dialog asks. Only the name is required. */
@@ -262,6 +284,35 @@ export function clearedContact(c: DemoContactDetails | undefined): DemoContactDe
   return out;
 }
 
+/**
+ * The dental block without anything that routes a call or a visit to the
+ * template's fictional clinic: branch addresses and numbers, the emergency
+ * line, and how to reach the building. Names, hours, sessions, doctors,
+ * treatments, fees, cases and every other line are kept (already renamed).
+ * Mutates and returns its argument, which is always the copy.
+ */
+export function clearedDental(d: DentalContent | undefined): DentalContent | undefined {
+  if (!d) return d;
+  if (d.branches) {
+    for (const b of d.branches) {
+      for (const k of CLEARED_BRANCH_KEYS) delete b[k];
+      if (b.hi) {
+        delete b.hi.addressLines;
+        delete b.hi.landmark;
+        delete b.hi.access;
+        delete b.hi.parking;
+        delete b.hi.transit;
+      }
+    }
+  }
+  if (d.emergency) {
+    delete d.emergency.phone;
+    delete d.emergency.whatsapp;
+  }
+  delete d.reach;
+  return d;
+}
+
 /* ── The provisional link, for demos duplicated before the name dialog ──── */
 
 /** The link base a nameless duplicate used to get: "draft-s1-urban-cbse". */
@@ -336,6 +387,7 @@ export function fromTemplate(
   if (copy.disclosure?.rows) {
     for (const k of CLEARED_DISCLOSURE_ROWS) delete copy.disclosure.rows[k];
   }
+  if (copy.dental) clearedDental(copy.dental);
 
   /* IDENTITY */
   const city = (who.city || "").trim();

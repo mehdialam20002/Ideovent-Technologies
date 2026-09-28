@@ -1,5 +1,6 @@
 /**
- * THE TEMPLATE REGISTRY: ten ready-made demos, five school and five coaching.
+ * THE TEMPLATE REGISTRY: seventeen ready-made demos, five school, five
+ * coaching and (28 September 2026) seven dental clinics.
  *
  * ── WHAT A TEMPLATE IS ────────────────────────────────────────────────────
  * A complete demo site for an institute that does not exist, written to show
@@ -42,6 +43,7 @@
 import type { DemoKind, DemoSite } from "@/lib/cms/types";
 import { TEMPLATE_IDS, TEMPLATE_PREVIEW_SLUG_PREFIX, type TemplateId } from "./ids";
 import type { DemoTemplateMeta, LoadedTemplate, TemplateModule } from "./shape";
+import { samplePrints } from "../site/sample";
 
 export { TEMPLATE_IDS, isTemplateId, isTemplateSlug, type TemplateId } from "./ids";
 export {
@@ -50,11 +52,13 @@ export {
   type DemoTemplateMeta,
   type LoadedTemplate,
   type TemplateContent,
+  type TemplateDental,
   type TemplateSegment,
 } from "./shape";
 export {
   DESIGN_FAMILIES,
   DESIGN_FAMILY_IDS,
+  KIND_FAMILY_IDS,
   THEME_PALETTE_NAME,
   familyOfTheme,
   type DesignFamily,
@@ -202,6 +206,79 @@ export const TEMPLATES: readonly DemoTemplateMeta[] = [
     label: "Government job exams",
     description: "SSC, banking, railways and state PSC, for adults 18 to 30 in tier-2 and tier-3 towns. Results and the calendar first.",
   },
+  /* DENTAL (28 September 2026). Segments, families and heroes from
+     E:/myagency/_assets/DENTAL-IA.md section 8 and DENTAL-DESIGN.md section 8:
+
+       d1 haven     Clinical a  split hero, one dentist, bilingual, small town
+       d2 meridian  Clinical a  split hero, MDS team, problem picker
+       d3 ivory     Luxury a    the reference hero: cream veil, gold serif
+       d4 anchor    Calm a      deep teal full bleed, 45+ audience
+       d5 mint      Clinical b  reason card beside the photo
+       d6 sprout    Clinical c  kids: arch photo, coral and sky
+       d7 harbour   Calm b      branch picker in the hero                  */
+  {
+    id: "d1-family-dentist",
+    kind: "dental",
+    segment: "rural",
+    designFamily: "clinical",
+    theme: "haven",
+    label: "Family dental clinic",
+    description: "One dentist and visiting specialists in a suburb or small town, for families and seniors. Hours, prices and WhatsApp first.",
+  },
+  {
+    id: "d2-multispeciality",
+    kind: "dental",
+    segment: "urban",
+    designFamily: "clinical",
+    theme: "meridian",
+    label: "Multi-speciality dental centre",
+    description: "An MDS team across every specialty in a metro neighbourhood. Opens on what you need help with, then the team.",
+  },
+  {
+    id: "d3-smile-studio",
+    kind: "dental",
+    segment: "urban",
+    designFamily: "luxury",
+    theme: "ivory",
+    label: "Cosmetic smile design studio",
+    description: "Veneers, whitening and smile makeovers for a premium metro practice. The smile journey and the gallery come first.",
+  },
+  {
+    id: "d4-implant-centre",
+    kind: "dental",
+    segment: "specialised",
+    designFamily: "calm",
+    theme: "anchor",
+    label: "Dental implant and full-mouth centre",
+    description: "Implant options, the 3D-planned journey and the surgeon, written for patients over 45 and their adult children.",
+  },
+  {
+    id: "d5-ortho-aligners",
+    kind: "dental",
+    segment: "specialised",
+    designFamily: "clinical",
+    theme: "mint",
+    label: "Orthodontic and aligner clinic",
+    description: "Braces and clear aligners for teens and young adults. What would you like to fix, the comparison, cost and EMI.",
+  },
+  {
+    id: "d6-kids-dental",
+    kind: "dental",
+    segment: "specialised",
+    designFamily: "clinical",
+    theme: "sprout",
+    label: "Children's dental clinic",
+    description: "A pedodontist-led clinic for parents of children up to 14. The first visit, age bands and weekend hours.",
+  },
+  {
+    id: "d7-dental-chain",
+    kind: "dental",
+    segment: "urban",
+    designFamily: "calm",
+    theme: "harbour",
+    label: "Multi-branch dental chain",
+    description: "Several branches across a city or two. Find a clinic first, one standard everywhere, doctors by branch.",
+  },
 ];
 
 /**
@@ -220,6 +297,13 @@ const LOADERS: Record<TemplateId, () => Promise<{ default: TemplateModule }>> = 
   "c3-science": () => import("./coaching/c3-science"),
   "c4-foundation": () => import("./coaching/c4-foundation"),
   "c5-government-jobs": () => import("./coaching/c5-government-jobs"),
+  "d1-family-dentist": () => import("./dental/d1-family-dentist"),
+  "d2-multispeciality": () => import("./dental/d2-multispeciality"),
+  "d3-smile-studio": () => import("./dental/d3-smile-studio"),
+  "d4-implant-centre": () => import("./dental/d4-implant-centre"),
+  "d5-ortho-aligners": () => import("./dental/d5-ortho-aligners"),
+  "d6-kids-dental": () => import("./dental/d6-kids-dental"),
+  "d7-dental-chain": () => import("./dental/d7-dental-chain"),
 };
 
 /* ── Lookups ─────────────────────────────────────────────────────────────── */
@@ -265,7 +349,7 @@ export async function loadTemplate(id: string | undefined): Promise<LoadedTempla
  */
 export function templatePreviewSite(t: LoadedTemplate): DemoSite {
   const { faq, ...rest } = t.content;
-  return {
+  const site: DemoSite = {
     ...rest,
     /* The `generic` flag is template bookkeeping for the duplicate; the page
        never sees it. Everything else (group, the `hi` twin) is kept, or the
@@ -279,6 +363,12 @@ export function templatePreviewSite(t: LoadedTemplate): DemoSite {
     isExample: true,
     templateId: t.meta.id,
   };
+  /* DENTAL: the preview carries the same sample prints a duplicate gets, so
+     the reviews, trust row, cases and doctors show their "Sample" line in the
+     preview exactly as they will on the draft (Mehdi sells from the preview).
+     School and coaching previews are left as they were. */
+  if (t.meta.kind === "dental") site.sample = { from: t.meta.id, prints: samplePrints(site) };
+  return site;
 }
 
 /** The admin address of a template's preview. Behind the login. */

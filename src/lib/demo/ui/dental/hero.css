@@ -1,0 +1,109 @@
+/*
+ * THE DENTAL HERO: compositions and entrance motion (DENTAL-DESIGN.md s2-6).
+ * Loaded with hero.tsx (the dental chunk only). Colours are theme tokens.
+ * Motion: one entrance, never a loop (the scroll cue draws 3 times, the kids
+ * shapes float 2 cycles). Only [data-motion="full"] animates, and
+ * prefers-reduced-motion switches every animation off.
+ */
+
+.dn-hero { position: relative; isolation: isolate; }
+.dn-hero h1 { text-wrap: balance; }
+.dn-hero h1 em {
+  font-family: "Instrument Serif", var(--ds-serif) !important;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.04em;
+  letter-spacing: 0;
+}
+.dn-hero[data-family="luxury"] h1 { font-weight: 400; letter-spacing: -0.005em; }
+.dn-hero[data-family="clinical"] h1 { font-weight: 600; letter-spacing: -0.02em; }
+.dn-hero[data-family="calm"] h1 { font-weight: 300; letter-spacing: -0.02em; }
+.dn-hero[data-family="calm"] h1 em { color: hsl(var(--ds-hero-accent)); }
+.dn-hero[data-kids] h1 { font-weight: 700; letter-spacing: -0.01em; }
+/* Kids: the accent stays in Sora, coral, with a sunshine underline. */
+.dn-hero[data-kids] h1 em {
+  font-family: var(--ds-display) !important;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 1em;
+  color: hsl(var(--ds-hero-accent));
+  background: linear-gradient(transparent 72%, hsl(var(--ds-rule) / 0.55) 72%, hsl(var(--ds-rule) / 0.55) 92%, transparent 92%);
+  border-radius: 4px;
+  padding-inline: 2px;
+}
+
+/* ── Photo layers ── */
+.dn-hero-photo { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
+.dn-hero-photo img { transform-origin: 50% 60%; }
+/* Luxury veil: flat cream at .55, a warm cast, and a radial ellipse on the text. */
+.dn-veil-lux {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(70% 60% at 50% 55%, hsl(var(--ds-bg) / 0.92) 0%, hsl(var(--ds-bg) / 0.78) 45%, hsl(var(--ds-bg) / 0) 100%),
+    linear-gradient(hsl(var(--ds-bg) / 0.55), hsl(var(--ds-bg) / 0.55)),
+    linear-gradient(180deg, hsl(38 70% 86% / 0.28), hsl(38 60% 80% / 0.18));
+}
+.dn-veil-lux::after {
+  /* the top of the photo sits under the transparent header: keep it readable */
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 140px;
+  background: linear-gradient(hsl(var(--ds-bg) / 0.75), hsl(var(--ds-bg) / 0));
+}
+/* Luxury b: text left, the room visible on the right. */
+.dn-veil-lux-split {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(90deg, hsl(var(--ds-bg) / 0.94) 0%, hsl(var(--ds-bg) / 0.9) 32%, hsl(var(--ds-bg) / 0) 58%),
+    linear-gradient(180deg, hsl(38 70% 86% / 0.25), hsl(38 60% 80% / 0.12));
+}
+@media (max-width: 1023px) {
+  .dn-veil-lux-split { background: linear-gradient(hsl(var(--ds-bg) / 0.86), hsl(var(--ds-bg) / 0.93)); }
+}
+/* Calm veil: deep teal over the text zone easing right, plus a bottom scrim. */
+.dn-veil-calm {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(0deg, rgb(11 46 45 / 0.6) 0%, rgb(11 46 45 / 0) 30%),
+    linear-gradient(90deg, rgb(11 46 45 / 0.78) 0%, rgb(11 46 45 / 0.78) 45%, rgb(11 46 45 / 0.45) 100%);
+}
+@media (max-width: 767px) {
+  .dn-veil-calm {
+    background:
+      linear-gradient(0deg, rgb(11 46 45 / 0.72) 0%, rgb(11 46 45 / 0.2) 40%),
+      linear-gradient(rgb(11 46 45 / 0.74), rgb(11 46 45 / 0.74));
+  }
+}
+
+/* ── Luxury: pull the hero under the transparent header. ── */
+.dn-hero[data-under-header] { margin-top: calc(-1 * var(--dn-header-h)); }
+
+/* ── The trust row's hairline dividers (luxury). ── */
+.dn-trust-lux > * + * { border-left: 1px solid hsl(var(--ds-rule)); }
+
+/* ── Floating cards (clinical split). ── */
+.dn-float {
+  background: hsl(var(--ds-surface));
+  border-radius: 12px;
+  box-shadow: var(--dn-shadow-2);
+}
+/* The soft blob behind the photo (clinical) and the sky blob (kids). */
+.dn-blob { position: absolute; z-index: -1; border-radius: 42% 58% 55% 45% / 48% 42% 58% 52%; background: hsl(var(--ds-surface-2)); }
+.dn-arch { border-radius: 999px 999px 28px 28px; }
+
+/* ── Entrance motion ── */
+@keyframes dn-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes dn-settle { from { transform: scale(1.06); } to { transform: scale(1); } }
+@keyframes dn-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dn-draw { 0% { transform: scaleY(0); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+@keyframes dn-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+.dn-hero[data-motion="full"] .dn-rise { animation: dn-rise var(--ds-d4) var(--ds-ease-out) both; animation-delay: calc(var(--i, 0) * 80ms); }
+.dn-hero[data-motion="full"] .dn-rise-cta { animation: dn-rise var(--ds-d4) var(--ds-ease-out) both; animation-delay: calc(var(--i, 3) * 80ms + 240ms); }
+.dn-hero[data-motion="full"] .dn-settle img { animation: dn-settle 1400ms var(--ds-ease-out) both; }
+.dn-hero[data-motion="full"] .dn-fade-late { animation: dn-fade var(--ds-d5) var(--ds-ease-out) 600ms both; }
+.dn-cue-line { display: block; width: 1px; height: 24px; background: currentColor; opacity: 0.7; }
+.dn-hero[data-motion="full"] .dn-cue-line { animation: dn-draw 2.4s var(--ds-ease-inout) 1.2s 3 both; }
+.dn-hero[data-motion="full"] .dn-bob { animation: dn-bob 6s ease-in-out 2; animation-delay: var(--delay, 0s); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-hero *, .dn-hero *::before, .dn-hero *::after { animation: none !important; transition: none !important; }
+}

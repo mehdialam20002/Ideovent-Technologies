@@ -5,6 +5,7 @@ import { useCms } from "@/lib/cms/context";
 import { loadTemplate, templateMeta, type TemplateId } from "@/lib/demo/templates";
 import { fromTemplate, type DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
 import { DuplicateTemplateDialog } from "./DuplicateTemplateDialog";
+import { addDemoToCrm } from "@/lib/outreach/demoLead";
 
 /**
  * THE ONE WRITE A TEMPLATE ALLOWS: make a new draft demo from it.
@@ -43,6 +44,10 @@ export function useDuplicateTemplate() {
           who,
         );
         await actions.saveDoc("demoSites", copy);
+        /* Track it in the CRM: a new lead, or linked to the lead it already is.
+           Follows the CRM setting "Add every new demo to the CRM" (on unless
+           turned off). A failure here never loses the demo. */
+        await addDemoToCrm(copy, "template").catch((e) => console.warn("Demo saved, but not added to the CRM:", e));
         setAsking(null);
         navigate(`/admin/c/demoSites?edit=${encodeURIComponent(copy.id)}`);
       } catch (e) {
@@ -65,6 +70,7 @@ export function useDuplicateTemplate() {
   const dialog = asking
     ? createElement(DuplicateTemplateDialog, {
         templateLabel: meta?.label || asking,
+        kind: meta?.kind,
         busy: busy !== null,
         error,
         onCancel: () => setAsking(null),

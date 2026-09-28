@@ -24,7 +24,17 @@ export type CoachingPageId =
   | "faq" | "contact" | "portal" | "fees-and-refunds" | "exam-calendar"
   | "cut-offs" | "olympiad" | "gallery" | "sitemap";
 
-export type SitePageId = SchoolPageId | CoachingPageId;
+/**
+ * Dental (28 Sep 2026). "treatment", "doctor", "clinic" and "post" take a
+ * slug; "book" and "contact" always exist. See DENTAL-ARCHITECTURE.md.
+ */
+export type DentalPageId =
+  | "home" | "about" | "treatments" | "treatment" | "doctors" | "doctor"
+  | "before-after" | "book" | "reviews" | "fees" | "technology" | "kids"
+  | "emergency" | "blog" | "post" | "clinics" | "clinic" | "international"
+  | "faq" | "contact" | "privacy" | "sitemap";
+
+export type SitePageId = SchoolPageId | CoachingPageId | DentalPageId;
 
 export const SCHOOL_PAGE_SETS = {
   /** s1 urban CBSE, 14 pages. */
@@ -77,3 +87,45 @@ export const COACHING_PAGE_SETS = {
     "test-series", "demo-class", "blog", "post", "faq", "portal", "fees-and-refunds", "contact",
   ],
 } as const satisfies Record<string, readonly CoachingPageId[]>;
+
+/**
+ * Dental, from E:/myagency/_assets/DENTAL-IA.md section 8. Order is nav
+ * order; "book" is also the header button on every page.
+ */
+export const DENTAL_PAGE_SETS = {
+  /** d1 family dentist, 13 page types. */
+  "d1-family-dentist": [
+    "home", "treatments", "treatment", "doctors", "reviews", "fees", "about", "emergency", "blog",
+    "post", "faq", "contact", "book",
+  ],
+  /** d2 multi-speciality, the full library minus chains and international. */
+  "d2-multispeciality": [
+    "home", "treatments", "treatment", "doctors", "doctor", "reviews", "fees", "technology",
+    "before-after", "kids", "emergency", "about", "blog", "post", "faq", "contact", "book",
+  ],
+  /** d3 smile studio: gallery high, international patients. */
+  "d3-smile-studio": [
+    "home", "treatments", "treatment", "before-after", "doctors", "doctor", "reviews", "fees",
+    "technology", "about", "international", "blog", "post", "faq", "contact", "book",
+  ],
+  /** d4 implant centre: options, technology, the surgeon. */
+  "d4-implant-centre": [
+    "home", "treatments", "treatment", "doctors", "doctor", "reviews", "fees", "technology",
+    "before-after", "about", "international", "blog", "post", "faq", "contact", "book",
+  ],
+  /** d5 ortho and aligners: cases by problem, kids ortho. */
+  "d5-ortho-aligners": [
+    "home", "treatments", "treatment", "before-after", "doctors", "reviews", "fees", "kids",
+    "about", "blog", "post", "faq", "contact", "book",
+  ],
+  /** d6 kids: the Kids page is the first visit; knocked-out tooth on Emergency. */
+  "d6-kids-dental": [
+    "home", "kids", "treatments", "treatment", "doctors", "reviews", "emergency", "about", "blog",
+    "post", "faq", "contact", "book",
+  ],
+  /** d7 chain: find a clinic first. */
+  "d7-dental-chain": [
+    "home", "clinics", "clinic", "treatments", "treatment", "doctors", "doctor", "reviews", "fees",
+    "technology", "emergency", "about", "blog", "post", "faq", "contact", "book",
+  ],
+} as const satisfies Record<string, readonly DentalPageId[]>;

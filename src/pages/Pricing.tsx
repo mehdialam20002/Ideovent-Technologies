@@ -398,8 +398,10 @@ const PROMISES = [
   },
   {
     title: "The person you speak to writes the code",
+    // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+    // Original: "... founded in 2024. Its partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi. There is ..."
     description:
-      "Ideovent is a partnership firm founded in 2024. Its partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi. There is no account manager in between.",
+      "Ideovent is a partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024. There is no account manager in between.",
   },
 ];
 

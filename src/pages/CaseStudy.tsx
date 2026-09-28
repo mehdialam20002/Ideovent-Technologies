@@ -87,7 +87,7 @@ export default function CaseStudy() {
    */
   const isOwnProduct = project.category.toLowerCase() === "product";
   const engagement = isEmployerWork
-    ? "The founder’s employment: not a client"
+    ? "A partner’s own employment: not a client"
 : isOwnProduct
       ? "Ours. Nobody paid us to build it"
 : "Paid client work";

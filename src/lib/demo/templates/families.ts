@@ -74,11 +74,37 @@
 import type { DemoKind } from "@/lib/cms/types";
 import type { DemoSchoolThemeId } from "../schoolThemes";
 import type { CoachingThemeId } from "../coachingThemes";
-import type { SiteCoachingThemeId, SiteSchoolThemeId } from "../site/themes";
+import type { SiteCoachingThemeId, SiteDentalThemeId, SiteSchoolThemeId } from "../site/themes";
 
-export type DesignFamily = "classic" | "modern" | "warm";
+/**
+ * DENTAL FAMILIES (28 September 2026). A clinic is not a prospectus or a
+ * dashboard, so dental has three families of its own, from
+ * E:/myagency/_assets/DENTAL-DESIGN.md:
+ *
+ *   LUXURY    the reference's first example: a bright room under a cream
+ *             veil, serif display with gold accent words, pill buttons,
+ *             20px corners. The cosmetic studio (d3).
+ *   CLINICAL  split hero, Sora display, navy and teal, 14px corners, a data
+ *             card beside the headline (next free slot, rating). Family
+ *             (d1), multi-speciality (d2), ortho (d5, reason card), and its
+ *             playful variant c, Kids (d6, sprout: 28px, coral and sky).
+ *   CALM      deep teal full bleed under a veil, Sora light, hairlines not
+ *             shadows, 6px corners, larger body type. Implants (d4) and
+ *             chains (d7, with the branch picker).
+ *
+ * School and coaching never use these three, and dental never uses the
+ * first three: `KIND_FAMILY_IDS` says which families each kind offers.
+ */
+export type DesignFamily = "classic" | "modern" | "warm" | "luxury" | "clinical" | "calm";
 
-export const DESIGN_FAMILY_IDS: DesignFamily[] = ["classic", "modern", "warm"];
+export const DESIGN_FAMILY_IDS: DesignFamily[] = ["classic", "modern", "warm", "luxury", "clinical", "calm"];
+
+/** The families a template of each kind may be filed under. */
+export const KIND_FAMILY_IDS: Record<DemoKind, DesignFamily[]> = {
+  school: ["classic", "modern", "warm"],
+  coaching: ["classic", "modern", "warm"],
+  dental: ["luxury", "clinical", "calm"],
+};
 
 interface FamilyDefinition {
   label: string;
@@ -88,6 +114,7 @@ interface FamilyDefinition {
   themes: {
     school: readonly (DemoSchoolThemeId | SiteSchoolThemeId)[];
     coaching: readonly (CoachingThemeId | SiteCoachingThemeId)[];
+    dental: readonly SiteDentalThemeId[];
   };
 }
 
@@ -95,17 +122,32 @@ export const DESIGN_FAMILIES = {
   classic: {
     label: "Classic",
     blurb: "A book voice, small corners, the name as the mass of the hero. Reads like a prospectus.",
-    themes: { school: ["heritage", "quiet-campus", "pinewood", "almanac"], coaching: ["bulletin", "register", "folio"] },
+    themes: { school: ["heritage", "quiet-campus", "pinewood", "almanac"], coaching: ["bulletin", "register", "folio"], dental: [] },
   },
   modern: {
     label: "Modern",
     blurb: "One sharp sans, a split hero with a board or a fact block beside the headline. Opens on what is taught.",
-    themes: { school: ["modern-campus", "metro", "atlas"], coaching: ["ledger", "signal", "marks", "podium", "timetable"] },
+    themes: { school: ["modern-campus", "metro", "atlas"], coaching: ["ledger", "signal", "marks", "podium", "timetable"], dental: [] },
   },
   warm: {
     label: "Warm",
     blurb: "Their own colour full bleed, rounder corners, and people before figures. Reads like a neighbourhood place.",
-    themes: { school: ["bright", "riverside", "aangan", "crayon"], coaching: ["studio", "courtyard"] },
+    themes: { school: ["bright", "riverside", "aangan", "crayon"], coaching: ["studio", "courtyard"], dental: [] },
+  },
+  luxury: {
+    label: "Luxury",
+    blurb: "A bright room under a cream veil, a serif headline with gold accent words, pill buttons. Reads like a studio.",
+    themes: { school: [], coaching: [], dental: ["ivory"] },
+  },
+  clinical: {
+    label: "Clinical",
+    blurb: "Split hero with the next free slot beside the headline, navy and teal, clear cards. Reads like a well run clinic.",
+    themes: { school: [], coaching: [], dental: ["haven", "meridian", "mint", "sprout"] },
+  },
+  calm: {
+    label: "Calm",
+    blurb: "Deep teal full bleed, quiet light type, hairlines and larger text. Reads like a place for serious treatment.",
+    themes: { school: [], coaching: [], dental: ["anchor", "harbour"] },
   },
 } as const satisfies Record<DesignFamily, FamilyDefinition>;
 
@@ -122,7 +164,15 @@ export type FamilyTheme<K extends DemoKind, F extends DesignFamily> =
  * taken from the first clause of each theme's own blurb, so the card and the
  * admin's Look dropdown describe the same thing in the same words.
  */
-export const THEME_PALETTE_NAME: Record<DemoSchoolThemeId | CoachingThemeId | SiteSchoolThemeId | SiteCoachingThemeId, string> = {
+export const THEME_PALETTE_NAME: Record<DemoSchoolThemeId | CoachingThemeId | SiteSchoolThemeId | SiteCoachingThemeId | SiteDentalThemeId, string> = {
+  /* Dental. Same words as SITE_THEMES[id].paletteName. */
+  haven: "Teal and cream",
+  meridian: "Navy, teal and royal blue",
+  ivory: "Cream, espresso and antique gold",
+  anchor: "Deep teal, sea glass and sand",
+  mint: "Navy and mint",
+  sprout: "Sky, coral and sunshine",
+  harbour: "Deep teal and sand",
   /* The multi-page themes. Same words as SITE_THEMES[id].paletteName. */
   metro: "Navy, blue and marigold",
   atlas: "Ink teal, sea glass and coral",

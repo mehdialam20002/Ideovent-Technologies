@@ -88,6 +88,7 @@ const STATUS_STYLES: Record<DemoStatus, string> = {
 const KIND_LABEL: Record<DemoKind, string> = {
   school: "School",
   coaching: "Coaching",
+  dental: "Dental clinic",
 };
 
 function Chip({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -442,6 +443,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
           <option value="all">Every kind</option>
           <option value="school">School</option>
           <option value="coaching">Coaching</option>
+          <option value="dental">Dental clinic</option>
         </select>
         <select
           aria-label="Filter by market"
@@ -920,7 +922,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                 </label>
                 <p className="text-xs text-muted-foreground">
                   Chooses the template. A school sells admission and trust; a coaching institute
-                  sells results and batches.
+                  sells results and batches; a dental clinic sells trust and an appointment.
                 </p>
                 <select
                   id="demo-kind"
@@ -930,6 +932,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                 >
                   <option value="school">School</option>
                   <option value="coaching">Coaching institute</option>
+                  <option value="dental">Dental clinic</option>
                 </select>
               </div>
 

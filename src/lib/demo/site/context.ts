@@ -95,3 +95,20 @@ export function courseSlug(c: { slug?: string; name: string }): string {
 export function postSlug(p: { slug?: string; title: string }): string {
   return (p.slug || "").trim() || slugify(p.title);
 }
+
+/* ── Dental slugs (28 Sep 2026) ── */
+
+/** A treatment's slug (required on the record; derived only as a fallback). */
+export function treatmentSlug(t: { slug?: string; name: string }): string {
+  return (t.slug || "").trim() || slugify(t.name);
+}
+
+/** A doctor's slug: their `slug`, else one from the name without "Dr.". */
+export function doctorSlug(d: { slug?: string; name: string }): string {
+  return (d.slug || "").trim() || slugify(d.name.replace(/^\s*dr\.?\s+/i, ""));
+}
+
+/** A branch's slug. */
+export function branchSlug(b: { slug?: string; name: string }): string {
+  return (b.slug || "").trim() || slugify(b.name);
+}

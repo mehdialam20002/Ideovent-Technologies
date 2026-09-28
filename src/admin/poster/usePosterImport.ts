@@ -1,4 +1,4 @@
-import { createElement, useCallback, useState } from "react";
+import { createElement, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { DemoSite, PitchPage } from "@/lib/cms/types";
 import { useCms } from "@/lib/cms/context";
@@ -9,6 +9,8 @@ import type { PosterExtract } from "@/lib/ai/posterSchema";
 import { providerLabel } from "@/lib/ai/posterClient";
 import { DuplicateTemplateDialog } from "@/admin/DuplicateTemplateDialog";
 import { PosterImportDialog, type PosterReadMeta } from "@/admin/PosterImportDialog";
+import { addDemoToCrm } from "@/lib/outreach/demoLead";
+import { outreachStore } from "@/lib/outreach/store";
 
 /**
  * THE POSTER IMPORT, WIRED IN. Shared by the Templates tab, the template
@@ -23,6 +25,12 @@ import { PosterImportDialog, type PosterReadMeta } from "@/admin/PosterImportDia
  * prefilled with whatever name and city are already known, and makes the
  * copy exactly as useDuplicateTemplate does.
  *
+ * Both paths also add the demo to the CRM as a lead, or link it to the
+ * lead the institute already is (src/lib/outreach/demoLead.ts): the poster
+ * review screen has its own "Also add to CRM" box, the manual path follows
+ * the CRM setting "Add every new demo to the CRM". A failure there never
+ * loses the demo.
+ *
  * The caller renders `dialog`.
  */
 export function usePosterImport() {
@@ -32,6 +40,20 @@ export function usePosterImport() {
   const [manual, setManual] = useState<{ id: TemplateId; known: Partial<DuplicateIdentity> } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [crmDefault, setCrmDefault] = useState(true);
+
+  /* Where the poster screen's "Also add to CRM" starts: the CRM setting. */
+  useEffect(() => {
+    if (!openFor) return;
+    let live = true;
+    outreachStore
+      .getSettings()
+      .then((s) => live && setCrmDefault(s.autoAddDemos !== false))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [openFor]);
 
   /* The plain Duplicate, as useDuplicateTemplate does it, but closing THIS
      dialog on success: on the demo-sites list the page does not change when
@@ -49,6 +71,7 @@ export function usePosterImport() {
           who,
         );
         await actions.saveDoc("demoSites", copy);
+        await addDemoToCrm(copy, "template").catch((e) => console.warn("Demo saved, but not added to the CRM:", e));
         setManual(null);
         navigate(`/admin/c/demoSites?edit=${encodeURIComponent(copy.id)}`);
       } catch (e) {
@@ -61,7 +84,7 @@ export function usePosterImport() {
   );
 
   const create = useCallback(
-    async (id: TemplateId, extract: PosterExtract, meta: PosterReadMeta) => {
+    async (id: TemplateId, extract: PosterExtract, meta: PosterReadMeta, opts?: { addToCrm: boolean }) => {
       setBusy(true);
       setError(null);
       try {
@@ -89,6 +112,9 @@ export function usePosterImport() {
         } catch {
           /* The demo exists; only the note is missing. */
         }
+        await addDemoToCrm(site, "poster", { force: opts ? opts.addToCrm : undefined }).catch((e) =>
+          console.warn("Demo saved, but not added to the CRM:", e),
+        );
         setOpenFor(null);
         navigate(`/admin/c/demoSites?edit=${encodeURIComponent(site.id)}`);
       } catch (e) {
@@ -114,6 +140,7 @@ export function usePosterImport() {
       error,
       onCancel: () => setOpenFor(null),
       onCreate: create,
+      addToCrmDefault: crmDefault,
       onManual: (id: TemplateId, known: Partial<DuplicateIdentity>) => {
         setOpenFor(null);
         setError(null);

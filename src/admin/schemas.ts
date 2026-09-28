@@ -68,7 +68,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
     fields: [
       { name: "title", label: "Title", type: "text", full: true },
       { name: "slug", label: "Slug", type: "text" },
-      { name: "category", label: "Category", type: "text", placeholder: "web, product, employer work", help: "Drives which band the project sits in on /work. “web” = paid client work, “product” = ours, “employer work” = the founder’s work for another company. Anything else falls into a generic “More” band." },
+      { name: "category", label: "Category", type: "text", placeholder: "web, product, employer work", help: "Drives which band the project sits in on /work. “web” = paid client work, “product” = ours, “employer work” = a partner’s work for another company. Anything else falls into a generic “More” band." },
       { name: "sector", label: "Sector", type: "text", placeholder: "Fitness · marketplace" },
       { name: "clientName", label: "Client", type: "text" },
       { name: "liveUrl", label: "Live URL", type: "text" },

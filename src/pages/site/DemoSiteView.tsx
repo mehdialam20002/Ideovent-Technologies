@@ -32,7 +32,9 @@ export default function DemoSiteView({ site, basePath, rest = "", isPreview = fa
   const clean = rest.replace(/^\/+|\/+$/g, "");
   const blank = <div className="min-h-screen" />;
 
-  if (isSiteThemeId(site.theme)) {
+  /* A dental record is multi-page whatever its theme says: there is no
+     single-page dental template to fall back to (28 Sep 2026). */
+  if (site.kind === "dental" || isSiteThemeId(site.theme)) {
     return (
       <Suspense fallback={blank}>
         <SiteShell site={site} basePath={basePath.replace(/\/+$/, "")} rest={clean} isPreview={isPreview} />

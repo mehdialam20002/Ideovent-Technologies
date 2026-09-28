@@ -48,13 +48,18 @@ export function absolutizeUrls<T>(node: T, host: string): T {
 }
 
 /**
- * Organization. Legal form is a partnership firm with three partners, Mehdi
- * Alam, Abhishek Tiwari and Animesh Raturi (FACTS.md, 24 Sep 2026), so the
- * generic Organization type is used rather than anything that implies a
+ * Organization. Legal form is a partnership firm (FACTS.md, 24 Sep 2026), so
+ * the generic Organization type is used rather than anything that implies a
  * registered company, and no numberOfEmployees / foundingDate beyond 2024 is
- * claimed. `founder` names Mehdi alone because FACTS.md records him as the
- * founder; the other two are partners and co-founders, which schema.org's
- * `founder` does not distinguish, and a headcount must never be inferable.
+ * claimed. There is NO `founder` property: on 28 Sep 2026 Mehdi asked for
+ * every Founder / Co-Founder title to come off every person on the site, and
+ * a JSON-LD `founder` is the same claim made to Google instead of a reader.
+ * People are listed as `employee` with their job titles only, the same three
+ * titles the About page prints. Keep this list and index.html's static copy
+ * in step.
+ * HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+ * (The previous comment named him as the third partner; he was never in the
+ * `founder` value.) A headcount must never be inferable.
  */
 export function organizationNode(
   settings: SiteSettings,
@@ -92,7 +97,11 @@ export function organizationNode(
     email: contact.emailDisplay,
     telephone: contact.phoneHref.replace(/^tel:/, ""),
     foundingDate: "2024",
-    founder: { "@type": "Person", name: "Mehdi Alam" },
+    employee: [
+      { "@type": "Person", name: "Mehdi Alam", jobTitle: "Software Developer" },
+      { "@type": "Person", name: "Abhishek Tiwari", jobTitle: "Product Manager" },
+      { "@type": "Person", name: "Saif Ali", jobTitle: "Senior App Developer" },
+    ],
     address,
     geo: { "@type": "GeoCoordinates", latitude: 28.5245, longitude: 77.2066 },
     openingHoursSpecification: [

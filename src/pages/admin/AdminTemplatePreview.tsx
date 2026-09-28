@@ -96,23 +96,26 @@ export default function AdminTemplatePreview() {
             </span>
           </span>
         </span>
-        <button
+        <span className="ml-auto flex flex-wrap gap-2">
+        {/* A poster fills school and coaching templates only. */}
+        {meta.kind !== "dental" && <button
           type="button"
           onClick={() => poster.open(meta.id)}
-          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium hover:border-primary/50"
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium hover:border-primary/50"
         >
           <ScanText className="h-3.5 w-3.5" aria-hidden="true" />
           Create from poster
-        </button>
+        </button>}
         <button
           type="button"
           onClick={() => request(meta.id)}
           disabled={busy !== null}
-          className=" inline-flex h-8 items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/5 px-3 text-xs font-medium text-primary hover:bg-primary/10 disabled:cursor-wait disabled:opacity-60"
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/5 px-3 text-xs font-medium text-primary hover:bg-primary/10 disabled:cursor-wait disabled:opacity-60"
         >
           <Files className="h-3.5 w-3.5" aria-hidden="true" />
           {busy ? "Duplicating…" : "Duplicate into a draft"}
         </button>
+        </span>
       </div>
 
       {dialog}

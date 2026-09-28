@@ -116,6 +116,11 @@
  *             faq, focusAreas, instituteName, market, method, notices,
  *             results, resultsHeading, resultsNote, schedule, scheduleNote,
  *             shortName, tagline, trial
+ *   dental    about, city/state/country, contact, currency, dental (the whole
+ *             block), established, establishedYear, faq, heroImage,
+ *             instituteName (the clinic), mission, vision, photos, posts,
+ *             rating, reviews, sectionPhotos, shortName, stats (the trust
+ *             row), tagline. Contract: E:/myagency/_assets/DENTAL-ARCHITECTURE.md
  * A SCHOOL tagline may carry ONE phrase in *asterisks*; the school template
  * sets it in the serif italic accent. A COACHING tagline never does: that
  * template puts its accent on a word of ours in the headline and prints the
@@ -161,6 +166,12 @@
  */
 
 import type {
+  DentalBranch,
+  DentalCase,
+  DentalContent,
+  DentalDoctor,
+  DentalTech,
+  DentalTreatment,
   DemoCurrency,
   DemoFaculty,
   DemoFounder,
@@ -231,7 +242,7 @@ type NotInTemplate =
 type Redeclared =
   | "instituteName" | "city" | "state" | "country" | "market" | "currency"
   | "faq" | "results" | "faculty" | "gallery" | "photos" | "founder"
-  | "heroImage" | "sectionPhotos";
+  | "heroImage" | "sectionPhotos" | "dental";
 
 /**
  * A question and its answer. `generic: true` means it survives a duplicate;
@@ -274,6 +285,26 @@ export type TemplateSectionPhotos = { [K in keyof DemoSectionPhotos]?: StockPhot
 /** The founder, with no photograph. */
 export type TemplateFounder = Omit<DemoFounder, "photo" | "photoConsent">;
 
+/* ── Dental (28 September 2026) ─────────────────────────────────────────────
+ * The same rules as above, on the dental block: every photo is a stock path,
+ * a doctor's portrait is a people/dentist-* stock portrait, and a CASE HAS NO
+ * PHOTO AT ALL. A template's before-after is the illustrative placeholder
+ * tile; `before`, `after` and `consent` belong to a real clinic's own cases,
+ * so on a template they are a compile error, not a caption to remember. */
+export type TemplateDentalDoctor = Omit<DentalDoctor, "photo" | "photoConsent"> & { photo?: StockPortraitSrc };
+export type TemplateDentalTreatment = Omit<DentalTreatment, "image"> & { image?: StockPhotoSrc };
+export type TemplateDentalTech = Omit<DentalTech, "image"> & { image?: StockPhotoSrc };
+export type TemplateDentalBranch = Omit<DentalBranch, "photo"> & { photo?: StockPhotoSrc };
+export type TemplateDentalCase = Omit<DentalCase, "before" | "after" | "consent">;
+
+export type TemplateDental = Omit<DentalContent, "doctors" | "treatments" | "technology" | "branches" | "cases"> & {
+  doctors?: TemplateDentalDoctor[];
+  treatments?: TemplateDentalTreatment[];
+  technology?: TemplateDentalTech[];
+  branches?: TemplateDentalBranch[];
+  cases?: TemplateDentalCase[];
+};
+
 export type TemplateContent = Omit<DemoSite, NotInTemplate | Redeclared> & {
   instituteName: string;
   city: string;
@@ -290,6 +321,8 @@ export type TemplateContent = Omit<DemoSite, NotInTemplate | Redeclared> & {
   /** The home hero: a hero-sized stock photo. */
   heroImage?: StockHeroSrc;
   sectionPhotos?: TemplateSectionPhotos;
+  /** Dental templates only. See TemplateDental. */
+  dental?: TemplateDental;
 };
 
 /** What a content file default-exports. Build it with `defineTemplateContent`. */

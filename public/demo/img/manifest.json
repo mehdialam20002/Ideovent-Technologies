@@ -3390,6 +3390,2845 @@
    "photographer": "Shahid Sultan",
    "photographerUrl": "https://www.pexels.com/@ishahidsultan/",
    "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/hero-sunlit-operatory",
+   "file": "dental/hero-sunlit-operatory",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 2880,
+     "h": 1620,
+     "bytes": 145810,
+     "src": "/demo/img/dental/hero-sunlit-operatory-2880.webp"
+    },
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 109804,
+     "src": "/demo/img/dental/hero-sunlit-operatory-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 57910,
+     "src": "/demo/img/dental/hero-sunlit-operatory-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 29664,
+     "src": "/demo/img/dental/hero-sunlit-operatory-800.webp"
+    }
+   ],
+   "width": 2880,
+   "height": 1620,
+   "alt": "A bright treatment room with a white dental chair, pale wooden floor and daylight",
+   "altHi": "सफ़ेद डेंटल चेयर, हल्के लकड़ी के फ़र्श और दिन की रोशनी वाला उजला ट्रीटमेंट रूम",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d1",
+    "d3",
+    "d4"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-dental-room-with-a-desk-and-chairs-Fdku_oMrDvk",
+   "photographer": "Kari Bjorn Photography",
+   "photographerUrl": "https://unsplash.com/@karibjorn",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/hero-white-operatory",
+   "file": "dental/hero-white-operatory",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 2880,
+     "h": 1620,
+     "bytes": 213528,
+     "src": "/demo/img/dental/hero-white-operatory-2880.webp"
+    },
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 162192,
+     "src": "/demo/img/dental/hero-white-operatory-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 87626,
+     "src": "/demo/img/dental/hero-white-operatory-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 42916,
+     "src": "/demo/img/dental/hero-white-operatory-800.webp"
+    }
+   ],
+   "width": 2880,
+   "height": 1620,
+   "alt": "A white dental chair and cabinets in a clean, well lit treatment room",
+   "altHi": "साफ़, रोशन ट्रीटमेंट रूम में सफ़ेद डेंटल चेयर और अलमारियाँ",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d2",
+    "d4",
+    "d7"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-hospital-room-with-medical-equipment-in-it-yJsMOVwazRU",
+   "photographer": "Kari Bjorn Photography",
+   "photographerUrl": "https://unsplash.com/@karibjorn",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/hero-reception-lounge",
+   "file": "dental/hero-reception-lounge",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 97288,
+     "src": "/demo/img/dental/hero-reception-lounge-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 47664,
+     "src": "/demo/img/dental/hero-reception-lounge-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 22422,
+     "src": "/demo/img/dental/hero-reception-lounge-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "A calm clinic reception with a long wooden counter, pendant lights and a lounge chair",
+   "altHi": "लकड़ी के लंबे काउंटर, लटकती लाइटों और आरामकुर्सी वाला शांत क्लिनिक रिसेप्शन",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d3",
+    "d7",
+    "d1"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-kitchen-with-a-counter-chairs-and-a-bar-oLtNPzG0_uU",
+   "photographer": "Lisa Anna",
+   "photographerUrl": "https://unsplash.com/@lisaanna195",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/hero-consultation-chair",
+   "file": "dental/hero-consultation-chair",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 97390,
+     "src": "/demo/img/dental/hero-consultation-chair-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 61508,
+     "src": "/demo/img/dental/hero-consultation-chair-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 35088,
+     "src": "/demo/img/dental/hero-consultation-chair-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "A smiling dentist talks with a relaxed woman seated in the dental chair",
+   "altHi": "मुस्कुराते डेंटिस्ट डेंटल चेयर पर आराम से बैठी महिला से बात कर रहे हैं",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d1",
+    "d3",
+    "d5"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.4,
+    "y": 0.5
+   },
+   "objectPosition": "40% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/dentist-talking-to-patient-in-a-modern-dental-office-Bg81yWKZlMg",
+   "photographer": "Harold Hisona",
+   "photographerUrl": "https://unsplash.com/@harold_angus",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/hero-dentist-boy-checkup",
+   "file": "dental/hero-dentist-boy-checkup",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 61106,
+     "src": "/demo/img/dental/hero-dentist-boy-checkup-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 34404,
+     "src": "/demo/img/dental/hero-dentist-boy-checkup-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 18480,
+     "src": "/demo/img/dental/hero-dentist-boy-checkup-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "A dentist checks a young boy's teeth under the clinic light",
+   "altHi": "क्लिनिक की रोशनी में डेंटिस्ट एक छोटे लड़के के दाँत जाँच रहे हैं",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d6",
+    "d1"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.55,
+    "y": 0.5
+   },
+   "objectPosition": "55% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/photo-of-a-child-in-dental-clinic-8224633/",
+   "photographer": "Lakhinandan Borah",
+   "photographerUrl": "https://www.pexels.com/@theplanetx/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/hero-kids-thumbs-up",
+   "file": "dental/hero-kids-thumbs-up",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 108212,
+     "src": "/demo/img/dental/hero-kids-thumbs-up-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 55768,
+     "src": "/demo/img/dental/hero-kids-thumbs-up-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 29962,
+     "src": "/demo/img/dental/hero-kids-thumbs-up-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "A dentist in blue scrubs and a smiling girl give a thumbs up from the dental chair",
+   "altHi": "नीली ड्रेस में डेंटिस्ट और मुस्कुराती बच्ची डेंटल चेयर से अंगूठा दिखा रही हैं",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d6"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.45,
+    "y": 0.47
+   },
+   "objectPosition": "45% 47%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/dentist-and-her-patient-posing-at-the-camera-12917374/",
+   "photographer": "iam luisao",
+   "photographerUrl": "https://www.pexels.com/@iamluisao/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/hero-white-studio",
+   "file": "dental/hero-white-studio",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 97224,
+     "src": "/demo/img/dental/hero-white-studio-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 43538,
+     "src": "/demo/img/dental/hero-white-studio-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 21288,
+     "src": "/demo/img/dental/hero-white-studio-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "Two dental team members at work in a bright all-white treatment room",
+   "altHi": "पूरी तरह सफ़ेद, उजले ट्रीटमेंट रूम में काम करती डेंटल टीम की दो सदस्य",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d4",
+    "d2",
+    "d3"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/female-dentist-and-assistant-examining-patients-teeth-in-clinic-3845981/",
+   "photographer": "Anna Shvets",
+   "photographerUrl": "https://www.pexels.com/@shvetsa/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/hero-aligner-smile",
+   "file": "dental/hero-aligner-smile",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 61220,
+     "src": "/demo/img/dental/hero-aligner-smile-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 34170,
+     "src": "/demo/img/dental/hero-aligner-smile-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 17756,
+     "src": "/demo/img/dental/hero-aligner-smile-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "A smiling teenage girl fits a clear aligner against a yellow backdrop",
+   "altHi": "पीली पृष्ठभूमि के सामने मुस्कुराती किशोरी क्लियर अलाइनर लगा रही है",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d5"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.45,
+    "y": 0.5
+   },
+   "objectPosition": "45% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/smiling-woman-in-white-knit-sweater-Q_o_ob-3Ny4",
+   "photographer": "Diana Polekhina",
+   "photographerUrl": "https://unsplash.com/@diana_pole",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/hero-implant-model",
+   "file": "dental/hero-implant-model",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 33580,
+     "src": "/demo/img/dental/hero-implant-model-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 18788,
+     "src": "/demo/img/dental/hero-implant-model-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 9828,
+     "src": "/demo/img/dental/hero-implant-model-800.webp"
+    }
+   ],
+   "width": 1920,
+   "height": 1080,
+   "alt": "A dental implant model set between two natural teeth on a soft grey surface",
+   "altHi": "हल्की स्लेटी सतह पर दो प्राकृतिक दाँतों के बीच डेंटल इम्प्लांट का मॉडल",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d4"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/close-up-shot-of-dental-implant-model-6502305/",
+   "photographer": "cottonbro studio",
+   "photographerUrl": "https://www.pexels.com/@cottonbro/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/hero-multi-chair-floor",
+   "file": "dental/hero-multi-chair-floor",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 2880,
+     "h": 1620,
+     "bytes": 125132,
+     "src": "/demo/img/dental/hero-multi-chair-floor-2880.webp"
+    },
+    {
+     "w": 1920,
+     "h": 1080,
+     "bytes": 102868,
+     "src": "/demo/img/dental/hero-multi-chair-floor-1920.webp"
+    },
+    {
+     "w": 1280,
+     "h": 720,
+     "bytes": 58672,
+     "src": "/demo/img/dental/hero-multi-chair-floor-1280.webp"
+    },
+    {
+     "w": 800,
+     "h": 450,
+     "bytes": 29524,
+     "src": "/demo/img/dental/hero-multi-chair-floor-800.webp"
+    }
+   ],
+   "width": 2880,
+   "height": 1620,
+   "alt": "A wide, bright clinic floor with several dental chairs and cabinets by the windows",
+   "altHi": "खिड़कियों के पास कई डेंटल चेयर और अलमारियों वाला चौड़ा, उजला क्लिनिक फ़्लोर",
+   "category": "dental-hero",
+   "suggestedFor": [
+    "d7",
+    "d2"
+   ],
+   "role": "hero",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/white-and-blue-hospital-bed-LQ698TTvGpA",
+   "photographer": "Benyamin Bohlouli",
+   "photographerUrl": "https://unsplash.com/@benyamin_bohlouli",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-lounge-corridor",
+   "file": "dental/interior-lounge-corridor",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 36902,
+     "src": "/demo/img/dental/interior-lounge-corridor-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 14248,
+     "src": "/demo/img/dental/interior-lounge-corridor-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A woman waits in a white armchair in a softly lit clinic corridor",
+   "altHi": "हल्की रोशनी वाले क्लिनिक गलियारे में सफ़ेद आरामकुर्सी पर इंतज़ार करती महिला",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d3",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.5
+   },
+   "objectPosition": "45% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/woman-sitting-in-a-modern-waiting-room-reading-jH05wxjmAWE",
+   "photographer": "Caroline Badran",
+   "photographerUrl": "https://unsplash.com/@___atmos",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-garden-operatory",
+   "file": "dental/interior-garden-operatory",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 72486,
+     "src": "/demo/img/dental/interior-garden-operatory-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 27444,
+     "src": "/demo/img/dental/interior-garden-operatory-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dentist treats a patient in a room with a stone wall and a garden view",
+   "altHi": "पत्थर की दीवार और बगीचे के नज़ारे वाले कमरे में मरीज़ का इलाज करते डेंटिस्ट",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d1",
+    "d3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/man-in-blue-dress-shirt-and-blue-denim-jeans-standing-near-black-flat-screen-computer-monitor-4SUyx4KQ5Ik",
+   "photographer": "Jose Vazquez",
+   "photographerUrl": "https://unsplash.com/@jess33mx",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-teal-operatory",
+   "file": "dental/interior-teal-operatory",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 55084,
+     "src": "/demo/img/dental/interior-teal-operatory-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 22234,
+     "src": "/demo/img/dental/interior-teal-operatory-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A treatment room with a teal dental chair, white cabinets and window blinds",
+   "altHi": "टील रंग की डेंटल चेयर, सफ़ेद अलमारियों और खिड़की के पर्दों वाला ट्रीटमेंट रूम",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d2",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/modern-dental-office-with-chair-and-equipment-e7MJLM5VGjY",
+   "photographer": "Benyamin Bohlouli",
+   "photographerUrl": "https://unsplash.com/@benyamin_bohlouli",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-teal-suite",
+   "file": "dental/interior-teal-suite",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 48006,
+     "src": "/demo/img/dental/interior-teal-suite-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 20024,
+     "src": "/demo/img/dental/interior-teal-suite-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A bright treatment room with a teal dental chair and bench seating",
+   "altHi": "टील डेंटल चेयर और बेंच वाली बैठक के साथ उजला ट्रीटमेंट रूम",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d2",
+    "d1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/white-and-blue-hospital-bed-hmVZ7StKY7I",
+   "photographer": "Benyamin Bohlouli",
+   "photographerUrl": "https://unsplash.com/@benyamin_bohlouli",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-waiting-teal",
+   "file": "dental/interior-waiting-teal",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 51766,
+     "src": "/demo/img/dental/interior-waiting-teal-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 20196,
+     "src": "/demo/img/dental/interior-waiting-teal-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A waiting area with teal sofas, a wall clock and a reception window",
+   "altHi": "टील सोफ़ों, दीवार घड़ी और रिसेप्शन खिड़की वाला प्रतीक्षा क्षेत्र",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/blue-couch-beside-green-potted-plant-B_sK_xgzwVA",
+   "photographer": "Benyamin Bohlouli",
+   "photographerUrl": "https://unsplash.com/@benyamin_bohlouli",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-waiting-lounge",
+   "file": "dental/interior-waiting-lounge",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 112586,
+     "src": "/demo/img/dental/interior-waiting-lounge-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 39844,
+     "src": "/demo/img/dental/interior-waiting-lounge-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A waiting lounge with armchairs, a wall screen and patterned wallpaper",
+   "altHi": "आरामकुर्सियों, दीवार पर स्क्रीन और डिज़ाइनदार वॉलपेपर वाला प्रतीक्षा लाउंज",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d3",
+    "d6"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-living-room-with-a-tv-and-couches-0ggXne6UuKY",
+   "photographer": "D Dental Office",
+   "photographerUrl": "https://unsplash.com/@ddentalof1",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-consult-room",
+   "file": "dental/interior-consult-room",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 64738,
+     "src": "/demo/img/dental/interior-consult-room-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 26122,
+     "src": "/demo/img/dental/interior-consult-room-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A consultation room with a white desk, grey chairs and a floral wall panel",
+   "altHi": "सफ़ेद मेज़, स्लेटी कुर्सियों और फूलों वाले दीवार पैनल वाला परामर्श कक्ष",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d3",
+    "d4",
+    "d5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/modern-office-with-desk-chairs-and-computer-bdeLBIPYUrE",
+   "photographer": "Irshad Pathan",
+   "photographerUrl": "https://unsplash.com/@alrighthospital",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/interior-open-shelves",
+   "file": "dental/interior-open-shelves",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 107834,
+     "src": "/demo/img/dental/interior-open-shelves-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 51216,
+     "src": "/demo/img/dental/interior-open-shelves-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A clinic space with open shelves and framed photos, a treatment chair behind",
+   "altHi": "खुली अलमारियों और फ़्रेम की हुई तस्वीरों वाला क्लिनिक, पीछे ट्रीटमेंट चेयर",
+   "category": "dental-interior",
+   "suggestedFor": [
+    "d3",
+    "d5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/picture-frames-on-a-shelves-11816813/",
+   "photographer": "Mario Schafer",
+   "photographerUrl": "https://www.pexels.com/@marioschafer/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/doctor-at-work-blue",
+   "file": "dental/doctor-at-work-blue",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 70120,
+     "src": "/demo/img/dental/doctor-at-work-blue-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 30222,
+     "src": "/demo/img/dental/doctor-at-work-blue-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A young dentist in blue scrubs and glasses examines a patient",
+   "altHi": "नीली ड्रेस और चश्मा पहने युवा डेंटिस्ट मरीज़ की जाँच कर रहे हैं",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.48
+   },
+   "objectPosition": "50% 48%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-in-a-blue-shirt-is-getting-his-teeth-checked-ohYWfh1IR5U",
+   "photographer": "Miguel Joya",
+   "photographerUrl": "https://unsplash.com/@migueljoya",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/doctor-at-work-teal",
+   "file": "dental/doctor-at-work-teal",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 36584,
+     "src": "/demo/img/dental/doctor-at-work-teal-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 16682,
+     "src": "/demo/img/dental/doctor-at-work-teal-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dentist in teal scrubs and a cap treats a patient in the chair",
+   "altHi": "टील ड्रेस और कैप पहने डेंटिस्ट चेयर पर बैठे मरीज़ का इलाज कर रही हैं",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.53,
+    "y": 0.45
+   },
+   "objectPosition": "53% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-getting-her-teeth-checked-by-a-dentist-IX5vs6sjSFo",
+   "photographer": "Shedrack Salami",
+   "photographerUrl": "https://unsplash.com/@xtrovarts",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/doctor-handpiece-care",
+   "file": "dental/doctor-handpiece-care",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 116494,
+     "src": "/demo/img/dental/doctor-handpiece-care-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 41696,
+     "src": "/demo/img/dental/doctor-handpiece-care-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A dentist in a white coat works carefully with a dental handpiece",
+   "altHi": "सफ़ेद कोट पहने डेंटिस्ट सावधानी से डेंटल उपकरण से काम कर रही हैं",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d2",
+    "d4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/woman-holding-dentist-mirror-vewtbb0swgA",
+   "photographer": "Hush Naidoo Jade Photography",
+   "photographerUrl": "https://unsplash.com/@hush52",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/doctor-lamp-adjust",
+   "file": "dental/doctor-lamp-adjust",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 45106,
+     "src": "/demo/img/dental/doctor-lamp-adjust-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 20900,
+     "src": "/demo/img/dental/doctor-lamp-adjust-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dentist in a light blue coat adjusts the lamp over a patient",
+   "altHi": "हल्के नीले कोट में डेंटिस्ट मरीज़ के ऊपर लैम्प ठीक कर रही हैं",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.45
+   },
+   "objectPosition": "55% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-getting-her-teeth-brushed-by-a-dentist-7n50uixCBV8",
+   "photographer": "SoyBreno",
+   "photographerUrl": "https://unsplash.com/@soybrenofotografia",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/doctor-desk-models",
+   "file": "dental/doctor-desk-models",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 61536,
+     "src": "/demo/img/dental/doctor-desk-models-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 24612,
+     "src": "/demo/img/dental/doctor-desk-models-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A dentist in scrubs works at a desk with dental models beside the keyboard",
+   "altHi": "कीबोर्ड के पास डेंटल मॉडल रखे, मेज़ पर काम करते डेंटिस्ट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d4",
+    "d1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.52
+   },
+   "objectPosition": "45% 52%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/side-view-of-a-man-wearing-face-mask-while-typing-on-computer-keyboard-4269486/",
+   "photographer": "Cedric Fauntleroy",
+   "photographerUrl": "https://www.pexels.com/@cedric-fauntleroy/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/doctor-aligner-smile",
+   "file": "dental/doctor-aligner-smile",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 34208,
+     "src": "/demo/img/dental/doctor-aligner-smile-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 13168,
+     "src": "/demo/img/dental/doctor-aligner-smile-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A smiling dentist in grey scrubs holds a clear aligner",
+   "altHi": "स्लेटी ड्रेस में मुस्कुराते डेंटिस्ट क्लियर अलाइनर पकड़े हुए",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d5",
+    "d3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.6,
+    "y": 0.45
+   },
+   "objectPosition": "60% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/man-in-gray-scrub-suit-wearing-blue-latex-gloves-4270090/",
+   "photographer": "Cedric Fauntleroy",
+   "photographerUrl": "https://www.pexels.com/@cedric-fauntleroy/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/doctor-xray-review",
+   "file": "dental/doctor-xray-review",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 89330,
+     "src": "/demo/img/dental/doctor-xray-review-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 40236,
+     "src": "/demo/img/dental/doctor-xray-review-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "Two dentists review an X-ray on a screen beside the patient",
+   "altHi": "दो डेंटिस्ट मरीज़ के पास स्क्रीन पर एक्स-रे देख रहे हैं",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d2",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.6,
+    "y": 0.5
+   },
+   "objectPosition": "60% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/patient-and-the-dentists-7800669/",
+   "photographer": "Nadezhda Moryak",
+   "photographerUrl": "https://www.pexels.com/@nadezhda-moryak/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/doctor-clinic-floor",
+   "file": "dental/doctor-clinic-floor",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 42084,
+     "src": "/demo/img/dental/doctor-clinic-floor-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 17940,
+     "src": "/demo/img/dental/doctor-clinic-floor-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dentist in a patterned cap and mask on a clinic floor with several chairs",
+   "altHi": "कई चेयर वाले क्लिनिक में डिज़ाइनदार कैप और मास्क पहने डेंटिस्ट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d7",
+    "d2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.36,
+    "y": 0.45
+   },
+   "objectPosition": "36% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-wearing-a-surgical-mask-in-a-hospital-EVcTjiaq4NE",
+   "photographer": "Divaris Shirichena",
+   "photographerUrl": "https://unsplash.com/@divaris",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/patient-man-checkup",
+   "file": "dental/patient-man-checkup",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 59736,
+     "src": "/demo/img/dental/patient-man-checkup-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 24638,
+     "src": "/demo/img/dental/patient-man-checkup-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A smiling man has a check-up with a dentist beside the chair",
+   "altHi": "डेंटिस्ट के साथ जाँच करवाते मुस्कुराते पुरुष",
+   "category": "dental-patient",
+   "suggestedFor": [
+    "d1",
+    "d3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.45
+   },
+   "objectPosition": "50% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/dentist-examining-teeth-in-dental-office-BiknMFl7iOw",
+   "photographer": "D Dental Office",
+   "photographerUrl": "https://unsplash.com/@ddentalof1",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/patient-older-woman-talk",
+   "file": "dental/patient-older-woman-talk",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 64016,
+     "src": "/demo/img/dental/patient-older-woman-talk-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 27666,
+     "src": "/demo/img/dental/patient-older-woman-talk-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "An older woman laughs while talking with her dentist",
+   "altHi": "अपने डेंटिस्ट से बात करते हुए हँसती बुज़ुर्ग महिला",
+   "category": "dental-patient",
+   "suggestedFor": [
+    "d4",
+    "d1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.45
+   },
+   "objectPosition": "50% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/a-dentist-doctor-talking-the-woman-14052564/",
+   "photographer": "Marco Dental Tourism Stomatolog Beograd",
+   "photographerUrl": "https://www.pexels.com/@marco-dental-tourism-stomatolog-beograd-341981292/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/patient-older-woman-mirror",
+   "file": "dental/patient-older-woman-mirror",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 35752,
+     "src": "/demo/img/dental/patient-older-woman-mirror-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 14336,
+     "src": "/demo/img/dental/patient-older-woman-mirror-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "An older woman smiles into a hand mirror in the dental chair",
+   "altHi": "डेंटल चेयर पर हाथ के शीशे में देखकर मुस्कुराती बुज़ुर्ग महिला",
+   "category": "dental-patient",
+   "suggestedFor": [
+    "d4",
+    "d3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.4
+   },
+   "objectPosition": "45% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/woman-looking-at-her-teeth-in-a-mirror-in-a-dentist-room-5622009/",
+   "photographer": "Gustavo Fring",
+   "photographerUrl": "https://www.pexels.com/@gustavo-fring/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/patient-woman-chair",
+   "file": "dental/patient-woman-chair",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 52960,
+     "src": "/demo/img/dental/patient-woman-chair-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 21770,
+     "src": "/demo/img/dental/patient-woman-chair-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A smiling woman sits in the dental chair before her appointment",
+   "altHi": "अपॉइंटमेंट से पहले डेंटल चेयर पर बैठी मुस्कुराती महिला",
+   "category": "dental-patient",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.4
+   },
+   "objectPosition": "55% 40%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/woman-at-the-dentist-3845549/",
+   "photographer": "Anna Shvets",
+   "photographerUrl": "https://www.pexels.com/@shvetsa/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/patient-laugh-room",
+   "file": "dental/patient-laugh-room",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 114282,
+     "src": "/demo/img/dental/patient-laugh-room-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 41128,
+     "src": "/demo/img/dental/patient-laugh-room-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A dentist laughs with a patient in a modern treatment room",
+   "altHi": "आधुनिक ट्रीटमेंट रूम में मरीज़ के साथ हँसती डेंटिस्ट",
+   "category": "dental-patient",
+   "suggestedFor": [
+    "d3",
+    "d1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-standing-next-to-a-person-in-a-hospital-bed-tU51A2WWwxw",
+   "photographer": "Ozkan Guner",
+   "photographerUrl": "https://unsplash.com/@dentistozkanguner",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/kids-boy-checkup",
+   "file": "dental/kids-boy-checkup",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 23804,
+     "src": "/demo/img/dental/kids-boy-checkup-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 11078,
+     "src": "/demo/img/dental/kids-boy-checkup-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dentist gently examines a young boy's teeth",
+   "altHi": "डेंटिस्ट प्यार से एक छोटे लड़के के दाँत जाँच रहे हैं",
+   "category": "dental-kids",
+   "suggestedFor": [
+    "d6",
+    "d1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.45
+   },
+   "objectPosition": "55% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/person-wearing-a-latex-gloves-8224659/",
+   "photographer": "Lakhinandan Borah",
+   "photographerUrl": "https://www.pexels.com/@theplanetx/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/kids-girl-mirror",
+   "file": "dental/kids-girl-mirror",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 56548,
+     "src": "/demo/img/dental/kids-girl-mirror-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 23932,
+     "src": "/demo/img/dental/kids-girl-mirror-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A smiling girl holds a dental mirror in the chair",
+   "altHi": "चेयर पर डेंटल शीशा पकड़े मुस्कुराती बच्ची",
+   "category": "dental-kids",
+   "suggestedFor": [
+    "d6"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/cute-girl-sitting-in-a-blue-dental-chair-7800558/",
+   "photographer": "Nadezhda Moryak",
+   "photographerUrl": "https://www.pexels.com/@nadezhda-moryak/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/kids-boy-with-dentist",
+   "file": "dental/kids-boy-with-dentist",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 84028,
+     "src": "/demo/img/dental/kids-boy-with-dentist-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 35346,
+     "src": "/demo/img/dental/kids-boy-with-dentist-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A dentist sits beside a smiling boy in a child-friendly clinic",
+   "altHi": "बच्चों के अनुकूल क्लिनिक में मुस्कुराते लड़के के पास बैठे डेंटिस्ट",
+   "category": "dental-kids",
+   "suggestedFor": [
+    "d6"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-sitting-on-a-bench-next-to-a-little-boy-ogfwXs_la2g",
+   "photographer": "Ortopediatri Çocuk Ortopedi Akademisi",
+   "photographerUrl": "https://unsplash.com/@ortopediatri",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/kids-brushing-brothers",
+   "file": "dental/kids-brushing-brothers",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 53918,
+     "src": "/demo/img/dental/kids-brushing-brothers-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 24044,
+     "src": "/demo/img/dental/kids-brushing-brothers-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "An older boy helps his little brother brush his teeth",
+   "altHi": "बड़ा भाई अपने छोटे भाई को ब्रश करना सिखा रहा है",
+   "category": "dental-kids",
+   "suggestedFor": [
+    "d6",
+    "d1"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-couple-of-boys-brushing-their-teeth-Rx3hQk-d6F8",
+   "photographer": "Vantage Point Photographers",
+   "photographerUrl": "https://unsplash.com/@vpphotographers",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/kids-dentist-boy-smile",
+   "file": "dental/kids-dentist-boy-smile",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 50174,
+     "src": "/demo/img/dental/kids-dentist-boy-smile-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 21220,
+     "src": "/demo/img/dental/kids-dentist-boy-smile-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dentist and a boy in the dental chair smile at the camera",
+   "altHi": "डेंटिस्ट और डेंटल चेयर पर बैठा लड़का कैमरे की ओर मुस्कुरा रहे हैं",
+   "category": "dental-kids",
+   "suggestedFor": [
+    "d6"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.45
+   },
+   "objectPosition": "45% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-young-boy-getting-his-teeth-checked-by-a-dentist-66yynNM_Ft4",
+   "photographer": "Angels for Humanity",
+   "photographerUrl": "https://unsplash.com/@angels4humanity",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/kids-colourful-room",
+   "file": "dental/kids-colourful-room",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 48598,
+     "src": "/demo/img/dental/kids-colourful-room-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 22038,
+     "src": "/demo/img/dental/kids-colourful-room-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A mother and daughter in a colourful children's dental room",
+   "altHi": "रंग-बिरंगे बच्चों के डेंटल कमरे में माँ और बेटी",
+   "category": "dental-kids",
+   "suggestedFor": [
+    "d6"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.5
+   },
+   "objectPosition": "45% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/woman-in-black-long-sleeve-shirt-sitting-beside-girl-in-pink-shirt-_9b4WKR_u9I",
+   "photographer": "Mufid Majnun",
+   "photographerUrl": "https://unsplash.com/@mufidpwt",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/ortho-braces-model",
+   "file": "dental/ortho-braces-model",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 17926,
+     "src": "/demo/img/dental/ortho-braces-model-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 8390,
+     "src": "/demo/img/dental/ortho-braces-model-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A teeth model fitted with metal braces on a white table",
+   "altHi": "सफ़ेद मेज़ पर मेटल ब्रेसेस लगा दाँतों का मॉडल",
+   "category": "dental-ortho",
+   "suggestedFor": [
+    "d5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/white-and-red-plastic-toy-QT7ytJJwAnY",
+   "photographer": "Enis Yavuz",
+   "photographerUrl": "https://unsplash.com/@enisyavuz",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/ortho-aligner-fit",
+   "file": "dental/ortho-aligner-fit",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 33130,
+     "src": "/demo/img/dental/ortho-aligner-fit-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 14240,
+     "src": "/demo/img/dental/ortho-aligner-fit-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Close view of a clear aligner being fitted over the teeth",
+   "altHi": "दाँतों पर क्लियर अलाइनर लगाते हुए नज़दीकी दृश्य",
+   "category": "dental-ortho",
+   "suggestedFor": [
+    "d5",
+    "d3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.6,
+    "y": 0.45
+   },
+   "objectPosition": "60% 45%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/person-inserting-clear-dental-aligner-fmB7IdFjhTM",
+   "photographer": "Diana Polekhina",
+   "photographerUrl": "https://unsplash.com/@diana_pole",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/ortho-aligners-vs-braces",
+   "file": "dental/ortho-aligners-vs-braces",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 36610,
+     "src": "/demo/img/dental/ortho-aligners-vs-braces-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 16470,
+     "src": "/demo/img/dental/ortho-aligners-vs-braces-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Two teeth models compare clear aligners with metal braces",
+   "altHi": "क्लियर अलाइनर और मेटल ब्रेसेस की तुलना करते दाँतों के दो मॉडल",
+   "category": "dental-ortho",
+   "suggestedFor": [
+    "d5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-model-of-a-teeth-with-braces-and-braces-B9lLokDYTMY",
+   "photographer": "Katarzyna Zygnerska",
+   "photographerUrl": "https://unsplash.com/@katasha",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/ortho-clear-aligner",
+   "file": "dental/ortho-clear-aligner",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 12516,
+     "src": "/demo/img/dental/ortho-clear-aligner-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 5300,
+     "src": "/demo/img/dental/ortho-clear-aligner-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A single clear aligner on a white background",
+   "altHi": "सफ़ेद पृष्ठभूमि पर एक क्लियर अलाइनर",
+   "category": "dental-ortho",
+   "suggestedFor": [
+    "d5"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/white-spiral-lace-on-white-surface-irPpXQF5bSI",
+   "photographer": "Geniova Technologies",
+   "photographerUrl": "https://unsplash.com/@geniovatechnologies",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/implant-models-table",
+   "file": "dental/implant-models-table",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 38806,
+     "src": "/demo/img/dental/implant-models-table-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 16856,
+     "src": "/demo/img/dental/implant-models-table-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Implant and teeth models on a dark table",
+   "altHi": "गहरे रंग की मेज़ पर इम्प्लांट और दाँतों के मॉडल",
+   "category": "dental-implant",
+   "suggestedFor": [
+    "d4",
+    "d2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/dental-implant-model-with-teeth-W9YEY6G8LVM",
+   "photographer": "Jonathan Borba",
+   "photographerUrl": "https://unsplash.com/@jonathanborba",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/implant-crown",
+   "file": "dental/implant-crown",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 9214,
+     "src": "/demo/img/dental/implant-crown-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 3046,
+     "src": "/demo/img/dental/implant-crown-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "An implant crown on its screw against a black background",
+   "altHi": "काली पृष्ठभूमि पर स्क्रू के साथ इम्प्लांट क्राउन",
+   "category": "dental-implant",
+   "suggestedFor": [
+    "d4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.5
+   },
+   "objectPosition": "55% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-tooth-that-is-in-the-dark-with-a-black-background-EBuxfjIxKcA",
+   "photographer": "Andreea Rus",
+   "photographerUrl": "https://unsplash.com/@andreeaaaa",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/implant-ceramic-crowns",
+   "file": "dental/implant-ceramic-crowns",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 24044,
+     "src": "/demo/img/dental/implant-ceramic-crowns-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 9560,
+     "src": "/demo/img/dental/implant-ceramic-crowns-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Ceramic crowns on a plaster model of the teeth",
+   "altHi": "दाँतों के प्लास्टर मॉडल पर सिरेमिक क्राउन",
+   "category": "dental-implant",
+   "suggestedFor": [
+    "d3",
+    "d4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-pile-of-chocolate-kL6LP2olEds",
+   "photographer": "Ozkan Guner",
+   "photographerUrl": "https://unsplash.com/@dentistozkanguner",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/implant-bridge-model",
+   "file": "dental/implant-bridge-model",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 17052,
+     "src": "/demo/img/dental/implant-bridge-model-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 7516,
+     "src": "/demo/img/dental/implant-bridge-model-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Close view of a tooth and bridge model on a blue background",
+   "altHi": "नीली पृष्ठभूमि पर दाँत और ब्रिज मॉडल का नज़दीकी दृश्य",
+   "category": "dental-implant",
+   "suggestedFor": [
+    "d4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/close-up-of-fake-teeth-lying-on-a-glass-surface-12712256/",
+   "photographer": "Arvind Philomin",
+   "photographerUrl": "https://www.pexels.com/@arvind-philomin-187831830/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/tech-3d-scan-screen",
+   "file": "dental/tech-3d-scan-screen",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 68684,
+     "src": "/demo/img/dental/tech-3d-scan-screen-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 24380,
+     "src": "/demo/img/dental/tech-3d-scan-screen-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A dentist examines a patient with a 3D scan of the teeth on the screen",
+   "altHi": "स्क्रीन पर दाँतों का 3D स्कैन, डेंटिस्ट मरीज़ की जाँच कर रहे हैं",
+   "category": "dental-tech",
+   "suggestedFor": [
+    "d3",
+    "d5",
+    "d2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/dentist-examining-patient-with-dental-scanner-joILn6p_oeM",
+   "photographer": "Filip Rankovic Grobgaard",
+   "photographerUrl": "https://unsplash.com/@filipgrobgaard",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/tech-intraoral-scanner",
+   "file": "dental/tech-intraoral-scanner",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 24996,
+     "src": "/demo/img/dental/tech-intraoral-scanner-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 10546,
+     "src": "/demo/img/dental/tech-intraoral-scanner-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A hand holds an intraoral scanner beside its screen",
+   "altHi": "स्क्रीन के पास इंट्राओरल स्कैनर पकड़े हाथ",
+   "category": "dental-tech",
+   "suggestedFor": [
+    "d5",
+    "d3"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-is-holding-a-device-in-her-hand-JaL1PZq-gHE",
+   "photographer": "Mélyna Côté",
+   "photographerUrl": "https://unsplash.com/@laptiteminimaliste",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/tech-3d-imaging",
+   "file": "dental/tech-3d-imaging",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 28272,
+     "src": "/demo/img/dental/tech-3d-imaging-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 12560,
+     "src": "/demo/img/dental/tech-3d-imaging-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "A 3D dental imaging machine in a white room",
+   "altHi": "सफ़ेद कमरे में 3D डेंटल इमेजिंग मशीन",
+   "category": "dental-tech",
+   "suggestedFor": [
+    "d4",
+    "d2",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/close-up-shot-of-a-dental-x-ray-machine-6501852/",
+   "photographer": "cottonbro studio",
+   "photographerUrl": "https://www.pexels.com/@cottonbro/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/tech-xray-monitor",
+   "file": "dental/tech-xray-monitor",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 39996,
+     "src": "/demo/img/dental/tech-xray-monitor-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 18650,
+     "src": "/demo/img/dental/tech-xray-monitor-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dental X-ray on a monitor above the treatment chair",
+   "altHi": "ट्रीटमेंट चेयर के ऊपर मॉनिटर पर डेंटल एक्स-रे",
+   "category": "dental-tech",
+   "suggestedFor": [
+    "d1",
+    "d2"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.45,
+    "y": 0.5
+   },
+   "objectPosition": "45% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/dental-x-ray-displayed-on-a-monitor-in-a-clinic-DwlC4fija6o",
+   "photographer": "Fr0ggy5",
+   "photographerUrl": "https://unsplash.com/@fr0ggy5_fr0ggy5",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "dental/tech-xray-tablet",
+   "file": "dental/tech-xray-tablet",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 36152,
+     "src": "/demo/img/dental/tech-xray-tablet-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 16050,
+     "src": "/demo/img/dental/tech-xray-tablet-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "A dentist shows a patient an X-ray on a tablet",
+   "altHi": "डेंटिस्ट मरीज़ को टैबलेट पर एक्स-रे दिखा रहे हैं",
+   "category": "dental-tech",
+   "suggestedFor": [
+    "d1",
+    "d4"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.45
+   },
+   "objectPosition": "50% 45%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/person-wearing-blue-latex-gloves-holding-white-tablet-computer-4270094/",
+   "photographer": "Cedric Fauntleroy",
+   "photographerUrl": "https://www.pexels.com/@cedric-fauntleroy/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/sterile-autoclave",
+   "file": "dental/sterile-autoclave",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 1500,
+     "bytes": 72272,
+     "src": "/demo/img/dental/sterile-autoclave-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 31310,
+     "src": "/demo/img/dental/sterile-autoclave-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 1500,
+   "alt": "An autoclave loaded with sealed instrument packs",
+   "altHi": "सील किए उपकरण पैकेटों से भरा ऑटोक्लेव",
+   "category": "dental-sterile",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.52
+   },
+   "objectPosition": "50% 52%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/view-of-a-medical-sterilizer-6627665/",
+   "photographer": "Karolina Grabowska (Kaboompics)",
+   "photographerUrl": "https://www.pexels.com/@karola-g/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/sterile-sealed-pouches",
+   "file": "dental/sterile-sealed-pouches",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 84634,
+     "src": "/demo/img/dental/sterile-sealed-pouches-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 31412,
+     "src": "/demo/img/dental/sterile-sealed-pouches-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Sealed sterilisation pouches holding dental instruments",
+   "altHi": "डेंटल उपकरणों वाले सील बंद स्टरलाइज़ेशन पाउच",
+   "category": "dental-sterile",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "objectPosition": "50% 50%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/sterile-dental-equipment-wrapped-in-plastic-6812550/",
+   "photographer": "Pavel Danilyuk",
+   "photographerUrl": "https://www.pexels.com/@pavel-danilyuk/",
+   "licence": "Pexels License (https://www.pexels.com/license/)"
+  },
+  {
+   "id": "dental/sterile-instrument-tray",
+   "file": "dental/sterile-instrument-tray",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 1200,
+     "h": 800,
+     "bytes": 27928,
+     "src": "/demo/img/dental/sterile-instrument-tray-1200.webp"
+    },
+    {
+     "w": 640,
+     "h": 427,
+     "bytes": 13012,
+     "src": "/demo/img/dental/sterile-instrument-tray-640.webp"
+    }
+   ],
+   "width": 1200,
+   "height": 800,
+   "alt": "Clean dental instruments laid out on a tray",
+   "altHi": "ट्रे पर सजाए गए साफ़ डेंटल उपकरण",
+   "category": "dental-sterile",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d6"
+   ],
+   "role": "section",
+   "focal": {
+    "x": 0.55,
+    "y": 0.5
+   },
+   "objectPosition": "55% 50%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/stainless-steel-fork-and-bread-knife-on-white-ceramic-plate-y8fWicGsv4g",
+   "photographer": "Quilia",
+   "photographerUrl": "https://unsplash.com/@heyquilia",
+   "licence": "Unsplash License (https://unsplash.com/license)"
+  },
+  {
+   "id": "people/dentist-w01",
+   "file": "people/dentist-w01",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 30280,
+     "src": "/demo/img/people/dentist-w01-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 18018,
+     "src": "/demo/img/people/dentist-w01-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 12228,
+     "src": "/demo/img/people/dentist-w01-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 4754,
+     "src": "/demo/img/people/dentist-w01-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a smiling woman dentist with glasses in navy scrubs, arms folded",
+   "altHi": "हाथ बाँधे, नेवी स्क्रब और चश्मे में मुस्कुराती महिला डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-in-blue-scrubs-with-glasses-smiles-_4xStiTXY1o",
+   "photographer": "Beatriz Mendez",
+   "photographerUrl": "https://unsplash.com/@beatrizmendez",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/dentist-w02",
+   "file": "people/dentist-w02",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 34412,
+     "src": "/demo/img/people/dentist-w02-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 18056,
+     "src": "/demo/img/people/dentist-w02-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 11542,
+     "src": "/demo/img/people/dentist-w02-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 4330,
+     "src": "/demo/img/people/dentist-w02-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a woman dentist in a white clinic tunic with arms folded",
+   "altHi": "हाथ बाँधे, सफ़ेद क्लिनिक ट्यूनिक में महिला डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-in-a-white-coat-is-posing-for-a-picture-RtakOBTTdvY",
+   "photographer": "Eros Reyes Cabrera",
+   "photographerUrl": "https://unsplash.com/@eagraph",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/dentist-w03",
+   "file": "people/dentist-w03",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 54932,
+     "src": "/demo/img/people/dentist-w03-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 26932,
+     "src": "/demo/img/people/dentist-w03-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 17692,
+     "src": "/demo/img/people/dentist-w03-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 6710,
+     "src": "/demo/img/people/dentist-w03-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a smiling woman dentist in blue scrubs and a surgical cap",
+   "altHi": "नीली स्क्रब और सर्जिकल कैप में मुस्कुराती महिला डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-person-in-a-blue-shirt-6XQLjOHIByc",
+   "photographer": "Kamal Hoseinianzade",
+   "photographerUrl": "https://unsplash.com/@teravis_sk",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/dentist-w04",
+   "file": "people/dentist-w04",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 52520,
+     "src": "/demo/img/people/dentist-w04-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 21840,
+     "src": "/demo/img/people/dentist-w04-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 13438,
+     "src": "/demo/img/people/dentist-w04-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 5086,
+     "src": "/demo/img/people/dentist-w04-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a woman dentist in black scrubs on a light background",
+   "altHi": "हल्की पृष्ठभूमि पर काली स्क्रब में महिला डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/professional-female-dentist-in-black-scrubs-31043312/",
+   "photographer": "Manuel Toledo",
+   "photographerUrl": "https://www.pexels.com/@manuel-toledo-434387434/",
+   "licence": "Pexels License (https://www.pexels.com/license/)",
+   "gender": "female"
+  },
+  {
+   "id": "people/dentist-w05",
+   "file": "people/dentist-w05",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 46360,
+     "src": "/demo/img/people/dentist-w05-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 22122,
+     "src": "/demo/img/people/dentist-w05-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 13382,
+     "src": "/demo/img/people/dentist-w05-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 4416,
+     "src": "/demo/img/people/dentist-w05-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a smiling woman dentist in a white coat and navy scrubs",
+   "altHi": "सफ़ेद कोट और नेवी स्क्रब में मुस्कुराती महिला डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/doctor-in-scrubs-and-a-stethoscope-around-her-neck-15962796/",
+   "photographer": "Tran Nhu Tuan",
+   "photographerUrl": "https://www.pexels.com/@kooldark/",
+   "licence": "Pexels License (https://www.pexels.com/license/)",
+   "gender": "female"
+  },
+  {
+   "id": "people/dentist-w06",
+   "file": "people/dentist-w06",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 66278,
+     "src": "/demo/img/people/dentist-w06-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 29562,
+     "src": "/demo/img/people/dentist-w06-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 17982,
+     "src": "/demo/img/people/dentist-w06-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 6234,
+     "src": "/demo/img/people/dentist-w06-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a woman dentist in blue scrubs and a white coat",
+   "altHi": "नीली स्क्रब और सफ़ेद कोट में महिला डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-woman-in-scrubs-posing-for-a-picture-X5tU3HuUrsc",
+   "photographer": "Eros Reyes Cabrera",
+   "photographerUrl": "https://unsplash.com/@eagraph",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "female"
+  },
+  {
+   "id": "people/dentist-m01",
+   "file": "people/dentist-m01",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 37364,
+     "src": "/demo/img/people/dentist-m01-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 18914,
+     "src": "/demo/img/people/dentist-m01-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 12520,
+     "src": "/demo/img/people/dentist-m01-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 4938,
+     "src": "/demo/img/people/dentist-m01-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a smiling man dentist in black scrubs in a dental treatment room",
+   "altHi": "डेंटल ट्रीटमेंट रूम में काली स्क्रब पहने मुस्कुराते पुरुष डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-in-a-dentists-office-holding-a-pair-of-scissors-607-cXjrge4",
+   "photographer": "Laurent Yasiel",
+   "photographerUrl": "https://unsplash.com/@laurentyasiel",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/dentist-m02",
+   "file": "people/dentist-m02",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 64414,
+     "src": "/demo/img/people/dentist-m02-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 33474,
+     "src": "/demo/img/people/dentist-m02-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 20840,
+     "src": "/demo/img/people/dentist-m02-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 6808,
+     "src": "/demo/img/people/dentist-m02-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a smiling grey-haired man dentist in a white coat",
+   "altHi": "सफ़ेद कोट में मुस्कुराते, सफ़ेद बालों वाले पुरुष डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-man-in-a-white-lab-coat-smiles-at-the-camera-5vfc-1KQLtE",
+   "photographer": "Vidak",
+   "photographerUrl": "https://unsplash.com/@vidak",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/dentist-m03",
+   "file": "people/dentist-m03",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 39514,
+     "src": "/demo/img/people/dentist-m03-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 19702,
+     "src": "/demo/img/people/dentist-m03-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 12560,
+     "src": "/demo/img/people/dentist-m03-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 4714,
+     "src": "/demo/img/people/dentist-m03-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a man dentist in light blue scrubs in a bright clinic",
+   "altHi": "रोशन क्लिनिक में हल्की नीली स्क्रब पहने पुरुष डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/a-portrait-of-a-man-in-scrub-suit-4270364/",
+   "photographer": "Cedric Fauntleroy",
+   "photographerUrl": "https://www.pexels.com/@cedric-fauntleroy/",
+   "licence": "Pexels License (https://www.pexels.com/license/)",
+   "gender": "male"
+  },
+  {
+   "id": "people/dentist-m04",
+   "file": "people/dentist-m04",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 74078,
+     "src": "/demo/img/people/dentist-m04-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 34828,
+     "src": "/demo/img/people/dentist-m04-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 21384,
+     "src": "/demo/img/people/dentist-m04-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 7392,
+     "src": "/demo/img/people/dentist-m04-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a smiling man dentist in navy scrubs adjusting his glasses",
+   "altHi": "नेवी स्क्रब में चश्मा ठीक करते मुस्कुराते पुरुष डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/man-in-blue-scrub-suit-wearing-sunglasses-5888172/",
+   "photographer": "Gustavo Fring",
+   "photographerUrl": "https://www.pexels.com/@gustavo-fring/",
+   "licence": "Pexels License (https://www.pexels.com/license/)",
+   "gender": "male"
+  },
+  {
+   "id": "people/dentist-m05",
+   "file": "people/dentist-m05",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 24590,
+     "src": "/demo/img/people/dentist-m05-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 12962,
+     "src": "/demo/img/people/dentist-m05-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 8654,
+     "src": "/demo/img/people/dentist-m05-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 3400,
+     "src": "/demo/img/people/dentist-m05-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a smiling man dentist in a white clinic tunic on a light background",
+   "altHi": "हल्की पृष्ठभूमि पर सफ़ेद क्लिनिक ट्यूनिक में मुस्कुराते पुरुष डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Unsplash",
+   "sourceUrl": "https://unsplash.com/photos/a-smiling-man-in-a-white-lab-coat-stands-confidently-vIE7XtQ_5ek",
+   "photographer": "SoyBreno",
+   "photographerUrl": "https://unsplash.com/@soybrenofotografia",
+   "licence": "Unsplash License (https://unsplash.com/license)",
+   "gender": "male"
+  },
+  {
+   "id": "people/dentist-m06",
+   "file": "people/dentist-m06",
+   "format": "webp",
+   "sizes": [
+    {
+     "w": 960,
+     "h": 1200,
+     "bytes": 31840,
+     "src": "/demo/img/people/dentist-m06-960.webp"
+    },
+    {
+     "w": 640,
+     "h": 800,
+     "bytes": 18858,
+     "src": "/demo/img/people/dentist-m06-640.webp"
+    },
+    {
+     "w": 480,
+     "h": 600,
+     "bytes": 13416,
+     "src": "/demo/img/people/dentist-m06-480.webp"
+    },
+    {
+     "w": 240,
+     "h": 300,
+     "bytes": 5852,
+     "src": "/demo/img/people/dentist-m06-240.webp"
+    }
+   ],
+   "width": 960,
+   "height": 1200,
+   "alt": "Portrait of a young man dentist in a white coat seated in a dental clinic",
+   "altHi": "डेंटल क्लिनिक में बैठे, सफ़ेद कोट में युवा पुरुष डेंटिस्ट का पोर्ट्रेट",
+   "category": "dental-doctor",
+   "suggestedFor": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+   ],
+   "role": "portrait",
+   "focal": {
+    "x": 0.5,
+    "y": 0.3
+   },
+   "objectPosition": "50% 30%",
+   "source": "Pexels",
+   "sourceUrl": "https://www.pexels.com/photo/dentist-in-office-with-medical-equipment-34007064/",
+   "photographer": "khezez",
+   "photographerUrl": "https://www.pexels.com/@khezez/",
+   "licence": "Pexels License (https://www.pexels.com/license/)",
+   "gender": "male"
   }
  ],
  "note": "Demo photos. Pexels/Unsplash licence, free for commercial use, no attribution required. Credits kept here anyway."

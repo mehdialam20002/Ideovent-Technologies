@@ -1,0 +1,82 @@
+/*
+ * DENTAL HOME, ABOUT, DOCTORS, TECHNOLOGY: section type and grounds (HOME
+ * builder, 28 Sep 2026). Tokens only; family rules from DENTAL-DESIGN.md.
+ */
+
+.dn-h2 {
+  font-variant-numeric: lining-nums;
+  font-family: var(--ds-display);
+  font-size: clamp(1.75rem, 1.3rem + 1.9vw, 2.75rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.ds-site[data-family="luxury"] .dn-h2 { font-weight: 400; letter-spacing: -0.005em; }
+.ds-site[data-family="clinical"] .dn-h2 { font-weight: 600; letter-spacing: -0.02em; }
+.ds-site[data-family="calm"] .dn-h2 { font-weight: 300; letter-spacing: -0.02em; }
+.ds-site[data-variant="c"][data-family="clinical"] .dn-h2 { font-weight: 700; letter-spacing: -0.01em; }
+.dn-h3 { font-family: var(--ds-display); font-size: 1.25rem; line-height: 1.3; }
+.ds-site[data-family="luxury"] .dn-h3 { font-weight: 400; font-size: 1.5rem; }
+.ds-site[data-family="clinical"] .dn-h3 { font-weight: 600; letter-spacing: -0.01em; }
+.ds-site[data-family="calm"] .dn-h3 { font-weight: 400; }
+.ds-site[data-variant="c"][data-family="clinical"] .dn-h3 { font-weight: 700; }
+
+.dn-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--ds-accent)); }
+
+/* The *accent* phrase in a section title. */
+.dn-accent { font-family: "Instrument Serif", var(--ds-serif); font-style: italic; font-weight: 400; font-size: 1.06em; letter-spacing: 0; color: hsl(var(--ds-hero-accent)); }
+.ds-site[data-family="calm"] .dn-accent { color: hsl(var(--ds-accent)); }
+.ds-site[data-variant="c"] .dn-accent { font-family: var(--ds-display); font-style: normal; font-weight: 700; font-size: 1em; }
+
+/* Dark grounds: brand band. Text and accents per family (measured in DENTAL-DESIGN.md). */
+.dn-band { background: hsl(var(--ds-brand)); color: hsl(var(--ds-on-brand)); }
+.dn-band .dn-eyebrow { color: hsl(var(--ds-on-brand) / 0.82); }
+.dn-band .dn-soft { color: hsl(var(--ds-on-brand) / 0.92); }
+.ds-site[data-family="luxury"] .dn-band .dn-accent,
+.ds-site[data-family="luxury"] .dn-band .dn-eyebrow { color: hsl(var(--ds-rule)); }
+.ds-site[data-family="clinical"] .dn-band .dn-accent { color: #5eead4; }
+.ds-site[data-family="clinical"] .dn-band .dn-eyebrow { color: #fff; }
+.ds-site[data-family="calm"] .dn-band .dn-accent,
+.ds-site[data-family="calm"] .dn-band .dn-eyebrow { color: hsl(var(--ds-hero-accent)); }
+.ds-site[data-variant="c"] .dn-band .dn-accent { color: hsl(var(--ds-rule)); }
+.ds-site[data-variant="c"] .dn-band .dn-eyebrow { color: #fff; }
+
+/* A cta button on a dark band: white with the brand as its label (teal on teal
+   would vanish). Calm uses its sand hero tone; kids keep coral with a dark label. */
+.ds-site:not([data-variant="c"]) .dn-band .dn-book[data-tone="cta"] { background: #fff; color: hsl(var(--ds-brand)); }
+.dn-tint { background: hsl(var(--ds-surface-2)); }
+.dn-soft { color: hsl(var(--ds-ink-soft)); }
+
+/* Cards on this page family. */
+.dn-tile { background: hsl(var(--ds-surface)); border-radius: var(--ds-radius); box-shadow: var(--dn-shadow-1); }
+.ds-site[data-family="calm"] .dn-tile { box-shadow: none; border: 1px solid hsl(var(--ds-line)); }
+.ds-site[data-family="luxury"] .dn-tile { box-shadow: 0 1px 2px rgb(20 16 10 / 0.04), 0 10px 30px -18px rgb(20 16 10 / 0.25); }
+@media (hover: hover) {
+  .dn-lift { transition: transform var(--ds-d2) var(--ds-ease-out), box-shadow var(--ds-d2) var(--ds-ease-out); }
+  .dn-lift:hover { transform: translateY(-2px); box-shadow: var(--dn-shadow-2); }
+  .ds-site[data-family="calm"] .dn-lift:hover { box-shadow: none; border-color: hsl(var(--ds-brand) / 0.45); }
+  .dn-lift .ds-photo img { transition: transform var(--ds-d3) var(--ds-ease-out); }
+  .dn-lift:hover .ds-photo img { transform: scale(1.03); }
+}
+
+/* Snap scroller for team cards on phones (1.2 cards visible). */
+.dn-snap { display: grid; grid-auto-flow: column; grid-auto-columns: 78%; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; padding-bottom: 4px; }
+.dn-snap::-webkit-scrollbar { display: none; }
+.dn-snap > * { scroll-snap-align: start; }
+@media (min-width: 640px) { .dn-snap { grid-auto-columns: 44%; } }
+@media (min-width: 1024px) { .dn-snap { grid-auto-flow: row; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); overflow: visible; } }
+
+/* Arch-top portrait frame (luxury and kids). */
+.dn-arch-frame { border-radius: 999px 999px var(--ds-radius) var(--ds-radius); }
+
+/* Luxury journey: numerals joined by a gold hairline. */
+.dn-journey-line { position: absolute; left: 0; right: 0; top: 28px; height: 1px; background: hsl(var(--ds-rule)); }
+@media (max-width: 767px) { .dn-journey-line { left: 27px; right: auto; top: 0; bottom: 0; width: 1px; height: auto; } }
+
+/* Studio band: 1px gold inset frame 24px in. */
+.dn-inset::after { content: ""; position: absolute; inset: 16px; border: 1px solid hsl(var(--ds-rule) / 0.9); border-radius: calc(var(--ds-radius) - 6px); pointer-events: none; }
+@media (min-width: 768px) { .dn-inset::after { inset: 24px; } }
+
+/* Review carousel fade. */
+.dn-quote-in { animation: dn-quote 520ms var(--ds-ease-out) both; }
+@keyframes dn-quote { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dn-quote-in { animation: none; } .dn-lift, .dn-lift .ds-photo img { transition: none !important; } }

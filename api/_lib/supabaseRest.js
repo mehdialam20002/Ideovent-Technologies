@@ -43,37 +43,83 @@ export async function isAdmin(env, token) {
 }
 
 /**
- * Enabled keys in priority order. Returns { rows } or { missing: true } when
- * the table does not exist yet (0006 not run), which the handler reports as
- * "no keys" with a pointer to the migration.
+ * Enabled keys, in the order they are tried: providers by the admin's provider
+ * order, and inside each provider its keys by their own order (0008).
+ *
+ * Returns { rows } or { missing: true } when the table does not exist yet
+ * (0006 not run), which the handler reports as "no keys" with a pointer to the
+ * migration. Before 0008 is run the new columns do not exist: the old select
+ * is used instead and every row is marked `legacy`, so posters keep being read
+ * with one key per provider exactly as before, and nothing writes key_id.
  */
+const KEY_COLS = "id,provider,label,api_key,model,priority,provider_priority,enabled,last_error,last_error_at";
+const LEGACY_COLS = "provider,api_key,model,priority,enabled,last_error,last_error_at";
+
 export async function readKeys(env, token) {
-  const res = await call(env, token,
-    "/rest/v1/ai_provider_keys?select=provider,api_key,model,priority,enabled,last_error,last_error_at" +
-    "&enabled=eq.true&order=priority.asc,provider.asc");
-  if (res.status === 404 || res.status === 400) {
+  let res = await call(env, token, `/rest/v1/ai_provider_keys?select=${KEY_COLS}&enabled=eq.true`);
+  let legacy = false;
+  if (res.status === 400 || res.status === 404) {
     const t = await res.text().catch(() => "");
-    if (/ai_provider_keys|PGRST205|42P01/.test(t)) return { missing: true, rows: [] };
+    // 42703: a column in KEY_COLS is unknown, so 0006 is run but 0008 is not.
+    // Checked first: that message names the table too.
+    if (/42703|PGRST204|column.*does not exist/i.test(t)) {
+      legacy = true;
+      res = await call(env, token, `/rest/v1/ai_provider_keys?select=${LEGACY_COLS}&enabled=eq.true`);
+    } else if (/ai_provider_keys|PGRST205|42P01/.test(t)) {
+      return { missing: true, rows: [] };
+    }
   }
   if (!res.ok) throw new Error(`Could not read the AI keys (HTTP ${res.status})`);
-  const rows = await res.json();
-  return { rows: Array.isArray(rows) ? rows : [] };
+  const got = await res.json();
+  const rows = (Array.isArray(got) ? got : []).map((r) => (legacy
+    ? { ...r, id: null, label: null, provider_priority: r.priority, priority: 0, legacy: true }
+    : r));
+  return { rows: orderKeys(rows), legacy };
+}
+
+/**
+ * Providers first, keys second. A provider's place is the LOWEST
+ * provider_priority among its keys, so one key left with a stale number (a
+ * hand edit in the table editor, a save that half failed) cannot split its
+ * provider in two around another provider.
+ */
+export function orderKeys(rows) {
+  const rank = new Map();
+  for (const r of rows) {
+    const p = Number(r.provider_priority ?? 100);
+    if (!rank.has(r.provider) || p < rank.get(r.provider)) rank.set(r.provider, p);
+  }
+  return [...rows].sort((a, b) =>
+    rank.get(a.provider) - rank.get(b.provider)
+    || String(a.provider).localeCompare(String(b.provider))
+    || Number(a.priority ?? 0) - Number(b.priority ?? 0)
+    || String(a.label ?? "").localeCompare(String(b.label ?? ""))
+    || String(a.id ?? "").localeCompare(String(b.id ?? "")));
 }
 
 /**
  * Record the attempts and each key's last error. Best effort: a failed log
  * write must never turn a poster that was read into an error for the admin.
- * Keys are never part of what is written.
+ * Keys are never part of what is written, only a key's id.
+ *
+ * Each attempt names the key it used (keyId). Its error is written to THAT
+ * row, so a limit parks one key and not its whole provider. A legacy attempt
+ * (0008 not run, keyId null) is written by provider as before, and key_id is
+ * left out of the run rows because the column does not exist yet.
  */
 export async function recordAttempts(env, token, logged) {
   if (!logged.length) return;
   const now = new Date().toISOString();
+  const withKeyId = logged.some((a) => a.keyId);
   const jobs = [
     call(env, token, "/rest/v1/ai_poster_runs", {
       method: "POST", headers: { prefer: "return=minimal" },
-      body: JSON.stringify(logged.map((a) => ({ provider: a.provider, status: a.status, detail: a.detail || null }))),
+      body: JSON.stringify(logged.map((a) => ({ provider: a.provider, status: a.status, detail: a.detail || null,
+        ...(withKeyId ? { key_id: a.keyId || null } : {}) }))),
     }),
-    ...logged.map((a) => call(env, token, `/rest/v1/ai_provider_keys?provider=eq.${encodeURIComponent(a.provider)}`, {
+    ...logged.map((a) => call(env, token, a.keyId
+      ? `/rest/v1/ai_provider_keys?id=eq.${encodeURIComponent(a.keyId)}`
+      : `/rest/v1/ai_provider_keys?provider=eq.${encodeURIComponent(a.provider)}`, {
       method: "PATCH", headers: { prefer: "return=minimal" },
       body: JSON.stringify(a.status === "ok"
         ? { last_error: null, last_error_at: null }

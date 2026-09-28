@@ -141,8 +141,11 @@ const GOLD_BG = "bg-[hsl(var(--secondary))] dark:bg-[hsl(var(--brand-gold))]";
    The people.
 
    Names and roles are IDENTICAL to the India page and to /about, and come from
-   the corrections section of _assets/FACTS.md: three partners, and Abhilasha
-   Kumari is a Developer and not a partner. The one-line descriptions differ
+   the corrections section of _assets/FACTS.md (27 Sep 2026: Animesh Raturi
+   hidden; 28 Sep 2026: no Founder / Co-Founder title on anybody, Mehdi Alam
+   is Software Developer, Abhishek Tiwari is Product Manager, Saif Ali (new)
+   is Senior App Developer). Saif and Abhilasha Kumari (Developer) are not
+   partners. The one-line descriptions differ
    because the India page describes each person's job in terms of parents and
    admissions, which means nothing here.
 
@@ -153,19 +156,24 @@ const GOLD_BG = "bg-[hsl(var(--secondary))] dark:bg-[hsl(var(--brand-gold))]";
 const TEAM = [
   {
     name: "Mehdi Alam",
-    role: "Founder & SDE",
+    role: "Software Developer",
     line: "The person on your call and the person writing the code. He owns the scope, the estimate and the build, and he answers the email.",
   },
   {
     name: "Abhishek Tiwari",
-    role: "Co-Founder & Product Manager",
+    role: "Product Manager",
     line: "Holds the statement of work, the acceptance criteria and the written change note, so what was agreed in week one is what ships in week five.",
   },
-  {
-    name: "Animesh Raturi",
-    role: "Co-Founder & Marketing Lead",
-    line: "Runs how a finished site gets found: your search presence, your listings, and the pages that answer what people actually type.",
-  },
+  // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+  // {
+  //   name: "Animesh Raturi",
+  //   role: "Co-Founder & Marketing Lead",
+  //   line: "Runs how a finished site gets found: your search presence, your listings, and the pages that answer what people actually type.",
+  // },
+  // Added 28 Sep 2026 (Mehdi). A team member, not a partner. No line under
+  // his title on purpose: nothing about his work is on record yet beyond the
+  // title, and this page does not guess. The card renders without it.
+  { name: "Saif Ali", role: "Senior App Developer" },
   {
     name: "Abhilasha Kumari",
     role: "Developer",
@@ -424,7 +432,7 @@ function ProofCard({ entry, featured = false }: { entry: ProofEntry; featured?: 
           {/* Names what the thing IS. "Not a client project" alone is true of
               both Aura Orbit and WTFGO and tells the reader nothing about the
               difference, and the difference is the whole reason the label is
-              here: one is ours, one is the founder's employer work. The rule now
+              here: one is ours, one is a partner's employer work. The rule now
               lives in proofKindLabel so the India card cannot answer it
               differently. */}
           <span className="text-[0.66rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -1421,7 +1429,7 @@ export default function PitchInternational({ page }: { page: PitchPage }) {
                   <div className="min-w-0">
                     <h3 className="font-display text-base font-semibold tracking-tight">{m.name}</h3>
                     <p className="text-sm font-medium text-[hsl(var(--primary))]">{m.role}</p>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{m.line}</p>
+                    {m.line && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{m.line}</p>}
                   </div>
                 </li>
               ))}

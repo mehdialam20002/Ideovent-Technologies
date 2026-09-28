@@ -1,5 +1,5 @@
 import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types";
-import { type Store, mergeWithSeed, clone } from "./store";
+import { type Store, mergeWithSeed, clone, COLLECTION_KEYS, SINGLETON_KEYS } from "./store";
 import { seed } from "./seed";
 
 const KEY = "ideovent_cms_v1";
@@ -129,9 +129,31 @@ export class LocalStore implements Store {
     if (cleaned) this.persist();
   }
 
+  /** The stored string this tab last read or wrote; see sync(). */
+  private seen: string | null | undefined;
+
+  /**
+   * ANOTHER TAB MAY HAVE SAVED SINCE (28 Sep 2026). The CRM opens in its own
+   * tab, so in local mode a demo made in the admin tab was invisible to the
+   * CRM tab until a reload, and the CRM tab's next save (Mark sent) wrote its
+   * stale copy back over it and deleted that demo. Before every load and
+   * write, re-read the snapshot when it is not the one this tab last saw. A
+   * write this tab could not persist (quota) leaves the stored string as it
+   * was, so the in-memory copy is kept then.
+   */
+  private sync(): void {
+    try {
+      const raw = typeof localStorage !== "undefined" ? localStorage.getItem(KEY) : null;
+      if (raw !== this.seen) this.data = this.read().data;
+    } catch {
+      /* keep what is in memory */
+    }
+  }
+
   private read(): { data: ContentData; cleaned: boolean } {
     try {
       const raw = typeof localStorage !== "undefined" ? localStorage.getItem(KEY) : null;
+      this.seen = raw;
       const parsed = raw ? JSON.parse(raw) : null;
       const legacy = dropLegacyContent(parsed);
       const cleaned = dropRetiredDemoRecords(parsed) || legacy;
@@ -143,17 +165,21 @@ export class LocalStore implements Store {
 
   private persist() {
     try {
-      localStorage.setItem(KEY, JSON.stringify(diffFromSeed(this.data)));
+      const raw = JSON.stringify(diffFromSeed(this.data));
+      localStorage.setItem(KEY, raw);
+      this.seen = raw;
     } catch (e) {
       console.warn("Ideovent CMS: could not persist to localStorage", e);
     }
   }
 
   async load(): Promise<ContentData> {
+    this.sync();
     return clone(this.data);
   }
 
   async saveDoc(col: CollectionKey, doc: BaseDoc): Promise<ContentData> {
+    this.sync();
     const list = (this.data[col] as BaseDoc[]) || [];
     const idx = list.findIndex((d) => d.id === doc.id);
     const stamped = { ...doc, updatedAt: new Date().toISOString() };
@@ -169,12 +195,14 @@ export class LocalStore implements Store {
   }
 
   async removeDoc(col: CollectionKey, id: string): Promise<ContentData> {
+    this.sync();
     (this.data[col] as BaseDoc[]) = ((this.data[col] as BaseDoc[]) || []).filter((d) => d.id !== id);
     this.persist();
     return clone(this.data);
   }
 
   async reorder(col: CollectionKey, orderedIds: string[]): Promise<ContentData> {
+    this.sync();
     const list = (this.data[col] as BaseDoc[]) || [];
     const map = new Map(list.map((d) => [d.id, d]));
     (this.data[col] as BaseDoc[]) = orderedIds
@@ -188,6 +216,7 @@ export class LocalStore implements Store {
   }
 
   async saveSingleton<K extends SingletonKey>(key: K, value: ContentData[K]): Promise<ContentData> {
+    this.sync();
     this.data[key] = value;
     this.persist();
     return clone(this.data);
@@ -207,14 +236,44 @@ export class LocalStore implements Store {
     return JSON.stringify(this.data, null, 2);
   }
 
+  /**
+   * THE SAME RULE AS THE LIVE STORE (changed 27 September 2026): upserts only
+   * the documents in the file onto what this browser already has, and a
+   * singleton given as an object replaces that section (over the seed's
+   * fields, as a load would). It used to rebuild everything from the seed plus
+   * the file, so an empty array wiped a collection and every local edit not in
+   * the file was lost. Keys starting with "_" (the import template's _readme
+   * and _example_demoSite) and any key that is not a known collection or
+   * singleton are skipped explicitly, so the downloadable template
+   * (src/lib/cms/importTemplate.ts), imported as it is, changes nothing.
+   */
   async importJson(json: string): Promise<ContentData> {
     const parsed = JSON.parse(json);
-    // An export is the full content; a marker from a copied snapshot is not content.
-    if (parsed && typeof parsed === "object") delete parsed[FORMAT_KEY];
+    if (!isPlainObject(parsed)) throw new Error("the file is not a content JSON object");
+    // A marker from a copied snapshot is not content.
+    delete parsed[FORMAT_KEY];
     // An export taken before 25 September 2026 still carries the four retired
     // records; importing it must not bring them back.
     dropRetiredDemoRecords(parsed);
-    this.data = mergeWithSeed(parsed);
+    this.sync();
+    const next = clone(this.data) as unknown as Record<string, unknown>;
+    for (const [key, value] of Object.entries(parsed)) {
+      if (key.startsWith("_")) continue;
+      if ((SINGLETON_KEYS as string[]).includes(key)) {
+        if (isPlainObject(value)) next[key] = (mergeWithSeed({ [key]: value }) as unknown as Record<string, unknown>)[key];
+        continue;
+      }
+      if (!(COLLECTION_KEYS as string[]).includes(key) || !Array.isArray(value)) continue;
+      const list = [...((next[key] as BaseDoc[]) || [])];
+      for (const doc of value as BaseDoc[]) {
+        if (!doc?.id) continue;
+        const i = list.findIndex((d) => d.id === doc.id);
+        if (i >= 0) list[i] = doc;
+        else list.push(doc);
+      }
+      next[key] = list;
+    }
+    this.data = next as unknown as ContentData;
     this.persist();
     return clone(this.data);
   }

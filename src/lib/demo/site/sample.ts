@@ -26,12 +26,27 @@ import type { Bilingual } from "./bilingual";
 
 export type SampleBlock = keyof DemoSampleMarks["prints"];
 
-export const SAMPLE_BLOCKS: SampleBlock[] = ["faculty", "results", "fees", "reviews", "timings", "photos"];
+export const SAMPLE_BLOCKS: SampleBlock[] = ["faculty", "results", "fees", "reviews", "timings", "photos", "stats", "cases", "doctors"];
+
+/**
+ * DENTAL (28 Sep 2026). Three blocks were added: `stats` (the hero trust row,
+ * patient counts), `cases` (before-after) and `doctors`. The dental parts of
+ * the older blocks (fees, timings, photos) are appended ONLY on a record that
+ * has a dental block, so the print of every school and coaching demo already
+ * made is byte for byte what it was and none of them reads as edited.
+ */
 
 /** What each block is made of. The same list feeds the print and the check. */
 function blockData(site: Partial<DemoSite>, block: SampleBlock): unknown {
   const courses = site.courses || [];
+  const d = site.dental;
   switch (block) {
+    case "stats":
+      return [site.stats, d?.hero?.nextSlot];
+    case "cases":
+      return d?.cases;
+    case "doctors":
+      return (d?.doctors || []).map(({ photo: _p, photoConsent: _c, ...rest }) => rest);
     case "faculty":
       return (site.faculty || []).map(({ photo: _p, photoConsent: _c, ...rest }) => rest);
     case "results":
@@ -44,9 +59,13 @@ function blockData(site: Partial<DemoSite>, block: SampleBlock): unknown {
         site.admissions?.fees,
         site.admissions?.feeNote,
         site.feesPolicy,
+        ...(d ? [d.fees, d.payment, d.plans, (d.treatments || []).map((t) => [t.fromPrice, t.priceNote])] : []),
       ];
     case "timings":
-      return [courses.map((c) => [c.timings, c.batchStarts]), site.schedule, site.dayPlan];
+      return [
+        courses.map((c) => [c.timings, c.batchStarts]), site.schedule, site.dayPlan,
+        ...(d ? [d.sessions, d.booking?.morning, d.booking?.evening, (d.doctors || []).map((x) => x.days)] : []),
+      ];
     case "photos":
       return [
         site.heroImage,
@@ -54,6 +73,12 @@ function blockData(site: Partial<DemoSite>, block: SampleBlock): unknown {
         (site.photos || []).map((p) => p.src),
         (site.gallery || []).map((g) => g.src),
         (site.faculty || []).map((f) => f.photo || ""),
+        ...(d ? [
+          (d.doctors || []).map((x) => x.photo || ""),
+          (d.treatments || []).map((x) => x.image || ""),
+          (d.technology || []).map((x) => x.image || ""),
+          (d.branches || []).map((x) => x.photo || ""),
+        ] : []),
       ];
   }
 }
@@ -113,15 +138,24 @@ export function isCarried(site: Partial<DemoSite>, block: SampleBlock): boolean 
   return Boolean(p) && p === samplePrint(site, block);
 }
 
+/** The blocks that print a line on the page. */
+export type SampleLineBlock = "results" | "reviews" | "stats" | "cases" | "doctors";
+
 /** True when the page should print the sample line under this block. */
-export function showSampleLine(site: Partial<DemoSite>, block: "results" | "reviews"): boolean {
+export function showSampleLine(site: Partial<DemoSite>, block: SampleLineBlock): boolean {
   return !site.sample?.real && isCarried(site, block);
 }
 
 /** The line itself, in both languages. No em dashes. */
-export const SAMPLE_COPY: Record<"results" | "reviews", Bilingual> = {
+export const SAMPLE_COPY: Record<SampleLineBlock, Bilingual> = {
   results: { en: "Sample figures for this demonstration", hi: "इस डेमो के लिए नमूने के आँकड़े" },
   reviews: { en: "Sample reviews for this demonstration", hi: "इस डेमो के लिए नमूने के रिव्यू" },
+  stats: { en: "Sample figures for this demonstration", hi: "इस डेमो के लिए नमूने के आँकड़े" },
+  cases: {
+    en: "Illustrations only, not real patients. The clinic's own cases appear here with written consent.",
+    hi: "ये केवल चित्र हैं, असली मरीज़ नहीं। क्लिनिक के अपने केस लिखित सहमति के साथ यहाँ दिखेंगे।",
+  },
+  doctors: { en: "Sample doctor profiles for this demonstration", hi: "इस डेमो के लिए नमूने की डॉक्टर प्रोफ़ाइल" },
 };
 
 /** The admin's names for the six blocks, for the checklist. */
@@ -132,4 +166,7 @@ export const SAMPLE_BLOCK_LABEL: Record<SampleBlock, string> = {
   reviews: "Reviews",
   timings: "Timings and schedule",
   photos: "Photos",
+  stats: "Trust figures",
+  cases: "Before and after cases",
+  doctors: "Doctors",
 };

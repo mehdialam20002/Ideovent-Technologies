@@ -1,5 +1,6 @@
 /**
- * The ten template ids, and nothing else.
+ * The template ids, and nothing else: five school, five coaching and (28 Sep
+ * 2026) seven dental.
  *
  * WHY THIS IS ITS OWN FILE. Two places outside the admin need to know what a
  * template is called, and neither may pull in the registry:
@@ -27,6 +28,13 @@ export const TEMPLATE_IDS = [
   "c3-science",
   "c4-foundation",
   "c5-government-jobs",
+  "d1-family-dentist",
+  "d2-multispeciality",
+  "d3-smile-studio",
+  "d4-implant-centre",
+  "d5-ortho-aligners",
+  "d6-kids-dental",
+  "d7-dental-chain",
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
