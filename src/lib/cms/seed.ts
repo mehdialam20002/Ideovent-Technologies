@@ -518,7 +518,9 @@ export const seed: ContentData = {
       { text: "trust you and get in touch.", highlighted: true },
     ],
     subheading:
-      "You deal directly with the three partners. You get a written scope and a fixed price before you pay anything. The code, logins and domain stay yours.",
+      // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+      // Original: "You deal directly with the three partners. You get ..."
+      "You deal directly with the partners. You get a written scope and a fixed price before you pay anything. The code, logins and domain stay yours.",
     // "can be found on Google and Maps": what the site does, never a ranking.
     audience:
       "For owners of growing businesses: clinics, gyms, shops, restaurants, law and CA firms, schools and coaching. Your site can be found on Google and Maps, opens fast on a phone, and sends every enquiry to you.",
@@ -658,8 +660,8 @@ export const seed: ContentData = {
     rubricNote:
       "Two gates override the total. Any breach of confidentiality or mishandling of data means no certificate, whatever the score. No capstone submitted and merged means no certificate, however strong weeks 1 to 10 were. Below 70 we issue a dated letter of participation instead, and it does not enter the verification system.",
     mentors: [
-      { name: "Mehdi Alam", role: "Founder & SDE", responsibility: "Programme lead. Writes the curriculum, runs the Monday briefing, first reviewer on every pull request, and signs off the final rubric." },
-      { name: "Abhishek Tiwari", role: "Co-Founder & Product Manager", responsibility: "Second reviewer. Holds access provisioning and revocation, and the client-consent gate, deliberately someone other than the person who wants the help." },
+      { name: "Mehdi Alam", role: "Software Developer", responsibility: "Programme lead. Writes the curriculum, runs the Monday briefing, first reviewer on every pull request, and signs off the final rubric." },
+      { name: "Abhishek Tiwari", role: "Product Manager", responsibility: "Second reviewer. Holds access provisioning and revocation, and the client-consent gate, deliberately someone other than the person who wants the help." },
     ],
     selection: [
       { step: "01", title: "You apply", description: "The form below. A GitHub link with at least one repository you actually wrote is the one thing we will not waive." },
@@ -797,14 +799,14 @@ export const seed: ContentData = {
     earlyAccessEyebrow: "Early access · Delhi",
     earlyAccessHeading: "Be one of the first, and help decide what gets built next",
     earlyAccessBody:
-      "We are taking a small first group of institutions into early access, schools and coaching institutes in Delhi. A small group and no more, because each one gets the founder’s own time, and there is not more than that to give.",
+      "We are taking a small first group of institutions into early access, schools and coaching institutes in Delhi. A small group and no more, because each one gets the partners’ own time, and there is not more than that to give.",
     pilotSeats: "",
     pilotPrice: "",
     pilotMonths: "",
     parallelRunWeeks: "",
     youGet: [
       "An early-access price agreed before you start, with the price after that fixed in writing at the same time",
-      "Your existing data imported, and your staff trained, on site, by the founder",
+      "Your existing data imported, and your staff trained, on site, by us",
       "Your report card built in the format you already print",
       "A direct say in which module is built next",
       "Your full data exported back to you at any time, without asking permission",
@@ -819,7 +821,9 @@ export const seed: ContentData = {
     ctaBody:
       "No decision on the first visit. We spend an hour in your office, then put in writing what can be built, for what, and by when.",
     footnote:
-      "EduFlow is a product of Ideovent Technologies, a partnership firm founded in 2024, whose partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi, based in Saket, New Delhi. EduFlow is currently in development and is not a released product.",
+      // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+      // Original: "... a partnership firm founded in 2024, whose partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi, based in ..."
+      "EduFlow is a product of Ideovent Technologies, a partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024 and based in Saket, New Delhi. EduFlow is currently in development and is not a released product.",
   },
 
   // The four public legal documents, generated from the canonical Markdown in
@@ -1090,8 +1094,8 @@ export const seed: ContentData = {
 
     /* ── The founder's work elsewhere: the employer is named, and this is
      *    never presented as Ideovent client work. ────────────────────────── */
-    { id: "wtf-go", title: "WTF Go. Gym & Wellness Management SaaS", slug: "wtf-go", category: "employer work", sector: "Gym & wellness SaaS", clientName: "Witness The Fitness Pvt. Ltd., founder’s employment", featured: false, order: 10,
-      summary: "Built by our founder, Mehdi Alam, while employed as a full-stack developer at Witness The Fitness Pvt. Ltd. (April. July 2026). This is his professional work for that employer, not an Ideovent client project, and it is listed here as experience rather than as a case study we can sell. WTF Go is a multi-tenant operating system for gyms, studios and wellness businesses: memberships and billing, payments, CRM and leads, retention and renewals, personal training, waivers and e-sign, messaging, staff permissions, and per-location branded sites and member apps.",
+    { id: "wtf-go", title: "WTF Go. Gym & Wellness Management SaaS", slug: "wtf-go", category: "employer work", sector: "Gym & wellness SaaS", clientName: "Witness The Fitness Pvt. Ltd., a partner’s own employment", featured: false, order: 10,
+      summary: "Built by Mehdi Alam, one of our partners, while employed as a full-stack developer at Witness The Fitness Pvt. Ltd. (April to July 2026). This is his professional work for that employer, not an Ideovent client project, and it is listed here as experience rather than as a case study we can sell. WTF Go is a multi-tenant operating system for gyms, studios and wellness businesses: memberships and billing, payments, CRM and leads, retention and renewals, personal training, waivers and e-sign, messaging, staff permissions, and per-location branded sites and member apps.",
       technologies: ["React", "TypeScript", "Node.js", "Multi-tenant SaaS"],
       // The screenshot is NOT published. _assets/FACTS.md requires IP permission
       // before an employer's interface is published, and 06-portfolio/
@@ -1113,7 +1117,18 @@ export const seed: ContentData = {
    * Roles as corrected by Mehdi on 24 Sep 2026 (_assets/FACTS.md, "CORRECTIONS
    * CONFIRMED BY MEHDI"). Ideovent is a partnership firm and the partners are
    * Mehdi Alam (Founder & SDE), Abhishek Tiwari (Co-Founder & Product Manager)
-   * and Animesh Raturi (Co-Founder & Marketing Lead). Abhilasha Kumari is a
+   * and Animesh Raturi (Co-Founder & Marketing Lead). On 27 Sep 2026 Mehdi
+   * asked for Abhishek to be shown as Founder & Product Manager and for Animesh
+   * to be hidden for now (his entry is commented out below).
+   *
+   * 28 Sep 2026, Mehdi: no "Founder" or "Co-Founder" tag on anybody. Titles
+   * are job titles only: Mehdi Alam, Software Developer; Abhishek Tiwari,
+   * Product Manager; Saif Ali (new), Senior App Developer. Mehdi and Abhishek are
+   * still the firm's partners, which is a legal fact and stays in the bios and the legal
+   * pages; "founder" was a title, and titles are what changed. Restore notes:
+   * E:/myagency/_build/people-change-2026-09-27.md, "28 Sep 2026: titles".
+   *
+   * Abhilasha Kumari is a
    * Developer and a team member, NOT a partner. The "Co-Founder & CEO" and
    * "Co-Founder & CTO" titles once shown here were wrong, and so was the
    * interim correction that made Animesh a Developer.
@@ -1132,19 +1147,27 @@ export const seed: ContentData = {
    * into every build for nothing. It now lives in _unpublished/ instead.
    * ────────────────────────────────────────────────────────────────────────── */
   team: [
-    { id: "mehdi", name: "Mehdi Alam", role: "Founder & SDE", visible: true, order: 0,
-      bio: "Founder and a partner in the firm, and the engineer who writes the code: the person you will talk to about scope, timelines and price.",
+    { id: "mehdi", name: "Mehdi Alam", role: "Software Developer", visible: true, order: 0,
+      bio: "A partner in the firm, and the developer who writes the code: the person you will talk to about scope, timelines and price.",
       photo: { src: "", alt: "" },
       socials: [{ platform: "LinkedIn", url: "https://www.linkedin.com/in/mehdi-alam-9411751b7", icon: "Linkedin" }] },
-    { id: "abhishek", name: "Abhishek Tiwari", role: "Co-Founder & Product Manager", visible: true, order: 1,
-      bio: "Co-founder and a partner in the firm. Holds the scope, the acceptance criteria and the written change note, so what was agreed is what gets built.",
+    { id: "abhishek", name: "Abhishek Tiwari", role: "Product Manager", visible: true, order: 1,
+      bio: "A partner in the firm. Holds the scope, the acceptance criteria and the written change note, so what was agreed is what gets built.",
       photo: { src: "", alt: "" },
       socials: [] },
-    { id: "animesh", name: "Animesh Raturi", role: "Co-Founder & Marketing Lead", visible: true, order: 2,
-      bio: "Co-founder and a partner in the firm. Runs how Ideovent reaches the businesses it builds for.",
+    // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+    // { id: "animesh", name: "Animesh Raturi", role: "Co-Founder & Marketing Lead", visible: true, order: 2,
+    //   bio: "Co-founder and a partner in the firm. Runs how Ideovent reaches the businesses it builds for.",
+    //   photo: { src: "", alt: "" },
+    //   socials: [] },
+    // Added 28 Sep 2026 (Mehdi). A team member, not a partner. The bio is
+    // his title and nothing more: nothing else about him is on record yet,
+    // and a bio is not the place to guess.
+    { id: "saif", name: "Saif Ali", role: "Senior App Developer", visible: true, order: 3,
+      bio: "",
       photo: { src: "", alt: "" },
       socials: [] },
-    { id: "abhilasha", name: "Abhilasha Kumari", role: "Developer", visible: true, order: 3,
+    { id: "abhilasha", name: "Abhilasha Kumari", role: "Developer", visible: true, order: 4,
       bio: "Developer at Ideovent, working across React front-ends and modern web tooling.",
       photo: { src: "", alt: "" },
       socials: [] },
@@ -1153,7 +1176,9 @@ export const seed: ContentData = {
   // "2025. First enterprise client" was removed: there is no enterprise client
   // on record, and nothing supports the claim.
   milestones: [
-    { id: "m1", year: "2024", title: "Ideovent is founded", description: "Ideovent Technologies is established as a partnership firm by Mehdi Alam, with co-founders Abhishek Tiwari and Animesh Raturi.", order: 0 },
+    // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+    // Original description: "Ideovent Technologies is established as a partnership firm by Mehdi Alam, with co-founders Abhishek Tiwari and Animesh Raturi."
+    { id: "m1", year: "2024", title: "Ideovent is founded", description: "Ideovent Technologies is established as a partnership firm by Mehdi Alam and Abhishek Tiwari.", order: 0 },
     { id: "m3", year: "2025", title: "LaunchPad internship", description: "Launched our mentored internship programme, with QR-verifiable certificates that anyone can check at /verify.", order: 1 },
     { id: "m4", year: "2026", title: "Product engineering", description: "Expanded from websites into full product builds: a real-time desktop AI copilot, commerce storefronts and internal business tools.", order: 2 },
   ],

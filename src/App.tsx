@@ -37,7 +37,20 @@ const AdminDemoPreview = lazy(() => import("./pages/admin/AdminDemoPreview"));
 const AdminTemplates = lazy(() => import("./pages/admin/AdminTemplates"));
 const AdminTemplatePreview = lazy(() => import("./pages/admin/AdminTemplatePreview"));
 const AdminAiKeys = lazy(() => import("./pages/admin/AdminAiKeys"));
-const AdminOutreach = lazy(() => import("./pages/admin/AdminOutreach"));
+const OutreachRedirect = lazy(() => import("@/crm/OutreachRedirect"));
+const AdminLeadFinder = lazy(() => import("./pages/admin/AdminLeadFinder"));
+
+/* The CRM: its own full-screen app at /crm, same sign-in as /admin. */
+const CrmLayout = lazy(() => import("@/crm/CrmLayout"));
+const CrmDashboard = lazy(() => import("@/crm/dashboard/CrmDashboard"));
+const CrmLeads = lazy(() => import("@/crm/leads/CrmLeads"));
+const CrmLeadPage = lazy(() => import("@/crm/lead/CrmLeadPage"));
+const CrmPipeline = lazy(() => import("@/crm/pipeline/CrmPipeline"));
+const CrmToday = lazy(() => import("@/crm/today/CrmToday"));
+const CrmDemos = lazy(() => import("@/crm/demos/CrmDemos"));
+const CrmFinder = lazy(() => import("@/crm/finder/CrmFinder"));
+const CrmImport = lazy(() => import("@/crm/import/CrmImport"));
+const CrmSettings = lazy(() => import("@/crm/settings/CrmSettings"));
 
 function PageLoader() {
   return (
@@ -142,10 +155,10 @@ const App = () => (
             {/* Keys for the poster reader (/api/poster). Stored in Supabase under
                 admin-only RLS, never in the content store; see src/lib/ai/keys.ts. */}
             <Route path="ai-keys" element={<AdminAiKeys />} />
-            {/* Cold outreach: leads, follow-ups, and one tap to Gmail or WhatsApp
-                with the message typed. Own tables (0007_outreach.sql), never
-                the content store; see src/pages/admin/AdminOutreach.tsx. */}
-            <Route path="outreach" element={<AdminOutreach />} />
+            {/* Outreach moved to the CRM at /crm (its own tab). Old links,
+                including ?lead=<id>, land on the matching CRM screen. */}
+            <Route path="outreach" element={<OutreachRedirect />} />
+            <Route path="lead-finder" element={<AdminLeadFinder />} />
           </Route>
           {/*
             A template rendered by the real demo page, full width rather than
@@ -153,6 +166,25 @@ const App = () => (
             a director will see. Same login: ProtectedRoute wraps it directly.
           */}
           <Route path="preview/template/:id/*" element={<ProtectedRoute><AdminTemplatePreview /></ProtectedRoute>} />
+        </Route>
+
+        {/*
+          THE CRM. Full screen and outside AdminLayout (it has its own rail and
+          top bar), but behind the SAME guard: AdminAuthProvider + ProtectedRoute,
+          exactly as /admin. Leads live in the outreach store (0007_outreach.sql
+          or localStorage ideovent_outreach_v1), never in the CMS content.
+        */}
+        <Route path="/crm" element={<AdminAuthProvider><ProtectedRoute><CrmLayout /></ProtectedRoute></AdminAuthProvider>}>
+          <Route index element={<CrmDashboard />} />
+          <Route path="leads" element={<CrmLeads />} />
+          <Route path="leads/:id" element={<CrmLeadPage />} />
+          <Route path="pipeline" element={<CrmPipeline />} />
+          <Route path="today" element={<CrmToday />} />
+          <Route path="demos" element={<CrmDemos />} />
+          <Route path="finder" element={<CrmFinder />} />
+          <Route path="import" element={<CrmImport />} />
+          <Route path="settings" element={<CrmSettings />} />
+          <Route path="*" element={<Navigate to="/crm" replace />} />
         </Route>
 
         {/*

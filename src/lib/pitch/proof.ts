@@ -195,7 +195,8 @@ const ENTRIES: ProofEntry[] = [
  *
  * `sector` carries the true answer for both non-client kinds already, because it
  * has to be printable on its own: "Ideovent product" for Aura Orbit,
- * "Founder's employer work" for WTFGO.
+ * "A partner's employer work" for WTFGO (was "Founder's employer work"
+ * until 28 Sep 2026, when founder titles came off the site).
  */
 export function proofKindLabel(entry: Pick<ProofEntry, "kind" | "sector">): string {
   return entry.kind === "client" ? "Client project" : entry.sector;

@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from "react";
-import { CheckCircle2, FileUp, Upload } from "lucide-react";
-import { mapCsvRow, parseCsv, sameContact } from "@/lib/outreach/store";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, Download, FileUp, Upload } from "lucide-react";
+import { leadImportTemplateCsv, mapCsvRow, parseCsv, sameContact } from "@/lib/outreach/store";
+import { downloadText } from "@/admin/downloadFile";
 import type { ImportResult, LeadInput, OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { KIND_LABEL, btnPrimary, btnSecondary, cardCls, prettyPhone, textareaCls } from "./ui";
@@ -19,7 +20,14 @@ type PreviewRow =
  * duplicate (same phone or email as a lead already here, or as an earlier
  * row) or skipped with the reason. Duplicates are skipped by default; "fill
  * empty fields" merges without ever overwriting what is already there.
+ *
+ * The whole file is saved in ONE write (see planImport in the store): leaving
+ * the page mid-import cannot leave half of it behind. While it saves, the
+ * browser asks before closing or reloading the tab.
  */
+
+/** Guidance in the name itself: CSV has nowhere to put a note. */
+const TEMPLATE_FILE = "ideovent-leads-import-template-replace-example-row.csv";
 export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
   const { leads, importLeads } = useOutreach();
   const [text, setText] = useState("");
@@ -53,6 +61,19 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
     skip: preview.filter((p) => p.kind === "skip").length,
   };
 
+  const toWrite = counts.ok + (onDuplicate === "merge" ? counts.dup : 0);
+
+  /* One write, but it still takes a moment on a slow line: ask before the tab closes. */
+  useEffect(() => {
+    if (!busy) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [busy]);
+
   const run = async () => {
     setBusy(true);
     setErr(null);
@@ -61,7 +82,7 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
       setResult(r);
       setText("");
     } catch (e) {
-      setErr("Import failed: " + ((e as Error).message || "unknown error") + ". Nothing was lost; try again.");
+      setErr("Import failed, nothing was saved. Reason: " + ((e as Error).message || "unknown error") + ". Your list is still here; try again.");
     } finally {
       setBusy(false);
     }
@@ -74,11 +95,20 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
         <p className="mt-1 text-sm text-muted-foreground">
           Upload a CSV or paste it below. The first line must be the column names. Works with the sales kit's
           LEAD-SHEET-TEMPLATE.csv, or a simple sheet with <code>name, phone, email, city, type</code>. Every row needs a
-          name and a phone or email.
+          name and a phone or email. Not sure of the columns? Download the import template: it has every column the
+          importer reads and one example row (Example Public School) to replace with your own leads.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" className={btnSecondary} onClick={() => fileRef.current?.click()}>
             <FileUp className="h-4 w-4" aria-hidden="true" /> Choose CSV file
+          </button>
+          <button
+            type="button"
+            className={btnSecondary}
+            data-testid="download-lead-template"
+            onClick={() => downloadText(TEMPLATE_FILE, leadImportTemplateCsv(), "text/csv;charset=utf-8")}
+          >
+            <Download className="h-4 w-4" aria-hidden="true" /> Download import template
           </button>
           <input
             ref={fileRef}
@@ -182,9 +212,15 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
               </li>
             ))}
           </ul>
-          <button type="button" className={btnPrimary + " mt-4 w-full sm:w-auto"} disabled={busy || counts.ok + (onDuplicate === "merge" ? counts.dup : 0) === 0} onClick={run}>
-            <Upload className="h-4 w-4" aria-hidden="true" /> {busy ? "Importing…" : `Import ${counts.ok} new ${counts.ok === 1 ? "lead" : "leads"}`}
+          <button type="button" className={btnPrimary + " mt-4 w-full sm:w-auto"} disabled={busy || toWrite === 0} onClick={run}>
+            <Upload className="h-4 w-4" aria-hidden="true" />{" "}
+            {busy ? `Saving ${toWrite} ${toWrite === 1 ? "lead" : "leads"}...` : `Import ${counts.ok} new ${counts.ok === 1 ? "lead" : "leads"}`}
           </button>
+          {busy && (
+            <p role="status" className="mt-2 text-xs text-muted-foreground">
+              Saving all {toWrite} in one go. Please stay on this page until it finishes.
+            </p>
+          )}
         </div>
       )}
     </div>

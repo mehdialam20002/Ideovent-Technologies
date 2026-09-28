@@ -140,7 +140,7 @@ export interface TermRow {
 export const OFFSHORE_TERMS: TermRow[] = [
   {
     q: "Who do I actually talk to?",
-    a: "Mehdi Alam, who founded the firm and who writes the code. He is on the call, he writes the scope, and he answers the email. There is no account manager in between, and no handover to a team you have not met once the deposit clears. His work history and his code are both public, and both are linked at the foot of this page.",
+    a: "Mehdi Alam, a partner in the firm and the developer who writes the code. He is on the call, he writes the scope, and he answers the email. There is no account manager in between, and no handover to a team you have not met once the deposit clears. His work history and his code are both public, and both are linked at the foot of this page.",
   },
   {
     q: "What am I signing?",
@@ -179,7 +179,9 @@ export const OFFSHORE_TERMS: TermRow[] = [
   },
   {
     q: "Who is Ideovent?",
-    a: "A partnership firm founded in 2024 and based in Saket, New Delhi. Three partners, named further down this page, and the people who work with them. We do not publish a headcount, a client count or a satisfaction score, because none of those has ever been measured here, and a number nobody measured is a number somebody invented.",
+    // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+    // Original: "... based in Saket, New Delhi. Three partners, named further down this page, and the people who work with them. ..."
+    a: "A partnership firm founded in 2024 and based in Saket, New Delhi. The partners are named further down this page, with the people who work with them. We do not publish a headcount, a client count or a satisfaction score, because none of those has ever been measured here, and a number nobody measured is a number somebody invented.",
   },
 ];
 
@@ -452,7 +454,7 @@ export function verticalCopy(page: PitchPage) {
  *
  * WTFGO IS DEFINED HERE, WITH ITS EMPLOYER NAMED IN THE SAME SENTENCE.
  * FACTS.md: it was built by Mehdi while EMPLOYED at Witness The Fitness Pvt.
- * Ltd. It is the founder's professional work, not an Ideovent client project,
+ * Ltd. It is a partner's (Mehdi Alam's) professional work, not an Ideovent client project,
  * and the attribution sits in the first clause of `what` where it cannot be
  * cropped off by a layout change. It is not in the shared list because the
  * India page has no use for it.
@@ -490,16 +492,16 @@ const INTL_RELEVANCE: Record<string, string> = {
     "Also behind a login, and for the same reason. Everything past it is other people’s contact details.",
 };
 
-/** WTFGO. The founder's employer work. The attribution stays inside `what`. */
+/** WTFGO. A partner's employer work (Mehdi Alam's). The attribution stays inside `what`. */
 const WTFGO: ProofEntry = {
   slug: "wtfgo",
   name: "WTFGO",
   what:
-    "A multi-tenant gym management platform, built by our founder Mehdi Alam while employed at Witness The Fitness Pvt. Ltd. It is his professional work for that company and not an Ideovent client project, and it is listed with the employer named because leaving the name off would be the dishonest version.",
+    "A multi-tenant gym management platform, built by Mehdi Alam, one of our partners, while employed at Witness The Fitness Pvt. Ltd. It is his professional work for that company and not an Ideovent client project, and it is listed with the employer named because leaving the name off would be the dishonest version.",
   /* NOT "own-product". It is not ours: the product and its IP belong to
      Witness The Fitness Pvt. Ltd. See ProofKind in ./proof. */
   kind: "employer-work",
-  sector: "Founder’s employer work",
+  sector: "A partner’s employer work",
   url: "https://wtfgos.com",
   linkState: "live",
   relevance:

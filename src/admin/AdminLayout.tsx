@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Download, Upload, RotateCcw, LogOut, ExternalLink, Menu, X, Circle } from "lucide-react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Download, FileDown, Upload, RotateCcw, LogOut, ExternalLink, Menu, X, Circle } from "lucide-react";
+import { contentImportTemplateJson, CONTENT_TEMPLATE_FILE } from "@/lib/cms/importTemplate";
+import { downloadText } from "./downloadFile";
 import { useCms, useDeferredBodies } from "@/lib/cms/context";
 import { useAdminAuth } from "./auth";
 import { getIcon } from "@/lib/icons";
@@ -9,7 +11,9 @@ import { collectionSchemas, singletonSchemas } from "./schemas";
 import { cn } from "@/lib/utils";
 import { useOutreachDueCount } from "./outreach/badge";
 
-const NAV = [
+type NavItem = { label: string; to: string; icon: string; end?: boolean; badge?: "outreachDue"; newTab?: boolean };
+
+const NAV: { title: string; items: NavItem[] }[] = [
   { title: "Overview", items: [{ label: "Dashboard", to: "/admin", icon: "LayoutDashboard", end: true }] },
   {
     title: "Content",
@@ -38,9 +42,14 @@ const NAV = [
       /* The ten fixed templates, in their own tab so the Demo sites list holds
          only real demos. Preview and duplicate only: see AdminTemplates.tsx. */
       { label: "Templates", to: "/admin/templates", icon: "LayoutGrid" },
-      /* Leads, follow-ups and the compose panel that opens Gmail or WhatsApp
-         typed and ready. The badge is today's due follow-ups. */
-      { label: "Outreach", to: "/admin/outreach", icon: "Send", badge: "outreachDue" },
+      /* The CRM: leads, pipeline, follow-ups, demos and the compose panel
+         that opens Gmail or WhatsApp typed and ready. Its own full-screen app
+         at /crm, opened in a NEW TAB so the admin stays where it was. The
+         badge is today's due follow-ups. */
+      { label: "CRM", to: "/crm", icon: "Users", badge: "outreachDue", newTab: true },
+      /* Finds the leads in the first place: Google Maps search plus a website
+         check, one click into Outreach. */
+      { label: "Lead finder", to: "/admin/lead-finder", icon: "MapPin" },
     ],
   },
   { title: "Certificates", items: [{ label: "Certificates & QR", to: "/admin/certificates", icon: "Award" }] },
@@ -95,6 +104,11 @@ export default function AdminLayout() {
     if (mode === "supabase") void actions.refresh();
   }, [mode, actions]);
   const navigate = useNavigate();
+  /* Export, Import, Template and Reset act on the site's CMS content, not on
+     leads (leads are never in that JSON). On Outreach they were four of seven
+     icon buttons above a screen that has nothing to do with them, and a Reset
+     tapped there by mistake wipes content. So they are left out on that route. */
+  const contentTools = !useLocation().pathname.startsWith("/admin/outreach");
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -121,6 +135,8 @@ export default function AdminLayout() {
     a.click();
     URL.revokeObjectURL(url);
   };
+  /* Beside Import: the file's shape, with a _readme. Imported as it is, it changes nothing. */
+  const doTemplate = () => downloadText(CONTENT_TEMPLATE_FILE, contentImportTemplateJson(), "application/json");
   const doImport = async (file: File) => {
     try {
       await actions.importJson(await file.text());
@@ -148,9 +164,29 @@ export default function AdminLayout() {
                 const Icon = getIcon(item.icon);
                 return (
                   <li key={item.to}>
+                    {item.newTab ? (
+                      <Link
+                        to={item.to}
+                        target="_blank"
+                        rel="noopener"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                        {item.label}
+                        <span className="sr-only"> (opens in a new tab)</span>
+                        {outreachDue > 0 && item.badge === "outreachDue" ? (
+                          <span className="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground" aria-label={`${outreachDue} follow-ups due today`}>
+                            {outreachDue}
+                          </span>
+                        ) : (
+                          <ExternalLink className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+                        )}
+                      </Link>
+                    ) : (
                     <NavLink
                       to={item.to}
-                      end={(item as any).end}
+                      end={item.end}
                       onClick={() => setOpen(false)}
                       className={({ isActive }) =>
                         cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors", isActive ? "bg-primary/10 font-medium text-primary": "text-muted-foreground hover:bg-muted hover:text-foreground")
@@ -158,12 +194,13 @@ export default function AdminLayout() {
                     >
                       <Icon className="h-4 w-4" aria-hidden="true" />
                       {item.label}
-                      {(item as any).badge === "outreachDue" && outreachDue > 0 && (
+                      {item.badge === "outreachDue" && outreachDue > 0 && (
                         <span className="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground" aria-label={`${outreachDue} follow-ups due today`}>
                           {outreachDue}
                         </span>
                       )}
                     </NavLink>
+                    )}
                   </li>
 );
               })}
@@ -205,8 +242,8 @@ export default function AdminLayout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/*
-          Wraps rather than overflows. The right-hand cluster is six 36px controls
-          (Export, Import, Reset, View site, Theme, Log out) and at 375px the two
+          Wraps rather than overflows. The right-hand cluster is seven 36px controls
+          (Export, Import, Template, Reset, View site, Theme, Log out); at 375px the two
           clusters together measured 394px against a 375px viewport, 19px of
           horizontal page scroll on every admin route, in both themes. `flex-wrap`
           with a min-height instead of a fixed h-16 lets the action cluster drop to
@@ -223,10 +260,15 @@ export default function AdminLayout() {
             </span>
           </div>
           <div className="flex items-center gap-1.5">
+            {contentTools && (
+              <>
             <button type="button" aria-label="Export content JSON" title="Export content JSON" onClick={doExport} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-primary/50"><Download className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">Export</span></button>
             <button type="button" aria-label="Import content JSON" title="Import content JSON" onClick={() => fileRef.current?.click()} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-primary/50"><Upload className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">Import</span></button>
-            <input ref={fileRef} type="file" accept="application/json" aria-label="Content JSON file to import" className="hidden" onChange={(e) => e.target.files?.[0] && doImport(e.target.files[0])} />
+            <button type="button" aria-label="Download import template" title="Download import template (content JSON)" data-testid="download-content-template" onClick={doTemplate} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-primary/50"><FileDown className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">Template</span></button>
+            <input ref={fileRef} type="file" accept="application/json" aria-label="Content JSON file to import" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) doImport(f); }} />
             <button type="button" aria-label="Reset all content to defaults" title="Reset to defaults" onClick={doReset} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive"><RotateCcw className="h-4 w-4" aria-hidden="true" /></button>
+              </>
+            )}
             <Link to="/" target="_blank" aria-label="Open the public site in a new tab" title="View site" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:border-primary/50"><ExternalLink className="h-4 w-4" aria-hidden="true" /></Link>
             <ThemeToggle />
             <button type="button" aria-label="Log out" title="Log out" onClick={async () => { await logout(); navigate("/admin/login"); }} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive"><LogOut className="h-4 w-4" aria-hidden="true" /></button>

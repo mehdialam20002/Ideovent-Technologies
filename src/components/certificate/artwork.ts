@@ -141,6 +141,13 @@ export interface CertificateArtData {
    */
   signatoryName?: string;
   /**
+   * The signatory's job title, printed on the role line before "Authorised
+   * Partner". Empty on every certificate issued before 28 Sep 2026, because
+   * none of those printed one. Set it through signatoryTitleFor(issuedAt),
+   * never by hand, so an issued certificate always redraws as it was printed.
+   */
+  signatoryTitle?: string;
+  /**
    * Draws the SPECIMEN overprint. Required for every certificate shown as an
    * example anywhere, and it is drawn ON TOP of the artwork rather than behind
    * it, so it cannot be cropped or covered. Only two real certificates exist.
@@ -568,7 +575,14 @@ export function drawCertificate(
       color: BRAND.navy900, align: "right",
     }, s);
   }
-  drawText(ctx, "Authorised Partner", {
+  /* The title shares the role line rather than taking a line of its own: a
+     fourth line under the rule reached down into the contact strip at 193.5mm.
+     "Authorised Partner" stays on every certificate whatever the title, because
+     that is the capacity the partner signs in (FACTS.md); the job title only
+     says what he does at the firm. */
+  drawText(ctx, data.signatoryName && data.signatoryTitle
+    ? `${data.signatoryTitle} · Authorised Partner`
+    : "Authorised Partner", {
     x: sigRight, y: BASE + (data.signatoryName ? 32.2 : 28.5), size: 2.5,
     weight: 500, family: BODY,
     color: BRAND.slate600, align: "right", tracking: 0.14, uppercase: true,
@@ -645,11 +659,36 @@ function drawSpecimen(ctx: CanvasRenderingContext2D, s: number) {
  */
 /**
  * The partner whose name is printed on certificates.
- * Confirmed by Mehdi, 25 Sep 2026: Abhishek Tiwari, Co-Founder & Product Manager.
+ * Confirmed by Mehdi, 25 Sep 2026: Abhishek Tiwari. His title was Co-Founder &
+ * Product Manager, then Founder & Product Manager (27 Sep 2026), and from
+ * 28 Sep 2026 it is Product Manager: Mehdi asked for every founder title to
+ * come off the site. Certificates issued before 28 Sep 2026 printed his name
+ * and "Authorised Partner" and no job title, and they keep exactly that. From
+ * 28 Sep 2026 the role line reads "Product Manager · Authorised Partner". The
+ * switch is keyed on issuedAt (SIGNATORY_TITLES below), so re-rendering an old
+ * certificate on the verification page never changes what was printed on it.
  * When the partnership deed is signed, make sure [[AUTHORISED_SIGNATORY]] in it
  * names the same person: the deed and the certificate must not disagree.
  */
 export const SIGNATORY_NAME = "Abhishek Tiwari";
+
+/**
+ * The signatory's job title by issue date, oldest first. A certificate takes
+ * the last row whose `from` is on or before its issuedAt (YYYY-MM-DD, so a
+ * string comparison is a date comparison). Before the first row: no title,
+ * which is what every certificate issued before 28 Sep 2026 printed. To change
+ * the title, ADD a row with the new date; editing a row rewrites certificates
+ * that have already been issued.
+ */
+export const SIGNATORY_TITLES: { from: string; title: string }[] = [
+  { from: "2026-09-28", title: "Product Manager" },
+];
+
+export function signatoryTitleFor(issuedAt: string): string {
+  let title = "";
+  for (const row of SIGNATORY_TITLES) if (issuedAt >= row.from) title = row.title;
+  return title;
+}
 
 export function toArtData(
   c: {
@@ -683,5 +722,6 @@ export function toArtData(
        Mehdi has set it directly. Change it in ONE place, here, and every
        certificate the admin previews, exports and publishes moves together. */
     signatoryName: SIGNATORY_NAME,
+    signatoryTitle: signatoryTitleFor(c.issuedAt),
   };
 }

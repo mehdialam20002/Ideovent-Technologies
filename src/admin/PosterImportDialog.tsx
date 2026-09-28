@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { AlertTriangle, Camera, FileImage, Loader2, ScanText, Sparkles, Upload, X } from "lucide-react";
-import { chooseTemplate, emptyExtract, normalizeExtract, type PosterAttempt, type PosterExtract } from "@/lib/ai/posterSchema";
+import { chooseTemplate, emptyExtract, normalizeExtract, type PosterAttempt, type PosterExtract, type PosterKind } from "@/lib/ai/posterSchema";
 import {
   PosterError, attemptLine, prepareImage, providerLabel, providerOrder, readPoster, type PreparedImage,
 } from "@/lib/ai/posterClient";
 import { templateMeta, type TemplateId } from "@/lib/demo/templates";
 import { ReviewForm } from "./poster/ReviewForm";
+
+/** A poster fills school and coaching templates only; a dental id has no poster kind. */
+function posterKindOf(id: string | undefined): PosterKind | undefined {
+  const k = templateMeta(id)?.kind;
+  return k === "school" || k === "coaching" ? k : undefined;
+}
 import { TemplatePicker, primaryButton, secondaryButton, templateLabel, inputClass, type TemplateChoice } from "./poster/ui";
 
 /**
@@ -40,7 +46,7 @@ export interface PosterReadMeta {
 }
 
 export function PosterImportDialog({
-  initialTemplate, busy, error, onCancel, onCreate, onManual,
+  initialTemplate, busy, error, onCancel, onCreate, onManual, addToCrmDefault = true,
 }: {
   initialTemplate?: TemplateId;
   /** True while the caller saves the draft. */
@@ -48,10 +54,15 @@ export function PosterImportDialog({
   /** The caller's save error, if any. */
   error: string | null;
   onCancel: () => void;
-  onCreate: (templateId: TemplateId, extract: PosterExtract, meta: PosterReadMeta) => void;
+  /** `opts.addToCrm`: the review screen's "Also add to CRM" box. */
+  onCreate: (templateId: TemplateId, extract: PosterExtract, meta: PosterReadMeta, opts: { addToCrm: boolean }) => void;
   onManual: (templateId: TemplateId, known: { name?: string; city?: string; hiName?: string }) => void;
+  /** Where "Also add to CRM" starts (the CRM setting "Add every new demo to the CRM"). */
+  addToCrmDefault?: boolean;
 }) {
   const [step, setStep] = useState<Step>("upload");
+  const [addToCrm, setAddToCrm] = useState(addToCrmDefault);
+  useEffect(() => setAddToCrm(addToCrmDefault), [addToCrmDefault]);
   const [image, setImage] = useState<PreparedImage | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -119,12 +130,12 @@ export function PosterImportDialog({
     const ctrl = new AbortController();
     abort.current = ctrl;
     providerOrder().then((o) => !ctrl.signal.aborted && setOrder(o));
-    const kind = choice === "auto" ? "auto" : templateMeta(choice)?.kind || "auto";
+    const kind = choice === "auto" ? "auto" : posterKindOf(choice) || "auto";
     try {
       const r = await readPoster(image, { kind, templateHint: choice, signal: ctrl.signal });
       const x = { ...r.extracted };
       /* The template picked by hand fixes the kind; the name typed in step 1 wins. */
-      if (choice !== "auto") x.kind = templateMeta(choice)?.kind || x.kind;
+      if (choice !== "auto") x.kind = posterKindOf(choice) || x.kind;
       if (nameOverride.trim()) x.instituteName = nameOverride.trim();
       setExtract(x);
       setSuggested(r.suggestedTemplate);
@@ -141,7 +152,7 @@ export function PosterImportDialog({
 
   /** Start the review with nothing read: Mehdi types the poster in himself. */
   function typeItIn() {
-    const kind = templateMeta(manualChoice)?.kind || "coaching";
+    const kind = posterKindOf(manualChoice) || "coaching";
     setExtract({ ...emptyExtract(kind), instituteName: nameOverride.trim() || undefined });
     setChoice(manualChoice);
     setMeta({ provider: "manual", model: "", attempts: readError?.attempts || [] });
@@ -153,7 +164,7 @@ export function PosterImportDialog({
     setTried(true);
     const clean = normalizeExtract(extract, extract.kind);
     if (!clean.instituteName && !clean.instituteNameHi) return;
-    onCreate(resolved, clean, meta);
+    onCreate(resolved, clean, meta, { addToCrm });
   }
 
   const known = () => ({
@@ -344,6 +355,11 @@ export function PosterImportDialog({
               <button type="button" className={secondaryButton} disabled={busy || !resolved} onClick={() => resolved && onManual(resolved, known())}>
                 Fill manually instead
               </button>
+              {/* The demo is tracked in the CRM as a lead (or linked to the lead it already is). */}
+              <label className="flex min-h-11 items-center gap-2 text-sm">
+                <input type="checkbox" className="h-4 w-4" data-testid="poster-add-crm" checked={addToCrm} disabled={busy} onChange={(e) => setAddToCrm(e.target.checked)} />
+                Also add to CRM
+              </label>
             </div>
           </div>
         )}

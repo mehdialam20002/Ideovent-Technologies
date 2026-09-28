@@ -54,13 +54,27 @@ export interface HotLead {
   lastOpenAt: string;
 }
 
-/** Leads whose demo was opened since the last contact, most recent open first. */
-export function hotLeads(leads: OutreachLead[], opens: DemoSiteOpen[] | undefined): HotLead[] {
+/**
+ * A demo open stays "hot" (call or message today) for this many days. An open
+ * from three weeks ago is not a reason to call today; the lead then waits for
+ * its follow-up date like any other.
+ */
+export const HOT_DAYS = 7;
+
+/** True when the newest open since the last contact is recent enough to act on. */
+export function isHotOpen(lastOpenAt: string | undefined, now = new Date()): boolean {
+  if (!lastOpenAt) return false;
+  const at = new Date(lastOpenAt).getTime();
+  return Number.isFinite(at) && at >= now.getTime() - HOT_DAYS * 864e5;
+}
+
+/** Leads whose demo was opened since the last contact, in the last HOT_DAYS days, most recent open first. */
+export function hotLeads(leads: OutreachLead[], opens: DemoSiteOpen[] | undefined, now = new Date()): HotLead[] {
   const out: HotLead[] = [];
   for (const lead of leads) {
     if (!isOpenLead(lead)) continue;
     const o = opensSinceContact(lead, opens);
-    if (o.length) out.push({ lead, opens: o, lastOpenAt: o[0].at });
+    if (o.length && isHotOpen(o[0].at, now)) out.push({ lead, opens: o, lastOpenAt: o[0].at });
   }
   return out.sort((a, b) => new Date(b.lastOpenAt).getTime() - new Date(a.lastOpenAt).getTime());
 }

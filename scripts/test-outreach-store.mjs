@@ -14,6 +14,10 @@
  *      PROSPECTS-DELHI-NCR.csv (real rows mapped column by column), any
  *      outreach-2026-09-27/LEADS-*.csv, a plain hand-made sheet, duplicates
  *      within a file and against the store, and merge mode.
+ *   5. ONE WRITE PER IMPORT (27 Sep 2026): a 30-row import makes exactly one
+ *      storage write (local) and exactly one upsert of every row (Supabase,
+ *      through a fake client that counts calls); a failed write saves
+ *      nothing; the downloadable template CSV imports exactly its one example.
  *
  * Same harness as test-from-template.mjs: esbuild bundles the real TypeScript,
  * nothing is mocked except localStorage (an in-memory StorageLike).
@@ -43,6 +47,12 @@ const NEGATIVE = Boolean(process.env.OUTREACH_NEGATIVE);
 const alias = {
   name: "alias",
   setup(b) {
+    /* The Supabase client is swapped for a fake that counts writes (section 5). */
+    b.onResolve({ filter: /^@\/lib\/cms\/client$/ }, () => ({ path: "fake-client", namespace: "fake" }));
+    b.onLoad({ filter: /.*/, namespace: "fake" }, () => ({
+      contents: "export function supabase() { return globalThis.__fakeSupabase; }",
+      loader: "js",
+    }));
     b.onResolve({ filter: /^@\// }, (args) => ({ path: resolveTs(join(SRC, args.path.slice(2))) }));
     if (NEGATIVE) {
       b.onLoad({ filter: /outreach[\\/]store\.ts$/ }, (args) => {
@@ -154,11 +164,13 @@ check(allEv[0].leadId === b.id, "listEvents is newest first");
 check(M.countSentToday(allEv, "whatsapp") === 2 && M.countSentToday(allEv, "email") === 0, "countSentToday counts today's sends per channel");
 
 const s0 = await store.getSettings();
-check(s0.whatsappDailyCap === 10 && s0.quietStart === "20:00" && s0.quietEnd === "09:00", "default settings: cap 10, quiet 20:00-09:00");
+check(s0.whatsappDailyLimit === undefined && s0.autoAddDemos === true && s0.quietStart === "20:00" && s0.quietEnd === "09:00", "default settings: no WhatsApp limit, add demos to the CRM, quiet 20:00-09:00");
 check(/Mehdi Alam/.test(s0.signature) && /\+91 77619 21786/.test(s0.signature), "default signature carries the real sender");
-await store.saveSettings({ senderGmail: "mehdi@example.com", whatsappDailyCap: 8 });
+await store.saveSettings({ senderGmail: "mehdi@example.com", whatsappDailyLimit: 8 });
 const s1 = await new M.LocalOutreachStore(mem).getSettings();
-check(s1.senderGmail === "mehdi@example.com" && s1.whatsappDailyCap === 8 && s1.signature === s0.signature, "settings persist and merge");
+check(s1.senderGmail === "mehdi@example.com" && s1.whatsappDailyLimit === 8 && s1.signature === s0.signature, "settings persist and merge");
+await store.saveSettings({ whatsappDailyLimit: 0 });
+check((await store.getSettings()).whatsappDailyLimit === undefined, "a blank (0) WhatsApp limit is saved as no limit");
 
 check(mem.map.has(M.OUTREACH_LOCAL_KEY) && M.OUTREACH_LOCAL_KEY === "ideovent_outreach_v1", "data is stored under ideovent_outreach_v1");
 check(!mem.map.has("ideovent_cms_v1") && [...mem.map.keys()].length === 1, "nothing is written to the CMS snapshot key");
@@ -246,6 +258,100 @@ for (const f of realFiles.filter(existsSync)) {
   check(res.added.length > 0, `${name}: imports at least one lead`);
   check(res.added.every((l) => l.instituteName && (l.phone || l.email || l.whatsapp)), `${name}: every lead has a name and a contact`);
   check(res.added.every((l) => !l.phone || /^\+\d{10,13}$/.test(l.phone)), `${name}: every phone is normalised`);
+}
+
+/* ── 5. One write per import ─────────────────────────────────────────────── */
+
+const thirty = ["Name,Phone,Email,City,Type"];
+for (let i = 0; i < 30; i++) thirty.push(`Batch School ${i + 1},98${String(10000000 + i).padStart(8, "0")},,Delhi,school`);
+const thirtyRows = M.parseCsv(thirty.join("\n") + "\n");
+
+/* Local: count setItem calls. */
+const counted = memStorage();
+let setCalls = 0;
+const countingStorage = { getItem: counted.getItem, setItem: (k, v) => (setCalls++, counted.setItem(k, v)) };
+const cStore = new M.LocalOutreachStore(countingStorage);
+const cRes = await cStore.importLeads(thirtyRows);
+check(cRes.added.length === 30, `local: 30-row import adds 30 (got ${cRes.added.length})`);
+check(setCalls === 1, `local: a 30-row import is ONE storage write (got ${setCalls})`);
+check((await cStore.listLeads()).length === 30, "local: all 30 are stored");
+
+/* Local: the single write fails, nothing is saved, the caller hears why. */
+const quota = memStorage();
+const failing = { getItem: quota.getItem, setItem: () => { throw new Error("QuotaExceededError"); } };
+let localErr = null;
+try { await new M.LocalOutreachStore(failing).importLeads(thirtyRows); } catch (e) { localErr = e; }
+check(localErr && /Quota/.test(localErr.message), "local: a failed write rejects with the reason");
+check((await new M.LocalOutreachStore(quota).listLeads()).length === 0, "local: a failed write leaves nothing behind");
+
+/* Supabase: a fake client that records every call. */
+function fakeSupabase({ failUpsert = false } = {}) {
+  const calls = { upsert: [], insert: [], del: 0 };
+  const stored = new Map();
+  const reader = () => {
+    const q = {
+      select: () => q, order: () => q, eq: () => q,
+      maybeSingle: async () => ({ data: null, error: null }),
+      range: async () => ({ data: [...stored.values()].map((r) => ({ id: r.id, data: r.data })), error: null }),
+    };
+    return q;
+  };
+  return {
+    calls, stored,
+    from: (table) => ({
+      ...reader(),
+      upsert: async (rows, opts) => {
+        const list = Array.isArray(rows) ? rows : [rows];
+        calls.upsert.push({ table, count: list.length, opts });
+        if (failUpsert) return { error: { message: "network down" } };
+        if (table === "outreach_leads") for (const r of list) stored.set(r.id, r);
+        return { error: null };
+      },
+      insert: async (rows) => (calls.insert.push({ table, count: [].concat(rows).length }), { error: null }),
+      delete: () => (calls.del++, reader()),
+    }),
+  };
+}
+const fake = fakeSupabase();
+globalThis.__fakeSupabase = fake;
+const sbRes = await new M.SupabaseOutreachStore().importLeads(thirtyRows);
+check(sbRes.added.length === 30, `supabase: 30-row import adds 30 (got ${sbRes.added.length})`);
+check(fake.calls.upsert.length === 1, `supabase: ONE upsert per import (got ${fake.calls.upsert.length})`);
+check(fake.calls.upsert[0]?.table === "outreach_leads" && fake.calls.upsert[0]?.count === 30, "supabase: that upsert carries all 30 rows to outreach_leads");
+check(fake.calls.insert.length <= 1, `supabase: at most one events insert (got ${fake.calls.insert.length})`);
+
+const bad = fakeSupabase({ failUpsert: true });
+globalThis.__fakeSupabase = bad;
+let sbErr = null;
+try { await new M.SupabaseOutreachStore().importLeads(thirtyRows); } catch (e) { sbErr = e; }
+check(sbErr && /nothing was saved/.test(sbErr.message) && /network down/.test(sbErr.message), "supabase: a failed upsert rejects, saying nothing was saved and why");
+check(bad.calls.upsert.length === 1 && bad.stored.size === 0, "supabase: no retry row by row, nothing stored");
+delete globalThis.__fakeSupabase;
+
+/* The downloadable template: its header is what the importer reads, its one example row imports. */
+const tplCsv = M.leadImportTemplateCsv();
+const tplParsed = M.parseCsv(tplCsv);
+check(tplParsed.length === 1, `template CSV has exactly one row (got ${tplParsed.length})`);
+const tRes = await new M.LocalOutreachStore(memStorage()).importLeads(tplParsed);
+const ex = tRes.added[0];
+check(tRes.added.length === 1 && tRes.skipped.length === 0, "template CSV imports exactly its one example lead");
+check(ex?.instituteName === "Example Public School" && ex?.phone === "+919876543210" && ex?.email === "office@example.org", "example lead: name, phone, email mapped");
+check(ex?.kind === "school" && ex?.city === "Saket, New Delhi" && ex?.contactName === "Principal (example)" && Boolean(ex?.observation) && Boolean(ex?.notes), "example lead: segment, city, contact, observation, notes read from the template's columns");
+check(new Set(M.LEAD_TEMPLATE_COLUMNS).size === M.LEAD_TEMPLATE_COLUMNS.length && M.LEAD_TEMPLATE_COLUMNS.includes("org_name") && M.LEAD_TEMPLATE_COLUMNS.includes("contact_phone"), "template header: unique LEAD-SHEET-TEMPLATE column names");
+console.log("      template columns: " + M.LEAD_TEMPLATE_COLUMNS.join(","));
+
+/* ── 6. upsertLeads: several leads, ONE write (CRM "Clean saved observations") ── */
+{
+  const base = memStorage();
+  let writes = 0;
+  const st = new M.LocalOutreachStore({ getItem: base.getItem, setItem: (k, v) => (writes++, base.setItem(k, v)) });
+  const a1 = await st.upsertLead({ instituteName: "Alpha Academy", observation: "curl 27 Sep: HTTP 200" });
+  const b1 = await st.upsertLead({ instituteName: "Beta Classes", observation: "Your site does not open on a phone." });
+  writes = 0;
+  const out = await st.upsertLeads([{ ...a1, observation: undefined }, { ...b1, observation: undefined }]);
+  const after = await st.listLeads();
+  check(writes === 1 && out.length === 2, "upsertLeads saves two leads in one storage write");
+  check(after.length === 2 && after.every((l) => !l.observation) && after.find((l) => l.id === a1.id)?.createdAt === a1.createdAt, "upsertLeads clears the fields and keeps createdAt");
 }
 
 /* ── Result ──────────────────────────────────────────────────────────────── */

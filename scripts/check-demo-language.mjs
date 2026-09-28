@@ -52,6 +52,10 @@ const DEVANAGARI = /[ऀ-ॿ]/;
 const TEMPLATE_IDS = [
   "s1-urban-cbse", "s2-rural-state-board", "s3-play-school", "s4-residential", "s5-international",
   "c1-jee-neet-urban", "c2-rural-tuition", "c3-science", "c4-foundation", "c5-government-jobs",
+  /* Dental (28 Sep 2026). Every dental template is bilingual like the rest:
+     LANG_ONLY=d1-family-dentist runs one. */
+  "d1-family-dentist", "d2-multispeciality", "d3-smile-studio", "d4-implant-centre",
+  "d5-ortho-aligners", "d6-kids-dental", "d7-dental-chain",
 ];
 
 // ── STRUCTURAL COPY PAIRS ───────────────────────────────────────────────────

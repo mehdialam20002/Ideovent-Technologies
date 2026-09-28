@@ -23,7 +23,10 @@ const KEYS = {
   xai: "xai-FAKExaiKEY00000000000000003",
   anthropic: "sk-ant-api03-FAKEanthropicKEY000000004",
 };
-const ALL_KEYS = Object.values(KEYS);
+// A second and third Gemini key, for the several-keys-per-provider cases (0008).
+const GEMINI2 = "AIzaFAKEgeminiSECONDkey0000000000000005";
+const GEMINI3 = "AIzaFAKEgeminiTHIRDkey00000000000000006";
+const ALL_KEYS = [...Object.values(KEYS), GEMINI2, GEMINI3];
 const IMG = { mimeType: "image/png", data: Buffer.from("fake poster bytes").toString("base64") };
 
 // ── The world the handler talks to ─────────────────────────────────────────
@@ -35,13 +38,21 @@ function reset(over = {}) {
     providers: {},         // provider -> (body) => Response
     calls: [],             // every fetch: { url, method, headers, body }
     runs: [],              // rows inserted into ai_poster_runs
-    patches: [],           // { provider, body } written to ai_provider_keys
+    patches: [],           // { id, provider, body } written to ai_provider_keys
+    legacy: false,         // true: the table is still 0006's shape (0008 not run)
     ...over,
   };
 }
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
-const row = (provider, extra = {}) => ({ provider, api_key: KEYS[provider], model: "", priority: 100,
+// A key row as 0008 stores it. `priority` in the older cases below was the
+// provider's place, which is now provider_priority; each provider's single
+// key is its "Key 1". keyRow() makes a second, third... key of a provider.
+let nextId = 0;
+const row = (provider, { priority = 100, ...extra } = {}) => ({ id: `id-${provider}-${++nextId}`, provider,
+  label: "Key 1", api_key: KEYS[provider], model: "", provider_priority: priority, priority: 10,
   enabled: true, last_error: null, last_error_at: null, ...extra });
+const keyRow = (provider, n, apiKey, { providerPriority = 100, ...extra } = {}) => ({
+  ...row(provider, { priority: providerPriority }), label: `Key ${n}`, api_key: apiKey, priority: n * 10, ...extra });
 
 globalThis.fetch = async (input, init = {}) => {
   const url = typeof input === "string" ? input : input.url;
@@ -62,15 +73,27 @@ globalThis.fetch = async (input, init = {}) => {
     if (u.pathname === "/rest/v1/rpc/is_admin") return json(200, token === "admin-token");
     if (u.pathname === "/rest/v1/ai_provider_keys" && method === "GET") {
       if (state.missingTable) return json(404, { code: "PGRST205", message: "Could not find the table 'public.ai_provider_keys'" });
+      const cols = (u.searchParams.get("select") || "").split(",");
+      // Before 0008 the new columns do not exist, and PostgREST says so.
+      if (state.legacy && cols.some((c) => ["id", "label", "provider_priority"].includes(c))) {
+        return json(400, { code: "42703", message: "column ai_provider_keys.id does not exist" });
+      }
       if (token !== "admin-token") return json(200, []); // what RLS does for a non-admin
-      return json(200, state.keys.filter((k) => k.enabled).sort((a, b) => a.priority - b.priority));
+      // Rows come back in NO particular order, on purpose: the handler must
+      // sort them itself (providers first, then keys), not trust the database.
+      const enabled = state.keys.filter((k) => k.enabled).reverse();
+      return json(200, enabled.map((k) => Object.fromEntries(cols.filter((c) => c in k).map((c) => [c, k[c]]))));
     }
     if (u.pathname === "/rest/v1/ai_provider_keys" && method === "PATCH") {
-      state.patches.push({ provider: u.searchParams.get("provider")?.replace(/^eq\./, ""), body: JSON.parse(body) });
+      const id = u.searchParams.get("id")?.replace(/^eq\./, "");
+      const byProvider = u.searchParams.get("provider")?.replace(/^eq\./, "");
+      state.patches.push({ id, provider: byProvider ?? state.keys.find((k) => k.id === id)?.provider, body: JSON.parse(body) });
       return new Response(null, { status: 204 });
     }
     if (u.pathname === "/rest/v1/ai_poster_runs" && method === "POST") {
-      state.runs.push(...JSON.parse(body));
+      const rows = JSON.parse(body);
+      if (state.legacy && rows.some((r) => "key_id" in r)) return json(400, { code: "PGRST204", message: "Could not find the 'key_id' column" });
+      state.runs.push(...rows);
       return new Response(null, { status: 201 });
     }
     return json(404, { message: "unmocked " + u.pathname });
@@ -282,6 +305,87 @@ check("gemini ok (a parked key is still pinged), openai fails, anthropic ok",
 check("each entry names its model", r.json.test.every((t) => typeof t.model === "string" && t.model), (v) => v);
 check("a passing ping un-parks gemini", state.patches.find((p) => p.provider === "gemini")?.body, (b) => b.last_error === null);
 check("the ping sent no image", state.calls.filter((c) => c.body.includes(IMG.data)).length, (n) => n === 0);
+
+// ── Several keys per provider (0008) ────────────────────────────────────────
+// A Gemini mock that answers per key: the key arrives in x-goog-api-key.
+const geminiByKey = (map) => (body, { headers }) => {
+  const fn = map[headers["x-goog-api-key"]];
+  if (!fn) throw new Error("a Gemini key that must not be used was used");
+  return fn(body);
+};
+const geminiKeysUsed = () => state.calls.filter((c) => c.url.includes("generativelanguage")).map((c) => c.headers["x-goog-api-key"]);
+const patchUrls = () => state.calls.filter((c) => c.method === "PATCH").map((c) => c.url);
+
+log("Two Gemini keys: the first is out of quota, the second reads it");
+reset({ keys: [keyRow("gemini", 1, KEYS.gemini, { providerPriority: 1 }), keyRow("gemini", 2, GEMINI2, { providerPriority: 1 }),
+  row("openai", { priority: 2 })],
+  providers: { gemini: geminiByKey({ [KEYS.gemini]: geminiQuota, [GEMINI2]: ok.gemini() }),
+    openai: () => { throw new Error("openai must not be called while a Gemini key works"); } } });
+const [g1, g2] = state.keys;
+r = await call({ body: { image: IMG } });
+check("200 from gemini", [r.status, r.json.provider], ([s, p]) => s === 200 && p === "gemini");
+check("Key 1 then Key 2, in that order", geminiKeysUsed(), (k) => k.join() === `${KEYS.gemini},${GEMINI2}`);
+check("attempts name each key by its label", r.json.attempts.map((a) => `${a.provider}/${a.label}:${a.status}`),
+  (a) => a.join() === "gemini/Key 1:limit,gemini/Key 2:ok");
+check("attempts carry no key id and no model", r.json.attempts, (a) => a.every((x) => !("keyId" in x) && !("model" in x)));
+check("ONLY Key 1 is parked, by its own id", state.patches.map((p) => [p.id, /^limit:/.test(p.body.last_error || "")]),
+  (p) => p.length === 2 && p.some(([id, lim]) => id === g1.id && lim) && p.some(([id, lim]) => id === g2.id && !lim));
+check("no patch touches the whole provider", patchUrls(), (u) => u.every((x) => /[?&]id=eq\./.test(x) && !/provider=/.test(x)));
+check("each run row records its key_id", state.runs.map((x) => `${x.key_id}:${x.status}`),
+  (a) => a.join() === `${g1.id}:limit,${g2.id}:ok`);
+
+log("Key 1 parked earlier today: skipped, Key 2 used straight away");
+reset({ keys: [keyRow("gemini", 1, KEYS.gemini, { providerPriority: 1, last_error: "limit: HTTP 429", last_error_at: now.toISOString() }),
+  keyRow("gemini", 2, GEMINI2, { providerPriority: 1 })],
+  providers: { gemini: geminiByKey({ [GEMINI2]: ok.gemini() }) } });
+r = await call({ body: { image: IMG } });
+check("Key 1 skipped, Key 2 read it", r.json.attempts.map((a) => `${a.label}:${a.status}`), (a) => a.join() === "Key 1:skipped,Key 2:ok");
+check("Key 1 was never called", geminiKeysUsed(), (k) => k.join() === GEMINI2);
+
+log("Both Gemini keys parked today: the next provider takes over");
+reset({ keys: [
+  keyRow("gemini", 1, KEYS.gemini, { providerPriority: 1, last_error: "limit: HTTP 429", last_error_at: now.toISOString() }),
+  keyRow("gemini", 2, GEMINI2, { providerPriority: 1, last_error: "limit: quota", last_error_at: now.toISOString() }),
+  row("openai", { priority: 2 })],
+  providers: { gemini: () => { throw new Error("parked Gemini keys must not be called"); }, openai: ok.responses() } });
+r = await call({ body: { image: IMG } });
+check("200 from openai", [r.status, r.json.provider], ([s, p]) => s === 200 && p === "openai");
+check("gemini Key 1 and Key 2 skipped, then openai", r.json.attempts.map((a) => `${a.provider}:${a.status}`),
+  (a) => a.join() === "gemini:skipped,gemini:skipped,openai:ok");
+
+log("Order: providers first, then keys inside each provider");
+reset({ keys: [
+  keyRow("gemini", 2, GEMINI2, { providerPriority: 20 }),
+  keyRow("openai", 1, KEYS.openai, { providerPriority: 10 }),
+  // A stale provider_priority on one Gemini key must not split Gemini in two.
+  keyRow("gemini", 1, KEYS.gemini, { providerPriority: 30 }),
+  keyRow("gemini", 3, GEMINI3, { providerPriority: 20 })],
+  providers: { openai: () => json(500, { error: { message: "down" } }), gemini: () => json(500, { error: { message: "down" } }) } });
+r = await call({ body: { image: IMG } });
+check("openai first, then Gemini Key 1, Key 2, Key 3", r.json.attempts.map((a) => `${a.provider}/${a.label}`),
+  (a) => a.join() === "openai/Key 1,gemini/Key 1,gemini/Key 2,gemini/Key 3");
+check("a plain error moves on to the provider's next key", geminiKeysUsed(), (k) => k.join() === [KEYS.gemini, GEMINI2, GEMINI3].join());
+check("502 all_failed once every key has failed", [r.status, r.json.code], ([s, c]) => s === 502 && c === "all_failed");
+
+log("test: true pings EVERY key, each named by id and label");
+reset({ keys: [keyRow("gemini", 1, KEYS.gemini, { providerPriority: 1, last_error: "limit: HTTP 429", last_error_at: now.toISOString() }),
+  keyRow("gemini", 2, GEMINI2, { providerPriority: 1 }), row("openai", { priority: 2 })],
+  providers: { gemini: geminiByKey({ [KEYS.gemini]: ok.gemini(), [GEMINI2]: geminiQuota }), openai: ok.responses() } });
+r = await call({ body: { test: true } });
+check("three results, in order", r.json.test?.map((t) => `${t.provider}/${t.label}:${t.ok}`),
+  (a) => a.join() === "gemini/Key 1:true,gemini/Key 2:false,openai/Key 1:true");
+check("each result has its key id", r.json.test.map((t) => t.keyId), (ids) => ids.join() === state.keys.map((k) => k.id).join());
+check("the ping un-parks Key 1 and parks Key 2, each by id", state.patches.map((p) => `${p.id}:${p.body.last_error === null ? "clear" : "err"}`),
+  (a) => a.includes(`${state.keys[0].id}:clear`) && a.includes(`${state.keys[1].id}:err`));
+
+log("Before 0008 is run: the old table shape still works");
+reset({ legacy: true, keys: [row("gemini", { priority: 1 }), row("openai", { priority: 2 })],
+  providers: { gemini: geminiQuota, openai: ok.responses() } });
+r = await call({ body: { image: IMG } });
+check("200 from openai after gemini's limit", [r.status, r.json.provider], ([s, p]) => s === 200 && p === "openai");
+check("errors are written by provider, as 0006 expects", patchUrls(), (u) => u.length === 2 && u.every((x) => /provider=eq\./.test(x)));
+check("runs are logged without key_id (the column does not exist yet)", state.runs.map((x) => "key_id" in x),
+  (a) => a.length === 2 && a.every((v) => !v));
 
 // ── The property that matters most ─────────────────────────────────────────
 log("Keys never leave");

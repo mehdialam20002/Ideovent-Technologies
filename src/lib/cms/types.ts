@@ -904,8 +904,12 @@ export type PitchMarket = "india" | "international";
  *    could carry, and "we will crop it later" is not a mechanism.
  * ───────────────────────────────────────────────────────────────────────── */
 
-/** Which template renders. A school sells admission; a coaching institute sells results. */
-export type DemoKind = "coaching" | "school";
+/**
+ * Which template renders. A school sells admission; a coaching institute sells
+ * results; a dental clinic (28 Sep 2026) sells trust and an appointment. The
+ * dental half of the record is `DemoSite.dental` (DentalContent below).
+ */
+export type DemoKind = "coaching" | "school" | "dental";
 
 /**
  * WHERE A DEMO IS IN ITS LIFE. This is the field the whole slot system turns
@@ -1000,7 +1004,16 @@ export type DemoTheme =
   | "timetable"
   | "register"
   | "folio"
-  | "courtyard";
+  | "courtyard"
+  /* Dental (28 September 2026), multi-page only. See
+     E:/myagency/_assets/DENTAL-ARCHITECTURE.md. */
+  | "haven"
+  | "meridian"
+  | "ivory"
+  | "anchor"
+  | "mint"
+  | "sprout"
+  | "harbour";
 
 /** What a fee is printed in. Drives a symbol and nothing else. */
 export type DemoCurrency = "INR" | "USD" | "GBP" | "AED" | "AUD";
@@ -1378,7 +1391,11 @@ export interface DemoReview {
   /** A video on their own channel: rendered as a poster that loads on tap. */
   videoUrl?: string;
   category?: string;
-  hi?: DemoHi<DemoReview, "quote" | "relation" | "source" | "category">;
+  /** Dental: when it was written, as the source shows it: "Aug 2026". */
+  date?: string;
+  /** Dental chains: the branch slug the review is about. */
+  branch?: string;
+  hi?: DemoHi<DemoReview, "quote" | "relation" | "source" | "category" | "date">;
 }
 
 /** A public rating, printed only with its count and a link to the profile. */
@@ -1521,7 +1538,13 @@ export interface DemoPost {
   excerpt?: string;
   body?: string;
   author?: string;
-  hi?: DemoHi<DemoPost, "title" | "excerpt" | "body" | "date" | "author">;
+  /** Dental (DCI 8.1.7): "Medically reviewed by Dr. X, MDS (Endodontics)". */
+  reviewedBy?: string;
+  /** Dental: a treatment slug the guide links to ("Book a consultation for ..."). */
+  treatment?: string;
+  /** "Implants", "Kids", "Braces". Filter chip on the blog list. */
+  category?: string;
+  hi?: DemoHi<DemoPost, "title" | "excerpt" | "body" | "date" | "author" | "reviewedBy" | "category">;
 }
 
 /** Coaching: the founder's story on About. */
@@ -1593,13 +1616,384 @@ export interface DemoFeesPolicy {
   hi?: DemoHi<DemoFeesPolicy, "intro" | "instalmentNote" | "refund" | "receipts" | "noIncrease" | "hostel" | "paymentModes" | "countsYear">;
 }
 
+/* ── DENTAL (28 September 2026) ───────────────────────────────────────────
+ * The dental half of a record: `DemoSite.dental`. Contract, page list and
+ * copy rules: E:/myagency/_assets/DENTAL-ARCHITECTURE.md, DENTAL-IA.md,
+ * DENTAL-COMPLIANCE.md. Rules the type cannot check:
+ *   - No "best", "painless", "guaranteed", "award-winning", "% off", "free".
+ *   - Prices are "starting from" an amount (digits only, no symbol), and
+ *     every price shows the diagnosis note (src/lib/demo/ui/dental/copy.ts).
+ *   - A specialist title only for a recognised MDS branch; the degree and the
+ *     specialisation are separate fields.
+ *   - Before-after on a template is an ILLUSTRATIVE PLACEHOLDER: no photo.
+ *     `before`/`after` are set only by a real clinic, with `consent: true`.
+ * Every text field has its Hindi twin in the object's own `hi`, as elsewhere.
+ */
+
+/** Icon keys the dental kit draws (src/lib/demo/ui/dental/icons.tsx). */
+export type DentalIcon =
+  | "tooth" | "checkup" | "cleaning" | "filling" | "root-canal" | "crown" | "bridge"
+  | "implant" | "denture" | "extraction" | "wisdom" | "braces" | "aligner" | "retainer"
+  | "whitening" | "veneer" | "smile" | "gum" | "kids" | "sealant" | "fluoride"
+  | "emergency" | "pain" | "swelling" | "broken" | "xray" | "scan" | "cbct" | "laser"
+  | "microscope" | "sterile" | "calendar" | "clock" | "shield" | "heart" | "globe"
+  | "rupee" | "family" | "senior" | "accessible" | "parking" | "metro";
+
+/**
+ * The seven first screens. Default: from the theme (haven, meridian:
+ * clinical-split; mint: clinical-reason; ivory: luxury-centred; sprout:
+ * kids-arch; anchor: calm-full; harbour: calm-branch).
+ */
+export type DentalHeroVariant =
+  | "luxury-centred" | "luxury-split" | "clinical-split" | "clinical-reason"
+  | "kids-arch" | "calm-full" | "calm-branch";
+
+export interface DentalHero {
+  variant?: DentalHeroVariant;
+  /** A FACT, never an award: "Smile design studio, Bandra West" or "Open today, 10 am to 8:30 pm". */
+  pill?: string;
+  /** May carry ONE *accent* phrase: "Your *smile journey* starts here". */
+  headline?: string;
+  /** 3 to 5 main treatments and the area: the 3-second rule. */
+  lead?: string;
+  /** Floating card on clinical-split: a standing fact such as "Evening slots from 5 pm, Mon to Sat". Never a live-looking "free today" claim on a template. */
+  nextSlot?: string;
+  /** Calm heroes: the lead surgeon's degree and registration number. */
+  credential?: string;
+  hi?: DemoHi<DentalHero, "pill" | "headline" | "lead" | "nextSlot" | "credential">;
+}
+
+export interface DentalDoctor {
+  /** URL segment for /doctors/<slug>. Derived from `name` when empty. */
+  slug?: string;
+  /** "Dr. Aditi Rao". Fictional on a template. */
+  name: string;
+  /** A stock portrait (people/dentist-*) on a template; a real photo needs `photoConsent`. */
+  photo?: string;
+  photoConsent?: boolean;
+  gender?: "female" | "male";
+  /** Earned, recognised degrees only: "BDS, MDS (Prosthodontics)". */
+  qualification: string;
+  /** A recognised MDS branch title ("Prosthodontist") or "General dentist". Never "Implantologist". */
+  specialisation?: string;
+  /** Areas of work: "Dental implants, full-mouth rehabilitation". */
+  focus?: string;
+  /** "12 years in practice". */
+  experience?: string;
+  /** "English", "Hindi", "Marathi". Filter chips on chains. */
+  languages?: string[];
+  /** State Dental Council registration: "Reg. no. A-00000 (sample)". */
+  regNo?: string;
+  /** Visiting specialists: "Tuesdays and Fridays, 5 to 8 pm". */
+  days?: string;
+  visiting?: boolean;
+  /** The lead dentist: long bio, first card, hero credential. One per site. */
+  lead?: boolean;
+  /** Chains: branch slugs this doctor sits at. */
+  branches?: string[];
+  /** Paragraphs separated by a blank line. With a bio the doctor gets /doctors/<slug>. */
+  bio?: string;
+  /** A short line in their voice about how they work. No boasting. */
+  quote?: string;
+  training?: string[];
+  memberships?: string[];
+  hi?: DemoHi<DentalDoctor, "name" | "qualification" | "specialisation" | "focus" | "experience" | "languages" | "days" | "bio" | "quote" | "training" | "memberships" | "regNo">;
+}
+
+export interface DentalTreatment {
+  /** URL segment for /treatments/<slug>. Required: pages and bookings key on it. */
+  slug: string;
+  name: string;
+  /** Specialty or problem group: "Implants", "Root canal and fillings", "Braces and aligners". */
+  category?: string;
+  icon?: DentalIcon;
+  /** A stock section photo on a template. Never a smile close-up. */
+  image?: string;
+  /** One or two lines for cards. */
+  summary: string;
+  /** "What is it": a paragraph. */
+  what?: string;
+  /** "Signs you may need it". */
+  symptoms?: string[];
+  /** "Who it suits". */
+  whoNeedsIt?: string[];
+  /** The treatment steps, in order. */
+  steps?: DemoPoint[];
+  /** "2 to 3 visits over 3 to 6 months". */
+  duration?: string;
+  /** "1 visit of about 60 minutes". */
+  visits?: string;
+  recovery?: string;
+  /** What you will feel, factually: "Done under local anaesthesia...". */
+  comfort?: string;
+  faqs?: DemoPoint[];
+  /** Amount only, as published: "3,500". Absent: consultation required. */
+  fromPrice?: string;
+  /** "per tooth", or "Cost after consultation and X-ray". The diagnosis note is added by the kit. */
+  priceNote?: string;
+  /** Large card on the home page (d3 signature treatments, d1 grid first). */
+  featured?: boolean;
+  /** Booking step-1 reason this treatment pre-selects (DentalReason.id). */
+  reason?: string;
+  hi?: DemoHi<DentalTreatment, "name" | "category" | "summary" | "what" | "symptoms" | "whoNeedsIt" | "duration" | "visits" | "recovery" | "comfort" | "priceNote">;
+}
+
+/** One technology item, written as the patient's benefit. */
+export interface DentalTech {
+  /** "Digital X-rays". */
+  title: string;
+  /** "A lower radiation dose than film, and the image is on screen in seconds." */
+  benefit: string;
+  group?: "diagnosis" | "comfort" | "precision" | "speed" | "preview" | "hygiene";
+  icon?: DentalIcon;
+  image?: string;
+  hi?: DemoHi<DentalTech, "title" | "benefit">;
+}
+
+/** One fee row. Never a fixed price for complex work. */
+export interface DentalFeeRow {
+  /** "Root canal treatment (front tooth)". */
+  treatment: string;
+  /** The treatment page it links to. */
+  slug?: string;
+  /** "Starting from" amount, digits only: "3,500". Empty: consultation required. */
+  from?: string;
+  /** "per tooth", "per arch", "per visit". */
+  unit?: string;
+  /** True for implants, full-mouth, smile makeover, aligners: prints "Cost after consultation and X-ray". */
+  consult?: boolean;
+  note?: string;
+  /** Grouping on the Fees page: "Consultation", "General", "Implants". */
+  group?: string;
+  hi?: DemoHi<DentalFeeRow, "treatment" | "unit" | "note" | "group" | "from">;
+}
+
+/** EMI, payment and insurance, in plain words (DENTAL-COMPLIANCE.md section 3). */
+export interface DentalPayment {
+  /** "EMI options may be available through partner lenders, subject to their approval." */
+  emi?: string;
+  /** "12 months at about Rs 2,900 a month on Rs 35,000": an illustration, labelled as one. */
+  emiExample?: string;
+  partners?: string[];
+  /** "UPI", "Debit and credit cards", "Cash". */
+  modes?: string[];
+  /** Only what the clinic confirms: "Cashless with some insurers; ask at the desk". */
+  insurance?: string;
+  /** "Consultation: Rs 300" or "First visit not charged. Treatment is charged as per the estimate you approve." */
+  consultFee?: string;
+  hi?: DemoHi<DentalPayment, "emi" | "emiExample" | "partners" | "modes" | "insurance" | "consultFee">;
+}
+
+/**
+ * A before-after case. On a template it has NO photos and renders as the
+ * labelled illustrative placeholder tile. A real clinic adds `before` and
+ * `after` with `consent: true` (written consent, cropped to teeth and lips).
+ */
+export interface DentalCase {
+  /** Filter chip: "Implants", "Braces", "Whitening", "Veneers", "Smile design". */
+  category: string;
+  /** Neutral caption: "Single missing lower molar replaced with an implant crown". */
+  title: string;
+  /** Treatment slug. */
+  treatment?: string;
+  /** "4 months, 3 visits". */
+  duration?: string;
+  /** For d5 filters: "Crowding", "Gaps", "Overbite". */
+  problem?: string;
+  before?: string;
+  after?: string;
+  consent?: boolean;
+  hi?: DemoHi<DentalCase, "category" | "title" | "duration" | "problem">;
+}
+
+/** One branch of a chain (d7) or a second chamber (d1). */
+export interface DentalBranch {
+  /** URL segment for /clinics/<slug>. Required. */
+  slug: string;
+  /** "Dwarka Sector 12". The area name, kept on a duplicate. */
+  name: string;
+  city?: string;
+  /** CLEARED on duplicate: address, phone, WhatsApp, map, landmark. */
+  addressLines?: string[];
+  phone?: string;
+  whatsapp?: string;
+  mapQuery?: string;
+  mapUrl?: string;
+  landmark?: string;
+  /** "Mon to Sat 10 am to 8 pm, Sun 10 am to 2 pm". Kept, like contact.hours. */
+  hours?: string;
+  /** Structured, for the Open now chip. Kept. */
+  sessions?: DentalSession[];
+  /** Doctor slugs at this branch. */
+  doctors?: string[];
+  photo?: string;
+  /** "Lift to the first floor", "Ground floor, ramp at the entrance". Cleared. */
+  access?: string;
+  parking?: string;
+  transit?: string;
+  hi?: DemoHi<DentalBranch, "name" | "city" | "addressLines" | "hours" | "landmark" | "access" | "parking" | "transit">;
+}
+
+/** One opening session, for the Open now chip. 0 is Sunday. Times "HH:MM", 24 hour. */
+export interface DentalSession {
+  days: number[];
+  from: string;
+  to: string;
+}
+
+export interface DentalEmergency {
+  /** "Tooth pain? Same-day emergency appointments". The kit adds "Same-day slots depend on availability". */
+  headline?: string;
+  intro?: string;
+  /** CLEARED on duplicate. Empty: the page uses contact.phone and contact.whatsapp. */
+  phone?: string;
+  whatsapp?: string;
+  /** "Emergency line answered 8 am to 10 pm". */
+  hours?: string;
+  /** "What counts as urgent": severe pain, swelling, a knocked-out tooth... */
+  urgent?: string[];
+  /** Numbered first aid: knocked-out tooth, broken tooth, bleeding after extraction. */
+  firstAid?: DemoPoint[];
+  /** "Can wait for a regular appointment". */
+  canWait?: string[];
+  hi?: DemoHi<DentalEmergency, "headline" | "intro" | "hours" | "urgent" | "canWait">;
+}
+
+/** The Kids page and the kids blocks (d6 whole site; d2, d5 one page). */
+export interface DentalKids {
+  intro?: string;
+  /** "First visit in 4 steps". */
+  firstVisit?: DemoPoint[];
+  /** Babies, kids, pre-teens: title "Babies (0 to 3)", body. */
+  ageBands?: DemoPoint[];
+  /** Fluoride, sealants, diet. */
+  prevention?: DemoPoint[];
+  /** Thumb sucking, bottle, mouth breathing. */
+  habits?: DemoPoint[];
+  /** Tell-show-do, parent can stay, sedation information. No guarantees. */
+  comfort?: DemoPoint[];
+  specialCare?: string;
+  parentFaq?: DemoPoint[];
+  hi?: DemoHi<DentalKids, "intro" | "specialCare">;
+}
+
+/** Booking step 1: "What do you need help with". */
+export interface DentalReason {
+  /** Stable key: "checkup", "pain", "root-canal", "implants", "braces", "whitening", "kids", "not-sure". */
+  id: string;
+  label: string;
+  icon?: DentalIcon;
+  /** Treatment slug it maps to. */
+  treatment?: string;
+  /** Tooth pain and swelling: shows "Emergency? Call now" and sorts first. */
+  urgent?: boolean;
+  hi?: DemoHi<DentalReason, "label">;
+}
+
+/** The booking widget's data. The demo sends nothing: it opens WhatsApp. */
+export interface DentalBooking {
+  reasons?: DentalReason[];
+  /** Slot labels, "10:00 am". Sample on a template. */
+  morning?: string[];
+  evening?: string[];
+  /** Weekdays with no slots, 0 is Sunday. */
+  closedDays?: number[];
+  /** "Closed on Sundays". */
+  closedNote?: string;
+  hi?: DemoHi<DentalBooking, "closedNote">;
+}
+
+/** A comparison table: braces vs aligners (d5), implant options (d4). */
+export interface DentalComparison {
+  title?: string;
+  /** Column heads: ["Metal braces", "Ceramic braces", "Clear aligners"]. */
+  columns: string[];
+  rows: { label: string; values: string[]; hi?: { label?: string; values?: string[] } }[];
+  note?: string;
+  hi?: { title?: string; columns?: string[]; note?: string };
+}
+
+/** Family care plan (d7). Factual price, no discount language. */
+export interface DentalPlan {
+  name: string;
+  price?: string;
+  period?: string;
+  includes?: string[];
+  note?: string;
+  hi?: DemoHi<DentalPlan, "name" | "period" | "includes" | "note" | "price">;
+}
+
+export interface DentalInternational {
+  intro?: string;
+  /** Plan, teleconsult, travel, treatment, review. */
+  steps?: DemoPoint[];
+  /** "Implants: plan for two trips, 3 to 4 months apart". */
+  stays?: DemoPoint[];
+  hi?: DemoHi<DentalInternational, "intro">;
+}
+
+/** How to reach the clinic. CLEARED on duplicate (it is the address's fact). */
+export interface DentalReach {
+  transit?: string;
+  parking?: string;
+  access?: string;
+  hi?: DemoHi<DentalReach, "transit" | "parking" | "access">;
+}
+
+/**
+ * THE DENTAL HALF OF A RECORD. Every field optional; each page leaves the nav
+ * when its data is missing (src/lib/demo/site/pages.ts, DENTAL_PAGES).
+ */
+export interface DentalContent {
+  hero?: DentalHero;
+  doctors?: DentalDoctor[];
+  treatments?: DentalTreatment[];
+  /** Specialty tiles (d2, d7): title, body, group = the treatment category it filters. */
+  specialties?: DemoPoint[];
+  technology?: DentalTech[];
+  fees?: DentalFeeRow[];
+  payment?: DentalPayment;
+  cases?: DentalCase[];
+  branches?: DentalBranch[];
+  emergency?: DentalEmergency;
+  kids?: DentalKids;
+  booking?: DentalBooking;
+  /** Structured opening hours for the Open now chip. Kept on duplicate. */
+  sessions?: DentalSession[];
+  reach?: DentalReach;
+  /** The sterilisation protocol, in steps. Home strip + About. */
+  sterilisation?: DemoPoint[];
+  /** Why patients trust us (About). Facts, not superlatives. */
+  trust?: DemoPoint[];
+  /** Journey steps: smile journey (d3), implant journey (d4), ortho journey (d5). */
+  journey?: DemoPoint[];
+  /** "Who this is for" (d4): missing tooth, loose denture, many teeth. */
+  audience?: DemoPoint[];
+  /** Candidate checklist (d4): diabetes, smoking, bone. */
+  candidate?: DemoPoint[];
+  comparison?: DentalComparison;
+  /** Comfort promise: what you will feel, anaesthesia, breaks. No guarantees. */
+  comfort?: DemoPoint[];
+  plans?: DentalPlan[];
+  corporate?: DemoPoint[];
+  international?: DentalInternational;
+  /** Legal name for the footer: "Sheesham Dental Care LLP (sample)". */
+  legalName?: string;
+  hi?: DemoHi<DentalContent, "legalName">;
+}
+
 /** Hindi versions of DemoSite's own top-level text fields. */
 /** See `DemoSite.sample` and src/lib/demo/site/sample.ts. */
 export interface DemoSampleMarks {
   /** The template id the content came from. */
   from: string;
   /** Block name to fingerprint, as the block landed on the copy. */
-  prints: Partial<Record<"faculty" | "results" | "fees" | "reviews" | "timings" | "photos", string>>;
+  prints: Partial<Record<
+    | "faculty" | "results" | "fees" | "reviews" | "timings" | "photos"
+    /* Dental (28 Sep 2026): the trust row, before-after cases, the doctors. */
+    | "stats" | "cases" | "doctors",
+    string
+  >>;
   /** Ticked in the admin: the results and reviews are the institute's own. */
   real?: boolean;
 }
@@ -1874,6 +2268,12 @@ export interface DemoSite extends BaseDoc {
   govExams?: DemoGovExams;
   olympiad?: DemoOlympiad;
   feesPolicy?: DemoFeesPolicy;
+
+  /* Dental (28 Sep 2026). Everything a clinic has that a school has not.
+     The shared fields above carry the rest: about, mission, vision,
+     established, stats (the trust row), reviews and rating, posts (the
+     guides), faq, photos, heroImage, sectionPhotos, contact. */
+  dental?: DentalContent;
 }
 
 /* ── The slot beside the demo: THE ADMIN HALF ──────────────────────────────

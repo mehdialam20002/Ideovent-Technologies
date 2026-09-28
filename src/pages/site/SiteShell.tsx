@@ -19,14 +19,17 @@ import { Helmet } from "react-helmet-async";
 import type { DemoSite } from "@/lib/cms/types";
 import { DEMO_HINDI_CSS, useDemoLangControl } from "@/lib/demo/language";
 import { tr } from "@/lib/demo/site/bilingual";
-import { SiteCtx, courseSlug, postSlug, type SiteContext, type SitePageProps } from "@/lib/demo/site/context";
+import { SiteCtx, branchSlug, courseSlug, doctorSlug, postSlug, treatmentSlug, type SiteContext, type SitePageProps } from "@/lib/demo/site/context";
 import { matchPage, visiblePages, type SitePageDef } from "@/lib/demo/site/pages";
 import type { SitePageId } from "@/lib/demo/site/pageSets";
-import { siteThemeFor, siteThemeStyle } from "@/lib/demo/site/themes";
+import { dentalThemeFor, siteThemeFor, siteThemeStyle } from "@/lib/demo/site/themes";
 import { DemoMarker, DemoRibbon } from "./DemoMarker";
 import { PageStub } from "./kit/PageStub";
 import { Header } from "./shell/Header";
 import { BottomBar, Footer } from "./shell/Footer";
+
+/* Lazy, so a school or coaching page never downloads the dental chrome. */
+const DentalChrome = lazy(() => import("./dental/shell/DentalShell"));
 import "./site.css";
 
 /* One lazy component per page definition, made once. */
@@ -98,7 +101,8 @@ export default function SiteShell({ site: record, basePath, rest, isPreview }: {
   rest: string;
   isPreview: boolean;
 }) {
-  const theme = siteThemeFor(record.kind, record.theme)!;
+  /* A dental record has no single page to fall back to, so its theme is never null. */
+  const theme = record.kind === "dental" ? dentalThemeFor(record.theme) : siteThemeFor(record.kind, record.theme)!;
   const { lang, setLang, offered } = useDemoLangControl(record);
   const site = useMemo(() => inLanguage(record, lang), [record, lang]);
   const reduced = useReducedMotion();
@@ -115,6 +119,10 @@ export default function SiteShell({ site: record, basePath, rest, isPreview }: {
         if (!param) return null;
         if (id === "course" && !(site.courses || []).some((c) => c.name && courseSlug(c) === param)) return null;
         if (id === "post" && !(site.posts || []).some((p) => p.title && postSlug(p) === param)) return null;
+        const dental = site.dental || {};
+        if (id === "treatment" && !(dental.treatments || []).some((t) => t.name && treatmentSlug(t) === param)) return null;
+        if (id === "doctor" && !(dental.doctors || []).some((d) => d.name && (d.bio || d.hi?.bio) && doctorSlug(d) === param)) return null;
+        if (id === "clinic" && !(dental.branches || []).some((b) => b.name && branchSlug(b) === param)) return null;
         return `${basePath}/${def.path.replace(/:[a-z]+/, encodeURIComponent(param))}`;
       }
       return def.path ? `${basePath}/${def.path}` : basePath;
@@ -148,17 +156,32 @@ export default function SiteShell({ site: record, basePath, rest, isPreview }: {
         data-kind={site.kind} lang={lang === "hi" ? "hi-IN" : undefined} style={siteThemeStyle(theme)}>
         {lang === "hi" && <style>{DEMO_HINDI_CSS}</style>}
         <DemoRibbon site={site} />
-        <Header />
-        <main id="ds-main">
-          {/* A full screen, not 70vh: under the ribbon and header, 70vh left the
-              footer's top edge on screen at 390x844 and the page chunk then
-              pushed it out (CLS 0.053 on /site/<slug>). */}
+        {site.kind === "dental" ? (
+          /* Dental chrome (28 Sep 2026): top bar with Emergency, Call,
+             WhatsApp and Book; sticky header; the mobile action bar; the
+             booking sheet; the dental footer. See ./dental/shell/. */
           <Suspense fallback={<div className="min-h-screen" />}>
-            {Page ? <Page site={site} ctx={ctx} /> : <PageStub site={site} ctx={ctx} />}
+            <DentalChrome>
+              <Suspense fallback={<div className="min-h-screen" />}>
+                {Page ? <Page site={site} ctx={ctx} /> : <PageStub site={site} ctx={ctx} />}
+              </Suspense>
+            </DentalChrome>
           </Suspense>
-        </main>
-        <Footer />
-        <BottomBar />
+        ) : (
+          <>
+            <Header />
+            <main id="ds-main">
+              {/* A full screen, not 70vh: under the ribbon and header, 70vh left the
+                  footer's top edge on screen at 390x844 and the page chunk then
+                  pushed it out (CLS 0.053 on /site/<slug>). */}
+              <Suspense fallback={<div className="min-h-screen" />}>
+                {Page ? <Page site={site} ctx={ctx} /> : <PageStub site={site} ctx={ctx} />}
+              </Suspense>
+            </main>
+            <Footer />
+            <BottomBar />
+          </>
+        )}
         <DemoMarker site={site} />
       </div>
       <Helmet>

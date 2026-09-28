@@ -7,7 +7,8 @@
  * THE RULE (src/lib/demo/site/bilingual.ts): a plain text field on a demo
  * record is English; its Hindi goes in the object's own `hi` block under the
  * same key. So Devanagari anywhere in a template OUTSIDE a `hi` block is the
- * leak: the English page would print it. This walks all ten templates and
+ * leak: the English page would print it. This walks every template (school,
+ * coaching and dental) and
  * fails on each such string, naming the path.
  *
  * It also fails when a `hi` block carries a key its object does not have in

@@ -15,10 +15,11 @@
 
 import { tr } from "@/lib/demo/site/bilingual";
 import { useSite } from "@/lib/demo/site/context";
-import { SAMPLE_COPY, showSampleLine } from "@/lib/demo/site/sample";
+import { SAMPLE_COPY, showSampleLine, type SampleLineBlock } from "@/lib/demo/site/sample";
 
 export function SampleNote({ block, className = "", onDark = false }: {
-  block: "results" | "reviews";
+  /** Dental adds "stats" (trust row), "cases" (before-after) and "doctors". */
+  block: SampleLineBlock;
   className?: string;
   /** True on a dark band, so the line keeps its contrast. */
   onDark?: boolean;
@@ -28,6 +29,18 @@ export function SampleNote({ block, className = "", onDark = false }: {
   const text = tr(SAMPLE_COPY[block], lang);
   const ink = onDark ? "text-white/80" : "text-[hsl(var(--ds-ink-soft))]";
 
+  /* Dental families (28 Sep 2026): a soft pill on clinical and luxury (gold
+     dot on luxury), a hairline caption on calm. Same words everywhere. */
+  if (family === "clinical" || family === "luxury" || family === "calm") {
+    return (
+      <p data-sample-note={block} className={`${className} flex`}>
+        <span className={`inline-flex items-center gap-2 ${family === "calm" ? "border-t pt-2 text-[13px]" : "rounded-full border px-3 py-1 text-xs"} font-medium ${onDark ? "border-white/30" : family === "calm" ? "border-[hsl(var(--ds-line))]" : "border-[hsl(var(--ds-line))] bg-[hsl(var(--ds-surface))]/80"} ${ink}`}>
+          <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${family === "luxury" ? "bg-[hsl(var(--ds-rule))]" : "bg-[hsl(var(--ds-accent))]"}`} />
+          {text}
+        </span>
+      </p>
+    );
+  }
   if (family === "modern") {
     return (
       <p data-sample-note={block} className={`${className} flex`}>

@@ -124,7 +124,7 @@ export default function ContactFormBody() {
           Sent. Thank you{firstName ? `, ${firstName}` : ""}.
         </h3>
         <p className="mt-3 text-[16px] leading-relaxed text-muted-foreground">
-          Mehdi Alam, the founder, will {form.need === "software" ? "read what you sent" : "look at your site"} and reply {phone.ok && phone.kind === "landline" ? "by phone on " : "on WhatsApp to "}
+          Mehdi Alam will {form.need === "software" ? "read what you sent" : "look at your site"} and reply {phone.ok && phone.kind === "landline" ? "by phone on " : "on WhatsApp to "}
           <span className="font-medium text-foreground">{phone.ok ? unbreakable(phone.display) : form.phone}</span>.{" "}
           {contact.responseTimePromise}
         </p>

@@ -44,6 +44,9 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 };
 
 export type LeadKind = "school" | "coaching" | "other";
+export type LeadPitch = "new_website" | "fix_website";
+/** The value of `source` on a lead the Lead Finder added. */
+export const LEAD_FINDER_SOURCE = "lead-finder";
 export type LeadLanguage = "en" | "hinglish" | "hi";
 
 export interface OutreachLead {
@@ -63,8 +66,16 @@ export interface OutreachLead {
   website?: string;
   city?: string;
   state?: string;
-  /** Where the lead came from, e.g. GMAPS, SCHOOL_DIRECTORY, CSV import. */
+  /** Where the lead came from, e.g. GMAPS, SCHOOL_DIRECTORY, CSV import, lead-finder. */
   source?: string;
+  /**
+   * Google Maps place ID, set by the Lead Finder. Google's terms let a place ID
+   * be kept indefinitely; its phone, address and rating are NOT copied here
+   * (they are shown live in the finder), except a phone Mehdi saves by hand.
+   */
+  placeId?: string;
+  /** What to offer: a new website (none or broken) or fixing theirs (poor). */
+  pitch?: LeadPitch;
   status: LeadStatus;
   /** The demoSites record id and slug (public link /site/<slug>). */
   demoId?: string;
@@ -100,13 +111,25 @@ export interface OutreachSettings {
   /** The Google account Gmail compose opens in (authuser=). Empty = browser default. */
   senderGmail?: string;
   signature: string;
-  /** WHATSAPP-PLAYBOOK.md section 1.2: hard cap of 10 cold first-contact messages a day. */
-  whatsappDailyCap: number;
+  /**
+   * RETIRED. It was a forced cap of 10 a day, and every saved settings row
+   * carries that 10, so it cannot mean "Mehdi chose 10". Nothing reads it any
+   * more; `whatsappDailyLimit` replaced it (28 Sep 2026: "remove the WhatsApp
+   * limit of 10, keep it unlimited"). Kept so old rows still load.
+   */
+  whatsappDailyCap?: number;
+  /** Optional daily limit on first WhatsApp messages. Empty or 0: no limit (the default). */
+  whatsappDailyLimit?: number;
   /** "HH:MM", 24-hour, India time. Sending inside the window only warns. */
   quietStart: string;
   quietEnd: string;
   alertOnDemoOpen: boolean;
   alertEmail?: string;
+  /**
+   * When a demo is made from a template or a poster, also add (or link) a
+   * lead for it, so every demo can be tracked in the CRM. Missing means on.
+   */
+  autoAddDemos?: boolean;
 }
 
 /** What a caller passes to upsertLead: id and timestamps are filled in when missing. */

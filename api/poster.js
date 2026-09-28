@@ -17,14 +17,17 @@
  * public.is_admin() is asked AS THE CALLER, and the keys are read AS THE
  * CALLER, so the RLS in 0006 is what actually guards them. No service_role key.
  *
- * ONE KEY PER PROVIDER, AND WHAT "FALLBACK" MEANS
+ * SEVERAL KEYS PER PROVIDER, AND WHAT "FALLBACK" MEANS
  *
- * Fallback is to a DIFFERENT PROVIDER: Gemini's free tier, then whichever paid
- * provider comes next. Rotating several free accounts of one provider to dodge
- * its limit is against that provider's terms, so the table allows one key per
- * provider and this function never retries the same provider with another.
- * A key that reports a quota or rate limit is parked until tomorrow (India
- * time), so the next posters today go straight to the next provider.
+ * Since 0008 a provider can hold several keys. They are tried in the admin's
+ * order: every key of the first provider, top to bottom, then every key of the
+ * next provider, until one reads the poster. A key that reports a quota or
+ * rate limit is parked until tomorrow (India time) BY ITS OWN ID, so the next
+ * posters today go straight to that provider's next key, and once all of a
+ * provider's keys are parked, straight to the next provider. Before 0008 is
+ * run the table has one key per provider and this behaves exactly as it did.
+ * The admin page carries the note about provider terms; this function does
+ * not second-guess which keys the admin saved.
  *
  * TIME
  *
@@ -94,15 +97,16 @@ function parseRequest(body) {
   return { image: { mimeType: img.mimeType, data }, kind, templateHint };
 }
 
-/** One provider, one attempt. Returns an attempt record; never throws. */
+/** One key, one attempt. Returns an attempt record; never throws. */
 async function attempt(row, job, timeoutMs) {
   const provider = row.provider;
+  const who = { provider, keyId: row.id || null, label: row.label || null };
   const model = (row.model || "").trim() || DEFAULT_MODELS[provider];
   const adapter = ADAPTERS[provider];
   try {
     if (job.test) {
       await adapter.ping({ apiKey: row.api_key, model, timeoutMs });
-      return { provider, model, status: "ok" };
+      return { ...who, model, status: "ok" };
     }
     const text = await adapter.read({ apiKey: row.api_key, model, image: job.image,
       prompt: buildPrompt(job.kind), timeoutMs });
@@ -112,10 +116,10 @@ async function attempt(row, job, timeoutMs) {
     // Nothing but `kind` means this model saw nothing it could use (a blurred
     // photo, the wrong image). Another provider may read it; say so honestly.
     if (Object.keys(extracted).length <= 1) throw new Error("Nothing readable on the poster");
-    return { provider, model, status: "ok", extracted, modelTemplate };
+    return { ...who, model, status: "ok", extracted, modelTemplate };
   } catch (e) {
     const detail = redact(e?.message || String(e), row.api_key);
-    return { provider, model, status: e?.limit ? "limit" : "error", detail };
+    return { ...who, model, status: e?.limit ? "limit" : "error", detail };
   }
 }
 
@@ -173,6 +177,9 @@ export default async function handler(req, res) {
   const logged = [];
   let winner = null;
   const today = istDay(Date.now());
+  // The label tells two keys of one provider apart in the attempts list. It is
+  // the admin's own name for the key ("Key 2"), never any part of the key.
+  const tag = (row) => (row.label ? { label: row.label } : {});
   for (const row of rows) {
     const left = BUDGET_MS - (Date.now() - started);
     // A test pings every key, including one parked for today: the admin
@@ -180,16 +187,17 @@ export default async function handler(req, res) {
     if (!job.test && winner) break;
     if (!job.test && /^limit:/.test(row.last_error || "") && row.last_error_at &&
         istDay(Date.parse(row.last_error_at)) === today) {
-      attempts.push({ provider: row.provider, status: "skipped", error: "Out of quota today. Tried again tomorrow." });
+      attempts.push({ provider: row.provider, ...tag(row), status: "skipped", error: "Out of quota today. Tried again tomorrow." });
       continue;
     }
     if (left < MIN_ATTEMPT_MS) {
-      attempts.push({ provider: row.provider, status: "skipped", error: "Out of time" });
+      attempts.push({ provider: row.provider, ...tag(row), status: "skipped", error: "Out of time" });
       continue;
     }
     const a = await attempt(row, job, Math.min(PER_ATTEMPT_MS, left - 1000));
-    attempts.push({ provider: a.provider, model: a.model, status: a.status, ...(a.detail ? { error: a.detail } : {}) });
-    logged.push({ provider: a.provider, status: a.status, detail: job.test ? `Test: ${a.detail || "ok"}` : a.detail });
+    attempts.push({ provider: a.provider, ...tag(row), keyId: a.keyId, model: a.model, status: a.status,
+      ...(a.detail ? { error: a.detail } : {}) });
+    logged.push({ provider: a.provider, keyId: a.keyId, status: a.status, detail: job.test ? `Test: ${a.detail || "ok"}` : a.detail });
     if (a.status !== "ok") console.error(`poster: ${a.provider} ${a.status}`);
     if (!job.test && a.status === "ok") winner = a;
   }
@@ -197,10 +205,14 @@ export default async function handler(req, res) {
   await recordAttempts(env, token, logged);
 
   if (job.test) {
+    // keyId lets the admin page put each result beside its own key. An id is
+    // a row number, not a secret: the key itself is never in this list.
     return send(res, 200, { ok: true, test: attempts.map((a) => ({ provider: a.provider,
+      ...(a.keyId ? { keyId: a.keyId } : {}), ...(a.label ? { label: a.label } : {}),
       model: a.model || DEFAULT_MODELS[a.provider], ok: a.status === "ok", ...(a.error ? { error: a.error } : {}) })) });
   }
-  if (!winner) return send(res, 502, { ok: false, code: "all_failed", attempts, error: "No provider could read the poster. Fill the details by hand." });
+  const listed = attempts.map(({ keyId, ...rest }) => rest);
+  if (!winner) return send(res, 502, { ok: false, code: "all_failed", attempts: listed, error: "No provider could read the poster. Fill the details by hand." });
 
   return send(res, 200, {
     ok: true,
@@ -208,6 +220,6 @@ export default async function handler(req, res) {
     model: winner.model,
     extracted: winner.extracted,
     suggestedTemplate: chooseTemplate(winner.extracted, job.templateHint, winner.modelTemplate),
-    attempts: attempts.map(({ model, ...rest }) => rest),
+    attempts: listed.map(({ model, ...rest }) => rest),
   });
 }

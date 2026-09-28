@@ -6,6 +6,9 @@
   "functions": {
     "api/poster.js": {
       "maxDuration": 60
+    },
+    "api/leads-search.js": {
+      "maxDuration": 30
     }
   },
   "redirects": [
@@ -85,7 +88,7 @@
       "destination": "/api/share?kind=pitch&slug=:slug"
     },
     {
-      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|disclaimer|eduflow|faq|icons|ii|internship|launchpad|login|og|outreach|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|site|submissions|templates|terms|verify|work)/?$)[^/.]+)",
+      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|crm|demos|disclaimer|eduflow|faq|finder|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|work)/?$)[^/.]+)",
       "has": [
         {
           "type": "header",
@@ -163,7 +166,7 @@
       ]
     },
     {
-      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|disclaimer|eduflow|faq|icons|ii|internship|launchpad|login|og|outreach|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|site|submissions|templates|terms|verify|work)/?$)[^/.]+)",
+      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|crm|demos|disclaimer|eduflow|faq|finder|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|work)/?$)[^/.]+)",
       "headers": [
         {
           "key": "X-Robots-Tag",

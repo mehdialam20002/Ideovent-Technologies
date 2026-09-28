@@ -2,15 +2,15 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS, type LeadStatus } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
-import { LeadRow } from "./LeadRow";
-import { inputCls } from "./ui";
+import { LeadRow, leadListCls } from "./LeadRow";
+import { inputCls, summaryCls } from "./ui";
 
 type Sort = "next" | "updated" | "created" | "name";
 
 const selectCls =
   "h-11 w-full rounded-xl border border-input bg-background px-3 text-base outline-none focus:border-primary sm:text-sm";
 
-/** Every lead, with search, three filters and a sort. */
+/** Every lead: a search box, and the filters and sort folded under it. */
 export function LeadsTab({ onOpen }: { onOpen: (id: string) => void }) {
   const { leads } = useOutreach();
   const [q, setQ] = useState("");
@@ -53,48 +53,52 @@ export function LeadsTab({ onOpen }: { onOpen: (id: string) => void }) {
 
   return (
     <div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="relative sm:col-span-2 lg:col-span-5">
-          <label htmlFor="lead-search" className="sr-only">Search leads</label>
-          <Search className="pointer-events-none absolute left-3 top-1/2 mt-[3px] h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <input id="lead-search" className={inputCls + " pl-9"} placeholder="Name, phone, email, city, note" value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-        <select aria-label="Status" className={selectCls} value={status} onChange={(e) => setStatus(e.target.value as any)}>
-          <option value="open">Open leads</option>
-          <option value="">All statuses</option>
-          {LEAD_STATUSES.map((s) => (
-            <option key={s} value={s}>{LEAD_STATUS_LABELS[s]}</option>
-          ))}
-        </select>
-        <select aria-label="Kind" className={selectCls} value={kind} onChange={(e) => setKind(e.target.value)}>
-          <option value="">Schools and coaching</option>
-          <option value="school">Schools</option>
-          <option value="coaching">Coaching</option>
-          <option value="other">Other</option>
-        </select>
-        <select aria-label="City" className={selectCls} value={city} onChange={(e) => setCity(e.target.value)}>
-          <option value="">All cities</option>
-          {cities.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        <select aria-label="Sort" className={selectCls + " lg:col-span-2"} value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
-          <option value="next">Sort: next follow-up</option>
-          <option value="updated">Sort: recently changed</option>
-          <option value="created">Sort: newest added</option>
-          <option value="name">Sort: name A to Z</option>
-        </select>
+      <div className="relative">
+        <label htmlFor="lead-search" className="sr-only">Search leads</label>
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+        <input id="lead-search" className={inputCls + " mt-0 pl-9"} placeholder="Search name, phone, email, city" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
-      <p className="mb-2 mt-4 text-sm text-muted-foreground">
-        {shown.length} of {leads.length} {leads.length === 1 ? "lead" : "leads"}
-      </p>
+      <details className="mt-2">
+        <summary className={summaryCls}>
+          <span>Filters and sort</span>
+          <span className="ml-auto text-xs font-normal">{shown.length} of {leads.length} {leads.length === 1 ? "lead" : "leads"}</span>
+        </summary>
+        <div className="grid gap-2 pb-2 pt-1 sm:grid-cols-2 lg:grid-cols-4">
+          <select aria-label="Status" className={selectCls} value={status} onChange={(e) => setStatus(e.target.value as any)}>
+            <option value="open">Open leads</option>
+            <option value="">All statuses</option>
+            {LEAD_STATUSES.map((s) => (
+              <option key={s} value={s}>{LEAD_STATUS_LABELS[s]}</option>
+            ))}
+          </select>
+          <select aria-label="Kind" className={selectCls} value={kind} onChange={(e) => setKind(e.target.value)}>
+            <option value="">Every kind</option>
+            <option value="school">Schools</option>
+            <option value="coaching">Coaching</option>
+            <option value="other">Other businesses</option>
+          </select>
+          <select aria-label="City" className={selectCls} value={city} onChange={(e) => setCity(e.target.value)}>
+            <option value="">All cities</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <select aria-label="Sort" className={selectCls} value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+            <option value="next">Sort: next follow-up</option>
+            <option value="updated">Sort: recently changed</option>
+            <option value="created">Sort: newest added</option>
+            <option value="name">Sort: name A to Z</option>
+          </select>
+        </div>
+      </details>
+
       {shown.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          {leads.length ? "No lead matches these filters." : "No leads yet. Tap New lead, or paste a list under Import."}
+        <p className="mt-2 rounded-2xl bg-muted/40 p-8 text-center text-sm text-muted-foreground">
+          {leads.length ? "No lead matches." : "No leads yet. Tap New lead, or paste a list under Import."}
         </p>
       ) : (
-        <ul className="space-y-2" data-testid="lead-list">
+        <ul className={leadListCls + " mt-2"} data-testid="lead-list">
           {shown.map((l) => (
             <LeadRow key={l.id} lead={l} onOpen={onOpen} />
           ))}

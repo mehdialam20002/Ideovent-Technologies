@@ -125,17 +125,31 @@ export class SupabaseStore implements Store {
     return JSON.stringify(this.cache, null, 2);
   }
 
+  /**
+   * Upserts ONLY the documents in the file; a singleton given as an object
+   * replaces that section. Keys starting with "_" (the import template's
+   * _readme and _example_demoSite) are skipped explicitly, as are other
+   * non-array values and documents without an id. So the downloadable
+   * template (src/lib/cms/importTemplate.ts), imported as it is, writes nothing.
+   */
   async importJson(json: string): Promise<ContentData> {
     const parsed = JSON.parse(json) as ContentData;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("the file is not a content JSON object");
     const rows: any[] = [];
-    for (const key of SINGLETONS) if ((parsed as any)[key]) rows.push({ collection: key, doc_id: "_", data: (parsed as any)[key] });
+    for (const key of SINGLETONS) {
+      const v = (parsed as any)[key];
+      if (v && typeof v === "object" && !Array.isArray(v)) rows.push({ collection: key, doc_id: "_", data: v });
+    }
     for (const [col, val] of Object.entries(parsed)) {
+      if (col.startsWith("_")) continue;
       if (SINGLETONS.includes(col as SingletonKey)) continue;
       if (SKIP_ON_IMPORT.includes(col as CollectionKey)) continue;
-      if (Array.isArray(val)) for (const d of val) rows.push({ collection: col, doc_id: (d as BaseDoc).id, data: d });
+      if (Array.isArray(val)) for (const d of val) if ((d as BaseDoc)?.id) rows.push({ collection: col, doc_id: (d as BaseDoc).id, data: d });
     }
-    const { error } = await supabase().from(TABLE).upsert(rows, { onConflict: "collection, doc_id" });
-    if (error) throw error;
+    if (rows.length) {
+      const { error } = await supabase().from(TABLE).upsert(rows, { onConflict: "collection, doc_id" });
+      if (error) throw error;
+    }
     return this.load();
   }
 }

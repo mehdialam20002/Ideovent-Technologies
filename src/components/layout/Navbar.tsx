@@ -602,7 +602,7 @@ export default function Navbar() {
                                 <span className="block text-sm font-medium text-foreground">{link.label}</span>
                                 {/* Deliberately NOT clamped. At 1024px these columns are
                                     about 300px wide and line-clamp-2 cut the end off the
-                                    longer lines, including the "Built by our founder at
+                                    longer lines, including the "Built by Mehdi Alam at
                                     Witness The Fitness Pvt. Ltd." attribution that
                                     _assets/FACTS.md requires to travel with that card. */}
                                 {link.description && (

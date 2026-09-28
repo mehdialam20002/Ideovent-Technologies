@@ -36,7 +36,7 @@ export function NewLeadForm({ onCancel, onCreated, onOpen }: { onCancel: () => v
       <button type="button" onClick={onCancel} className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
       </button>
-      <h2 className="mb-4 font-display text-xl font-semibold">New lead</h2>
+      <h1 className="mb-4 font-display text-xl font-semibold">New lead</h1>
       <LeadFields value={draft} onChange={setDraft} onOpenDuplicate={onOpen} tried={tried} />
       {err && <p role="alert" className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">{err}</p>}
       <div className="mt-6 flex flex-wrap gap-3">

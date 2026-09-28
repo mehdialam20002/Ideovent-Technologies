@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Lock, Loader2 } from "lucide-react";
 import { useAdminAuth } from "@/admin/auth";
 import { Aurora } from "@/components/ui/aurora";
@@ -9,9 +9,22 @@ const fieldCls =
   "w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-colors " +
   "focus:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
+/*
+  Back to where the sign-in was asked for (ProtectedRoute passes it as
+  state.from). Matters for the CRM: it opens in a new tab, and in local mode
+  the session is per tab, so the new tab signs in and must land on /crm, not
+  on the admin dashboard. Only our own two apps are accepted.
+*/
+function returnPath(state: unknown): string {
+  const from = (state as { from?: unknown } | null)?.from;
+  if (typeof from !== "string" || from.startsWith("/admin/login")) return "/admin";
+  return /^\/(admin|crm)(\/|$)/.test(from) ? from : "/admin";
+}
+
 export default function AdminLogin() {
   const { login, mode, authed } = useAdminAuth();
   const navigate = useNavigate();
+  const back = returnPath(useLocation().state);
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [error, setError] = useState("");
@@ -25,8 +38,8 @@ export default function AdminLogin() {
     the site, and a real re-entrancy bug rather than a lint nit.
   */
   useEffect(() => {
-    if (authed) navigate("/admin", { replace: true });
-  }, [authed, navigate]);
+    if (authed) navigate(back, { replace: true });
+  }, [authed, navigate, back]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +47,7 @@ export default function AdminLogin() {
     setError("");
     const res = await login(a, b);
     setBusy(false);
-    if (res.ok) navigate("/admin", { replace: true });
+    if (res.ok) navigate(back, { replace: true });
     else setError(res.error || "Login failed");
   };
 

@@ -94,7 +94,7 @@ async function staticRoutes() {
     if (!m) continue;
     const route = m[1];
     if (route.includes(":") || route.includes("*")) continue; // parameterised
-    if (route === "/admin" || route.startsWith("/admin/")) continue;
+    if (route === "/admin" || route.startsWith("/admin/") || route === "/crm" || route.startsWith("/crm/")) continue;
     if (line.includes("<Navigate")) continue; // legacy alias, 301 in _redirects
     const kind = line.match(/<Legal\s+kind="([a-z]+)"/);
     if (kind) legal.push([kind[1], route]);

@@ -22,7 +22,8 @@
  *
  * sabotages the real modules after loading them: a demo link is slipped into
  * every first WhatsApp template, render() stops appending the opt-out line,
- * the Gmail link drops the subject and checkSend forgets do_not_contact. The
+ * the Gmail link drops the subject, checkSend forgets do_not_contact and
+ * brings back the old hard cap of 10 WhatsApp messages a day. The
  * run must then FAIL, which proves these checks can fail. It exits 0 only when
  * the expected failures were seen.
  *
@@ -90,8 +91,10 @@ if (NEGATIVE) {
     return { ...r, body: r.body.replace(real.EMAIL_OPT_OUT_EN, "").replace(real.EMAIL_OPT_OUT_HINGLISH, "").trim() };
   };
   M.gmailComposeUrl = (input) => real.gmailComposeUrl({ ...input, subject: "" });
-  M.checkSend = (lead, ...rest) =>
-    real.checkSend(lead.status === "do_not_contact" ? { ...lead, status: "contacted" } : lead, ...rest);
+  // ...and the old hard cap of 10 comes back when no limit is set.
+  M.checkSend = (lead, t, ch, settings, count, ...rest) =>
+    real.checkSend(lead.status === "do_not_contact" ? { ...lead, status: "contacted" } : lead, t, ch,
+      settings && !(settings.whatsappDailyLimit > 0) ? { ...settings, whatsappDailyLimit: 10 } : settings, count, ...rest);
 }
 
 /* ── Assertion plumbing ──────────────────────────────────────────────────── */
@@ -168,6 +171,9 @@ for (const t of T) {
   check(!DASH.test(text), `${t.id}: no em or en dash`);
   check(!/₹|\bRs\.?\s?\d|\bINR\b/i.test(text), `${t.id}: no price`);
   check(!/ideovent\.in\b/i.test(text), `${t.id}: does not print ideovent.in (not live yet)`);
+  // The note is shown to Mehdi on the compose screen: sources stay in code comments.
+  const shown = `${t.label}\n${t.note ?? ""}`;
+  check(!/\.md\b|playbook/i.test(shown) && !/[A-Z]{3,}-[A-Z]{3,}/.test(shown), `${t.id}: label and note name no internal playbook file`);
   check(t.channel !== "email" || Boolean(t.subject), `${t.id}: e-mail has a subject`);
   check(t.allowsLink || !/\{(demoLink|pitchLink)\}/.test(`${t.subject ?? ""}${t.body}`), `${t.id}: allowsLink false has no link field`);
   for (const f of M.fieldsUsed(t)) check(M.MERGE_FIELDS.includes(f), `${t.id}: {${f}} is a known merge field`);
@@ -337,11 +343,19 @@ for (const t of T) {
   check(blockedBy(M.checkSend({ ...lead, pitchSlug: undefined }, M.getTemplate("wa_first_pitch_any_hinglish"), "whatsapp", SETTINGS, 0, now), /no pitch page yet/i), "the pitch-page first WhatsApp blocks without a pitch page");
   check(!M.checkSend(noDemo, M.getTemplate("wa_fu2_en"), "whatsapp", SETTINGS, 0, now).blockers.some((b) => /no demo yet/i.test(b)), "follow-up 2 makes no demo claim, so no demo is needed");
 
-  check(blockedBy(M.checkSend(lead, waFirst, "whatsapp", SETTINGS, 10, now), /cap/i), "10 first messages today: the 11th first WhatsApp blocks");
-  check(M.checkSend(lead, waFirst, "whatsapp", SETTINGS, 9, now).ok, "9 today: the 10th still goes");
-  check(blockedBy(M.checkSend(lead, waFirst, "whatsapp", { ...SETTINGS, whatsappDailyCap: 3 }, 3, now), /3 of 3/), "the cap comes from settings");
-  const capReply = M.checkSend({ ...lead, status: "replied" }, waReply, "whatsapp", SETTINGS, 10, now);
-  check(capReply.ok && warnedBy(capReply, /cap/i), "cap reached only warns for a reply to someone who answered");
+  // No daily limit by default (Mehdi, 28 Sep 2026): the 11th, the 50th, the 500th first WhatsApp all go.
+  check(M.checkSend(lead, waFirst, "whatsapp", SETTINGS, 10, now).ok, "no limit set: the 11th first WhatsApp goes");
+  check(M.checkSend(lead, waFirst, "whatsapp", SETTINGS, 500, now).ok, "no limit set: the 501st first WhatsApp goes");
+  check(!warnedBy(M.checkSend(lead, waFirst, "whatsapp", SETTINGS, 500, now), /limit/i), "no limit set: no volume warning either");
+  check(M.checkSend(lead, waFirst, "whatsapp", { ...SETTINGS, whatsappDailyLimit: 0 }, 50, now).ok, "a limit of 0 (blank) means no limit");
+  check(M.checkSend(lead, waFirst, "whatsapp", { ...SETTINGS, whatsappDailyCap: 10 }, 10, now).ok, "the retired whatsappDailyCap of 10 on an old settings row limits nothing");
+  check(M.dailyWhatsappLimit({}) === null && M.dailyWhatsappLimit({ whatsappDailyLimit: 0 }) === null && M.dailyWhatsappLimit({ whatsappDailyCap: 10 }) === null, "dailyWhatsappLimit: blank and 0 are no limit");
+  // A limit Mehdi sets himself still holds.
+  const LIM = { ...SETTINGS, whatsappDailyLimit: 3 };
+  check(blockedBy(M.checkSend(lead, waFirst, "whatsapp", LIM, 3, now), /3 of 3/), "a limit set in settings blocks the next first WhatsApp");
+  check(M.checkSend(lead, waFirst, "whatsapp", LIM, 2, now).ok, "under the set limit the first WhatsApp goes");
+  const capReply = M.checkSend({ ...lead, status: "replied" }, waReply, "whatsapp", LIM, 3, now);
+  check(capReply.ok && warnedBy(capReply, /limit/i), "a set limit only warns for a reply to someone who answered");
 
   const late = new Date("2026-09-29T16:00:00.000Z"); // 21:30 IST
   const lateRes = M.checkSend(lead, waFirst, "whatsapp", SETTINGS, 0, late);
@@ -371,7 +385,7 @@ for (const t of T) {
 /* ── Verdict ─────────────────────────────────────────────────────────────── */
 
 if (NEGATIVE) {
-  const expected = [/allowsLink false has no link field/, /first WhatsApp renders with no URL/, /REMOVE opt-out/, /gmail: subject decodes/, /do_not_contact blocks/];
+  const expected = [/allowsLink false has no link field/, /first WhatsApp renders with no URL/, /REMOVE opt-out/, /gmail: subject decodes/, /do_not_contact blocks/, /no limit set: the 11th/];
   const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
   console.log(`\nNEGATIVE CONTROL: ${failures.length} failures seen.`);
   if (missed.length) {

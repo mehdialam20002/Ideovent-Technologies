@@ -58,7 +58,7 @@ const RESOLVED = {
 const CORRECTIONS = {
   // Refund-and-Cancellation-Policy.md needed two corrections here, both of the
   // stale "Ideovent is one person" / "a studio of one" claim that FACTS.md
-  // replaced with a three-partner partnership firm. Both have now been made in
+  // replaced with a partnership firm of named partners. Both have now been made in
   // the source .md and in the printable .html, so overriding them here would be
   // a second copy of the same edit and would throw the moment the source moved
   // again. A correction belongs here only while the source still disagrees.
@@ -200,6 +200,13 @@ function build(file, title) {
   // Normalise line endings first: the source docs are edited on Windows, and the
   // CORRECTIONS below match on multi-line strings.
   let md = readFileSync(resolve(SRC, file), "utf8").replace(/\r\n/g, "\n");
+
+  // 0. HTML comments are editorial notes in the source (for example the
+  //    "HIDDEN 27 Sep 2026" notes that keep removed text restorable). They are
+  //    never published: a comment on its own line goes with its line, so a
+  //    table around it stays one table, and an inline one is simply removed.
+  //    Without this, esc() below would print them as visible text.
+  md = md.replace(/^[ \t]*<!--[\s\S]*?-->[ \t]*\n/gm, "").replace(/<!--[\s\S]*?-->/g, "");
 
   // 1. Accuracy corrections, before anything else touches the text.
   for (const c of CORRECTIONS[file] || []) {

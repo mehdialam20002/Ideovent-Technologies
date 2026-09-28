@@ -1,0 +1,90 @@
+/*
+ * DENTAL KIT STYLES. Loaded only by the dental chrome chunk
+ * (src/pages/site/dental/shell/DentalShell.tsx), so school and coaching pages
+ * never carry it. Every colour is a theme token (--ds-*, set by
+ * siteThemeStyle) or one of the two kit constants below. Families key off
+ * .ds-site[data-family="luxury" | "clinical" | "calm"], the Kids variant off
+ * [data-variant="c"]. Tokens per family: DENTAL-ARCHITECTURE.md section 6.
+ */
+
+.ds-site[data-kind="dental"] {
+  --dn-wa: #0b7a3e;
+  --dn-emergency: #b42318;
+  --dn-shadow-1: 0 1px 2px rgb(20 16 10 / 0.06), 0 4px 16px rgb(20 16 10 / 0.06);
+  --dn-shadow-2: 0 2px 6px rgb(20 16 10 / 0.08), 0 18px 48px -12px rgb(20 16 10 / 0.18);
+  --dn-btn-radius: 10px;
+  --dn-topbar-h: 36px;
+  --dn-header-h: 60px;
+  --dn-actionbar-h: 64px;
+}
+@media (min-width: 1024px) {
+  .ds-site[data-kind="dental"] { --dn-header-h: 72px; }
+}
+.ds-site[data-kind="dental"][data-family="luxury"],
+.ds-site[data-kind="dental"][data-family="calm"],
+.ds-site[data-kind="dental"][data-variant="c"] { --dn-btn-radius: 999px; }
+.ds-site[data-kind="dental"][data-family="calm"] { font-size: 17px; }
+
+/* Buttons */
+.dn-book[data-tone="cta"] { background: hsl(var(--ds-cta)); color: hsl(var(--ds-on-cta)); }
+.dn-book[data-tone="cta"]:hover { filter: brightness(0.94); }
+/* On a brand-coloured band the cta fill can equal the band (calm and clinical
+   use the brand as the cta), which left a label with no button. White with the
+   brand as label, as home.css does on the home band; kids keep coral. */
+.ds-site:not([data-variant="c"]) [data-tone="brand"] .dn-book[data-tone="cta"] { background: #fff; color: hsl(var(--ds-brand)); }
+.dn-book[data-tone="hero"] { background: hsl(var(--ds-hero-accent)); color: hsl(var(--ds-hero-bg)); }
+.dn-book[data-tone="ghost"] { border: 1.5px solid hsl(var(--ds-cta)); color: hsl(var(--ds-ink)); }
+.dn-wa { background: var(--dn-wa); color: #fff; }
+.dn-wa[data-variant="outline"] { background: transparent; color: hsl(var(--ds-ink)); border: 1.5px solid hsl(var(--ds-line)); }
+.dn-wa[data-variant="outline"] svg { color: var(--dn-wa); }
+.dn-emergency { background: var(--dn-emergency); color: #fff; }
+
+/* Cards */
+.dn-card {
+  background: hsl(var(--ds-surface));
+  border-radius: var(--ds-radius);
+  box-shadow: var(--dn-shadow-1);
+}
+.ds-site[data-family="calm"] .dn-card { box-shadow: none; border: 1px solid hsl(var(--ds-line)); }
+.dn-card[data-interactive]:hover { box-shadow: var(--dn-shadow-2); transform: translateY(-2px); }
+.dn-card[data-interactive] { transition: box-shadow 200ms, transform 200ms; }
+
+/* The booking sheet slides up on a phone. */
+@media (max-width: 639px) {
+  .dn-sheet { border-radius: 20px 20px 0 0; min-height: 70svh; }
+}
+
+/* The mobile action bar: under 1024px, after 120px of scroll. The footer
+   pads itself by the bar's height so nothing is covered. */
+.dn-actionbar {
+  position: fixed; inset-inline: 0; bottom: 0; z-index: 50;
+  height: calc(var(--dn-actionbar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: hsl(var(--ds-surface));
+  border-top: 1px solid hsl(var(--ds-line));
+  transform: translateY(100%);
+  transition: transform 200ms ease-out;
+}
+.dn-actionbar[data-shown] { transform: none; }
+@media (min-width: 1024px) { .dn-actionbar { display: none; } }
+@media (max-width: 1023px) { .dn-footer { padding-bottom: calc(var(--dn-actionbar-h) + 16px + env(safe-area-inset-bottom)); } }
+@media (prefers-reduced-motion: reduce) {
+  .dn-actionbar, .dn-card[data-interactive] { transition: none; }
+}
+
+/* The header switches to the full nav by its own width, not the viewport's,
+   so the admin preview frame (narrower than the window) gets the menu button.
+   The container sits on an inner wrapper: on the <header> itself, its layout
+   containment would trap the fixed-position phone menu sheet. */
+.dn-hdr { container: dnhdr / inline-size; }
+.dn-hdr-nav, .dn-hdr-wide, .dn-hdr-call { display: none; }
+.dn-hdr-burger { display: inline-flex; }
+@container dnhdr (min-width: 1180px) {
+  .dn-hdr-nav { display: block; }
+  .dn-hdr-wide { display: inline-flex; }
+  .dn-hdr-end { margin-left: 1.5rem; }
+  .dn-hdr-burger { display: none; }
+}
+@container dnhdr (min-width: 1440px) {
+  .dn-hdr-call { display: inline-flex; }
+}

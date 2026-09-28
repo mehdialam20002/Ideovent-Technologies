@@ -49,8 +49,10 @@ import { cn } from "@/lib/utils";
 const RECORD: { term: string; detail: string }[] = [
   {
     term: "Business type",
+    // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+    // Original: "... Three partners share it: Mehdi Alam, Abhishek Tiwari and Animesh Raturi.",
     detail:
-      "A partnership firm, not a sole proprietorship and not a private limited company. Three partners share it: Mehdi Alam, Abhishek Tiwari and Animesh Raturi.",
+      "A partnership firm, not a sole proprietorship and not a private limited company. Its two partners are Mehdi Alam and Abhishek Tiwari.",
   },
   {
     term: "Founded",
@@ -88,13 +90,15 @@ export default function About() {
     <Layout>
       <Seo
         title="About"
-        description="Ideovent Technologies is a partnership firm founded in 2024, whose partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi, working from Saket, New Delhi. Meet the people who design and build the websites and software."
+        /* HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+           Original: "... founded in 2024, whose partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi, working from ..." */
+        description="Ideovent Technologies is a partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024 and working from Saket, New Delhi. Meet the people who design and build the websites and software."
         path="/about"
         keywords={[
           "about Ideovent Technologies",
           "web development team New Delhi",
           "software studio Saket",
-          "Mehdi Alam Ideovent founder",
+          "Mehdi Alam Ideovent",
         ]}
         breadcrumbs={[{ name: "About", path: "/about" }]}
       />
@@ -137,8 +141,12 @@ export default function About() {
           <div className="mt-8 grid gap-x-14 gap-y-5 lg:grid-cols-2">
             <Reveal delay={0.1}>
               <p className="text-lg text-foreground/85 text-pretty">
-                Founded in 2024. Owned by three partners, who are named below with what each of
-                them actually does.
+                {/* HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+                    Original: "Founded in 2024. Owned by three partners, who are named below with what each of them actually does." */}
+                {/* 28 Sep 2026 (Mehdi): no founder titles on anybody. Was "The
+                    founders are named below with what each of them actually does." */}
+                Founded in 2024. The people are named below with what each of them
+                actually does.
               </p>
             </Reveal>
             <Reveal delay={0.15}>

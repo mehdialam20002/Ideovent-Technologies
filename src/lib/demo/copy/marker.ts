@@ -64,7 +64,7 @@ export function markerCopy(lang: DemoLang): MarkerCopy {
       titleFirm: "Ideovent Technologies",
       titleFor: (institute) => ` ने ${institute} के लिए डेमो के तौर पर बनाई है।`,
       body: (institute) =>
-        `यह पूरी तरह काम करने वाला डेमो है, ${institute} की असली वेबसाइट नहीं। हर पेज असली है और उस पर सब कुछ बदला, जोड़ा या हटाया जा सकता है। यहाँ कुछ भी संस्थान ने ख़ुद पब्लिश नहीं किया, और जिस हिस्से में अभी खाली जगह दिख रही है, वह उनके अपने शब्दों का इंतज़ार कर रहा है।`,
+        `यह पूरी तरह काम करने वाला डेमो है, ${institute} की असली वेबसाइट नहीं। हर पेज असली है और उस पर सब कुछ बदला, जोड़ा या हटाया जा सकता है। यहाँ कुछ भी उन्होंने ख़ुद पब्लिश नहीं किया, और जिस हिस्से में अभी खाली जगह दिख रही है, वह उनके अपने शब्दों का इंतज़ार कर रहा है।`,
       officialLead: "उनकी असली वेबसाइट है ",
       talkToMehdi: "Mehdi से WhatsApp पर बात कीजिए",
       seeMore: "हम और क्या बनाते हैं, देखिए",
@@ -87,7 +87,7 @@ export function markerCopy(lang: DemoLang): MarkerCopy {
     titleFirm: "Ideovent Technologies",
     titleFor: (institute) => ` as a demonstration for ${institute}.`,
     body: (institute) =>
-      `It is a working example, not ${institute}’s live website. Every page is real and everything on it can be changed, added to or removed. Nothing here was published by the institute, and any section still showing a placeholder is waiting for their own words.`,
+      `It is a working example, not ${institute}’s live website. Every page is real and everything on it can be changed, added to or removed. Nothing here was published by them, and any section still showing a placeholder is waiting for their own words.`,
     officialLead: "Their actual website is ",
     talkToMehdi: "Talk to Mehdi on WhatsApp",
     seeMore: "See what else we build",

@@ -25,7 +25,15 @@ export const btnSecondary =
 export const btnDanger =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50";
 
-export const cardCls = "rounded-2xl border border-border bg-card/60 p-4 sm:p-5";
+export const cardCls = "rounded-2xl border border-border/70 bg-card p-4 sm:p-6";
+
+/** Quiet text button for secondary actions: no border, still 44px tall. */
+export const btnGhost =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
+/** A <details> summary that looks like a quiet row and keeps a visible focus ring. */
+export const summaryCls =
+  "flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-1 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden after:shrink-0 after:text-xs after:content-['+'] [[open]>&]:after:content-['-']";
 
 export const STATUS_TONE: Record<LeadStatus, string> = {
   new: "bg-muted text-foreground",
@@ -41,7 +49,7 @@ export const STATUS_TONE: Record<LeadStatus, string> = {
 
 export function StatusPill({ status, className }: { status: LeadStatus; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", STATUS_TONE[status], className)}>
+    <span className={cn("inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium", STATUS_TONE[status], className)}>
       {LEAD_STATUS_LABELS[status] || status}
     </span>
   );

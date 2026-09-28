@@ -457,7 +457,7 @@ export default function LeadPopup({ heading, subheading, onDismiss, onFinish }: 
                 {stage === "done" ? "Details added. Thank you." : `Sent. Thank you${firstName ? `, ${firstName}` : ""}.`}
               </h4>
               <span className="mt-1 block text-[14px] leading-[1.5] text-muted-foreground">
-                Mehdi Alam, the founder, will reply {replyHow} to{" "}
+                Mehdi Alam will reply {replyHow} to{" "}
                 <span className="font-medium text-foreground">{phone.ok ? unbreakable(phone.display) : lead.phone}</span>.{" "}
                 {contact.responseTimePromise}
               </span>

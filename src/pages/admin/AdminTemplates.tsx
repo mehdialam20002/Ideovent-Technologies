@@ -15,6 +15,7 @@ import {
 } from "@/lib/demo/templates";
 import { displayFamily, displayStyle, schoolTheme } from "@/lib/demo/schoolThemes";
 import { coachingDisplayFamily, coachingDisplayStyle, coachingTheme } from "@/lib/demo/coachingThemes";
+import { SITE_THEMES, dentalThemeFor } from "@/lib/demo/site/themes";
 import { useDuplicateTemplate } from "@/admin/useDuplicateTemplate";
 import { usePosterImport } from "@/admin/poster/usePosterImport";
 import { cn } from "@/lib/utils";
@@ -46,7 +47,12 @@ type Filter<T extends string> = T | "all";
 const KIND_HEADING: Record<DemoKind, string> = {
   school: "School",
   coaching: "Coaching",
+  dental: "Dental clinics",
 };
+
+/** The order the groups are listed in. */
+const KINDS: DemoKind[] = ["school", "coaching", "dental"];
+const countOf = (kind: DemoKind) => TEMPLATES.filter((t) => t.kind === kind).length;
 
 export default function AdminTemplates() {
   const [segment, setSegment] = useState<Filter<TemplateSegment>>("all");
@@ -73,7 +79,7 @@ export default function AdminTemplates() {
           <div>
             <h1 className="font-display text-2xl font-semibold">Templates</h1>
             <p className="text-sm text-muted-foreground">
-              {TEMPLATES.length} ready designs · 5 school · 5 coaching
+              {TEMPLATES.length} ready designs · {countOf("school")} school · {countOf("coaching")} coaching · {countOf("dental")} dental
             </p>
           </div>
         </div>
@@ -152,19 +158,19 @@ export default function AdminTemplates() {
         </div>
       )}
 
-      {(["school", "coaching"] as DemoKind[]).map((kind) => {
+      {KINDS.map((kind) => {
         const list = visible.filter((t) => t.kind === kind);
         return (
           <section key={kind} aria-labelledby={`tpl-${kind}`} className="mb-10">
             <h2 id={`tpl-${kind}`} className="mb-4 flex items-baseline gap-2 font-display text-lg font-semibold">
               {KIND_HEADING[kind]}
               <span className="text-sm font-normal text-muted-foreground">
-                {list.length} of 5
+                {list.length} of {countOf(kind)}
               </span>
             </h2>
             {list.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No {kind} template matches these filters.
+                No {KIND_HEADING[kind].toLowerCase()} template matches these filters.
               </p>
             ) : (
               <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -185,7 +191,9 @@ export default function AdminTemplates() {
       })}
 
       <section aria-labelledby="tpl-families" className="border-t border-border pt-6">
-        <h2 id="tpl-families" className="mb-3 text-sm font-semibold">The three designs</h2>
+        <h2 id="tpl-families" className="mb-3 text-sm font-semibold">
+          The designs: Classic, Modern and Warm for schools and coaching; Luxury, Clinical and Calm for dental
+        </h2>
         <dl className="grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
           {DESIGN_FAMILY_IDS.map((f) => (
             <div key={f}>
@@ -300,7 +308,7 @@ function TemplateCard({
  * Decorative: the card's text says everything this does.
  */
 function Thumbnail({ t }: { t: DemoTemplateMeta }) {
-  const s = t.kind === "school" ? schoolSketch(t.theme) : coachingSketch(t.theme);
+  const s = t.kind === "dental" ? dentalSketch(t.theme) : t.kind === "school" ? schoolSketch(t.theme) : coachingSketch(t.theme);
   const hsl = (v: string, a?: number) => (a === undefined ? `hsl(${v})` : `hsl(${v} / ${a})`);
   const type: CSSProperties = {
     fontFamily: s.display,
@@ -491,5 +499,34 @@ function coachingSketch(id: string): Sketch {
     transform: d.transform,
     object:
       th.hero === "board" ? "board" : th.hero === "strip" ? "strip" : th.hero === "figure" ? "figure" : th.hero === "column" ? "column" : "monogram",
+  };
+}
+
+/**
+ * Dental: drawn from the multi-page theme table (src/lib/demo/site/themes.ts),
+ * the same tokens the page sets. Calm heroes are the dark teal ground; the
+ * others are light with the split card beside the headline (a block), and
+ * the Luxury hero is one centred column over the room (none).
+ */
+function dentalSketch(id: string): Sketch {
+  const th = dentalThemeFor(id in SITE_THEMES ? id : undefined);
+  const k = th.tokens;
+  const serif = th.face === "serif";
+  return {
+    ground: k.heroBg,
+    ink: k.heroInk,
+    soft: k.heroSoft,
+    accentOnGround: k.heroAccent,
+    page: k.bg,
+    pageInk: k.ink,
+    brand: th.family === "calm" ? k.heroAccent : k.cta,
+    onBrand: th.family === "calm" ? k.heroBg : k.onCta,
+    accent: k.accent,
+    radius: cap(th.radius),
+    display: serif ? 'ui-serif, Georgia, "Times New Roman", serif' : '"Sora", "Inter", ui-sans-serif, system-ui, sans-serif',
+    weight: serif ? 400 : th.family === "calm" ? 300 : th.variant === "c" ? 700 : 600,
+    tracking: serif ? "0" : "-0.02em",
+    transform: "none",
+    object: th.family === "luxury" ? "none" : th.family === "calm" ? "rows" : "block",
   };
 }

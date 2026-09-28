@@ -101,6 +101,20 @@ const ROUTES = [
   '/admin/preview/template/c5-government-jobs/exam-calendar',
   '/admin/preview/template/c5-government-jobs/cut-offs',
   '/admin/preview/template/c5-government-jobs/demo-class',
+  // Dental (28 September 2026): every dental home (seven heroes, three
+  // families), then one template's inner pages. d2 carries the widest page
+  // set; its treatment and doctor slugs are fixed in DENTAL-ARCHITECTURE.md.
+  ...[
+    'd1-family-dentist', 'd2-multispeciality', 'd3-smile-studio', 'd4-implant-centre',
+    'd5-ortho-aligners', 'd6-kids-dental', 'd7-dental-chain',
+  ].map((id) => `/admin/preview/template/${id}`),
+  ...[
+    'treatments', 'treatments/root-canal-treatment', 'doctors', 'doctors/meera-reddy', 'before-after',
+    'book', 'reviews', 'fees', 'technology', 'kids', 'emergency', 'blog', 'faq', 'contact', 'about',
+    'privacy',
+  ].map((p) => `/admin/preview/template/d2-multispeciality/${p}`),
+  '/admin/preview/template/d7-dental-chain/clinics',
+  '/admin/preview/template/d1-family-dentist/blog',
   // The Templates tab itself: an admin page with no .container-page, so only
   // the horizontal-scroll and overflow checks apply. Its card grid is the
   // thing most likely to push a phone sideways.

@@ -1,0 +1,27 @@
+/*
+ * THE BOOKING FLOW'S FEW RULES Tailwind cannot say (BookingFlow.tsx). Loaded
+ * with the flow, so only dental pages carry it. Motion only when the reader
+ * has not asked for less.
+ */
+.dn-bk-strip { scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.dn-bk-chip[data-urgent][aria-checked="true"] {
+  border-color: #b42318;
+  box-shadow: inset 0 0 0 1px #b42318;
+  background: rgb(180 35 24 / 0.06);
+}
+.dn-bk-seg { transition: background-color 240ms ease-out; }
+@media (prefers-reduced-motion: no-preference) {
+  .dn-bk-step { animation: dn-bk-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+}
+@keyframes dn-bk-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The outline WhatsApp button on a dark band (BookingBand, tone "brand"):
+   the label takes the band's on-brand colour, so it never disappears. */
+[data-tone="brand"] .dn-wa[data-variant="outline"] {
+  color: hsl(var(--ds-on-brand));
+  border-color: hsl(var(--ds-on-brand) / 0.45);
+}
+[data-tone="brand"] .dn-wa[data-variant="outline"] svg { color: currentColor; }

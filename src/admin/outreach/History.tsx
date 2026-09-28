@@ -2,7 +2,7 @@ import { Eye, Mail, MessageCircle, NotebookPen, PhoneCall, Plus, Reply, Tag } fr
 import type { OutreachEvent, OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { allOpens } from "./derive";
-import { cardCls, fmtDateTime } from "./ui";
+import { fmtDateTime } from "./ui";
 
 type Row = { key: string; at: string; icon: typeof Mail; text: string; tone?: string };
 
@@ -54,9 +54,8 @@ export function History({ lead, events }: { lead: OutreachLead; events: Outreach
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
   return (
-    <section className={cardCls} aria-labelledby="hist-h">
-      <h3 id="hist-h" className="text-sm font-semibold">History</h3>
-      <ol className="mt-3 space-y-3" data-testid="history">
+    <section aria-label="History">
+      <ol className="space-y-3" data-testid="history">
         {rows.map((r) => {
           const Icon = r.icon;
           return (

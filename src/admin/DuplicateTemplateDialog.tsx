@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Files } from "lucide-react";
+import type { DemoKind } from "@/lib/cms/types";
 import type { DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
 
 /**
@@ -9,9 +10,11 @@ import type { DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
  * version. Enter submits (it is a form).
  */
 export function DuplicateTemplateDialog({
-  templateLabel, busy, error, onCancel, onSubmit, initial,
+  templateLabel, busy, error, onCancel, onSubmit, initial, kind,
 }: {
   templateLabel: string;
+  /** The template's kind: a dental template asks for the clinic's name. */
+  kind?: DemoKind;
   busy: boolean;
   error: string | null;
   onCancel: () => void;
@@ -24,6 +27,7 @@ export function DuplicateTemplateDialog({
   const [hiName, setHiName] = useState(initial?.hiName || "");
   const [tried, setTried] = useState(false);
   const missing = !name.trim();
+  const clinic = kind === "dental";
 
   const input =
     "mt-1.5 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
@@ -51,13 +55,13 @@ export function DuplicateTemplateDialog({
           Duplicate {templateLabel}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          The copy arrives already filled: courses, fees, teachers, results, reviews, photos and
-          every Hindi line. The example institute’s name becomes this one everywhere. Contact
-          details are left empty for you to add from their own website.
+          {clinic
+            ? "The copy arrives already filled: treatments, fees, doctors, reviews, cases, photos and every Hindi line. The example clinic’s name becomes this one everywhere. Contact details, branch addresses and the emergency number are left empty for you to add from their own website. Reviews, trust figures, doctors and before-after stay labelled as sample until you replace them."
+            : "The copy arrives already filled: courses, fees, teachers, results, reviews, photos and every Hindi line. The example institute’s name becomes this one everywhere. Contact details are left empty for you to add from their own website."}
         </p>
 
         <label htmlFor="dup-name" className="mt-4 block text-sm font-medium">
-          Institute name
+          {clinic ? "Clinic name" : "Institute name"}
         </label>
         <input
           id="dup-name"
@@ -71,7 +75,7 @@ export function DuplicateTemplateDialog({
         />
         {tried && missing && (
           <p id="dup-name-error" className="mt-1 text-xs text-destructive">
-            Type the institute’s name. It replaces the example name on every page.
+            Type the {clinic ? "clinic" : "institute"}’s name. It replaces the example name on every page.
           </p>
         )}
 
