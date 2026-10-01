@@ -2,32 +2,40 @@
  * Outreach message templates: the ready-made e-mails and WhatsApp messages the
  * admin's Outreach section offers for one lead.
  *
- * THE WORDING IS MEHDI'S (30 Sep 2026). He read the samples in
- * 04-sales-kit/APPROVED-MESSAGES-2026-09-30.md and said "ye sb msz templetes ko
- * ache se harr stage ke liye daal do": every stage below is written in that
- * voice, and where the file has a sample, the template renders it word for word
- * (scripts/test-outreach-engine.mjs compares them). The only differences are of
- * layout or truth: a checked observation is a sentence of its own ("... phone
- * par kholi. Usme ..."), a link sits on its own line, an e-mail's "Dear ..."
- * stands on its own line, the call times follow the kind's window, and an
- * implant centre is offered "kharche ki jaankari", not "kharche ki range",
- * because the implant demo (d4) shows no implant price. The specialist clinics'
- * approved words (implant, braces, kids) are the dental WhatsApp messages'
- * `variants`. 04-sales-kit/OUTREACH-TEMPLATES-RENDERED-2026-09-30.md shows
- * every message as it renders, beside the samples. The research behind it is
- * OUTREACH-APPROACH-PLAYBOOK-2026-09-30.md.
+ * THE FORMAT IS MEHDI'S (1 Oct 2026). He said "msz me line break nahi" and
+ * "pehle problem btao fir solution ache se btao", read the examples in
+ * 04-sales-kit/APPROVED-MESSAGES-2026-10-01.md and said "thik hai ye sare
+ * templete daal ke av live kro". Every first WhatsApp is short lines in five
+ * parts, ONE blank line between parts:
+ *   1. the greeting, then who is writing, each on its own line
+ *      ("Namaste {greeting}," / "Main {senderFirstName}, Ideovent Technologies (Saket, Delhi) se.");
+ *   2. the problem: what was checked, {observation} for a site of their own;
+ *   3. {impact}: one line on what that costs them, through their patient's,
+ *      parent's or student's eyes, no numbers, no fear (engine.ts impactFor);
+ *   4. the solution line ("Isliye humne aapke clinic ke naam se ek sample website
+ *      banayi hai:") and {offer}, three bullets that answer the problem (engine.ts offerFor);
+ *   5. the ask and the easy no, each on its own line.
+ * Every other stage (the link after a yes, the follow-up, the summary, the
+ * proposal) has the same look: short lines, a blank line between parts,
+ * bullets where a list helps. An e-mail has the same parts as paragraphs; it
+ * greets on its own line and does not say who is writing, because the From
+ * line and the signature do (04-sales-kit/cold-email/EMAIL-RULES.md section 6).
+ * scripts/test-outreach-engine.mjs renders the approved examples word for word
+ * and checks the shape of every first message;
+ * 04-sales-kit/OUTREACH-TEMPLATES-RENDERED-2026-10-01.md shows every message
+ * as it renders.
  *
- * THE VOICE. Greet by name and title, say who you are in half a line, one true
- * problem you checked, what you made for them (a sample, a demonstration), one
- * yes/no question, an easy no. Short. No link, price, emoji, "best", "free",
- * "guaranteed" or urgency in a first message.
+ * THE RULES OF 30 SEP 2026 STILL HOLD (APPROVED-MESSAGES-2026-09-30.md): no
+ * link, price, emoji, "best", "free", "guaranteed" or urgency in a first
+ * message; the problem line is something checked the same day, never a guess;
+ * one message, then wait.
  *
  * THE LADDER
- *   first        WhatsApp and e-mail, no link: "... Humne ... sample page banaya hai
- *                jisme {offer} hai. Kya main aapko bhej doon? Pasand na aaye to koi
- *                baat nahi." A lead with no demo yet gets the twin that OFFERS to make
+ *   first        WhatsApp and e-mail, no link. "Isliye humne ... sample website
+ *                banayi hai:", the bullets, "Kya main aapko link bhej doon?" and the
+ *                easy no. A lead with no demo yet gets the twin that OFFERS to make
  *                one (sample "offer"): no message says a sample is made when it is not.
- *   after_reply  after a yes: the link, "Ye sirf demonstration hai ...", two call times.
+ *   after_reply  after a yes: the link on its own line, "Ye sirf demonstration hai ...", two call times.
  *   follow_up_1  WhatsApp: the ONE follow-up, on day 4, and the last WhatsApp.
  *                E-mail: day 4, as a reply in the same thread.
  *   follow_up_2  e-mail only, day 9: one new, true, useful point (never the first observation again).
@@ -40,10 +48,12 @@
  *
  * HONESTY. Every sentence is true for the demo the prospect gets: it is a
  * demonstration, not their live site, and what we did not get from them is
- * sample content ("jo jaankari aapki taraf se nahi mili wo abhi sample hai").
- * No client, result, number or rating is claimed; no price is typed into a
- * message (the summary and the proposal leave [package and price] to the
- * sender). No em dashes. www.ideovent.in is not printed: it does not resolve yet.
+ * sample content ("jo jaankari aapki taraf se nahi mili, wo abhi sample hai").
+ * A bullet names one-tap call, WhatsApp or an enquiry form only when their own
+ * number is on the demo (a template duplicate clears every contact). No client,
+ * result, number or rating is claimed; no price is typed into a message (the
+ * summary and the proposal leave [package and price] to the sender). No em
+ * dashes. No web address is printed in a first message.
  *
  * MERGE FIELDS: MERGE_FIELDS below. engine.ts render() fills them; its header
  * says what each one says in each language.
@@ -101,20 +111,6 @@ export interface MessageTemplate {
   promises?: "demo" | "pitch" | null;
   /** Kept only so an old history entry still resolves; never offered (templatesFor skips it). */
   retired?: boolean;
-  /**
-   * Dental WhatsApp first messages only: the approved specialist words, which
-   * render() says in place of `body` (engine.ts bodyFor). They use the same
-   * merge fields and end with the same question and easy no.
-   *   implant, ortho, kids: the "no website" message to that specialist clinic,
-   *     as the approved kids sample says it ("Google par aapka kids dental
-   *     clinic dekha. Parents ..., par clinic ki website nahi mili.").
-   *   found: the "their site" message when the checked problem names their site
-   *     itself (a specialty's process and cost, a child's first visit) and the
-   *     lead was found on Google, as the approved implant sample says it
-   *     ("Google par aapka implant centre dekha. Log implant se pehle ..., par
-   *     aapki site par ye nahi mila.").
-   */
-  variants?: Partial<Record<Specialist | "found", string>>;
 }
 
 export const MERGE_FIELDS = [
@@ -123,6 +119,7 @@ export const MERGE_FIELDS = [
   "senderFirstName",
   "timeOfDay",
   "kindNoun",
+  "impact",
   "offer",
   "need",
   "visitor",
@@ -206,23 +203,44 @@ export const LANGUAGE_LABELS: Record<TemplateLanguage, string> = {
   hi: "Hindi",
 };
 
-/* ── The approved lines ───────────────────────────────────────────────────── */
+/* ── The approved lines (1 Oct 2026) ──────────────────────────────────────── */
 
-/** Line 1 of every first WhatsApp: greet by name and title, then who and where, in half a line. */
-const HELLO: Record<TemplateLanguage, string> = {
-  hinglish: "Namaste {greeting}, main {senderFirstName}, Ideovent Technologies (Saket, Delhi) se.",
-  en: "Good {timeOfDay} {greeting}, I am {senderFirstName} from Ideovent Technologies, Saket, Delhi.",
-  hi: "नमस्ते {greeting}, मैं {senderFirstName}, Ideovent Technologies (साकेत, दिल्ली) से।",
+/** Part 1 of every WhatsApp first message, line one: the greeting by name and title. */
+export const GREET: Record<TemplateLanguage, string> = {
+  hinglish: "Namaste {greeting},",
+  en: "Good {timeOfDay} {greeting},",
+  hi: "नमस्ते {greeting},",
 };
 
-/** The one question and the easy no that close a first message about a sample already made. */
+/** Part 1, line two, after a blank line: who is writing, and from where. */
+export const WHO: Record<TemplateLanguage, string> = {
+  hinglish: "Main {senderFirstName}, Ideovent Technologies (Saket, Delhi) se.",
+  en: "I am {senderFirstName} from Ideovent Technologies, Saket, Delhi.",
+  hi: "मैं {senderFirstName}, Ideovent Technologies (साकेत, दिल्ली) से।",
+};
+
+/** An e-mail's greeting, on its own line. Who is writing is in the From line and the signature. */
+const MAIL_GREET: Record<TemplateLanguage, string> = {
+  en: "Dear {greeting},",
+  hinglish: "Namaste {greeting},",
+  hi: "नमस्ते {greeting},",
+};
+
+/** Part 5 of a first message about a sample already made: the one question, then the easy no on its own line. */
 export const APPROVED_ASK: Record<TemplateLanguage, string> = {
-  hinglish: "Kya main aapko bhej doon? Pasand na aaye to koi baat nahi.",
-  en: "Shall I send it? If it is not useful, no problem at all.",
-  hi: "क्या मैं आपको भेज दूँ? पसंद न आए तो कोई बात नहीं।",
+  hinglish: "Kya main aapko link bhej doon?\nPasand na aaye to koi baat nahi.",
+  en: "Shall I send you the link?\nIf it is not useful, no problem at all.",
+  hi: "क्या मैं आपको लिंक भेज दूँ?\nपसंद न आए तो कोई बात नहीं।",
 };
 
-/** The easy no: it closes every first message, the ones that offer to make a sample too. */
+/** Part 5 of the twin that offers to make the sample: the one question, then the easy no. */
+export const OFFER_ASK: Record<TemplateLanguage, string> = {
+  hinglish: "Kya main ye sample bana doon?\nPasand na aaye to koi baat nahi.",
+  en: "Shall I make it for you?\nIf it is not useful, no problem at all.",
+  hi: "क्या मैं ये सैंपल बना दूँ?\nपसंद न आए तो कोई बात नहीं।",
+};
+
+/** The easy no: the last line of every first message. */
 export const EASY_NO: Record<TemplateLanguage, string> = {
   hinglish: "Pasand na aaye to koi baat nahi.",
   en: "If it is not useful, no problem at all.",
@@ -230,10 +248,10 @@ export const EASY_NO: Record<TemplateLanguage, string> = {
 };
 
 /**
- * Why a specialist clinic's patients look online first, as the approved implant
- * and kids samples say it, without the full stop: the specialist messages go on
- * "..., par clinic ki website nahi mili." engine.ts {need} is the same words as
- * a sentence of its own.
+ * Why a specialist clinic's patients look online first (the approved implant and
+ * kids lines of 30 Sep 2026), without the full stop. engine.ts says them as the
+ * impact line of a specialist clinic with no website ("... dhoondhte hain. Ye na
+ * mile to ..."), and {need} is the same words as a sentence of its own.
  */
 export const SPECIALIST_NEED: Record<TemplateLanguage, Record<Specialist, string>> = {
   hinglish: {
@@ -270,63 +288,84 @@ const TAG: Record<TemplateKind, string> = { dental: "dental", school: "school", 
 /**
  * A neutral message whose words only fit "any other business": a clinic, a
  * school and a coaching institute each have their own approved version of it,
- * and the neutral one would say the wrong thing to them ("jisme {offer} hai" is
- * wrong Hinglish for a school's "admission, fees aur enquiry ... hain"; a
- * summary asking a principal for "services aur timing").
+ * and the neutral one would say the wrong thing to them (a business's
+ * "services and timings" to a school, a summary asking a principal for
+ * "services aur timing").
  */
 const ONLY_OTHER: Pick<MessageTemplate, "notForKinds"> = { notForKinds: ["dental", "school", "coaching"] };
 
-/* ── First messages: one builder, the approved words per kind ─────────────── */
+/** Parts of a message, one blank line between each (the approved look). */
+const parts = (...p: string[]): string => p.join("\n\n");
+
+/* ── First messages: one builder, the approved five parts ─────────────────── */
 
 /**
- * The lines of one kind's first messages on one channel, in one language:
- * noSite: how we found them with no website of their own (the approved
- * "Google par aapka clinic dekha, par ..."); poorSite: their site on a phone,
- * then {observation}; made / offer: the sample line, made or offered.
+ * The words of one kind's first messages on one channel, in one language. The
+ * builder puts the five parts together, a blank line between each: the greeting
+ * and who (an e-mail: the greeting only), the problem, {impact}, the solution
+ * line with {offer} under it, and the ask with the easy no.
+ *   noSite    the problem when they have no website of their own (the approved
+ *             "Google par aapka clinic dekha. Clinic ki apni website nahi hai,
+ *             sirf Google listing hai.");
+ *   poorSite  the problem on their own site: where you looked, then {observation};
+ *   noun      their place in the solution line: "clinic" for every dental clinic,
+ *             as the approved samples say it, "school", "institute", "{kindNoun}".
  */
 interface FirstLines {
   noSite: string;
   poorSite?: string;
-  madeNew: string;
-  madeFix?: string;
-  offerNew: string;
-  offerFix?: string;
+  noun: string;
   /** A hint for Mehdi on the "their site" messages. */
   fixNote?: string;
   /** A hint for Mehdi on the messages that say the sample is made. */
   madeNote?: string;
-  /**
-   * Dental WhatsApp: the approved specialist words (MessageTemplate.variants).
-   * noSite: how a specialist clinic with no website was found, by specialty;
-   * found: the lead-in of a "their site" message whose problem names the site;
-   * made / offer: the sample line of both ("Humne ek sample page banaya hai ...").
-   */
-  specialist?: { noSite: Record<Specialist, string>; found: string; made: string; offer: string };
 }
 
+/** Part 4's first line: the sample made, or offered; a new website, or a new sample of theirs. */
+const SOLUTION: Record<TemplateLanguage, Record<"made" | "offer", Record<"new" | "fix", (noun: string) => string>>> = {
+  hinglish: {
+    made: {
+      new: (n) => `Isliye humne aapke ${n} ke naam se ek sample website banayi hai:`,
+      fix: (n) => `Isliye humne aapke ${n} ka ek naya sample banaya hai:`,
+    },
+    offer: {
+      new: (n) => `Isliye main aapke ${n} ke naam se ek sample website banana chahta hoon:`,
+      fix: (n) => `Isliye main aapke ${n} ka ek naya sample banana chahta hoon:`,
+    },
+  },
+  en: {
+    made: { new: (n) => `So we made a sample website for your ${n}:`, fix: (n) => `So we made a new sample website for your ${n}:` },
+    offer: { new: (n) => `So I would like to make a sample website for your ${n}:`, fix: (n) => `So I would like to make a new sample website for your ${n}:` },
+  },
+  hi: {
+    made: { new: (n) => `इसलिए हमने आपके ${n} के नाम से एक सैंपल वेबसाइट बनाई है:`, fix: (n) => `इसलिए हमने आपके ${n} का एक नया सैंपल बनाया है:` },
+    offer: { new: (n) => `इसलिए मैं आपके ${n} के नाम से एक सैंपल वेबसाइट बनाना चाहता हूँ:`, fix: (n) => `इसलिए मैं आपके ${n} का एक नया सैंपल बनाना चाहता हूँ:` },
+  },
+};
+
+/** What a "sample made" message lists only when their own number is on the demo (engine.ts offerFor). */
+const NUMBER_NOTE: Record<TemplateKind, string> = {
+  dental: "It names one-tap call or WhatsApp only when the clinic's number is on the demo.",
+  school: "It names the enquiry form only when the school's WhatsApp number is on the demo.",
+  coaching: "It names one-tap enquiry, call or WhatsApp only when the institute's number is on the demo.",
+  any: "It names one-tap call or WhatsApp only when their number is on the demo.",
+};
+
 function firstSet(kind: TemplateKind, channel: TemplateChannel, language: TemplateLanguage, l: FirstLines): MessageTemplate[] {
-  const open = channel === "email" ? `${language === "en" ? "Dear" : "Namaste"} {greeting},\n\n` : `${HELLO[language]} `;
+  const head = channel === "email" ? MAIL_GREET[language] : parts(GREET[language], WHO[language]);
   const out: MessageTemplate[] = [];
-  const close = { made: APPROVED_ASK[language], offer: EASY_NO[language] };
-  const s = l.specialist;
-  // The specialist words, with the same greeting and the same close as the message they stand in for.
-  const specialistNew = (sample: "made" | "offer"): MessageTemplate["variants"] =>
-    s && Object.fromEntries(SPECIALISTS.map((k) => [k, `${open}${s.noSite[k]} ${s[sample]} ${close[sample]}`]));
-  const specialistFix = (sample: "made" | "offer"): MessageTemplate["variants"] =>
-    s && { found: `${open}${s.found} ${s[sample]} ${close[sample]}` };
-  const add = (pitch: "new_website" | "fix_website", sample: "made" | "offer", middle: string, extra?: string) => {
-    const id = `${channel === "email" ? "em" : "wa"}_first_${pitch === "new_website" ? "new" : "fix"}_${kind}_${language}${sample === "offer" ? "_offer" : ""}`;
+  const add = (pitch: "new_website" | "fix_website", sample: "made" | "offer", problem: string, extra?: string) => {
+    const fix = pitch === "fix_website";
+    const id = `${channel === "email" ? "em" : "wa"}_first_${fix ? "fix" : "new"}_${kind}_${language}${sample === "offer" ? "_offer" : ""}`;
     const note = [
       WHEN[kind],
-      pitch === "new_website"
-        ? "Only when you searched today and found no website of their own; it says you saw them on Google."
-        : "Only with something you checked on their site today.",
+      fix ? "Only with something you checked on their site today." : "Only when you searched today and found no website of their own; it says you saw them on Google.",
       sample === "made" ? "Needs the demo: it says the sample is made." : "For a lead with no demo yet: it offers to make one.",
+      sample === "made" ? NUMBER_NOTE[kind] : undefined,
       sample === "made" ? l.madeNote : undefined,
       `No link${channel === "email" ? " in this e-mail" : ""}: the link goes after they say yes.`,
       extra,
     ];
-    const variants = pitch === "new_website" ? specialistNew(sample) : specialistFix(sample);
     out.push({
       id,
       channel,
@@ -334,211 +373,158 @@ function firstSet(kind: TemplateKind, channel: TemplateChannel, language: Templa
       pitch,
       kind,
       language,
-      label: `First message: ${pitch === "new_website" ? "no website" : "their site"}, ${sample === "made" ? "sample made" : "offer a sample"} (${TAG[kind]})`,
+      label: `First message: ${fix ? "their site" : "no website"}, ${sample === "made" ? "sample made" : "offer a sample"} (${TAG[kind]})`,
       note: note.filter(Boolean).join(" "),
       ...(channel === "email" ? { subject: "{instituteName} website" } : {}),
-      body: `${open}${middle} ${close[sample]}`,
+      body: parts(
+        head,
+        problem,
+        "{impact}",
+        `${SOLUTION[language][sample][fix ? "fix" : "new"](l.noun)}\n{offer}`,
+        sample === "made" ? APPROVED_ASK[language] : OFFER_ASK[language],
+      ),
       allowsLink: false,
       sample,
       promises: sample === "made" ? "demo" : null,
       ...(kind === "any" ? ONLY_OTHER : {}),
-      ...(variants ? { variants } : {}),
     });
   };
-  add("new_website", "made", `${l.noSite} ${l.madeNew}`);
-  if (l.poorSite && l.madeFix) add("fix_website", "made", `${l.poorSite} ${l.madeFix}`, l.fixNote);
-  add("new_website", "offer", `${l.noSite} ${l.offerNew}`);
-  if (l.poorSite && l.offerFix) add("fix_website", "offer", `${l.poorSite} ${l.offerFix}`, l.fixNote);
+  add("new_website", "made", l.noSite);
+  if (l.poorSite) add("fix_website", "made", l.poorSite, l.fixNote);
+  add("new_website", "offer", l.noSite);
+  if (l.poorSite) add("fix_website", "offer", l.poorSite, l.fixNote);
   return out;
 }
 
-/* The sample lines, by language. School and coaching say "ek sample page", a
-   clinic "ek chhota sample page", as the approved samples do. */
-const MADE_NEW_HINGLISH = "Humne aapke {kindNoun} ke naam se ek sample page banaya hai jisme {offer} hai.";
-const MADE_NEW_SHORT_HINGLISH = "Humne aapke {kindNoun} ke naam se ek chhota sample page banaya hai jisme {offer} hai.";
-const OFFER_NEW_HINGLISH = "Kya main aapke {kindNoun} ke naam se ek sample page bana doon, jisme {offer} ho?";
-const OFFER_NEW_SHORT_HINGLISH = "Kya main aapke {kindNoun} ke naam se ek chhota sample page bana doon, jisme {offer} ho?";
-const MADE_EN = "We have made a short sample page for your {kindNoun} with {offer}.";
-const OFFER_EN = "Shall I make a short sample page for your {kindNoun} with {offer}?";
 const OLD_SITE_NOTE = "For an old website, pick \"Old admission session\" and type the session you saw.";
 
-/* Dental clinics (the approved dental samples). {kindNoun} is "clinic", or the
-   specialty where they are named ("Google par aapka implant centre dekha"). The
-   sample line says "clinic", as the approved samples do. On WhatsApp a
-   specialist clinic gets the approved implant and kids words (`variants`); an
-   e-mail adds {need}, the specialty's line, after how it found them. */
-const DENTAL_MADE_HINGLISH = "Humne aapke clinic ke naam se ek chhota sample page banaya hai jisme {offer} hai.";
-const DENTAL_OFFER_HINGLISH = "Kya main aapke clinic ke naam se ek chhota sample page bana doon, jisme {offer} ho?";
-const DENTAL_MADE_EN = "We have made a short sample page for your clinic with {offer}.";
-const DENTAL_OFFER_EN = "Shall I make a short sample page for your clinic with {offer}?";
-
-const bySpecialty = (line: (k: Specialist) => string): Record<Specialist, string> => ({
-  implant: line("implant"),
-  ortho: line("ortho"),
-  kids: line("kids"),
-});
-
-/* The approved specialist samples: "Google par aapka kids dental clinic dekha.
-   Parents ..., par clinic ki website nahi mili. Humne ek sample page banaya hai
-   jisme ..." and "Google par aapka implant centre dekha. Log implant se pehle
-   ..., par aapki site par ye nahi mila. Humne ek sample page banaya hai jisme ...".
-   The English says it the same way. */
-const DENTAL_SPECIALIST_HINGLISH = {
-  noSite: bySpecialty((k) => `Google par aapka {kindNoun} dekha. ${SPECIALIST_NEED.hinglish[k]}, par clinic ki website nahi mili.`),
-  found: "Google par aapka {kindNoun} dekha. {observation}",
-  made: "Humne ek sample page banaya hai jisme {offer} hai.",
-  offer: "Kya main ek sample page bana doon jisme {offer} ho?",
-};
-const DENTAL_SPECIALIST_EN = {
-  noSite: bySpecialty((k) => `I found your {kindNoun} on Google. ${SPECIALIST_NEED.en[k]}, but I could not find the clinic's own website.`),
-  found: "I found your {kindNoun} on Google. {observation}",
-  made: DENTAL_MADE_EN,
-  offer: DENTAL_OFFER_EN,
-};
-
+/* Dental clinics (the approved dental examples). {kindNoun} is "clinic", or the
+   specialty where the lead names one ("Google par aapka implant centre dekha");
+   the solution line says "clinic", as the approved examples do. A specialist
+   clinic gets its specialty's impact line and bullets from the engine. An
+   e-mail adds "the way {visitor} would": a new patient, or a parent for a
+   children's clinic. */
 const DENTAL_FIRST: MessageTemplate[] = [
   ...firstSet("dental", "whatsapp", "hinglish", {
-    noSite: "Google par aapka {kindNoun} dekha, par clinic ki apni website nahi mili, sirf listing dikhti hai.",
+    noSite: "Google par aapka {kindNoun} dekha. Clinic ki apni website nahi hai, sirf Google listing hai.",
     poorSite: "Aapke {kindNoun} ki website phone par kholi. {observation}",
-    madeNew: DENTAL_MADE_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hai.",
-    offerNew: DENTAL_OFFER_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} ho?",
-    specialist: DENTAL_SPECIALIST_HINGLISH,
+    noun: "clinic",
   }),
   ...firstSet("dental", "whatsapp", "en", {
-    noSite: "I found your {kindNoun} on Google, but no website of its own, only the listing.",
+    noSite: "I found your {kindNoun} on Google, but it has no website of its own, only the Google listing.",
     poorSite: "I opened your {kindNoun}'s website on my phone. {observation}",
-    madeNew: DENTAL_MADE_EN, madeFix: DENTAL_MADE_EN, offerNew: DENTAL_OFFER_EN, offerFix: DENTAL_OFFER_EN,
-    specialist: DENTAL_SPECIALIST_EN,
+    noun: "clinic",
   }),
-  /* E-mail: "the way {visitor} would" is "a new patient", and "a parent" for a children's clinic. */
   ...firstSet("dental", "email", "en", {
-    noSite: "I looked for your {kindNoun} on Google, the way {visitor} would, and found the listing but no website of its own. {need}",
+    noSite: "I looked for your {kindNoun} on Google, the way {visitor} would, and found the listing but no website of its own.",
     poorSite: "I opened your {kindNoun}'s website on my phone, the way {visitor} would. {observation}",
-    madeNew: DENTAL_MADE_EN, madeFix: DENTAL_MADE_EN, offerNew: DENTAL_OFFER_EN, offerFix: DENTAL_OFFER_EN,
+    noun: "clinic",
   }),
   ...firstSet("dental", "email", "hinglish", {
-    noSite: "Maine Google par aapka {kindNoun} dhoondha, jaise {visitor} dhoondhta hai. Listing mili, par clinic ki apni website nahi mili. {need}",
+    noSite: "Maine Google par aapka {kindNoun} dhoondha, jaise {visitor} dhoondhta hai. Listing mili, par clinic ki apni website nahi mili.",
     poorSite: "Maine aapke {kindNoun} ki website phone par kholi, jaise {visitor} kholta hai. {observation}",
-    madeNew: DENTAL_MADE_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hai.",
-    offerNew: DENTAL_OFFER_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} ho?",
+    noun: "clinic",
   }),
 ];
 
-/* Schools (the approved school samples): a parent looks for fees and admission first. */
+/* Schools (the approved school examples): a parent looks for fees and admission first. */
 const SCHOOL_FIRST: MessageTemplate[] = [
   ...firstSet("school", "whatsapp", "hinglish", {
-    noSite: "Google par aapka school dekha, par school ki apni website nahi mili. Parents admission se pehle fees aur admission ki jaankari online dhoondhte hain.",
-    poorSite: "Aapke school ki website phone par dekhi. {observation}",
-    madeNew: MADE_NEW_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hain.",
-    offerNew: OFFER_NEW_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} hon?",
+    noSite: "Google par aapka school dekha. School ki apni website nahi hai, sirf Google listing hai.",
+    poorSite: "Aapke school ki website dekhi. {observation}",
+    noun: "school",
     fixNote: OLD_SITE_NOTE,
   }),
   ...firstSet("school", "whatsapp", "en", {
-    noSite: "I found your school on Google, but no website of its own. Parents look for fees and admission details online before they apply.",
-    poorSite: "I opened your school's website on my phone. {observation}",
-    madeNew: MADE_EN, madeFix: MADE_EN, offerNew: OFFER_EN, offerFix: OFFER_EN,
+    noSite: "I found your school on Google, but it has no website of its own, only the Google listing.",
+    poorSite: "I looked at your school's website. {observation}",
+    noun: "school",
     fixNote: OLD_SITE_NOTE,
   }),
   ...firstSet("school", "whatsapp", "hi", {
-    noSite: "Google पर आपका स्कूल देखा, पर स्कूल की अपनी वेबसाइट नहीं मिली। पेरेंट्स एडमिशन से पहले फ़ीस और एडमिशन की जानकारी ऑनलाइन ढूँढते हैं।",
-    madeNew: "हमने आपके {kindNoun} के नाम से एक सैंपल पेज बनाया है जिसमें {offer} है।",
-    offerNew: "क्या मैं आपके {kindNoun} के नाम से एक सैंपल पेज बना दूँ, जिसमें {offer} हो?",
+    noSite: "Google पर आपका स्कूल देखा। स्कूल की अपनी वेबसाइट नहीं है, सिर्फ़ Google लिस्टिंग है।",
+    noun: "{kindNoun}",
   }),
   ...firstSet("school", "email", "en", {
-    noSite: "I looked for your school on Google, the way a parent would, and found the listing but no website of its own. Parents look for fees and admission details online before they apply.",
-    poorSite: "I opened your school's website on my phone, the way a parent would. {observation}",
-    madeNew: MADE_EN, madeFix: MADE_EN, offerNew: OFFER_EN, offerFix: OFFER_EN,
+    noSite: "I looked for your school on Google, the way a parent would, and found the listing but no website of its own.",
+    poorSite: "I looked at your school's website, the way a parent would. {observation}",
+    noun: "school",
     fixNote: OLD_SITE_NOTE,
   }),
   ...firstSet("school", "email", "hinglish", {
-    noSite: "Maine Google par aapka school dhoondha, jaise ek parent dhoondhta hai. Listing mili, par school ki apni website nahi mili. Parents admission se pehle fees aur admission ki jaankari online dhoondhte hain.",
-    poorSite: "Maine aapke school ki website phone par dekhi, jaise ek parent dekhta hai. {observation}",
-    madeNew: MADE_NEW_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hain.",
-    offerNew: OFFER_NEW_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} hon?",
+    noSite: "Maine Google par aapka school dhoondha, jaise ek parent dhoondhta hai. Listing mili, par school ki apni website nahi mili.",
+    poorSite: "Maine aapke school ki website dekhi, jaise ek parent dekhta hai. {observation}",
+    noun: "school",
     fixNote: OLD_SITE_NOTE,
   }),
 ];
 
-/* Coaching institutes (the approved coaching samples): a student compares batches and fees first. */
+/* Coaching institutes (the approved coaching examples): a student compares batches and fees first. */
 const COACHING_FIRST: MessageTemplate[] = [
   ...firstSet("coaching", "whatsapp", "hinglish", {
-    noSite: "Google par aapka institute dekha, par apni website nahi mili. Students batch aur fees pehle online compare karte hain.",
-    poorSite: "Aapke institute ki site phone par kholi. {observation}",
-    madeNew: MADE_NEW_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hain.",
-    offerNew: OFFER_NEW_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} hon?",
+    noSite: "Google par aapka institute dekha. Institute ki apni website nahi hai, sirf Google listing hai.",
+    poorSite: "Aapke institute ki website phone par kholi. {observation}",
+    noun: "institute",
   }),
   ...firstSet("coaching", "whatsapp", "en", {
-    noSite: "I found your institute on Google, but no website of its own. Students compare batches and fees online first.",
+    noSite: "I found your institute on Google, but it has no website of its own, only the Google listing.",
     poorSite: "I opened your institute's website on my phone. {observation}",
-    madeNew: MADE_EN, madeFix: MADE_EN, offerNew: OFFER_EN, offerFix: OFFER_EN,
+    noun: "institute",
   }),
   ...firstSet("coaching", "email", "en", {
-    noSite: "I looked for your institute on Google, the way a student comparing institutes would, and found the listing but no website of its own. Students compare batches and fees online first.",
+    noSite: "I looked for your institute on Google, the way a student comparing institutes would, and found the listing but no website of its own.",
     poorSite: "I opened your institute's website on my phone, the way a student comparing institutes would. {observation}",
-    madeNew: MADE_EN, madeFix: MADE_EN, offerNew: OFFER_EN, offerFix: OFFER_EN,
+    noun: "institute",
   }),
   ...firstSet("coaching", "email", "hinglish", {
-    noSite: "Maine Google par aapka institute dhoondha, jaise ek student institutes compare karte waqt dhoondhta hai. Listing mili, par apni website nahi mili. Students batch aur fees pehle online compare karte hain.",
-    poorSite: "Maine aapke institute ki site phone par kholi, jaise ek student institutes compare karte waqt kholta hai. {observation}",
-    madeNew: MADE_NEW_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hain.",
-    offerNew: OFFER_NEW_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} hon?",
+    noSite: "Maine Google par aapka institute dhoondha, jaise ek student institutes compare karte waqt dhoondhta hai. Listing mili, par institute ki apni website nahi mili.",
+    poorSite: "Maine aapke institute ki website phone par kholi, jaise ek student institutes compare karte waqt kholta hai. {observation}",
+    noun: "institute",
   }),
 ];
 
 /* Any other business (kind "other"): the same voice, with {kindNoun} "business".
-   Its demo is made from a school, coaching or clinic template, and {offer} names
-   what a demo of that kind has ("admission, fees aur enquiry form"); with no demo
-   at hand it says "services, timing aur enquiry button". Never offered to a
-   school, coaching or dental lead (ONLY_OTHER): each has its own approved messages. */
-const ANY_MADE_NOTE = "It names what the demo has, from the kind of template it was made from: check the demo shows it.";
+   Its demo is made from a school, coaching or clinic template, and {offer} lists
+   what a demo of that kind has; with no demo at hand it lists their services and
+   timings. Never offered to a school, coaching or dental lead (ONLY_OTHER): each
+   has its own approved messages. */
+const ANY_MADE_NOTE = "The list names what the demo has, from the kind of template it was made from: check the demo shows it.";
 const ANY_FIRST: MessageTemplate[] = [
   ...firstSet("any", "whatsapp", "hinglish", {
-    noSite: "Google par aapka {kindNoun} dekha, par apni website nahi mili, sirf listing dikhti hai.",
+    noSite: "Google par aapka {kindNoun} dekha. Aapki apni website nahi hai, sirf Google listing hai.",
     poorSite: "Aapki website phone par kholi. {observation}",
-    madeNew: MADE_NEW_SHORT_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hai.",
-    offerNew: OFFER_NEW_SHORT_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} ho?",
+    noun: "{kindNoun}",
     madeNote: ANY_MADE_NOTE,
   }),
   ...firstSet("any", "whatsapp", "en", {
-    noSite: "I found your {kindNoun} on Google, but no website of its own, only the listing.",
+    noSite: "I found your {kindNoun} on Google, but it has no website of its own, only the Google listing.",
     poorSite: "I opened your website on my phone. {observation}",
-    madeNew: MADE_EN, madeFix: MADE_EN, offerNew: OFFER_EN, offerFix: OFFER_EN,
+    noun: "{kindNoun}",
     madeNote: ANY_MADE_NOTE,
   }),
   ...firstSet("any", "email", "en", {
     noSite: "I looked for your {kindNoun} on Google and found the listing but no website of its own.",
     poorSite: "I opened your website on my phone. {observation}",
-    madeNew: MADE_EN, madeFix: MADE_EN, offerNew: OFFER_EN, offerFix: OFFER_EN,
+    noun: "{kindNoun}",
     madeNote: ANY_MADE_NOTE,
   }),
   ...firstSet("any", "email", "hinglish", {
-    noSite: "Maine Google par aapka {kindNoun} dhoondha. Listing mili, par apni website nahi mili.",
+    noSite: "Maine Google par aapka {kindNoun} dhoondha. Listing mili, par aapki apni website nahi mili.",
     poorSite: "Maine aapki website phone par kholi. {observation}",
-    madeNew: MADE_NEW_SHORT_HINGLISH,
-    madeFix: "Humne ek sample banaya hai jisme {offer} hai.",
-    offerNew: OFFER_NEW_SHORT_HINGLISH,
-    offerFix: "Kya main ek sample bana doon jisme {offer} ho?",
+    noun: "{kindNoun}",
     madeNote: ANY_MADE_NOTE,
   }),
 ];
 
 /* A lead with a pitch page (a note on what we saw on their site and what each
-   fix would take, not a new website). Needs the pitch page: it says it is written. */
+   fix would take, not a new website). Needs the pitch page: it says it is
+   written. The bullets are what the note has: what was seen, what to fix, what
+   each fix takes (src/lib/cms/types.ts PitchPage). */
 const PITCH_NOTE = "For a lead with a pitch page. Only with something you checked on their site today. No link: it goes after they say yes.";
+const PITCH_LIST = {
+  hinglish: "• Aapki site par kya dikha\n• Kya theek karna hai\n• Har kaam mein kya lagega",
+  en: "• What I saw on your site\n• What to fix\n• What each fix would take",
+};
 const pitchFirst = (id: string, channel: TemplateChannel, language: "en" | "hinglish", body: string): MessageTemplate => ({
   id,
   channel,
@@ -556,23 +542,27 @@ const pitchFirst = (id: string, channel: TemplateChannel, language: "en" | "hing
 });
 
 const PITCH_FIRST: MessageTemplate[] = [
-  pitchFirst("wa_first_pitch_any_hinglish", "whatsapp", "hinglish",
-    `${HELLO.hinglish} Aapki website phone par kholi. {observation} Isi par maine aapke liye ek chhota note likha hai, ki kya theek karna hai aur har cheez mein kya lagega. ${APPROVED_ASK.hinglish}`),
-  pitchFirst("wa_first_pitch_any_en", "whatsapp", "en",
-    `${HELLO.en} I opened your website on my phone. {observation} I have written a short note for you on what to fix and what each fix would take. ${APPROVED_ASK.en}`),
-  pitchFirst("em_first_pitch_any_en", "email", "en",
-    `Dear {greeting},\n\nI opened your website on my phone. {observation} I have written a short note for you on this, with what each fix would take. It is a note, not a new website. ${APPROVED_ASK.en}`),
-  pitchFirst("em_first_pitch_any_hinglish", "email", "hinglish",
-    `Namaste {greeting},\n\nMaine aapki website phone par kholi. {observation} Isi par maine aapke liye ek chhota note likha hai, ki kya theek karna hai aur har cheez mein kya lagega. Ye note hai, nayi website nahi. ${APPROVED_ASK.hinglish}`),
+  pitchFirst("wa_first_pitch_any_hinglish", "whatsapp", "hinglish", parts(GREET.hinglish, WHO.hinglish,
+    "Aapki website phone par kholi. {observation}", "{impact}",
+    `Isliye maine aapke liye ek chhota note likha hai:\n${PITCH_LIST.hinglish}`, APPROVED_ASK.hinglish)),
+  pitchFirst("wa_first_pitch_any_en", "whatsapp", "en", parts(GREET.en, WHO.en,
+    "I opened your website on my phone. {observation}", "{impact}",
+    `So I have written a short note for you:\n${PITCH_LIST.en}`, APPROVED_ASK.en)),
+  pitchFirst("em_first_pitch_any_en", "email", "en", parts(MAIL_GREET.en,
+    "I opened your website on my phone. {observation}", "{impact}",
+    `So I have written a short note for you, not a new website. It covers:\n${PITCH_LIST.en}`, APPROVED_ASK.en)),
+  pitchFirst("em_first_pitch_any_hinglish", "email", "hinglish", parts(MAIL_GREET.hinglish,
+    "Maine aapki website phone par kholi. {observation}", "{impact}",
+    `Isliye maine aapke liye ek chhota note likha hai, nayi website nahi. Usme hai:\n${PITCH_LIST.hinglish}`, APPROVED_ASK.hinglish)),
 ];
 
-/* ── After they say yes: the link, the honest line, two call times ────────── */
+/* ── After they say yes: the link, the honest lines, two call times ───────── */
 
-/** The line that travels with every demo link (the approved after-yes message). */
+/** The two lines that travel with every demo link (the approved after-yes message, one thought a line). */
 const SAMPLE_TRUTH: Record<TemplateLanguage, string> = {
-  hinglish: "Ye sirf demonstration hai, aapki live site nahi, aur jo jaankari aapki taraf se nahi mili wo abhi sample hai.",
-  en: "It is only a demonstration, not your live site, and anything we did not get from you is sample content for now.",
-  hi: "ये सिर्फ़ डेमो है, आपकी लाइव साइट नहीं, और जो जानकारी आपकी तरफ़ से नहीं मिली वो अभी सैंपल है।",
+  hinglish: "Ye sirf demonstration hai, aapki live site nahi.\nJo jaankari aapki taraf se nahi mili, wo abhi sample hai.",
+  en: "It is only a demonstration, not your live site.\nAnything we did not get from you is sample content for now.",
+  hi: "ये सिर्फ़ डेमो है, आपकी लाइव साइट नहीं।\nजो जानकारी आपकी तरफ़ से नहीं मिली, वो अभी सैंपल है।",
 };
 /** One question with two times: {callSlots} is the next two working days in the kind's window. */
 const CALL_ASK: Record<TemplateLanguage, string> = {
@@ -580,15 +570,15 @@ const CALL_ASK: Record<TemplateLanguage, string> = {
   en: "Would {callSlots} suit you for a 10-minute call?",
   hi: "10 मिनट की कॉल के लिए {callSlots}?",
 };
-/* The link sits on its own line, with no full stop after it, so no app takes the stop into the address. */
+/* The link sits on its own line under "Ye raha sample:", with no full stop after it, so no app takes the stop into the address. */
 const YES_WA: Record<TemplateLanguage, string> = {
-  hinglish: `Shukriya {greeting}! Ye raha sample:\n{demoLink}\n\n${SAMPLE_TRUTH.hinglish} ${CALL_ASK.hinglish}`,
-  en: `Thank you, {greeting}! Here is the sample:\n{demoLink}\n\n${SAMPLE_TRUTH.en} ${CALL_ASK.en}`,
-  hi: `शुक्रिया {greeting}! ये रहा सैंपल:\n{demoLink}\n\n${SAMPLE_TRUTH.hi} ${CALL_ASK.hi}`,
+  hinglish: parts("Shukriya {greeting}!", "Ye raha sample:\n{demoLink}", SAMPLE_TRUTH.hinglish, CALL_ASK.hinglish),
+  en: parts("Thank you, {greeting}!", "Here is the sample:\n{demoLink}", SAMPLE_TRUTH.en, CALL_ASK.en),
+  hi: parts("शुक्रिया {greeting}!", "ये रहा सैंपल:\n{demoLink}", SAMPLE_TRUTH.hi, CALL_ASK.hi),
 };
 const YES_EMAIL: Record<"en" | "hinglish", string> = {
-  en: `Dear {greeting},\n\nThank you for your reply. Here is the sample:\n{demoLink}\n\n${SAMPLE_TRUTH.en} ${CALL_ASK.en}`,
-  hinglish: `Namaste {greeting},\n\nJawab ke liye shukriya. Ye raha sample:\n{demoLink}\n\n${SAMPLE_TRUTH.hinglish} ${CALL_ASK.hinglish}`,
+  en: parts("Dear {greeting},", "Thank you for your reply. Here is the sample:\n{demoLink}", SAMPLE_TRUTH.en, CALL_ASK.en),
+  hinglish: parts("Namaste {greeting},", "Jawab ke liye shukriya. Ye raha sample:\n{demoLink}", SAMPLE_TRUTH.hinglish, CALL_ASK.hinglish),
 };
 
 const YES_NOTE = "Only after they said yes, within the hour. The two call times follow their good window; change them if you like.";
@@ -616,8 +606,8 @@ const yes = (id: string, channel: TemplateChannel, kind: TemplateKind, language:
 });
 
 const PITCH_TRUTH = {
-  hinglish: "Ye aapki nayi website nahi hai, sirf ek page hai jisme likha hai ki aapki site par kya dikha aur use theek karne mein kya lagega.",
-  en: "It is not your new website, only a page on what I saw on your site and what each fix would take.",
+  hinglish: "Ye aapki nayi website nahi hai.\nIsme sirf likha hai ki aapki site par kya dikha, aur use theek karne mein kya lagega.",
+  en: "It is not your new website.\nIt is only a page on what I saw on your site, and what each fix would take.",
 };
 const pitchYes = (id: string, channel: TemplateChannel, language: "en" | "hinglish", body: string): MessageTemplate => ({
   id,
@@ -634,6 +624,8 @@ const pitchYes = (id: string, channel: TemplateChannel, language: "en" | "hingli
   promises: "pitch",
 });
 
+const PHONE_YES_NOTE = "Only after they said yes on a call and agreed to WhatsApp on this number: note the date, it is your permission. Send within five minutes.";
+
 const AFTER_YES: MessageTemplate[] = [
   yes("wa_after_reply_dental_hinglish", "whatsapp", "dental", "hinglish", YES_WA.hinglish),
   yes("wa_after_reply_dental_en", "whatsapp", "dental", "en", YES_WA.en),
@@ -645,39 +637,48 @@ const AFTER_YES: MessageTemplate[] = [
   yes("wa_after_reply_hi", "whatsapp", "any", "hi", YES_WA.hi),
   /* A yes on a phone call: the link within five minutes; that yes is also their WhatsApp permission. */
   {
-    ...yes("wa_after_reply_phone_hinglish", "whatsapp", "any", "hinglish",
-      `Namaste {greeting}, {senderFirstName}, Ideovent se. Abhi phone par baat hui thi, ye raha sample:\n{demoLink}\n\n${SAMPLE_TRUTH.hinglish} Dekh kar bata dijiye kya badalna hai.`),
+    ...yes("wa_after_reply_phone_hinglish", "whatsapp", "any", "hinglish", parts("Namaste {greeting},",
+      "{senderFirstName}, Ideovent se. Abhi phone par baat hui thi.", "Ye raha sample:\n{demoLink}", SAMPLE_TRUTH.hinglish,
+      "Dekh kar bata dijiye kya badalna hai.")),
     label: "After a yes on the phone: the sample link, within five minutes",
-    note: "Only after they said yes on a call and agreed to WhatsApp on this number: note the date, it is your permission. Send within five minutes.",
+    note: PHONE_YES_NOTE,
   },
   {
-    ...yes("wa_after_reply_phone_en", "whatsapp", "any", "en",
-      `Good {timeOfDay} {greeting}, {senderFirstName} from Ideovent here. As we just discussed on the phone, here is the sample:\n{demoLink}\n\n${SAMPLE_TRUTH.en} Have a look and tell me what you would change.`),
+    ...yes("wa_after_reply_phone_en", "whatsapp", "any", "en", parts("Good {timeOfDay} {greeting},",
+      "{senderFirstName} from Ideovent here. We just spoke on the phone.", "Here is the sample:\n{demoLink}", SAMPLE_TRUTH.en,
+      "Have a look and tell me what you would change.")),
     label: "After a yes on the phone: the sample link, within five minutes",
-    note: "Only after they said yes on a call and agreed to WhatsApp on this number: note the date, it is your permission. Send within five minutes.",
+    note: PHONE_YES_NOTE,
   },
-  pitchYes("wa_after_reply_pitch_hinglish", "whatsapp", "hinglish", `Shukriya {greeting}! Ye raha note:\n{pitchLink}\n\n${PITCH_TRUTH.hinglish} ${CALL_ASK.hinglish}`),
-  pitchYes("wa_after_reply_pitch_en", "whatsapp", "en", `Thank you, {greeting}! Here is the note:\n{pitchLink}\n\n${PITCH_TRUTH.en} ${CALL_ASK.en}`),
+  pitchYes("wa_after_reply_pitch_hinglish", "whatsapp", "hinglish", parts("Shukriya {greeting}!", "Ye raha note:\n{pitchLink}", PITCH_TRUTH.hinglish, CALL_ASK.hinglish)),
+  pitchYes("wa_after_reply_pitch_en", "whatsapp", "en", parts("Thank you, {greeting}!", "Here is the note:\n{pitchLink}", PITCH_TRUTH.en, CALL_ASK.en)),
   yes("em_after_reply_dental_en", "email", "dental", "en", YES_EMAIL.en),
   yes("em_after_reply_dental_hinglish", "email", "dental", "hinglish", YES_EMAIL.hinglish),
   yes("em_after_reply_any_en", "email", "any", "en", YES_EMAIL.en),
   yes("em_after_reply_any_hinglish", "email", "any", "hinglish", YES_EMAIL.hinglish),
   pitchYes("em_after_reply_pitch_en", "email", "en",
-    `Dear {greeting},\n\nThank you for your reply. Here is the note:\n{pitchLink}\n\n${PITCH_TRUTH.en} ${CALL_ASK.en}`),
+    parts("Dear {greeting},", "Thank you for your reply. Here is the note:\n{pitchLink}", PITCH_TRUTH.en, CALL_ASK.en)),
   pitchYes("em_after_reply_pitch_hinglish", "email", "hinglish",
-    `Namaste {greeting},\n\nJawab ke liye shukriya. Ye raha note:\n{pitchLink}\n\n${PITCH_TRUTH.hinglish} ${CALL_ASK.hinglish}`),
+    parts("Namaste {greeting},", "Jawab ke liye shukriya. Ye raha note:\n{pitchLink}", PITCH_TRUTH.hinglish, CALL_ASK.hinglish)),
 ];
 
 /* ── Follow-ups: ONE on WhatsApp (day 4, the last), three by e-mail (day 4, 9, 16) ── */
 
+/* The approved day-4 WhatsApp, word for word: "Namaste {greeting}," / "{senderFirstName},
+   Ideovent se. Kuch din pehle aapke {kindNoun} ke sample page ki baat ki thi." / "Main yahin
+   chhod raha hoon. Kabhi dekhna ho to bas "haan" likh dijiye." */
 const WA_FOLLOW_UP: Record<"made" | "offer", Record<"en" | "hinglish", string>> = {
   made: {
-    hinglish: "Namaste {greeting}, {senderFirstName}, Ideovent se. Kuch din pehle aapke {kindNoun} ke sample page ki baat ki thi. Main yahin chhod raha hoon, kabhi dekhna ho to bas \"haan\" likh dijiye.",
-    en: "Good {timeOfDay} {greeting}, {senderFirstName} from Ideovent here. A few days ago I wrote about the sample page for your {kindNoun}. I will leave it here. If you want to see it later, just reply \"yes\".",
+    hinglish: parts("Namaste {greeting},", "{senderFirstName}, Ideovent se. Kuch din pehle aapke {kindNoun} ke sample page ki baat ki thi.",
+      "Main yahin chhod raha hoon. Kabhi dekhna ho to bas \"haan\" likh dijiye."),
+    en: parts("Good {timeOfDay} {greeting},", "{senderFirstName} from Ideovent here. A few days ago I wrote about the sample page for your {kindNoun}.",
+      "I will leave it here. If you want to see it later, just reply \"yes\"."),
   },
   offer: {
-    hinglish: "Namaste {greeting}, {senderFirstName}, Ideovent se. Kuch din pehle aapke {kindNoun} ke liye sample page ki baat ki thi. Main yahin chhod raha hoon, kabhi chahiye ho to bas \"haan\" likh dijiye.",
-    en: "Good {timeOfDay} {greeting}, {senderFirstName} from Ideovent here. A few days ago I offered to make a sample page for your {kindNoun}. I will leave it here. If you would like one later, just reply \"yes\".",
+    hinglish: parts("Namaste {greeting},", "{senderFirstName}, Ideovent se. Kuch din pehle aapke {kindNoun} ke liye sample page ki baat ki thi.",
+      "Main yahin chhod raha hoon. Kabhi chahiye ho to bas \"haan\" likh dijiye."),
+    en: parts("Good {timeOfDay} {greeting},", "{senderFirstName} from Ideovent here. A few days ago I offered to make a sample page for your {kindNoun}.",
+      "I will leave it here. If you would like one later, just reply \"yes\"."),
   },
 };
 
@@ -707,45 +708,51 @@ const WA_FOLLOW_UPS: MessageTemplate[] = [
   waFollowUp("wa_fu1_en_offer", "any", "en", "offer"),
 ];
 
-/* E-mail: short replies in the same thread. Day 9 brings one new, true, useful
-   point (their Google listing), never the observation of the first e-mail. Each
-   opens with their name the way the approved day-4 sample does ("Dr. Mehta, a
-   quick note ..."): {addressAs}, no greeting word before it. */
+/* E-mail: short replies in the same thread, a blank line between the point and
+   the question. Day 9 brings one new, true, useful point (their Google
+   listing), never the observation of the first e-mail. Each opens with their
+   name the way the approved day-4 sample does ("Dr. Mehta, a quick note ..."):
+   {addressAs}, no greeting word before it. */
 type FollowUpStage = "follow_up_1" | "follow_up_2" | "follow_up_3";
-const EMAIL_FOLLOW_UP: Record<FollowUpStage, Record<"made" | "offer", Record<"en" | "hinglish", (who: { en: string; hinglish: string }) => string>>> = {
+type Who = { en: string; hinglish: string };
+const LISTING = {
+  en: (w: Who) => `${w.en} who search for {instituteName} on Google see its listing before any website. It is worth checking that the timings and phone number there are right.`,
+  hinglish: (w: Who) => `Google par {instituteName} dhoondhne ${w.hinglish} ko kisi bhi website se pehle aapki listing dikhti hai. Ek baar dekh lijiye ki usme timing aur phone number sahi hain.`,
+};
+const EMAIL_FOLLOW_UP: Record<FollowUpStage, Record<"made" | "offer", Record<"en" | "hinglish", (who: Who) => string>>> = {
   follow_up_1: {
     made: {
-      en: () => "{addressAs}, a quick note on the sample I made for {instituteName}. Shall I send the link?",
+      en: () => parts("{addressAs}, a quick note on the sample I made for {instituteName}.", "Shall I send you the link?"),
       // "aapke clinic ke liye", as the approved WhatsApp follow-up says it: a clinic named after
       // its doctor would otherwise read "Dr. Mehta, Mehta Dental Care ke liye ...".
-      hinglish: () => "{addressAs}, aapke {kindNoun} ke liye jo sample banaya hai, uske baare mein ek chhoti si baat. Kya main aapko link bhej doon?",
+      hinglish: () => parts("{addressAs}, aapke {kindNoun} ke liye jo sample banaya hai, uske baare mein ek chhoti si baat.", "Kya main aapko link bhej doon?"),
     },
     offer: {
-      en: () => "{addressAs}, a quick note on my e-mail about a sample page for {instituteName}. Shall I make one?",
-      hinglish: () => "{addressAs}, aapke {kindNoun} ke liye sample page wale mail ke baare mein ek chhoti si baat. Kya main aapke liye ek bana doon?",
+      en: () => parts("{addressAs}, a quick note on my e-mail about a sample website for {instituteName}.", "Shall I make one for you?"),
+      hinglish: () => parts("{addressAs}, aapke {kindNoun} ke liye sample website wale mail ke baare mein ek chhoti si baat.", "Kya main aapke liye ek bana doon?"),
     },
   },
   follow_up_2: {
     made: {
-      en: (w) => `{addressAs}, one more thing that may help, whether or not you use the sample: ${w.en} who search for {instituteName} on Google see its listing before any website, so it is worth checking that the timings and phone number there are right. Shall I send you the link to the sample?`,
-      hinglish: (w) => `{addressAs}, ek aur baat jo kaam aa sakti hai, sample lein ya na lein: Google par {instituteName} dhoondhne ${w.hinglish} ko website se pehle aapki listing dikhti hai, isliye ek baar dekh lijiye ki usme timing aur phone number sahi hain. Kya main aapko sample ka link bhej doon?`,
+      en: (w) => parts("{addressAs}, one more thing that may help, whether or not you use the sample.", LISTING.en(w), "Shall I send you the link to the sample?"),
+      hinglish: (w) => parts("{addressAs}, ek aur baat jo kaam aa sakti hai, sample lein ya na lein.", LISTING.hinglish(w), "Kya main aapko sample ka link bhej doon?"),
     },
     offer: {
-      en: (w) => `{addressAs}, one more thing that may help, whether or not you want a sample page: ${w.en} who search for {instituteName} on Google see its listing before any website, so it is worth checking that the timings and phone number there are right. Shall I make the sample page for you?`,
-      hinglish: (w) => `{addressAs}, ek aur baat jo kaam aa sakti hai, sample page chahiye ho ya na ho: Google par {instituteName} dhoondhne ${w.hinglish} ko website se pehle aapki listing dikhti hai, isliye ek baar dekh lijiye ki usme timing aur phone number sahi hain. Kya main aapke liye sample page bana doon?`,
+      en: (w) => parts("{addressAs}, one more thing that may help, whether or not you want a sample website.", LISTING.en(w), "Shall I make the sample website for you?"),
+      hinglish: (w) => parts("{addressAs}, ek aur baat jo kaam aa sakti hai, sample website chahiye ho ya na ho.", LISTING.hinglish(w), "Kya main aapke liye sample website bana doon?"),
     },
   },
   /* Day 16, the approved words: "I will close this here. If you want to see it
      later, just reply yes." In Hinglish, the approved WhatsApp follow-up's own
-     line: "Main yahin chhod raha hoon, kabhi dekhna ho to bas "haan" likh dijiye." */
+     lines: "Main yahin chhod raha hoon. Kabhi dekhna ho to bas "haan" likh dijiye." */
   follow_up_3: {
     made: {
-      en: () => "{addressAs}, I will close this here. If you want to see it later, just reply yes.",
-      hinglish: () => "{addressAs}, main yahin chhod raha hoon, kabhi dekhna ho to bas \"haan\" likh dijiye.",
+      en: () => parts("{addressAs}, I will close this here.", "If you want to see it later, just reply yes."),
+      hinglish: () => parts("{addressAs}, main yahin chhod raha hoon.", "Kabhi dekhna ho to bas \"haan\" likh dijiye."),
     },
     offer: {
-      en: () => "{addressAs}, I will close this here. If you would like a sample page later, just reply yes.",
-      hinglish: () => "{addressAs}, main yahin chhod raha hoon, kabhi sample page chahiye ho to bas \"haan\" likh dijiye.",
+      en: () => parts("{addressAs}, I will close this here.", "If you would like a sample website later, just reply yes."),
+      hinglish: () => parts("{addressAs}, main yahin chhod raha hoon.", "Kabhi sample website chahiye ho to bas \"haan\" likh dijiye."),
     },
   },
 };
@@ -766,7 +773,7 @@ const emFollowUp = (stage: FollowUpStage, kind: "dental" | "any", language: "en"
   label: `${FOLLOW_UP_DAY[stage].label}${sample === "offer" ? ", no demo yet" : ""} (${TAG[kind]})`,
   note: `${SAME_THREAD_NOTE} ${FOLLOW_UP_DAY[stage].note}`,
   subject: "Re: {instituteName} website",
-  body: EMAIL_FOLLOW_UP[stage][sample][language](kind === "dental" ? { en: "patients", hinglish: "wale patients" } : { en: "people", hinglish: "walon" }),
+  body: EMAIL_FOLLOW_UP[stage][sample][language](kind === "dental" ? { en: "Patients", hinglish: "wale patients" } : { en: "People", hinglish: "walon" }),
   allowsLink: false,
   sample,
   promises: sample === "made" ? "demo" : null,
@@ -780,7 +787,7 @@ const EMAIL_FOLLOW_UPS: MessageTemplate[] = (["follow_up_1", "follow_up_2", "fol
   ),
 );
 
-/* ── After the call: the approved same-day summary ────────────────────────── */
+/* ── After the call: the approved same-day summary, as a list ─────────────── */
 
 /** What we need from them, per kind (the approved dental line: "logo, doctors ki details, timing, clinic ki 5-6 photos"). */
 const WE_NEED: Record<TemplateKind, { en: string; hinglish: string }> = {
@@ -797,17 +804,17 @@ function summary(kind: TemplateKind, channel: TemplateChannel, language: "en" | 
   const thanks = language === "en" ? (kind === "dental" ? "Thank you, Doctor." : "Thank you.") : kind === "dental" ? "Shukriya Doctor." : "Shukriya.";
   const list =
     language === "en"
-      ? `- Package: [package and price]\n- Payment: 50% in advance, 50% at launch\n- What I need from you: ${WE_NEED[kind].en}\n- First version: [date]`
-      : `- Package: [package and price]\n- Payment: 50% advance, 50% launch par\n- Mujhe chahiye: ${WE_NEED[kind].hinglish}\n- Pehla version: [date]`;
+      ? `• Package: [package and price]\n• Payment: 50% in advance, 50% at launch\n• What I need from you: ${WE_NEED[kind].en}\n• First version: [date]`
+      : `• Package: [package and price]\n• Payment: 50% advance, 50% launch par\n• Mujhe chahiye: ${WE_NEED[kind].hinglish}\n• Pehla version: [date]`;
   // WhatsApp opens with their name alone, as the approved summary does: "Dr. Mehta, aaj ki baat ka summary:".
   if (channel === "whatsapp") {
     return language === "en"
-      ? `{addressAs}, a summary of our call today:\n${list}\nIf anything should change, just tell me. ${thanks}`
-      : `{addressAs}, aaj ki baat ka summary:\n${list}\nKuch badalna ho to bata dijiye. ${thanks}`;
+      ? parts(`{addressAs}, a summary of our call today:\n${list}`, `If anything should change, just tell me.\n${thanks}`)
+      : parts(`{addressAs}, aaj ki baat ka summary:\n${list}`, `Kuch badalna ho to bata dijiye.\n${thanks}`);
   }
   return language === "en"
-    ? `Dear {greeting},\n\nThank you for your time today. A summary of our call:\n${list}\n\nIf anything should change, just reply. ${thanks}`
-    : `Namaste {greeting},\n\nAaj time dene ke liye shukriya. Aaj ki baat ka summary:\n${list}\n\nKuch badalna ho to reply kar dijiye. ${thanks}`;
+    ? parts("Dear {greeting},", `Thank you for your time today. A summary of our call:\n${list}`, `If anything should change, just reply.\n${thanks}`)
+    : parts("Namaste {greeting},", `Aaj time dene ke liye shukriya. Aaj ki baat ka summary:\n${list}`, `Kuch badalna ho to reply kar dijiye.\n${thanks}`);
 }
 
 const afterCall = (id: string, channel: TemplateChannel, kind: TemplateKind, language: "en" | "hinglish"): MessageTemplate => ({
@@ -847,21 +854,42 @@ const AFTER_CALL: MessageTemplate[] = [
 
 /* ── Proposal: the PDF by e-mail, a WhatsApp note, and the day-3 follow-up ── */
 
-const PROPOSAL_TEXT = {
+/* What the proposal has, as a list. The payment terms are named, not restated: the PDF carries
+   them, and a split typed here could contradict it. No price is typed: it is in the PDF. */
+const PROPOSAL_LIST = {
   email: {
-    /* The payment terms are named, not restated: the PDF carries them, and a split typed here could contradict it. */
-    en: "Dear {greeting},\n\nAs we discussed, the proposal for {instituteName} is attached: the package, the price, the payment terms, what I need from you and the timeline, in one place. Shall we start on [date]? If anything is unclear, just reply.",
-    hinglish: "Namaste {greeting},\n\nJaisi baat hui thi, {instituteName} ka proposal saath mein attach hai: package, price, payment kaise hoga, aapse kya chahiye aur timeline, sab ek jagah. Kya hum [date] se shuru karein? Kuch saaf na ho to reply kar dijiye.",
+    en: "• The package and the price\n• The payment terms\n• What I need from you\n• The timeline",
+    hinglish: "• Package aur price\n• Payment kaise hoga\n• Aapse kya chahiye\n• Timeline",
   },
   whatsapp: {
-    en: "{addressAs}, I have sent the proposal for {instituteName} to your e-mail: the package, the price, what I need from you and the timeline, in one place. Shall we start on [date]? If anything is unclear, just ask here.",
-    hinglish: "{addressAs}, aapke {kindNoun} ka proposal email par bhej diya hai: package, price, aapse kya chahiye aur timeline, sab ek jagah. Kya hum [date] se shuru karein? Kuch saaf na ho to yahin pooch lijiye.",
+    en: "• The package and the price\n• What I need from you\n• The timeline",
+    hinglish: "• Package aur price\n• Aapse kya chahiye\n• Timeline",
+  },
+};
+const PROPOSAL_TEXT = {
+  email: {
+    en: parts("Dear {greeting},", `As we discussed, the proposal for {instituteName} is attached. It has everything in one place:\n${PROPOSAL_LIST.email.en}`,
+      "Shall we start on [date]?\nIf anything is unclear, just reply."),
+    hinglish: parts("Namaste {greeting},", `Jaisi baat hui thi, {instituteName} ka proposal saath mein attach hai. Usme sab ek jagah hai:\n${PROPOSAL_LIST.email.hinglish}`,
+      "Kya hum [date] se shuru karein?\nKuch saaf na ho to reply kar dijiye."),
+  },
+  whatsapp: {
+    en: parts(`{addressAs}, I have sent the proposal for {instituteName} to your e-mail. It has everything in one place:\n${PROPOSAL_LIST.whatsapp.en}`,
+      "Shall we start on [date]?\nIf anything is unclear, just ask here."),
+    hinglish: parts(`{addressAs}, aapke {kindNoun} ka proposal email par bhej diya hai. Usme sab ek jagah hai:\n${PROPOSAL_LIST.whatsapp.hinglish}`,
+      "Kya hum [date] se shuru karein?\nKuch saaf na ho to yahin pooch lijiye."),
   },
 };
 const PROPOSAL_CHASE = {
-  en: "{addressAs}, a quick note on the proposal I sent. Shall we start on [date]? If now is not the right time, tell me and I will close the file. Either answer is fine.",
-  hinglish: "{addressAs}, proposal ke baare mein ek chhoti si baat. Kya hum [date] se shuru karein? Abhi sahi time nahi hai to bata dijiye, main file band kar dunga. Dono jawab theek hain.",
+  en: parts("{addressAs}, a quick note on the proposal I sent.", "Shall we start on [date]?",
+    "If now is not the right time, tell me and I will close the file.\nEither answer is fine."),
+  hinglish: parts("{addressAs}, proposal ke baare mein ek chhoti si baat.", "Kya hum [date] se shuru karein?",
+    "Abhi sahi time nahi hai to bata dijiye, main file band kar dunga.\nDono jawab theek hain."),
 };
+
+/** On the e-mail proposal follow-up: it answers the proposal e-mail, whose subject it keeps ("Re: ... website: proposal"). */
+const PROPOSAL_THREAD_NOTE =
+  "Send it as a reply to your proposal e-mail: open that e-mail in your mail app and press Reply.";
 
 const proposal = (id: string, channel: TemplateChannel, kind: "dental" | "any", language: "en" | "hinglish", chase: boolean): MessageTemplate => ({
   id,
@@ -874,7 +902,7 @@ const proposal = (id: string, channel: TemplateChannel, kind: "dental" | "any", 
     ? `Proposal: the follow-up, day 3 (${TAG[kind]})`
     : channel === "email" ? `Proposal: the PDF by e-mail (${TAG[kind]})` : `Proposal: sent to your e-mail (${TAG[kind]})`,
   note: chase
-    ? `Three days after the proposal.${channel === "email" ? ` ${SAME_THREAD_NOTE}` : ""} Fill in the start date you proposed: it cannot be sent until you do.`
+    ? `Three days after the proposal.${channel === "email" ? ` ${PROPOSAL_THREAD_NOTE}` : ""} Fill in the start date you proposed: it cannot be sent until you do.`
     : channel === "email"
       ? "Attach the proposal PDF in your mail app before pressing Send. Fill in the start date: it cannot be sent until you do. The price and the payment terms are in the PDF, not in the text."
       : "The proposal itself goes by e-mail; this says it has been sent. Fill in the start date. No price in this message.",

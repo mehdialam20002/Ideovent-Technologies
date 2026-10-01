@@ -12,7 +12,10 @@
  *     "their site" message comes first, waiting for an observation), and a
  *     clinic whose only "website" is a Practo page is offered a new site;
  *   - the retired WhatsApp follow-ups are never ranked; the after-call summary
- *     is ranked but cannot go until its [blanks] are filled.
+ *     is ranked but cannot go until its [blanks] are filled;
+ *   - the preview shows the approved look of 1 Oct 2026 (a textarea over a
+ *     white-space: pre-wrap layer) and the send links carry its blank lines
+ *     and bullets (%0A%0A, %0A%E2%80%A2).
  * Bundled with esbuild like test-outreach-engine.mjs; nothing mocked. Fictional leads only.
  *
  *   node scripts/test-outreach-compose.mjs
@@ -44,7 +47,7 @@ const out = join(tmpdir(), `ideovent-test-outreach-compose-${process.pid}.mjs`);
 const bundled = await build({
   stdin: {
     contents: `export * from "@/admin/outreach/compose";
-export { OBSERVATIONS, observationsFor, checkSend } from "@/lib/outreach/engine";
+export { OBSERVATIONS, observationsFor, checkSend, render, whatsappUrl, mailtoUrl } from "@/lib/outreach/engine";
 export { STAGE_LABELS, stagesFor, getTemplate } from "@/lib/outreach/templates";`,
     resolveDir: ROOT,
     loader: "ts",
@@ -179,6 +182,23 @@ for (const o of C.OBSERVATIONS) {
 }
 for (const o of C.OBSERVATIONS.filter((x) => (x.kinds || []).includes("dental"))) {
   check(C.startingObservation(clinic({ observation: o.id })) === o.id, `dental chip ${o.id} starts a message`);
+}
+
+/* The compose preview shows the approved look (1 Oct 2026: short lines, a blank line between parts,
+   bullets). The message sits in a textarea, which keeps every line break, over a highlight layer that
+   wraps the same way (white-space: pre-wrap); the send links are built from the text on screen, so
+   the blank lines travel as %0A%0A and each bullet as %0A%E2%80%A2. */
+{
+  const box = readFileSync(join(SRC, "admin/outreach/MessageBox.tsx"), "utf8");
+  const panel = readFileSync(join(SRC, "admin/outreach/ComposePanel.tsx"), "utf8");
+  check(/const BOX_TEXT = "[^"]*\bwhitespace-pre-wrap\b/.test(box) && /<textarea[^>]*\bvalue=\{value\}/.test(box) && /className=\{cn\(BOX_TEXT, "relative block/.test(box),
+    "the message preview is a textarea over a highlight layer that wraps with white-space: pre-wrap, so blank lines and bullets show");
+  check(/whatsappUrl\(waNumber, body\)/.test(panel) && /mailtoUrl\(\{ to: lead\.email \|\| "", subject, body \}\)/.test(panel), "the WhatsApp and mail links are built from the text on screen");
+  const t = C.getTemplate("wa_first_new_dental_en");
+  const r = C.render(t, clinic(), { now: new Date("2026-09-29T09:00:00.000Z"), demo: { phone: true, whatsapp: true } });
+  const href = C.whatsappUrl("+91 98765 43210", r.body);
+  check(r.body.split("\n\n").length === 6 && href.includes("%0A%0A") && new URL(href).searchParams.get("text") === r.body && C.mailtoUrl({ to: "a@example.org", body: r.body }).includes("%0A%E2%80%A2%20"),
+    "a first WhatsApp's five parts reach WhatsApp and the mail app with their blank lines and bullets");
 }
 
 console.log(`test-outreach-compose: ${pass} passed, ${fail} failed${NEGATIVE ? " (NEGATIVE CONTROL: failures expected)" : ""}`);

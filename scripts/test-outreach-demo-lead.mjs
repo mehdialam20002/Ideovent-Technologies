@@ -13,7 +13,8 @@
  * ("other") lead it makes that lead dental, and a kind someone chose is kept.
  *
  * From the demo to the message (30 Sep 2026): the lead a demo makes is offered
- * the approved first message of its kind, and it names only what that demo
+ * the approved first message of its kind (the format of 1 Oct 2026: five parts,
+ * the sample's contents as three bullets), and it names only what that demo
  * has: a d4 demo the implant process and cost information (d4 prices no
  * implant, so never a cost range), a d6 demo the first visit in the approved
  * kids words, a fresh duplicate (no number) one-tap booking and never a call or
@@ -149,11 +150,11 @@ check(relinked && !relinked.created && relinked.lead.kind === "dental", "linking
     return { lead, t, r: t && M.render(t, { ...lead, contactName: "Dr. Kapoor", phone: "+91 98765 43210" }, { now: NOW, demo: M.demoFacts(d) }) };
   };
   const implant = await firstFor(dentalDemo({ slug: "example-implant-centre", instituteName: "Example Implant Centre", templateId: "d4-implant-centre" }));
-  check(implant.t?.kind === "dental" && implant.r.body.includes("Google par aapka implant centre dekha. Log implant se pehle process aur kharche ki jaankari online dhoondhte hain, par clinic ki website nahi mili.") &&
-    implant.r.body.includes("jisme implant ka process, kharche ki jaankari aur appointment booking hai") && !/range/.test(implant.r.body),
+  check(implant.t?.kind === "dental" && implant.r.body.includes("Google par aapka implant centre dekha. Clinic ki apni website nahi hai, sirf Google listing hai.\n\nLog implant se pehle process aur kharche ki jaankari online dhoondhte hain.") &&
+    implant.r.body.includes(":\n• Implant ka process, step by step\n• Kharche ki jaankari\n• Online appointment booking\n\n") && !/range/.test(implant.r.body),
     `a d4 demo's lead is offered the approved implant message, and no cost range the demo does not show (${implant.r?.body})`);
   const kids = await firstFor(dentalDemo({ slug: "example-kids", instituteName: "Example Smiles", templateId: "d6-kids-dental" }));
-  check(kids.r?.body.includes("Google par aapka kids dental clinic dekha. Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga, par clinic ki website nahi mili. Humne ek sample page banaya hai jisme pehli visit ki jaankari, timings aur booking hai."),
+  check(kids.r?.body.includes("Google par aapka kids dental clinic dekha. Clinic ki apni website nahi hai, sirf Google listing hai.\n\nParents bachche ki pehli visit se pehle online dekhte hain ki kya hoga. Ye na mile to wo aksar agle clinic ko call kar lete hain.\n\nIsliye humne aapke clinic ke naam se ek sample website banayi hai:\n• Bachche ki pehli visit mein kya hota hai\n"),
     `a d6 demo's lead gets the approved kids words (${kids.r?.body})`);
   check(M.suggestedStage(implant.lead.status, "whatsapp", 0) === "first" && !implant.r.warnings.length, "a new demo's lead starts at the first message, and the 'Google par' line raises nothing for a demo-created lead");
   check(M.checkSend({ ...implant.lead, phone: "+91 98765 43210" }, implant.t, "whatsapp", settings, 0, NOW).ok, "the lead has its demo, so 'we made a sample' may be said");
@@ -164,13 +165,13 @@ check(relinked && !relinked.created && relinked.lead.kind === "dental", "linking
   const fixT = M.templatesFor({ kind: "dental", channel: "whatsapp", stage: "first", pitch: "fix_website", language: "hinglish" })[0];
   const saysFresh = M.render(fixT, fixLead(fresh), { now: NOW, demo: M.demoFacts(fresh) }).body;
   const saysNumbered = M.render(fixT, fixLead(withNumber), { now: NOW, demo: M.demoFacts(withNumber) }).body;
-  check(saysFresh.includes("ek tap mein booking") && !/ek tap mein (call|WhatsApp)/.test(saysFresh), "a fresh template duplicate (no number) is never said to have call or WhatsApp buttons");
-  check(saysNumbered.includes("ek tap mein call ya WhatsApp"), "with the clinic's number on the demo, the approved 'ek tap mein call ya WhatsApp'");
+  check(saysFresh.includes("• Ek tap mein appointment booking") && !/ek tap mein[^\n]*(call|WhatsApp)/i.test(saysFresh), "a fresh template duplicate (no number) is never said to have call or WhatsApp buttons");
+  check(saysNumbered.includes("• Ek tap mein call, WhatsApp ya booking"), "with the clinic's number on the demo, the approved 'ek tap mein call, WhatsApp ya booking'");
 
   const schoolFix = M.templatesFor({ kind: "school", channel: "whatsapp", stage: "first", pitch: "fix_website", language: "en" })[0];
   const schoolLead = { instituteName: "Sunrise Public School", kind: "school", website: "https://example.org", observation: "not_mobile", demoSlug: "sunrise-public-school", contactName: "Principal Ma'am" };
-  check(M.render(schoolFix, schoolLead, { now: NOW, demo: M.demoFacts(demo({ sessionLabel: "2027" })) }).body.includes("the 2027 admissions"), "the school message names the session the demo shows");
-  check(M.render(schoolFix, schoolLead, { now: NOW }).body.includes("the 2027-28 admissions"), "without the demo at hand, the session is computed from the date");
+  check(M.render(schoolFix, schoolLead, { now: NOW, demo: M.demoFacts(demo({ sessionLabel: "2027" })) }).body.includes("• 2027 admission details"), "the school message names the session the demo shows");
+  check(M.render(schoolFix, schoolLead, { now: NOW }).body.includes("• 2027-28 admission details"), "without the demo at hand, the session is computed from the date");
 }
 
 if (NEGATIVE) {

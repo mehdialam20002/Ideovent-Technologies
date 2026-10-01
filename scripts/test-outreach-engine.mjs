@@ -1,6 +1,7 @@
 /**
  * Tests the Outreach templates and engine (src/lib/outreach/templates.ts, engine.ts)
- * against Mehdi's approved wording (04-sales-kit/APPROVED-MESSAGES-2026-09-30.md).
+ * against Mehdi's approved format and wording (04-sales-kit/APPROVED-MESSAGES-2026-10-01.md,
+ * and the rules of APPROVED-MESSAGES-2026-09-30.md, which still hold).
  *
  *   node scripts/test-outreach-engine.mjs
  *
@@ -10,34 +11,40 @@
  *      price, emoji, hype word, "left empty" claim or typed session year anywhere.
  *   2. Every live template renders for every lead it can be offered to, in its
  *      language, with no unfilled {field} and no warning but the ones expected.
- *   3. First messages: no link on either channel, the approved question and easy
- *      no at the end, one question, WhatsApp under 450 characters with every
- *      observation and specialty, e-mail under 100 words, "made" needs a demo,
- *      "offer" does not.
- *   4. The approved samples render word for word (dental, school, coaching, the
- *      follow-up, the after-yes and after-call messages, the e-mail).
+ *   3. First messages, the approved format of 1 Oct 2026: five parts with a
+ *      blank line between parts (the greeting and who on their own lines, the
+ *      problem, the impact, the solution with exactly three bullets, the ask and
+ *      the easy no on their own lines), for every lead each can go to (every
+ *      observation, every dental specialty, the demo with and without their
+ *      number); no link, price or emoji; one question; short lines; "made"
+ *      needs a demo, "offer" does not. E-mails: the same parts as paragraphs.
+ *   4. The approved examples render word for word (dental, school and coaching,
+ *      no website and their site; dental in English; the follow-up; the link
+ *      after a yes; the summary; the e-mail).
  *   5. The merge fields: {greeting} {senderFirstName} {timeOfDay} {kindNoun}
- *      {offer} {need} in each language; dental specialties; the school session.
+ *      {impact} {offer} {need} in each language; problemType; dental
+ *      specialties; the school session.
  *   6. {callSlots}: never a Sunday, always inside 10:00 to 21:00 and the kind's window.
  *   7. Cadence: 4 days, ONE WhatsApp follow-up (the others retired but still
  *      resolvable), e-mail follow-ups on day 4, 9 and 16 in the same thread.
  *   8. [Placeholders] block the send until filled.
- *   9. mailto and WhatsApp links decode exactly; demo links never point at a preview.
+ *   9. mailto and WhatsApp links decode exactly and carry every blank line
+ *      (%0A%0A) and bullet; demo links never point at a preview.
  *  10. checkSend: every guard (do not contact, links, promised demo, observation,
  *      "no website" truth, quiet hours from 10:00, limits, duplicates, kinds).
- *  11. Dental: the full ladder, no claim words, no school words, no WhatsApp
- *      button promised unless the demo has the number, dental chips.
- *  12. (section 13 below) The copy fixes of 1 Oct 2026: neutral first messages
- *      and summaries go to other businesses only, Hinglish "hain / hon" after a
- *      plural offer, a children's clinic "the way a parent would", no payment
- *      split typed into the proposal e-mail, the approved "yahin chhod raha
- *      hoon", the opt-out only under cold e-mails.
- *  13. (section 14 below) The second pass of 1 Oct 2026: the specialist clinics'
- *      approved words (variants: implant, braces, kids, and "Google par ...
- *      dekha" before a problem that names the site), {addressAs} ("Dr. Mehta,
- *      aaj ki baat ka summary:"), an implant centre never offered a cost range
- *      its demo does not show, an "other" business offered what its demo's kind
- *      has, principals called after school, the approved day-16 words.
+ *  11. Dental: the full ladder, no claim words, no school words, no call or
+ *      WhatsApp (nor a school's enquiry form) promised unless the demo has their
+ *      number, dental chips.
+ *  12. (section 13 below) Copy rules: neutral first messages and summaries go to
+ *      other businesses only, the sample's contents as bullets, a children's
+ *      clinic "the way a parent would", no payment split typed into the
+ *      proposal e-mail, the approved "yahin chhod raha hoon", the opt-out only
+ *      under cold e-mails.
+ *  13. (section 14 below) Specialist clinics hear their own impact line and
+ *      bullets, {addressAs} ("Dr. Mehta, aaj ki baat ka summary:"), an implant
+ *      centre is never offered a cost range its demo does not show, an "other"
+ *      business is offered what its demo's kind has, principals are called after
+ *      school, the approved day-16 words.
  *
  * NEGATIVE CONTROL
  *
@@ -48,10 +55,11 @@
  * the opt-out dropped and put back under the replies after a yes, the mailto
  * subject dropped, every kind offered to a clinic, do-not-contact forgotten, the old cap of 10, a Sunday call slot,
  * placeholders ignored, the 2-day cadence back, the retired WhatsApp
- * follow-ups offered again, the greeting lost, the specialist words dropped,
- * "ji" after "Dr. Mehta" in the summary, a cost range promised by an implant
- * centre's message, principals called at 11 am). The run must then FAIL on
- * each; it exits 0 only when every expected failure was seen.
+ * follow-ups offered again, the greeting lost, the specialist clinics' specialty
+ * lost, a coaching first WhatsApp flattened back into one paragraph, "ji" after
+ * "Dr. Mehta" in the summary, a cost range promised by an implant centre's
+ * message, principals called at 11 am). The run must then FAIL on each; it
+ * exits 0 only when every expected failure was seen.
  *
  * Bundled with esbuild exactly like scripts/test-from-template.mjs; nothing mocked.
  * Every lead here is fictional (example.org, "Example ..." names).
@@ -111,7 +119,7 @@ rmSync(out, { force: true });
 
 const M = { ...real };
 if (NEGATIVE) {
-  const noEasyNo = (s) => s.replace(real.APPROVED_ASK.en, "Shall I send it?").replace(real.APPROVED_ASK.hinglish, "Kya main aapko bhej doon?");
+  const noEasyNo = (s) => s.replace(real.APPROVED_ASK.en, "Shall I send you the link?").replace(real.APPROVED_ASK.hinglish, "Kya main aapko link bhej doon?");
   M.OUTREACH_TEMPLATES = real.OUTREACH_TEMPLATES.map((t) =>
     t.channel === "whatsapp" && t.stage === "first" ? { ...t, body: `${t.body}\n{demoLink}` }
     // ...a dental first e-mail promises the demo's WhatsApp button, which shows only once the clinic's number is on it...
@@ -121,12 +129,14 @@ if (NEGATIVE) {
     : t,
   );
   M.render = (t, lead, ctx) => {
-    // ...the specialist clinics lose their approved words (the variants)...
-    const r = real.render({ ...t, variants: undefined }, lead, ctx);
+    // ...the specialist clinics lose their specialty (segment and demo template), so their own impact and bullets...
+    const r = real.render(t, { ...lead, tags: [] }, ctx?.demo ? { ...ctx, demo: { ...ctx.demo, templateId: undefined } } : ctx);
     // ...the opt-out line goes, and the greeting loses the name and title...
     let body = r.body.replace(real.EMAIL_OPT_OUT_EN, "").replace(real.EMAIL_OPT_OUT_HINGLISH, "").replace(/^(Namaste|Good \w+|Dear) [^,!]+/, "$1").trim();
-    // ...and a reply after a yes (the link, the summary, the proposal) gets the cold opt-out.
+    // ...a reply after a yes (the link, the summary, the proposal) gets the cold opt-out...
     if (t.channel === "email" && !real.carriesOptOut(t.stage)) body = `${body}\n\n${real.EMAIL_OPT_OUT_EN}`;
+    // ...and a coaching institute's first WhatsApp goes back to one paragraph ("msz me line break nahi").
+    if (t.channel === "whatsapp" && t.stage === "first" && t.kind === "coaching") body = body.replace(/\s*\n+\s*/g, " ");
     return { ...r, body };
   };
   M.mailtoUrl = (input) => real.mailtoUrl({ ...input, subject: "" });
@@ -324,9 +334,42 @@ for (const t of T) {
   check(!/\{\w+\}/.test(textOf(r)) && r.warnings.some((w) => /No contact name/.test(w)), `${t.id}: no contact name still renders, and says so`);
 }
 
-/* ── 3. First messages: no link, the approved close, short ─────────────── */
+/* ── 3. First messages: the approved five parts, no link, short lines ───── */
+
+/*
+ * THE SHAPE (1 Oct 2026: "msz me line break nahi", "pehle problem btao fir solution ache se btao").
+ * A WhatsApp first message is five parts with one blank line between parts. Part 1 is the greeting
+ * and who is writing, each on its own line with a blank line between them, as the approved examples
+ * set it out, so the text splits on "\n\n" into six blocks:
+ *   greeting "Namaste Dr. Sharma ji," | who "Main Mehdi, ..." | the problem | the impact (one line) |
+ *   the solution (a line ending ":" and exactly three "• " bullets) | the ask and the easy no (two lines).
+ * An e-mail has the same parts as paragraphs above "Regards,", with the greeting alone in part 1.
+ */
+const BULLET = "• ";
+const PRICE = /₹|\bRs\b|\bINR\b|\b\d{1,3}(,\d{2})*,\d{3}\b|\d\s?\/-/;
+function shapeOf(text, channel) {
+  const blocks = text.split("\n\n");
+  const why = [];
+  const want = channel === "whatsapp" ? 6 : 5;
+  if (blocks.length !== want) why.push(`${blocks.length} blocks, not ${want}`);
+  if (blocks.some((b) => !b.trim() || /^\s|\s$/.test(b))) why.push("an empty block or a stray space");
+  const [greet, ...rest] = blocks;
+  const who = channel === "whatsapp" ? rest.shift() : undefined;
+  const [problem, impact, solution, ask] = rest;
+  if (!/^(Namaste|Good (morning|afternoon|evening)|Dear|नमस्ते) [^\n]+,$/.test(greet ?? "")) why.push(`greeting "${greet}"`);
+  if (channel === "whatsapp" && ![M.WHO.hinglish, M.WHO.en, M.WHO.hi].map((w) => w.replace("{senderFirstName}", "Mehdi")).includes(who)) why.push(`who "${who}"`);
+  if (!problem || problem.includes("\n") || problem.includes(BULLET)) why.push("the problem is not one paragraph");
+  if (!impact || impact.includes("\n") || impact.includes(BULLET)) why.push("the impact is not one line");
+  const lines = (solution ?? "").split("\n");
+  if (!/:$/.test(lines[0] ?? "") || (lines[0] ?? "").startsWith(BULLET)) why.push(`solution line "${lines[0]}"`);
+  const items = lines.slice(1);
+  if (items.length !== 3 || !items.every((l) => l.startsWith(BULLET) && l.length > 6 && !/[.:;,]$/.test(l))) why.push(`bullets ${JSON.stringify(items)}`);
+  const askLines = (ask ?? "").split("\n");
+  return { why, blocks, askLines, items, problem, impact };
+}
 
 const FIRST = T.filter((t) => t.stage === "first");
+let shapes = 0;
 for (const t of FIRST) {
   const kind = t.kind === "any" ? "other" : t.kind;
   const lead = leadFor(t, kind);
@@ -334,35 +377,51 @@ for (const t of FIRST) {
   const words = ownWords(t, r);
   check(t.allowsLink === false && !M.containsLink(`${t.subject ?? ""}${t.body}`), `${t.id}: a first message carries no link`);
   check(!URL_IN_TEXT.test(textOf(r)), `${t.id}: rendered with no URL`);
-  const close = t.sample === "offer" ? M.EASY_NO[t.language] : M.APPROVED_ASK[t.language];
-  check(words.endsWith(close), `${t.id}: ends with the approved ${t.sample === "offer" ? "offer and easy no" : "question and easy no"}`);
+  const ask = (t.sample === "offer" ? M.OFFER_ASK : M.APPROVED_ASK)[t.language];
+  check(words.endsWith(`\n\n${ask}`) && ask.split("\n")[1] === M.EASY_NO[t.language],
+    `${t.id}: ends with the approved ${t.sample === "offer" ? "offer" : "question"} and easy no, each on its own line`);
   check((words.match(/\?/g) || []).length === 1, `${t.id}: exactly one question`);
   check(t.sample === "offer" ? M.promisedPage(t) === null : M.promisedPage(t) !== null, `${t.id}: ${t.sample === "offer" ? "promises nothing" : "says what is made"}`);
-  if (t.channel === "whatsapp") {
-    const hello = {
-      hinglish: `Namaste ${M.greetingFor(lead.contactName, kind, "hinglish")}, main Mehdi, Ideovent Technologies (Saket, Delhi) se.`,
-      en: `Good afternoon ${lead.contactName}, I am Mehdi from Ideovent Technologies, Saket, Delhi.`,
-      hi: `नमस्ते ${M.greetingFor(lead.contactName, kind, "hi")}, मैं Mehdi, Ideovent Technologies (साकेत, दिल्ली) से।`,
-    }[t.language];
-    check(r.body.startsWith(hello), `${t.id}: opens with the approved greeting (${r.body.slice(0, 70)})`);
-    // Under about 450 characters with every observation its kind can pick, and every dental specialty.
-    const obsIds = t.pitch === "fix_website" ? M.observationsFor(kind).map((o) => o.id).filter((id) => id !== "no_website") : [undefined];
-    const specialties = kind === "dental" ? [[], ["DENTAL_IMPLANT"], ["DENTAL_ORTHO"], ["DENTAL_KIDS"]] : [[]];
-    let longest = 0;
-    for (const observation of obsIds) {
-      for (const tags of specialties) {
-        const body = M.render(t, leadFor(t, kind, { observation, tags }), { now: NOW, demo: { phone: true, whatsapp: true } }).body;
-        longest = Math.max(longest, body.length);
+  check(t.body.includes("{impact}") && (t.promises === "pitch" || t.body.includes("\n{offer}\n\n")), `${t.id}: says the impact, then the bullets under the solution line`);
+  // Every lead it can go to: every observation its kind can pick, every dental specialty, the demo with and without their number.
+  const obsIds = t.pitch === "fix_website" ? M.observationsFor(kind).map((o) => o.id).filter((id) => id !== "no_website") : [undefined];
+  const specialties = kind === "dental" ? [[], ["DENTAL_IMPLANT"], ["DENTAL_ORTHO"], ["DENTAL_KIDS"]] : [[]];
+  let longest = 0;
+  let longestLine = 0;
+  let words100 = 0;
+  const bad = [];
+  for (const observation of obsIds) {
+    for (const tags of specialties) {
+      for (const demo of [undefined, { phone: true, whatsapp: true }]) {
+        const one = M.render(t, leadFor(t, kind, { observation, tags }), { now: NOW, demo });
+        const own = ownWords(t, one);
+        const s = shapeOf(own, t.channel);
+        shapes++;
+        if (s.why.length) bad.push(`${observation ?? "no site"} ${tags[0] ?? ""}${demo ? " +number" : ""}: ${s.why.join("; ")}`);
+        if (s.askLines.join("\n") !== ask) bad.push(`ask ${JSON.stringify(s.askLines)}`);
+        if (URL_IN_TEXT.test(textOf(one)) || PRICE.test(own) || EMOJI.test(own) || DASH.test(own)) bad.push(`${observation}: a link, price, emoji or dash`);
+        if ((own.match(/\?/g) || []).length !== 1) bad.push("not exactly one question");
+        longest = Math.max(longest, own.length);
+        longestLine = Math.max(longestLine, ...own.split("\n").map((l) => l.length));
+        words100 = Math.max(words100, own.split(/\s+/).filter(Boolean).length);
       }
     }
-    check(longest <= 450, `${t.id}: under 450 characters with every observation and specialty (max ${longest})`);
+  }
+  check(bad.length === 0, `${t.id}: five parts (greeting and who, problem, impact, the solution with three bullets, the ask and the easy no), a blank line between parts, for every lead it can go to (${bad.slice(0, 3).join(" | ")})`);
+  if (t.channel === "whatsapp") {
+    check(r.body.startsWith(`${M.GREET[t.language].replace("{greeting}", M.greetingFor(lead.contactName, kind, t.language)).replace("{timeOfDay}", "afternoon")}\n\n${M.WHO[t.language].replace("{senderFirstName}", "Mehdi")}\n\n`),
+      `${t.id}: opens with the approved greeting, then who, each on its own line (${r.body.slice(0, 80)})`);
+    // Short lines; the whole message about as long as the approved examples, with every observation and specialty.
+    check(longestLine <= 160, `${t.id}: every line is short (longest ${longestLine} characters)`);
+    check(longest <= 650, `${t.id}: under 650 characters with every observation and specialty (max ${longest})`);
   } else {
     check(r.subject === `${lead.instituteName} website`, `${t.id}: subject "<name> website" (${r.subject})`);
     check(/^(Dear|Namaste) [^,\n]+,\n\n/.test(r.body), `${t.id}: greets by name and title on its own line`);
-    const n = words.split(/\s+/).filter(Boolean).length;
-    check(n <= 100, `${t.id}: under 100 words before the signature (${n})`);
+    check(!/Ideovent/.test(words), `${t.id}: the e-mail does not say who is writing above the signature (the From line and the signature do)`);
+    check(words100 <= 110, `${t.id}: under 110 words before the signature with every observation (${words100})`);
   }
 }
+check(shapes >= 1200, `the shape of every first message was read for every lead it can go to (${shapes})`);
 {
   // "Made" needs the demo; "offer" goes without one, and says so when a demo exists.
   const k = (t) => (t.kind === "any" ? "other" : t.kind);
@@ -387,54 +446,71 @@ for (const t of FIRST) {
   check(M.checkSend(leadOf("school"), t, "email", sig, 0, NOW, { text: { subject: r2.subject, body: r2.body } }).ok, "a web address in the signature does not count as a link in the message");
 }
 
-/* ── 4. The approved samples render word for word ─────────────────────────── */
+/* ── 4. The approved examples render word for word (1 Oct 2026) ──────────── */
 
 {
   const say = (id, lead, ctx = {}) => M.render(M.getTemplate(id), lead, { now: NOW, ...ctx }).body;
   const clinic = (over = {}) => leadOf("dental", { instituteName: "Example Smile Care", ...over });
-  const ASK = "Kya main aapko bhej doon? Pasand na aaye to koi baat nahi.";
-  check(say("wa_first_new_dental_hinglish", clinic({ contactName: "Dr. Sharma" })) ===
-    `Namaste Dr. Sharma ji, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Google par aapka clinic dekha, par clinic ki apni website nahi mili, sirf listing dikhti hai. Humne aapke clinic ke naam se ek chhota sample page banaya hai jisme treatments, timings aur one-tap booking hai. ${ASK}`,
-    "approved sample: dental, no website");
-  const poor = say("wa_first_fix_dental_hinglish", clinic({ contactName: "Dr. Gupta", website: "https://example.org", observation: "no_timings" }), { demo: { phone: true, whatsapp: true } });
-  check(poor.startsWith("Namaste Dr. Gupta ji, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Aapke clinic ki website phone par kholi.") &&
-    poor.endsWith(`Humne ek sample banaya hai jisme timing, treatments aur ek tap mein call ya WhatsApp hai. ${ASK}`), `approved sample: dental, poor website (${poor})`);
-  // Word for word but one honest word: the implant demo (d4) shows no implant price, so "kharche ki jaankari", not "range".
-  const implant = say("wa_first_fix_dental_hinglish", clinic({ contactName: "Dr. Kapoor", website: "https://example.org", observation: "no_implant_info", tags: ["DENTAL_IMPLANT"] }));
-  check(implant === `Namaste Dr. Kapoor ji, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Google par aapka implant centre dekha. Log implant se pehle process aur kharche ki jaankari online dhoondhte hain, par aapki site par ye nahi mila. Humne ek sample page banaya hai jisme implant ka process, kharche ki jaankari aur appointment booking hai. ${ASK}`,
-    `approved sample: implant centre (${implant})`);
-  const kids = say("wa_first_new_dental_hinglish", clinic({ contactName: "Dr. Arora", tags: ["DENTAL_KIDS"] }));
-  check(kids === "Namaste Dr. Arora ji, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Google par aapka kids dental clinic dekha. Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga, par clinic ki website nahi mili. Humne ek sample page banaya hai jisme pehli visit ki jaankari, timings aur booking hai. Kya main aapko bhej doon? Pasand na aaye to koi baat nahi.",
-    `approved sample: kids clinic (${kids})`);
-  const en = say("wa_first_fix_dental_en", clinic({ website: "https://example.org", observation: "no_online_booking" }));
-  check(en.startsWith("Good afternoon Dr. Mehta, I am Mehdi from Ideovent Technologies, Saket, Delhi.") &&
-    en.endsWith("We have made a short sample page for your clinic with treatments, timings and one-tap booking. Shall I send it? If it is not useful, no problem at all."), `approved sample: dental, English (${en})`);
-  check(say("wa_first_new_school_hinglish", leadOf("school", { contactName: "Principal Ma'am" })) ===
-    `Namaste Principal Ma'am, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Google par aapka school dekha, par school ki apni website nahi mili. Parents admission se pehle fees aur admission ki jaankari online dhoondhte hain. Humne aapke school ke naam se ek sample page banaya hai jisme admission, fees aur enquiry form hai. ${ASK}`,
-    "approved sample: school, no website");
-  const old = say("wa_first_fix_school_hinglish", leadOf("school", { contactName: "Sharma Sir", website: "https://example.org", observation: "old_session" }));
-  check(old.startsWith("Namaste Sharma Sir, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Aapke school ki website phone par dekhi. Usme abhi bhi [jo purana session dikha] ke admission likhe hain aur fees kahin nahi hai.") &&
-    old.endsWith(`Humne ek sample banaya hai jisme 2027-28 ke admission, fees aur enquiry ek hi screen par hain. ${ASK}`), `approved sample: school, old website (${old})`);
-  check(say("wa_first_new_coaching_hinglish", leadOf("coaching", { contactName: "Verma" })) ===
-    `Namaste Verma ji, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Google par aapka institute dekha, par apni website nahi mili. Students batch aur fees pehle online compare karte hain. Humne aapke institute ke naam se ek sample page banaya hai jisme courses, batch timing aur enquiry button hai. ${ASK}`,
-    "approved sample: coaching, no website");
-  const coach = say("wa_first_fix_coaching_hinglish", leadOf("coaching", { contactName: "Singh Sir", website: "https://example.org", observation: "no_batch_fees" }));
-  check(coach.includes("Aapke institute ki site phone par kholi. Usme batch ki timing aur fees kahin nahi mili, to student ko pehle call karna padta hai. Humne ek sample banaya hai jisme saare batches, timing aur fees ek jagah hain."), `approved sample: coaching, poor website (${coach})`);
+  const site = { website: "https://example.org" };
+  const NUMBER = { demo: { phone: true, whatsapp: true } };
+  const ASK = "Kya main aapko link bhej doon?\nPasand na aaye to koi baat nahi.";
+  const HELLO = (name) => `Namaste ${name},\n\nMain Mehdi, Ideovent Technologies (Saket, Delhi) se.\n\n`;
+  const dentalNew = say("wa_first_new_dental_hinglish", clinic({ contactName: "Dr. Sharma" }), NUMBER);
+  check(dentalNew === `${HELLO("Dr. Sharma ji")}Google par aapka clinic dekha. Clinic ki apni website nahi hai, sirf Google listing hai.\n\n` +
+    "Aaj patient clinic chunne se pehle timings, treatments aur fees online dekhte hain. Ye na mile to wo aksar agle clinic ko call kar lete hain.\n\n" +
+    "Isliye humne aapke clinic ke naam se ek sample website banayi hai:\n• Saare treatments aur timings ek jagah\n• Ek tap mein call ya WhatsApp\n• Online appointment booking\n\n" + ASK,
+  `approved sample: dental, no website (${dentalNew})`);
+  // The problem is the lead's own checked observation: here the words Mehdi typed in the approved example.
+  const poor = say("wa_first_fix_dental_hinglish", clinic({ contactName: "Dr. Gupta", ...site, observation: "Wo theek se khul nahi rahi, aur timings kahin nahi dikhi." }), NUMBER);
+  check(poor === `${HELLO("Dr. Gupta ji")}Aapke clinic ki website phone par kholi. Wo theek se khul nahi rahi, aur timings kahin nahi dikhi.\n\n` +
+    "Zyaadatar patient phone se hi dekhte hain. Site na khule to wo booking ki jagah doosra clinic dhoondh lete hain.\n\n" +
+    "Isliye humne aapke clinic ka ek naya sample banaya hai:\n• Phone par jaldi khulne wali site\n• Timings aur treatments pehli screen par\n• Ek tap mein call, WhatsApp ya booking\n\n" + ASK,
+  `approved sample: dental, poor website (${poor})`);
+  const schoolNew = say("wa_first_new_school_hinglish", leadOf("school", { contactName: "Principal Ma'am" }), { demo: { whatsapp: true } });
+  check(schoolNew === `${HELLO("Principal Ma'am")}Google par aapka school dekha. School ki apni website nahi hai, sirf Google listing hai.\n\n` +
+    "Parents admission se pehle fees, facilities aur admission ka process online dhoondhte hain. Ye na mile to wo aksar doosre school mein enquiry kar lete hain.\n\n" +
+    "Isliye humne aapke school ke naam se ek sample website banayi hai:\n• Admission ka process aur zaroori dates\n• Fees aur facilities ki jaankari\n• Enquiry form, jo seedha aapke phone par aata hai\n\n" + ASK,
+  `approved sample: school, no website (${schoolNew})`);
+  // The old session is typed into the [blank] before sending, as the approved example's "2023-24".
+  const old = say("wa_first_fix_school_hinglish", leadOf("school", { contactName: "Sharma Sir", ...site, observation: "old_session" }), { demo: { whatsapp: true } })
+    .replace("[jo purana session dikha]", "2023-24");
+  check(old === `${HELLO("Sharma Sir")}Aapke school ki website dekhi. Usme abhi bhi 2023-24 ke admission likhe hain, aur fees kahin nahi hai.\n\n` +
+    "Parents admission se pehle yahi sab online dekhte hain. Purani jaankari dekhkar wo aksar call hi nahi karte.\n\n" +
+    "Isliye humne aapke school ka ek naya sample banaya hai:\n• 2027-28 admission ki jaankari\n• Fees ka poora structure\n• Enquiry form, jo seedha aapke phone par aata hai\n\n" + ASK,
+  `approved sample: school, old website (${old})`);
+  const coachNew = say("wa_first_new_coaching_hinglish", leadOf("coaching", { contactName: "Verma" }), NUMBER);
+  check(coachNew === `${HELLO("Verma ji")}Google par aapka institute dekha. Institute ki apni website nahi hai, sirf Google listing hai.\n\n` +
+    "Students join karne se pehle batch, timing aur fees online compare karte hain. Ye na mile to wo aksar doosre institute mein enquiry kar lete hain.\n\n" +
+    "Isliye humne aapke institute ke naam se ek sample website banayi hai:\n• Saare courses aur batch timings ek jagah\n• Fees ki saaf jaankari\n• Ek tap mein enquiry, call ya WhatsApp\n\n" + ASK,
+  `approved sample: coaching, no website (${coachNew})`);
+  const coachPoor = say("wa_first_fix_coaching_hinglish", leadOf("coaching", { contactName: "Singh Sir", ...site, observation: "NEET batch ki timing aur fees kahin nahi mili." }), NUMBER);
+  check(coachPoor === `${HELLO("Singh Sir")}Aapke institute ki website phone par kholi. NEET batch ki timing aur fees kahin nahi mili.\n\n` +
+    "Ye jaanne ke liye student ko pehle call karna padta hai. Kai students call karne ki jagah agla institute dekh lete hain.\n\n" +
+    "Isliye humne aapke institute ka ek naya sample banaya hai:\n• Saare batches aur timings ek jagah\n• Har course ki fees saaf likhi\n• Phone par jaldi khulne wali site, ek tap mein enquiry\n\n" + ASK,
+  `approved sample: coaching, poor website (${coachPoor})`);
+  // English: the approved voice, impact, bullets and close. The problem line is what was checked: no website of its own.
+  const en = say("wa_first_new_dental_en", clinic({ contactName: "Dr. Mehta" }), NUMBER);
+  check(en === "Good afternoon Dr. Mehta,\n\nI am Mehdi from Ideovent Technologies, Saket, Delhi.\n\nI found your clinic on Google, but it has no website of its own, only the Google listing.\n\n" +
+    "Most patients check timings and book from their phone. When they cannot, they often call the next clinic on the list.\n\n" +
+    "So we made a sample website for your clinic:\n• All treatments and timings in one place\n• One tap to call or WhatsApp\n• Online appointment booking\n\nShall I send you the link?\nIf it is not useful, no problem at all.",
+  `approved sample: dental, English (${en})`);
   check(say("wa_fu1_dental_hinglish", clinic({ contactName: "Dr. Sharma" })) ===
-    "Namaste Dr. Sharma ji, Mehdi, Ideovent se. Kuch din pehle aapke clinic ke sample page ki baat ki thi. Main yahin chhod raha hoon, kabhi dekhna ho to bas \"haan\" likh dijiye.",
-    "approved sample: the one WhatsApp follow-up");
+    "Namaste Dr. Sharma ji,\n\nMehdi, Ideovent se. Kuch din pehle aapke clinic ke sample page ki baat ki thi.\n\nMain yahin chhod raha hoon. Kabhi dekhna ho to bas \"haan\" likh dijiye.",
+  "approved sample: the one WhatsApp follow-up, day 4");
   const yes = say("wa_after_reply_dental_hinglish", clinic({ contactName: "" }));
-  check(yes.startsWith("Shukriya Doctor! Ye raha sample:\nhttps://ideovent.vercel.app/site/example-dental\n\nYe sirf demonstration hai, aapki live site nahi, aur jo jaankari aapki taraf se nahi mili wo abhi sample hai. 10 minute ki call ke liye ") &&
-    / theek rahega ya [A-Z][a-z]+day \d+ baje\?$/.test(yes), `approved sample: after they say yes (${yes})`);
+  check(yes.startsWith("Shukriya Doctor!\n\nYe raha sample:\nhttps://ideovent.vercel.app/site/example-dental\n\nYe sirf demonstration hai, aapki live site nahi.\nJo jaankari aapki taraf se nahi mili, wo abhi sample hai.\n\n10 minute ki call ke liye ") &&
+    / theek rahega ya [A-Z][a-z]+day \d+ baje\?$/.test(yes), `after they say yes: the link on its own line, the honest lines, two call times (${yes})`);
   check(say("wa_after_call_dental_hinglish", clinic({ contactName: "Dr. Mehta" })) ===
-    "Dr. Mehta, aaj ki baat ka summary:\n- Package: [package and price]\n- Payment: 50% advance, 50% launch par\n- Mujhe chahiye: logo, doctors ki details, timing, clinic ki 5-6 photos\n- Pehla version: [date]\nKuch badalna ho to bata dijiye. Shukriya Doctor.",
-    "approved sample: after the call");
-  const mail = M.render(M.getTemplate("em_first_fix_dental_en"), clinic({ instituteName: "Smile Care", website: "https://example.org", observation: "no_timings" }), { now: NOW });
-  check(mail.subject === "Smile Care website" && mail.body.startsWith("Dear Dr. Mehta,\n\nI opened your clinic's website on my phone, the way a new patient would.") &&
-    mail.body.endsWith("We have made a short sample page for your clinic with treatments, timings and one-tap booking. Shall I send it? If it is not useful, no problem at all.\n\nRegards,\nMehdi Alam, Ideovent Technologies, Saket, New Delhi\n+91 77619 21786\n\nIf you would rather not hear from me, reply REMOVE and I will not write again."),
-    `approved sample: the first e-mail (${mail.body})`);
-  check(say("em_fu1_dental_en", clinic({ instituteName: "Smile Care" })).startsWith("Dr. Mehta, a quick note on the sample I made for Smile Care. Shall I send the link?"), "approved sample: e-mail follow-up, day 4");
-  check(say("em_fu3_dental_en", clinic({ instituteName: "Smile Care" })).startsWith("Dr. Mehta, I will close this here. If you want to see it later, just reply yes.\n\nRegards,"), "approved sample: e-mail follow-up, day 16");
+    "Dr. Mehta, aaj ki baat ka summary:\n• Package: [package and price]\n• Payment: 50% advance, 50% launch par\n• Mujhe chahiye: logo, doctors ki details, timing, clinic ki 5-6 photos\n• Pehla version: [date]\n\nKuch badalna ho to bata dijiye.\nShukriya Doctor.",
+  "after the call: the approved summary as a list, the close on its own lines");
+  const mail = M.render(M.getTemplate("em_first_fix_dental_en"), clinic({ instituteName: "Smile Care", ...site, observation: "no_timings" }), { now: NOW });
+  check(mail.subject === "Smile Care website" && mail.body === "Dear Dr. Mehta,\n\nI opened your clinic's website on my phone, the way a new patient would. The clinic timings are not on it.\n\n" +
+    "Most patients check this on their phone first. When they cannot find it, they often call the next clinic on the list.\n\n" +
+    "So we made a new sample website for your clinic:\n• A site that opens fast on a phone\n• Timings and treatments on the first screen\n• One tap to book an appointment\n\n" +
+    "Shall I send you the link?\nIf it is not useful, no problem at all.\n\nRegards,\nMehdi Alam, Ideovent Technologies, Saket, New Delhi\n+91 77619 21786\n\nIf you would rather not hear from me, reply REMOVE and I will not write again.",
+  `the first e-mail: the same parts as paragraphs, the greeting on its own line (${mail.body})`);
+  check(say("em_fu1_dental_en", clinic({ instituteName: "Smile Care" })).startsWith("Dr. Mehta, a quick note on the sample I made for Smile Care.\n\nShall I send you the link?\n\nRegards,"), "e-mail follow-up, day 4: the approved words, the question on its own line");
+  check(say("em_fu3_dental_en", clinic({ instituteName: "Smile Care" })).startsWith("Dr. Mehta, I will close this here.\n\nIf you want to see it later, just reply yes.\n\nRegards,"), "e-mail follow-up, day 16: the approved words, on their own lines");
 }
 
 /* ── 5. Merge fields ─────────────────────────────────────────────────────── */
@@ -444,7 +520,8 @@ for (const t of FIRST) {
     ["Dr. Mehta", "dental", "en", "Dr. Mehta"], ["Dr. Mehta", "dental", "hinglish", "Dr. Mehta ji"], ["Dr. Mehta", "dental", "hi", "Dr. Mehta जी"],
     ["Dr Sharma", "dental", "hinglish", "Dr Sharma ji"], ["Sharma Sir", "school", "hinglish", "Sharma Sir"], ["Sharma Sir", "school", "en", "Sharma Sir"],
     ["Principal Ma'am", "school", "hinglish", "Principal Ma'am"], ["Principal", "school", "hinglish", "Principal ji"], ["Verma", "coaching", "hinglish", "Verma ji"],
-    ["Verma ji", "coaching", "hinglish", "Verma ji"], ["Verma", "coaching", "en", "Verma"], ["Mr. Rao", "other", "hinglish", "Mr. Rao"], ["Mrs. Rao", "other", "hi", "Mrs. Rao"],
+    ["Verma ji", "coaching", "hinglish", "Verma ji"], ["Verma", "coaching", "en", "Verma ji"], ["Verma ji", "coaching", "en", "Verma ji"], ["Principal", "school", "en", "Principal"],
+    ["Principal Ma'am", "school", "en", "Principal Ma'am"], ["Mr. Rao", "other", "hinglish", "Mr. Rao"], ["Mr. Rao", "other", "en", "Mr. Rao"], ["Mrs. Rao", "other", "hi", "Mrs. Rao"],
     ["", "dental", "en", "Doctor"], ["", "dental", "hinglish", "Doctor"], ["", "dental", "hi", "डॉक्टर साहब"],
     ["", "school", "en", "Principal"], ["", "school", "hinglish", "Principal ji"], ["", "school", "hi", "प्रिंसिपल जी"],
     ["", "coaching", "en", "Sir"], ["", "coaching", "hinglish", "Sir"], ["", "other", "hi", "सर"],
@@ -455,9 +532,11 @@ for (const t of FIRST) {
   check(M.render(M.getTemplate("em_first_new_school_hinglish"), leadOf("school", { contactName: "" }), { now: NOW }).body.startsWith("Namaste Principal ji,"), "no name: a Hinglish school e-mail opens 'Namaste Principal ji,'");
   check(M.render(M.getTemplate("em_first_new_dental_hinglish"), leadOf("dental", { contactName: "" }), { now: NOW }).body.startsWith("Namaste Doctor,"), "no name: a Hinglish clinic e-mail opens 'Namaste Doctor,'");
   const bare = M.render(M.getTemplate("wa_first_new_coaching_en"), leadOf("coaching", { contactName: "Verma" }), { now: NOW });
-  check(bare.warnings.some((w) => /no title/.test(w)), "a bare name in an English greeting is flagged");
+  check(bare.body.startsWith("Good afternoon Verma ji,\n\n"), `a bare name in English gets "ji", never "Good afternoon Verma," (${bare.body.slice(0, 30)})`);
+  check(bare.warnings.some((w) => /no title/.test(w) && /"Verma ji"/.test(w)), "a bare name in an English greeting is flagged, with the greeting it reads");
+  check(M.render(M.getTemplate("em_fu1_any_en"), leadOf("coaching", { contactName: "Verma" }), { now: NOW }).body.startsWith("Verma ji, a quick note"), "a line that opens with a bare name says \"Verma ji,\" in English too");
   check(!M.render(M.getTemplate("wa_first_new_coaching_hinglish"), leadOf("coaching", { contactName: "Verma" }), { now: NOW }).warnings.length, "a bare name in Hinglish becomes 'Verma ji', no warning");
-  check(M.render(M.getTemplate("wa_first_new_school_hinglish"), leadOf("school"), { now: NOW, senderName: "Asha Verma" }).body.includes("main Asha, Ideovent"), "{senderFirstName} is the sender's first name");
+  check(M.render(M.getTemplate("wa_first_new_school_hinglish"), leadOf("school"), { now: NOW, senderName: "Asha Verma" }).body.includes("\n\nMain Asha, Ideovent"), "{senderFirstName} is the sender's first name");
   const at = (hh, mm) => new Date(Date.UTC(2026, 8, 29, hh, mm) - 330 * 60_000);
   check(M.timeOfDay(at(9, 30)) === "morning" && M.timeOfDay(at(14, 30)) === "afternoon" && M.timeOfDay(at(18, 0)) === "evening", "{timeOfDay} follows India time");
   check(M.render(M.getTemplate("wa_first_new_dental_en"), leadOf("dental"), { now: at(10, 30) }).body.startsWith("Good morning Dr. Mehta,"), "an English first message at 10:30 says Good morning");
@@ -467,27 +546,72 @@ for (const t of FIRST) {
     ["other", "general", "en", "business"], ["dental", "general", "hi", "क्लिनिक"], ["school", "general", "hi", "स्कूल"],
   ]) check(M.kindNounFor(kind, language, specialty) === want, `{kindNoun} ${kind}/${specialty}/${language} = ${want}`);
   const offer = (kind, pitch, language, extra = {}) => M.offerFor({ kind, pitch, language, now: NOW, ...extra });
+  const list = (...items) => items.map((x) => `• ${x}`).join("\n");
+  const BOTH = { demo: { phone: true, whatsapp: true } };
   for (const [args, want] of [
-    [["dental", "new_website", "hinglish"], "treatments, timings aur one-tap booking"],
-    [["dental", "fix_website", "hinglish", { demo: { phone: true, whatsapp: true } }], "timing, treatments aur ek tap mein call ya WhatsApp"],
-    [["dental", "fix_website", "hinglish", { sample: "offer" }], "timing, treatments aur ek tap mein call ya WhatsApp"],
-    [["dental", "fix_website", "hinglish"], "timing, treatments aur ek tap mein booking"],
-    [["dental", "fix_website", "en", { demo: { phone: true } }], "treatments, timings and one-tap calling"],
-    [["dental", "fix_website", "en", { demo: { whatsapp: true } }], "treatments, timings and one-tap WhatsApp"],
-    [["dental", "new_website", "hinglish", { specialty: "implant" }], "implant ka process, kharche ki jaankari aur appointment booking"],
-    [["dental", "fix_website", "en", { specialty: "implant" }], "the implant process, cost information and appointment booking"],
-    [["dental", "fix_website", "hinglish", { specialty: "ortho" }], "braces ka process, kharche ki range aur appointment booking"],
-    [["dental", "new_website", "hinglish", { specialty: "kids" }], "pehli visit ki jaankari, timings aur booking"],
-    [["school", "new_website", "hinglish"], "admission, fees aur enquiry form"],
-    [["school", "fix_website", "hinglish"], "2027-28 ke admission, fees aur enquiry ek hi screen par"],
-    [["school", "fix_website", "en", { demo: { sessionLabel: "2027" } }], "the 2027 admissions, fees and an enquiry form on one screen"],
-    [["coaching", "new_website", "hinglish"], "courses, batch timing aur enquiry button"],
-    [["coaching", "fix_website", "hinglish"], "saare batches, timing aur fees ek jagah"],
-    [["other", "new_website", "en"], "services, timings and an enquiry button"],
+    // Dental, no website: the approved three, one-tap call or WhatsApp only with the clinic's number on the demo.
+    [["dental", "new_website", "hinglish", BOTH], list("Saare treatments aur timings ek jagah", "Ek tap mein call ya WhatsApp", "Online appointment booking")],
+    [["dental", "new_website", "hinglish", { sample: "offer" }], list("Saare treatments aur timings ek jagah", "Ek tap mein call ya WhatsApp", "Online appointment booking")],
+    [["dental", "new_website", "hinglish"], list("Saare treatments aur timings ek jagah", "Phone par jaldi khulne wali site", "Online appointment booking")],
+    [["dental", "new_website", "en", { demo: { phone: true } }], list("All treatments and timings in one place", "One tap to call", "Online appointment booking")],
+    // Dental, their site: the approved three, the last one by what the demo carries.
+    [["dental", "fix_website", "hinglish", BOTH], list("Phone par jaldi khulne wali site", "Timings aur treatments pehli screen par", "Ek tap mein call, WhatsApp ya booking")],
+    [["dental", "fix_website", "hinglish"], list("Phone par jaldi khulne wali site", "Timings aur treatments pehli screen par", "Ek tap mein appointment booking")],
+    [["dental", "fix_website", "en", { demo: { whatsapp: true } }], list("A site that opens fast on a phone", "Timings and treatments on the first screen", "One tap to WhatsApp or book")],
+    // Specialist clinics: their own information; an implant centre never a cost range (its demo prices no implant).
+    [["dental", "new_website", "hinglish", { specialty: "implant" }], list("Implant ka process, step by step", "Kharche ki jaankari", "Online appointment booking")],
+    [["dental", "fix_website", "en", { specialty: "implant" }], list("A site that opens fast on a phone", "The implant process and cost information", "Online appointment booking")],
+    [["dental", "new_website", "hinglish", { specialty: "ortho" }], list("Braces ka process, step by step", "Har tarah ke braces ke kharche ki range", "Online appointment booking")],
+    [["dental", "new_website", "hinglish", { specialty: "kids" }], list("Bachche ki pehli visit mein kya hota hai", "Timings aur treatments ek jagah", "Online appointment booking")],
+    // Schools: the enquiry form only with the school's WhatsApp on the demo (it sends there; with none there is no form).
+    [["school", "new_website", "hinglish", { demo: { whatsapp: true } }], list("Admission ka process aur zaroori dates", "Fees aur facilities ki jaankari", "Enquiry form, jo seedha aapke phone par aata hai")],
+    [["school", "new_website", "hinglish"], list("Admission ka process aur zaroori dates", "Fees aur facilities ki jaankari", "Phone par jaldi khulne wali site")],
+    [["school", "fix_website", "hinglish", { sample: "offer", problem: "old" }], list("2027-28 admission ki jaankari", "Fees ka poora structure", "Enquiry form, jo seedha aapke phone par aata hai")],
+    [["school", "fix_website", "en", { demo: { sessionLabel: "2027" }, problem: "info" }], list("2027 admission details", "The full fee structure", "A site that opens fast on a phone")],
+    [["school", "fix_website", "hinglish", { problem: "site" }], list("Phone par jaldi khulne wali site", "2027-28 admission ki jaankari", "Fees ka poora structure")],
+    [["school", "new_website", "hi", { demo: { whatsapp: true } }], list("एडमिशन का प्रोसेस और ज़रूरी तारीख़ें", "फ़ीस और सुविधाओं की जानकारी", "एनक्वायरी फ़ॉर्म, जो सीधे आपके फ़ोन पर आता है")],
+    // Coaching: the approved three.
+    [["coaching", "new_website", "hinglish", BOTH], list("Saare courses aur batch timings ek jagah", "Fees ki saaf jaankari", "Ek tap mein enquiry, call ya WhatsApp")],
+    [["coaching", "fix_website", "hinglish", { demo: { whatsapp: true } }], list("Saare batches aur timings ek jagah", "Har course ki fees saaf likhi", "Phone par jaldi khulne wali site, ek tap mein enquiry")],
+    [["coaching", "fix_website", "hinglish"], list("Saare batches aur timings ek jagah", "Har course ki fees saaf likhi", "Phone par jaldi khulne wali site")],
+    [["other", "new_website", "en"], list("Your services and timings in one place", "A site that opens fast on a phone", "A clear page about you")],
+    // Their own site: the first bullet answers the problem checked. "Not secure": a secure site (every demo is on https).
+    [["dental", "fix_website", "hinglish", { problem: "trust" }], list("Secure site, jis par \"Not secure\" nahi dikhta", "Timings aur treatments pehli screen par", "Ek tap mein appointment booking")],
+    [["dental", "fix_website", "en", { specialty: "kids", problem: "trust" }], list("A secure site, with no \"Not secure\" warning", "What happens at a child's first visit", "Online appointment booking")],
+    [["school", "fix_website", "hinglish", { problem: "trust", demo: { whatsapp: true } }], list("Secure site, jis par \"Not secure\" nahi dikhta", "2027-28 admission aur fees ki poori jaankari", "Enquiry form, jo seedha aapke phone par aata hai")],
+    [["coaching", "fix_website", "en", { problem: "trust" }], list("A secure site, with no \"Not secure\" warning", "All batches and timings in one place", "Every course's fees, clearly written")],
+    [["other", "fix_website", "en", { problem: "trust", ...BOTH }], list("A secure site, with no \"Not secure\" warning", "Your services and timings in one place", "One tap to call or WhatsApp")],
+    // A site that fails on a phone: the fast site first, for coaching and any other business too.
+    [["coaching", "fix_website", "hinglish", { problem: "site", demo: { whatsapp: true } }], list("Phone par jaldi khulne wali site, ek tap mein enquiry", "Saare batches aur timings ek jagah", "Har course ki fees saaf likhi")],
+    [["other", "fix_website", "hinglish", { problem: "site" }], list("Phone par jaldi khulne wali site", "Aapki services aur timings ek jagah", "Aapke baare mein saaf jaankari")],
   ]) check(offer(...args) === want, `{offer} ${JSON.stringify(args)} = "${want}" (got "${offer(...args)}")`);
+  // {impact}: by kind and pitch, and on their own site by the kind of problem checked.
+  const impact = (kind, pitch, language, extra = {}) => M.impactFor({ kind, pitch, language, ...extra });
+  for (const [args, want] of [
+    [["dental", "new_website", "hinglish"], "Aaj patient clinic chunne se pehle timings, treatments aur fees online dekhte hain. Ye na mile to wo aksar agle clinic ko call kar lete hain."],
+    [["dental", "new_website", "en"], "Most patients check timings and book from their phone. When they cannot, they often call the next clinic on the list."],
+    [["dental", "fix_website", "hinglish", { problem: "site" }], "Zyaadatar patient phone se hi dekhte hain. Site na khule to wo booking ki jagah doosra clinic dhoondh lete hain."],
+    [["dental", "new_website", "hinglish", { specialty: "kids" }], "Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga. Ye na mile to wo aksar agle clinic ko call kar lete hain."],
+    [["dental", "fix_website", "hinglish", { specialty: "kids", problem: "site" }], "Zyaadatar parents phone se hi dekhte hain. Site na khule to wo booking ki jagah doosra clinic dhoondh lete hain."],
+    [["dental", "fix_website", "hinglish", { problem: "implant" }], "Log implant se pehle yahi jaankari online dhoondhte hain. Ye na mile to wo aksar agle clinic ko call kar lete hain."],
+    [["school", "new_website", "hinglish"], "Parents admission se pehle fees, facilities aur admission ka process online dhoondhte hain. Ye na mile to wo aksar doosre school mein enquiry kar lete hain."],
+    [["school", "fix_website", "hinglish", { problem: "old" }], "Parents admission se pehle yahi sab online dekhte hain. Purani jaankari dekhkar wo aksar call hi nahi karte."],
+    [["school", "fix_website", "hinglish", { problem: "site" }], "Zyaadatar parents phone se hi dekhte hain. Site na khule to wo aksar doosre school mein enquiry kar lete hain."],
+    [["coaching", "new_website", "hinglish"], "Students join karne se pehle batch, timing aur fees online compare karte hain. Ye na mile to wo aksar doosre institute mein enquiry kar lete hain."],
+    [["coaching", "fix_website", "hinglish", { problem: "info" }], "Ye jaanne ke liye student ko pehle call karna padta hai. Kai students call karne ki jagah agla institute dekh lete hain."],
+    [["coaching", "fix_website", "hinglish", { problem: "implant" }], "Ye jaanne ke liye student ko pehle call karna padta hai. Kai students call karne ki jagah agla institute dekh lete hain."],
+  ]) check(impact(...args) === want, `{impact} ${JSON.stringify(args)} = "${want}" (got "${impact(...args)}")`);
+  // What a checked problem is about: a chosen observation's own type, a typed sentence by its words.
+  for (const [said, want] of [
+    ["not_mobile", "site"], ["slow", "site"], ["http_only", "trust"], ["form_broken", "form"], ["old_session", "old"], ["no_timings", "info"],
+    ["no_implant_info", "implant"], ["no_braces_info", "braces"], ["no_first_visit_info", "first_visit"],
+    ["Wo theek se khul nahi rahi, aur timings kahin nahi dikhi.", "site"], ["NEET batch ki timing aur fees kahin nahi mili.", "info"],
+    ["Your website did not open properly when I tried it: the page timed out.", "site"], ["Clinic kab khula hai, ye kahin nahi likha.", "info"],
+    ["Usme clinic ki timing kahin nahi dikhi, to patient ko phone karke poochna padta hai.", "info"], ["", "info"],
+  ]) check(M.problemType(said) === want, `problemType(${JSON.stringify(said)}) = ${want} (got ${M.problemType(said)})`);
   const ist = (y, m, d) => new Date(Date.UTC(y, m - 1, d, 6, 30));
   check(M.admissionSession(ist(2026, 9, 30)) === "2027-28" && M.admissionSession(ist(2027, 3, 1)) === "2027-28" && M.admissionSession(ist(2027, 8, 1)) === "2028-29", "the school session is computed from the date, never typed");
-  check(M.render(M.getTemplate("wa_first_fix_school_en"), leadOf("school", { website: "https://example.org", observation: "not_mobile" }), { now: ist(2027, 9, 14) }).body.includes("the 2028-29 admissions"), "a year on, the school message moves to the next session");
+  check(M.render(M.getTemplate("wa_first_fix_school_en"), leadOf("school", { website: "https://example.org", observation: "not_mobile" }), { now: ist(2027, 9, 14) }).body.includes("• 2028-29 admission details"), "a year on, the school message moves to the next session");
   check(M.dentalSpecialty({ tags: ["DENTAL_KIDS"] }) === "kids" && M.dentalSpecialty({ tags: ["DENTAL_ORTHO"] }) === "ortho" && M.dentalSpecialty({ instituteName: "Example Dental Implant Centre" }) === "implant", "the specialty comes from the sheet's segment or the name");
   check(M.dentalSpecialty({ tags: ["DENTAL_KIDS"] }, { templateId: "d4-implant-centre" }) === "implant" && M.dentalSpecialty({ tags: ["DENTAL_KIDS"] }, { templateId: "d1-family-dentist" }) === "general", "the demo's own template wins over the segment");
   check(M.needFor("dental", "hinglish", "general") === "" && M.needFor("school", "en", "kids") === "" && /pehli visit/.test(M.needFor("dental", "hinglish", "kids")), "{need} only for a specialty clinic");
@@ -573,7 +697,9 @@ for (const t of FIRST) {
   }
   for (const t of T.filter((x) => x.channel === "whatsapp" && x.stage === "follow_up_1")) {
     const r = M.render(t, leadOf(t.kind === "any" ? "school" : t.kind), { now: NOW });
-    const approved = t.language === "hinglish" ? /Kuch din pehle .*Main yahin chhod raha hoon, kabhi (dekhna|chahiye) ho to bas "haan" likh dijiye\.$/ : /A few days ago .*I will leave it here\. If you (want to see it|would like one) later, just reply "yes"\.$/;
+    const approved = t.language === "hinglish"
+      ? /^Namaste [^\n]+,\n\nMehdi, Ideovent se\. Kuch din pehle [^\n]*\n\nMain yahin chhod raha hoon\. Kabhi (dekhna|chahiye) ho to bas "haan" likh dijiye\.$/
+      : /^Good afternoon [^\n]+,\n\nMehdi from Ideovent here\. A few days ago [^\n]*\n\nI will leave it here\. If you (want to see it|would like one) later, just reply "yes"\.$/;
     check(approved.test(r.body), `${t.id}: the approved follow-up, and the last WhatsApp (${r.body})`);
     check(!t.allowsLink && !URL_IN_TEXT.test(r.body), `${t.id}: no link`);
     check(/Four days after the first message/.test(t.note) && /last WhatsApp/.test(t.note), `${t.id}: the note says day 4 and that it is the last`);
@@ -642,6 +768,16 @@ for (const t of FIRST) {
   const mq = new URLSearchParams(m.split("?")[1]);
   check(mq.get("subject") === r.subject && mq.get("body") === r.body, "mailto: subject and body decode exactly");
   check(mq.get("body").includes("\n") && r.body.includes("\n"), "mailto: body keeps its line breaks");
+  // The approved look travels in the links: every line break is %0A, a blank line %0A%0A, a bullet %E2%80%A2.
+  check(m.includes("%0A%0A") && m.includes("%0A%E2%80%A2%20") && !/\r/.test(r.body), "mailto: the blank lines and bullets travel as %0A%0A and %0A%E2%80%A2");
+  for (const id of ["wa_first_new_dental_hinglish", "wa_first_fix_school_en", "wa_first_new_school_hi", "wa_after_call_coaching_hinglish"]) {
+    const t1 = M.getTemplate(id);
+    const one = M.render(t1, leadFor(t1, t1.kind === "any" ? "other" : t1.kind, { status: "call" }), { now: NOW, demo: { phone: true, whatsapp: true } });
+    const href = M.whatsappUrl(lead.phone, one.body);
+    const text = new URL(href).searchParams.get("text");
+    check(text === one.body && href.includes("%0A%0A") && href.split("%0A%0A").length === one.body.split("\n\n").length && href.includes("%0A%E2%80%A2%20"),
+      `${id}: the wa.me link carries every blank line (%0A%0A) and bullet, and decodes to the text on screen`);
+  }
   const odd = new URLSearchParams(M.mailtoUrl({ to: lead.email, subject: "a&b=c", body: "x+y #1 50%" }).split("?")[1]);
   check(odd.get("subject") === "a&b=c" && odd.get("body") === "x+y #1 50%", "mailto: & = + # % survive");
 
@@ -785,11 +921,19 @@ for (const t of FIRST) {
   }
   // Rendered: a call or WhatsApp button is named only when the clinic's number is on the demo.
   const lead = leadOf("dental", { website: "https://example.org", observation: "no_timings" });
-  for (const t of D.filter((x) => x.stage === "first" && x.pitch === "fix_website" && x.sample === "made")) {
-    const without = M.render(t, lead, { now: NOW }).body;
-    const withNumber = M.render(t, lead, { now: NOW, demo: { phone: true, whatsapp: true } }).body;
-    check(!/one-tap (call|WhatsApp)|ek tap mein (call|WhatsApp)/.test(without), `${t.id}: with no number on the demo, no call or WhatsApp button is promised`);
-    check(/one-tap call or WhatsApp|ek tap mein call ya WhatsApp/.test(withNumber), `${t.id}: with the clinic's number on the demo, the approved "call ya WhatsApp"`);
+  const TAP = /(one tap|ek tap mein)[^\n]*(call|WhatsApp)/i;
+  for (const t of D.filter((x) => x.stage === "first" && x.sample === "made")) {
+    const l = t.pitch === "fix_website" ? lead : leadOf("dental");
+    const without = M.render(t, l, { now: NOW }).body;
+    const withNumber = M.render(t, l, { now: NOW, demo: { phone: true, whatsapp: true } }).body;
+    check(!TAP.test(without), `${t.id}: with no number on the demo, no call or WhatsApp button is promised`);
+    const want = t.pitch === "fix_website" ? /One tap to call, WhatsApp or book|Ek tap mein call, WhatsApp ya booking/ : /One tap to call or WhatsApp|Ek tap mein call ya WhatsApp/;
+    check(want.test(withNumber), `${t.id}: with the clinic's number on the demo, the approved "call ya WhatsApp" bullet`);
+  }
+  for (const [kind, id, words] of [["school", "wa_first_new_school_hinglish", /Enquiry form/], ["coaching", "wa_first_new_coaching_hinglish", /Ek tap mein enquiry/]]) {
+    const t = M.getTemplate(id);
+    check(!words.test(M.render(t, leadOf(kind), { now: NOW }).body) && words.test(M.render(t, leadOf(kind), { now: NOW, demo: { phone: true, whatsapp: true } }).body),
+      `${id}: the enquiry form or one-tap enquiry is named only with their number on the demo (a template duplicate clears it)`);
   }
   const forDental = M.templatesFor({ kind: "dental" });
   check(forDental.length > 0 && forDental.every((t) => t.kind === "dental" || t.kind === "any"), "a dental lead never gets a school or coaching template");
@@ -840,11 +984,11 @@ for (const t of FIRST) {
   }
   check(neutral.every((t) => M.templatesFor({ kind: "other", stage: t.stage, channel: t.channel }).includes(t)), "an other-business lead still gets them");
   check(M.checkSend(leadOf("school"), M.getTemplate("wa_first_new_any_hinglish"), "whatsapp", SETTINGS, 0, NOW).warnings.some((w) => /not worded for a school\. Pick the school version/.test(w)), "picked anyway, the neutral message warns in plain words");
-  // Hinglish: a plural offer takes "hain" / "hon" (the approved school and coaching samples).
+  // The offer is a list now (1 Oct 2026): no "jisme ... hai / hain" sentence is left to get the agreement wrong.
   for (const kind of ["school", "coaching"]) {
-    for (const t of M.templatesFor({ kind, stage: "first", language: "hinglish" }).filter((x) => x.pitch === "fix_website" && x.promises === "demo" || (x.pitch === "fix_website" && x.sample === "offer"))) {
+    for (const t of M.templatesFor({ kind, stage: "first", language: "hinglish" })) {
       const body = M.render(t, leadFor(t, kind), { now: NOW }).body;
-      check(/(ek hi screen par|ek jagah) (hain\.|hon\?)/.test(body), `${t.id} (${kind}): the plural offer takes hain / hon (${body.slice(-120)})`);
+      check(!/\bjisme\b/.test(body) && /:\n• [^\n]+\n• [^\n]+\n• [^\n]+\n\n/.test(body), `${t.id} (${kind}): the sample's contents are three bullets under the solution line (${body.slice(-160)})`);
     }
   }
   // "The way a new patient would": a children's clinic is looked up by a parent.
@@ -860,7 +1004,7 @@ for (const t of FIRST) {
   check(!T.some((t) => /Jaisa baat/.test(t.body)), "Hinglish: 'Jaisi baat hui thi' (baat is feminine)");
   // Day 16 in Hinglish says it the approved way: "Main yahin chhod raha hoon, kabhi ... ho to bas "haan" likh dijiye."
   for (const t of T.filter((x) => x.stage === "follow_up_3" && x.language === "hinglish")) {
-    check(/main yahin chhod raha hoon, kabhi .*ho to bas "haan" likh dijiye\.$/i.test(t.body) && !/band kar raha/.test(t.body), `${t.id}: closes with the approved "yahin chhod raha hoon"`);
+    check(/main yahin chhod raha hoon\.\n\nKabhi [^\n]*ho to bas "haan" likh dijiye\.$/.test(t.body) && !/band kar raha/.test(t.body), `${t.id}: closes with the approved "yahin chhod raha hoon", on its own lines`);
   }
   // The two opt-out lines are EMAIL-RULES section 8, word for word; only cold e-mails carry them.
   check(M.EMAIL_OPT_OUT_EN === "If you would rather not hear from me, reply REMOVE and I will not write again." &&
@@ -871,63 +1015,56 @@ for (const t of FIRST) {
   check(M.render(M.getTemplate("em_fu2_any_en"), fromDirectory, { now: NOW }).warnings.some((w) => /Google listing/.test(w)), "the day-9 e-mail to a lead not found on Google asks to check the listing");
   check(!M.render(M.getTemplate("em_fu2_any_en"), leadOf("school"), { now: NOW }).warnings.length, "a Google lead gets no such warning");
   // School, their site, English: "an enquiry form", as in the no-website message.
-  check(M.render(M.getTemplate("em_first_fix_school_en"), leadOf("school", { website: "https://example.org", observation: "not_mobile" }), { now: NOW }).body.includes("with the 2027-28 admissions, fees and an enquiry form on one screen."), "school, their site (English): fees and an enquiry form");
+  // School, their site, English: a site that fails on a phone hears the fast site first; the enquiry form only with their WhatsApp on the demo.
+  const schoolSite = (demo) => M.render(M.getTemplate("em_first_fix_school_en"), leadOf("school", { website: "https://example.org", observation: "not_mobile" }), { now: NOW, demo }).body;
+  check(schoolSite().includes("So we made a new sample website for your school:\n• A site that opens fast on a phone\n• 2027-28 admission details\n• The full fee structure\n\n") &&
+    schoolSite({ whatsapp: true }).includes("• A site that opens fast on a phone\n• 2027-28 admission and fee details\n• An enquiry form that comes straight to your phone\n\n"), "school, their site (English): the bullets answer a site that does not open, and name the form only when it exists");
 }
 
-/* ── 14. Second pass of 1 Oct 2026: specialist words, {addressAs}, honest offers ── */
+/* ── 14. Specialist clinics, {addressAs}, honest offers (1 Oct 2026) ───────── */
 
 {
-  const ASK_HI = "Kya main aapko bhej doon? Pasand na aaye to koi baat nahi.";
-  const fieldsOf = (s) => [...new Set([...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]))].sort().join(",");
-  const helloOf = (s) => s.split(/(?<=\) se\.|Saket, Delhi\.) /)[0];
-  const CLAIM = /\b(best|no\.?\s?1|number one|leading|guarantee\w*|painless|free|results?|instant)\b|100\s?%/i;
-  const SCHOOLISH = /\b(class(es)?|courses?|admissions?|students?|batch(es)?|faculty|principal|schools?|coaching|tuition)\b/i;
-  // The specialist words: only on the dental WhatsApp first messages, with the body's own fields, greeting and close.
-  const withVariants = T.filter((t) => t.variants);
-  check(withVariants.length === 8 && withVariants.every((t) => t.kind === "dental" && t.channel === "whatsapp" && t.stage === "first"),
-    `the specialist words are on the 8 dental WhatsApp first messages only (${withVariants.map((t) => t.id).join(", ")})`);
-  for (const t of withVariants) {
-    const keys = Object.keys(t.variants).sort().join(",");
-    check(keys === (t.pitch === "new_website" ? "implant,kids,ortho" : "found"), `${t.id}: ${t.pitch === "new_website" ? "one variant per specialty" : "the 'found on Google' variant"} (${keys})`);
-    const close = t.sample === "offer" ? M.EASY_NO[t.language] : M.APPROVED_ASK[t.language];
-    for (const [k, v] of Object.entries(t.variants)) {
-      check(fieldsOf(v) === fieldsOf(t.body), `${t.id} (${k}): the same merge fields as the body (${fieldsOf(v)})`);
-      check(helloOf(v) === helloOf(t.body) && v.endsWith(close) && (v.match(/\?/g) || []).length === 1, `${t.id} (${k}): the approved greeting, one question and the easy no`);
-      check(!CLAIM.test(v) && !(k === "kids" ? SCHOOLISH : /\bparents?\b|\b(class(es)?|admissions?|students?|principal|schools?)\b/i).test(v), `${t.id} (${k}): no claim word, no other kind's word`);
-      check(!/(one tap|ek tap)[^.\n]*WhatsApp|WhatsApp[^.\n]*(one tap|ek tap)|WhatsApp button/i.test(v) && !M.containsLink(v), `${t.id} (${k}): no link, no WhatsApp button promised`);
-    }
-  }
-  // Which words go to which clinic (bodyFor).
+  // A specialist clinic (implant, braces, kids: its demo's template, else its segment or name) hears its
+  // own words: {kindNoun} names the specialty, {impact} says why its patients look online first (the
+  // approved implant and kids lines of 30 Sep), and the bullets list its own information.
+  const ASK_HI = "Kya main aapko link bhej doon?\nPasand na aaye to koi baat nahi.";
   const clinic = (over = {}) => leadOf("dental", { contactName: "Dr. Kapoor", ...over });
   const wNew = M.getTemplate("wa_first_new_dental_hinglish");
   const wFix = M.getTemplate("wa_first_fix_dental_hinglish");
-  const site = { website: "https://example.org" };
-  check(M.bodyFor(wNew, clinic()) === wNew.body, "a general clinic keeps the general words");
-  for (const [tag, k] of [["DENTAL_IMPLANT", "implant"], ["DENTAL_ORTHO", "ortho"], ["DENTAL_KIDS", "kids"]]) {
-    check(M.bodyFor(wNew, clinic({ tags: [tag] })) === wNew.variants[k], `a ${k} clinic (its segment) gets its specialty's words`);
-  }
-  check(M.bodyFor(wNew, clinic({ tags: ["DENTAL_KIDS"] }), { demo: { templateId: "d4-implant-centre" } }) === wNew.variants.implant &&
-    M.bodyFor(wNew, clinic({ tags: ["DENTAL_KIDS"] }), { demo: { templateId: "d1-family-dentist" } }) === wNew.body, "the demo's own template decides the specialty");
-  check(M.bodyFor(wFix, clinic({ ...site, observation: "no_implant_info" })) === wFix.variants.found, "their site, a problem that names the site, found on Google: 'Google par aapka ... dekha.'");
-  check(M.bodyFor(wFix, clinic({ ...site, observation: "no_timings", tags: ["DENTAL_IMPLANT"] })) === wFix.body, "their site, any other problem: 'Aapke ... ki website phone par kholi.' stays, specialist or not");
-  check(M.bodyFor(wFix, clinic({ ...site, observation: "no_timings" }), { observation: "no_first_visit_info" }) === wFix.variants.found, "the observation on screen decides, as it does in render");
-  const elsewhere = clinic({ ...site, observation: "no_implant_info", source: "JUSTDIAL", placeId: undefined });
-  const fromDirectory = M.render(wFix, elsewhere, { now: NOW });
-  check(M.bodyFor(wFix, elsewhere) === wFix.body && !/Google/.test(fromDirectory.body) && !fromDirectory.warnings.some((w) => /Google/.test(w)),
-    "a lead not found on Google is never told 'Google par dekha': the phone lead-in stays");
-  const email = M.getTemplate("em_first_new_dental_en");
-  check(!email.variants && M.bodyFor(email, clinic({ tags: ["DENTAL_KIDS"] })) === email.body, "an e-mail keeps its one body");
-  check(M.render(wNew, clinic({ tags: ["DENTAL_KIDS"] }), { now: NOW }).body.includes("Google par aapka kids dental clinic dekha. Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga, par clinic ki website nahi mili. Humne ek sample page banaya hai jisme"),
-    "specialist words: the kids clinic says the approved kids line");
+  const kids = M.render(wNew, clinic({ contactName: "Dr. Arora", tags: ["DENTAL_KIDS"] }), { now: NOW }).body;
+  check(kids === "Namaste Dr. Arora ji,\n\nMain Mehdi, Ideovent Technologies (Saket, Delhi) se.\n\nGoogle par aapka kids dental clinic dekha. Clinic ki apni website nahi hai, sirf Google listing hai.\n\n" +
+    "Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga. Ye na mile to wo aksar agle clinic ko call kar lete hain.\n\n" +
+    `Isliye humne aapke clinic ke naam se ek sample website banayi hai:\n• Bachche ki pehli visit mein kya hota hai\n• Timings aur treatments ek jagah\n• Online appointment booking\n\n${ASK_HI}`,
+  `specialist clinic: the kids clinic hears its own impact line and bullets (${kids})`);
   const ortho = M.render(wNew, clinic({ contactName: "Dr. Bhatia", tags: ["DENTAL_ORTHO"] }), { now: NOW }).body;
-  check(ortho === `Namaste Dr. Bhatia ji, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Google par aapka orthodontic clinic dekha. Log braces se pehle process aur kharche ki jaankari online dhoondhte hain, par clinic ki website nahi mili. Humne ek sample page banaya hai jisme braces ka process, kharche ki range aur appointment booking hai. ${ASK_HI}`,
-    `a braces clinic, no website: the approved specialist words (${ortho})`);
+  check(ortho.includes("Google par aapka orthodontic clinic dekha.") && ortho.includes("\n\nLog braces se pehle process aur kharche ki jaankari online dhoondhte hain. Ye na mile to wo aksar agle clinic ko call kar lete hain.\n\n") &&
+    ortho.includes(":\n• Braces ka process, step by step\n• Har tarah ke braces ke kharche ki range\n• Online appointment booking\n\n"), `specialist clinic: a braces clinic, no website (${ortho})`);
+  const implantFix = M.render(wFix, clinic({ website: "https://example.org", observation: "no_implant_info", tags: ["DENTAL_IMPLANT"] }), { now: NOW }).body;
+  check(implantFix.includes("Aapke implant centre ki website phone par kholi. Usme implant ka process aur kharche ki jaankari nahi mili.\n\nLog implant se pehle yahi jaankari online dhoondhte hain.") &&
+    implantFix.includes(":\n• Phone par jaldi khulne wali site\n• Implant ka process aur kharche ki jaankari\n• Online appointment booking\n\n"), `specialist clinic: an implant centre's own site (${implantFix})`);
+  check(M.render(wNew, clinic({ tags: ["DENTAL_KIDS"] }), { now: NOW, demo: { templateId: "d4-implant-centre" } }).body.includes("aapka implant centre dekha") &&
+    M.render(wNew, clinic({ tags: ["DENTAL_KIDS"] }), { now: NOW, demo: { templateId: "d1-family-dentist" } }).body.includes("aapka clinic dekha"), "the demo's own template decides the specialty");
   const kidsEn = M.render(M.getTemplate("wa_first_new_dental_en"), clinic({ contactName: "Dr. Arora", tags: ["DENTAL_KIDS"] }), { now: NOW }).body;
-  check(kidsEn === "Good afternoon Dr. Arora, I am Mehdi from Ideovent Technologies, Saket, Delhi. I found your kids dental clinic on Google. Parents look online to see what will happen at a child's first visit, but I could not find the clinic's own website. We have made a short sample page for your clinic with what happens at the first visit, timings and booking. Shall I send it? If it is not useful, no problem at all.",
-    `a kids clinic in English says it the same way (${kidsEn})`);
-  const offerTwin = M.render(M.getTemplate("wa_first_fix_dental_hinglish_offer"), clinic({ ...site, observation: "no_implant_info", tags: ["DENTAL_IMPLANT"], demoSlug: undefined }), { now: NOW }).body;
-  check(offerTwin.endsWith(`Google par aapka implant centre dekha. Log implant se pehle process aur kharche ki jaankari online dhoondhte hain, par aapki site par ye nahi mila. Kya main ek sample page bana doon jisme implant ka process, kharche ki jaankari aur appointment booking ho? ${M.EASY_NO.hinglish}`),
+  check(kidsEn.includes("I found your kids dental clinic on Google, but it has no website of its own, only the Google listing.\n\nParents look online to see what will happen at a child's first visit. When they cannot find it, they often call the next clinic on the list.\n\n") &&
+    kidsEn.includes("• What happens at a child's first visit\n• Timings and treatments in one place\n• Online appointment booking"), `a kids clinic in English says it the same way (${kidsEn})`);
+  const offerTwin = M.render(M.getTemplate("wa_first_fix_dental_hinglish_offer"), clinic({ website: "https://example.org", observation: "no_implant_info", tags: ["DENTAL_IMPLANT"], demoSlug: undefined }), { now: NOW }).body;
+  check(offerTwin.endsWith(`Isliye main aapke clinic ka ek naya sample banana chahta hoon:\n• Phone par jaldi khulne wali site\n• Implant ka process aur kharche ki jaankari\n• Online appointment booking\n\nKya main ye sample bana doon?\n${M.EASY_NO.hinglish}`),
     `with no demo yet, the implant centre is offered one in the same words (${offerTwin})`);
+  // Nothing a specialist clinic hears claims, ranks or borrows another kind's words.
+  const CLAIM = /\b(best|no\.?\s?1|number one|leading|guarantee\w*|painless|free|results?|instant)\b|100\s?%/i;
+  for (const tags of [["DENTAL_IMPLANT"], ["DENTAL_ORTHO"], ["DENTAL_KIDS"]]) {
+    for (const t of FIRST.filter((x) => x.kind === "dental")) {
+      const body = M.render(t, leadFor(t, "dental", { tags }), { now: NOW }).body;
+      check(!CLAIM.test(body) && !/\b(class(es)?|admissions?|students?|principal|schools?|coaching|tuition)\b/i.test(body), `${t.id} (${tags[0]}): no claim word, no other kind's word`);
+    }
+  }
+  // Every specialist line keeps the approved 30 Sep words of why patients look online first.
+  for (const [k, tag] of [["implant", "DENTAL_IMPLANT"], ["ortho", "DENTAL_ORTHO"], ["kids", "DENTAL_KIDS"]]) {
+    for (const language of ["en", "hinglish"]) {
+      const t = M.getTemplate(`wa_first_new_dental_${language}`);
+      check(M.render(t, clinic({ tags: [tag] }), { now: NOW }).body.includes(`\n\n${M.SPECIALIST_NEED[language][k]}. `), `${k} clinic (${language}): the approved specialist line is its impact`);
+    }
+  }
 }
 
 {
@@ -953,7 +1090,9 @@ for (const t of FIRST) {
     ["Dr. Mehta", "dental", "hinglish", "Dr. Mehta"], ["Dr Sharma", "dental", "hinglish", "Dr Sharma"], ["Verma", "coaching", "hinglish", "Verma ji"],
     ["Verma ji", "coaching", "hinglish", "Verma ji"], ["Sharma Sir", "school", "hinglish", "Sharma Sir"], ["Principal", "school", "hinglish", "Principal ji"],
     ["Principal Ma'am", "school", "hinglish", "Principal Ma'am"], ["Mrs. Rao", "other", "hinglish", "Mrs. Rao"], ["Dr. Mehta", "dental", "hi", "Dr. Mehta"],
-    ["Verma", "coaching", "hi", "Verma जी"], ["Verma", "coaching", "en", "Verma"], ["", "dental", "hinglish", "Doctor"], ["", "school", "hinglish", "Principal ji"], ["", "coaching", "en", "Sir"],
+    ["Verma", "coaching", "hi", "Verma जी"], ["Verma", "coaching", "en", "Verma ji"], ["", "dental", "hinglish", "Doctor"], ["", "school", "hinglish", "Principal ji"], ["", "coaching", "en", "Sir"],
+    // English keeps a title as stored, a bare title included; only a bare name gets "ji".
+    ["Dr. Mehta", "dental", "en", "Dr. Mehta"], ["Principal", "school", "en", "Principal"], ["Sharma Sir", "school", "en", "Sharma Sir"], ["Mrs. Rao", "other", "en", "Mrs. Rao"],
   ]) check(M.addressFor(name, kind, language) === want, `{addressAs} "${name}" (${kind}, ${language}) = "${want}" (got "${M.addressFor(name, kind, language)}")`);
   const opensWithName = T.filter((t) => /^\{(greeting|addressAs)\},/.test(t.body));
   check(opensWithName.length >= 30 && opensWithName.every((t) => t.body.startsWith("{addressAs},")),
@@ -972,20 +1111,21 @@ for (const t of FIRST) {
   check(noName.body.startsWith("Doctor, a summary of our call today:") && noName.warnings.some((w) => /No contact name: the greeting says "Doctor"/.test(w)), "no name: the English summary opens 'Doctor,' and says so");
   check(T.filter((t) => t.stage === "after_call").every((t) => /payment line/.test(t.note)), "the summary's note says to match the payment line to the call and the proposal");
   // Day 16: the approved words.
-  check(say("em_fu3_dental_hinglish", leadOf("dental")).startsWith("Dr. Mehta, main yahin chhod raha hoon, kabhi dekhna ho to bas \"haan\" likh dijiye.\n\nRegards,"), "day 16 in Hinglish: the approved line, word for word");
-  check(say("em_fu3_any_en_offer", leadOf("school", { demoSlug: undefined })).startsWith("Principal Ma'am, I will close this here. If you would like a sample page later, just reply yes.\n\nRegards,"), "day 16 with no demo: it offers the sample page and claims none");
+  check(say("em_fu3_dental_hinglish", leadOf("dental")).startsWith("Dr. Mehta, main yahin chhod raha hoon.\n\nKabhi dekhna ho to bas \"haan\" likh dijiye.\n\nRegards,"), "day 16 in Hinglish: the approved lines, word for word");
+  check(say("em_fu3_any_en_offer", leadOf("school", { demoSlug: undefined })).startsWith("Principal Ma'am, I will close this here.\n\nIf you would like a sample website later, just reply yes.\n\nRegards,"), "day 16 with no demo: it offers the sample website and claims none");
 }
 
 {
-  // An "other" business: its demo is made from a school, coaching or clinic template, and {offer} names what that demo has.
+  // An "other" business: its demo is made from a school, coaching or clinic template, and {offer} lists what that demo has.
   const yoga = (over = {}) => leadOf("other", over);
   const said = (id, lead, demo) => M.render(M.getTemplate(id), lead, { now: NOW, demo }).body;
-  check(said("wa_first_new_any_hinglish", yoga(), { kind: "school" }).includes("jisme admission, fees aur enquiry form hai."), "an other business with a school demo is offered what a school demo has");
-  check(said("wa_first_new_any_hinglish", yoga(), { kind: "coaching" }).includes("jisme courses, batch timing aur enquiry button hai."), "with a coaching demo, what a coaching demo has");
-  check(said("wa_first_new_any_hinglish", yoga(), { kind: "dental", templateId: "d6-kids-dental" }).includes("jisme pehli visit ki jaankari, timings aur booking hai."), "with a kids clinic demo, the first visit");
-  check(said("wa_first_fix_any_hinglish", yoga({ website: "https://example.org", observation: "not_mobile" }), { kind: "school" }).includes("Humne ek sample banaya hai jisme admission, fees aur enquiry form hai."), "their site: the list that goes with 'hai', never '... ek hi screen par hai'");
-  check(said("em_first_new_any_en", yoga(), { kind: "dental", templateId: "d1-family-dentist" }).includes("with treatments, timings and one-tap booking."), "English, a clinic demo: treatments, timings and one-tap booking");
-  check(said("wa_first_new_any_hinglish", yoga(), undefined).includes("jisme services, timing aur enquiry button hai."), "with no demo at hand, the neutral words");
+  check(said("wa_first_new_any_hinglish", yoga(), { kind: "school", whatsapp: true }).includes(":\n• Admission ka process aur zaroori dates\n• Fees aur facilities ki jaankari\n• Enquiry form, jo seedha aapke phone par aata hai\n\n"), "an other business with a school demo is offered what a school demo has");
+  check(said("wa_first_new_any_hinglish", yoga(), { kind: "coaching" }).includes(":\n• Saare courses aur batch timings ek jagah\n• Fees ki saaf jaankari\n• Phone par jaldi khulne wali site\n\n"), "with a coaching demo, what a coaching demo has");
+  check(said("wa_first_new_any_hinglish", yoga(), { kind: "dental", templateId: "d6-kids-dental" }).includes(":\n• Bachche ki pehli visit mein kya hota hai\n• Timings aur treatments ek jagah\n• Online appointment booking\n\n"), "with a kids clinic demo, the first visit");
+  check(said("wa_first_fix_any_hinglish", yoga({ website: "https://example.org", observation: "not_mobile" }), { kind: "school" }).includes("Isliye humne aapke business ka ek naya sample banaya hai:\n• Admission ka process aur zaroori dates\n"), "their site: the demo kind's list under the solution line");
+  check(said("em_first_new_any_en", yoga(), { kind: "dental", templateId: "d1-family-dentist" }).includes(":\n• All treatments and timings in one place\n• A site that opens fast on a phone\n• Online appointment booking\n\n"), "English, a clinic demo with no number: treatments, a fast site, booking");
+  check(said("wa_first_new_any_hinglish", yoga(), undefined).includes(":\n• Aapki services aur timings ek jagah\n• Phone par jaldi khulne wali site\n• Aapke baare mein saaf jaankari\n\n"), "with no demo at hand, the neutral list");
+  check(said("wa_first_new_any_hinglish", yoga(), undefined).includes("\n\nLog pehle online dekhte hain ki aap kya karte hain aur kab khule hain. Ye na mile to wo aksar kisi aur ko call kar lete hain.\n\n"), "an other business hears its own impact line, whatever its demo was made from");
   check(M.demoFacts({ kind: "school" }).kind === "school" && !("kind" in M.demoFacts({ kind: "gym" })), "demoFacts reads the demo's kind, and only a known one");
   check(M.getTemplate("wa_first_new_any_hinglish").note.includes("check the demo shows it") && !M.getTemplate("wa_first_new_any_hinglish_offer").note.includes("check the demo shows it"), "the neutral 'made' message tells Mehdi to check the demo shows what it names");
 }
@@ -1000,7 +1140,8 @@ if (NEGATIVE) {
     /ends with the approved question and easy no/, /never lands on a Sunday/, /cannot be sent with its blanks/,
     /due four days after/, /retired WhatsApp follow-ups are never offered/, /approved sample: dental, no website/,
     /carries no REMOVE line/, /dental lead is never offered the neutral first message or summary/,
-    /specialist words: the kids clinic/, /\{addressAs\} "Dr\. Mehta"/, /implant centre is never offered a cost range/, /schools are called after school/,
+    /specialist clinic: the kids clinic/, /\{addressAs\} "Dr\. Mehta"/, /implant centre is never offered a cost range/, /schools are called after school/,
+    /wa_first_new_coaching_hinglish: five parts/, /approved sample: coaching, no website/,
   ];
   const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
   console.log(`\nNEGATIVE CONTROL: ${failures.length} failures seen.`);
