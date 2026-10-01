@@ -1,7 +1,50 @@
 /*
-  hero.css: main-site styles added on 26 Sep 2026, then withdrawn the same night.
+  hero.css: the home hero's art box (src/components/sections/hero/scene/HeroScene.tsx).
 
-  Mehdi saw the restyled hero and navbar and preferred the ones live on
-  25 Sep, so the look went back to that deployment (_build/restore-old-look.py).
-  This file is kept, empty, because src/main.tsx imports it.
+  The box holds two inline SVGs (desk and phone poses) and, on the 3D path, one canvas
+  drawn by a worker. Each SVG has <g class="plan"> (the drawn plan, always shown) and
+  <g class="built"> (the built still). data-state="plan" hides the built group: the
+  canvas builds the page over the plan. data-state="built" shows it: the drawn still
+  for reduced motion, gated and no-WebGL visitors and every failure. Spec 7.8.
+
+  (Until 1 Oct 2026 this file was kept empty: the 26 Sep restyle it held was
+  withdrawn and src/main.tsx still imports it.)
 */
+.h3d-box svg,
+.h3d-box canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.h3d-box .built {
+  opacity: 1;
+}
+.h3d-box[data-state="plan"] .built {
+  opacity: 0;
+}
+/* Failure only (plan to built). Reduced motion and a pose swap show the still at once. */
+.h3d-box.h3d-xfade .built {
+  transition: opacity 250ms linear;
+}
+
+/* A safety net: also right for a future prerendered hero before hydration. */
+@media (prefers-reduced-motion: reduce) {
+  .h3d-box .built {
+    opacity: 1 !important;
+    transition: none !important;
+  }
+  .h3d-box canvas {
+    display: none;
+  }
+}
+
+@media print {
+  .h3d-box .built {
+    opacity: 1 !important;
+  }
+  .h3d-box canvas {
+    display: none;
+  }
+}

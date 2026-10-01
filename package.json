@@ -8,7 +8,7 @@
     "sitemap": "node scripts/generate-sitemap.mjs",
     "split-content": "node scripts/split-content.mjs",
     "typecheck": "tsc -b --force",
-    "build": "node scripts/split-content.mjs && node scripts/build-public-certificates.mjs && node scripts/check-no-hotlinks.mjs && node scripts/check-demo-palettes.mjs && node scripts/sync-noindex-header.mjs --check && node scripts/generate-sitemap.mjs && vite build && node scripts/prerender-heads.mjs",
+    "build": "node scripts/split-content.mjs && node scripts/build-public-certificates.mjs && node scripts/check-no-hotlinks.mjs && node scripts/check-demo-palettes.mjs && node scripts/sync-noindex-header.mjs --check && node scripts/generate-sitemap.mjs && node scripts/build-hero-poster.mjs --check && vite build && node scripts/check-hero-3d.mjs && node scripts/prerender-heads.mjs",
     "build:dev": "node scripts/split-content.mjs && node scripts/build-public-certificates.mjs && node scripts/check-no-hotlinks.mjs && node scripts/check-demo-palettes.mjs && node scripts/sync-noindex-header.mjs --check && node scripts/generate-sitemap.mjs && vite build --mode development && node scripts/prerender-heads.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -26,7 +26,9 @@
     "test:from-poster": "node scripts/test-from-poster.mjs",
     "test:poster-e2e": "node scripts/e2e-poster-import.mjs",
     "test:razorpay": "node scripts/test-razorpay-fn.mjs",
-    "test:checkout-e2e": "node scripts/e2e-checkout.mjs"
+    "test:checkout-e2e": "node scripts/e2e-checkout.mjs",
+    "hero:posters": "node scripts/build-hero-poster.mjs",
+    "test:hero3d": "node scripts/e2e-hero3d.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
