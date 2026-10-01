@@ -6,6 +6,10 @@
  * Pure functions, no I/O, no React: the admin UI and scripts/test-outreach-engine.mjs
  * call the same code.
  *
+ * THE FORMAT (1 Oct 2026, 04-sales-kit/APPROVED-MESSAGES-2026-10-01.md): short lines in
+ * parts, a blank line between parts; a first message is the greeting and who, the problem,
+ * the impact ({impact}), the solution with three bullets ({offer}), the ask and the easy no.
+ *
  * THE RULES (30 Sep 2026: Mehdi's approved wording, 04-sales-kit/APPROVED-MESSAGES-2026-09-30.md,
  * and the research behind it, OUTREACH-APPROACH-PLAYBOOK-2026-09-30.md):
  *   - no link in any first message, on either channel: the link goes after a yes;
@@ -28,19 +32,25 @@
  *   {greeting}        after "Namaste" / "Good afternoon" / "Dear": the contact's name and
  *                     title as stored ("Dr. Mehta", "Sharma Sir", "Principal Ma'am"); in
  *                     Hinglish a bare "Dr. Mehta" or "Verma" gets " ji" ("Namaste Dr. Sharma
- *                     ji"). No name: Doctor / Principal (ji) / Sir by kind. greetingFor().
+ *                     ji"), in English a bare "Verma" does ("Good afternoon Verma ji"). No
+ *                     name: Doctor / Principal (ji) / Sir by kind. greetingFor().
  *   {addressAs}       a line that opens with their name alone, as the approved summary
  *                     does ("Dr. Mehta, aaj ki baat ka summary:"): a titled name as stored,
- *                     a bare one with " ji" in Hinglish ("Verma ji,"). addressFor().
+ *                     a bare one with " ji" ("Verma ji,"). addressFor().
  *   {senderFirstName} the first word of the sender's name ("Mehdi").
  *   {timeOfDay}       morning / afternoon / evening, India time, for "Good afternoon".
  *   {kindNoun}        clinic / school / institute / business; for a dental specialty
  *                     "implant centre", "orthodontic clinic", "kids dental clinic".
- *   {offer}           what the sample page has, per kind, specialty and pitch, as the
- *                     approved samples list it, and only what the demo has (offerFor()).
- *                     An "other" business's demo is made from a school, coaching or
- *                     clinic template: the offer is that kind's.
- *   {need}            why a patient looks online first, for a specialty clinic only.
+ *   {impact}          one line on what the problem costs them, through their patient's,
+ *                     parent's or student's eyes: by kind and pitch, and on a site of their
+ *                     own by the kind of problem checked (impactFor(), problemType()).
+ *   {offer}           what the sample website has, as three bullet lines ("• ..."), per
+ *                     kind, specialty and pitch, as the approved examples list it, and only
+ *                     what the demo has: one-tap call, WhatsApp or an enquiry form only with
+ *                     their number on it (offerFor()). An "other" business's demo is made
+ *                     from a school, coaching or clinic template: the list is that kind's.
+ *   {need}            why a patient looks online first, for a specialty clinic only (no
+ *                     live template says it since 1 Oct 2026; {impact} carries it).
  *   {visitor}         who looks them up, for "the way a new patient would": a new patient;
  *                     a parent for a children's clinic or a school; a student for coaching.
  *   {callSlots}       the next two working-day call times in the kind's good window.
@@ -128,16 +138,22 @@ export interface Observation {
   hinglish: string;
   /** Lead kinds this observation is offered for. Missing: every kind. */
   kinds?: LeadKind[];
-  /** Earlier wordings, so a sentence saved before 30 Sep 2026 is still recognised. */
+  /** Earlier wordings, so a sentence saved before 1 Oct 2026 is still recognised and said in today's words. */
   previous?: string[];
-  /**
-   * The sentence names their site itself ("..., par aapki site par ye nahi
-   * mila"), so a dental WhatsApp may open with where you found them, as the
-   * approved implant sample does ("Google par aapka implant centre dekha."),
-   * in place of "Aapke clinic ki website phone par kholi." (bodyFor).
-   */
-  namesSite?: boolean;
+  /** What kind of problem it is, for the impact line and the bullets that answer it (problemType). */
+  type: ProblemType;
 }
+
+/**
+ * What a checked problem is about. The impact line and the bullets follow it:
+ *   site         the site does not open well on a phone, or is slow;
+ *   info         something they look for is not on it (timings, fees, booking ...);
+ *   old          it shows an old admission session;
+ *   form         its form did not send;
+ *   trust        it opens on http, so Chrome says "Not secure";
+ *   implant, braces, first_visit   a specialty's own information is missing.
+ */
+export type ProblemType = "site" | "info" | "old" | "form" | "trust" | "implant" | "braces" | "first_visit";
 
 /**
  * Things Mehdi can check on a prospect's site in two minutes. Pick one only
@@ -145,9 +161,10 @@ export interface Observation {
  *
  * Each sentence follows the message's lead-in, "I opened your clinic's website
  * on my phone." / "Aapke clinic ki website phone par kholi.", so it starts
- * "It ..." / "Usme ...", and it says what the problem means for their patient,
- * parent or student. Every id stays in this one list, so a saved id always
- * renders (getObservation); observationsFor(kind) is what a picker offers.
+ * "It ..." / "Usme ...". It says only the problem (1 Oct 2026): what that means
+ * for their patient, parent or student is the next part of the message, the
+ * impact line. Every id stays in this one list, so a saved id always renders
+ * (getObservation); observationsFor(kind) is what a picker offers.
  */
 export const OBSERVATIONS: Observation[] = [
   {
@@ -155,6 +172,7 @@ export const OBSERVATIONS: Observation[] = [
     label: "No website found",
     en: "I could not find a website of your own, only the Google listing.",
     hinglish: "Aapki apni website nahi mili, sirf Google listing dikhti hai.",
+    type: "info",
     previous: [
       "When I searched for your name, I could not find a website for you, only map and directory listings.",
       "Google pe aapka naam search kiya to koi website nahi mili, sirf map aur directory listings.",
@@ -165,6 +183,7 @@ export const OBSERVATIONS: Observation[] = [
     label: "Does not open well on a phone",
     en: "It does not open properly: the text is small and the page scrolls sideways.",
     hinglish: "Wo theek se nahi khulti, text chhota hai aur page side mein scroll karna padta hai.",
+    type: "site",
     previous: [
       "It does not open well on a phone: the text is small and the page scrolls sideways.",
       "Wo phone par theek se nahi khulti, text chhota hai aur page side mein scroll karna padta hai.",
@@ -175,37 +194,50 @@ export const OBSERVATIONS: Observation[] = [
   {
     id: "no_fees_admission",
     label: "Fees and admission details missing",
-    en: "The fees and admission details are not on it, so a parent has to call the office to ask.",
-    hinglish: "Usme fees aur admission ki jaankari nahi hai, to parent ko office phone karke poochna padta hai.",
+    en: "The fees and admission details are not on it.",
+    hinglish: "Usme fees aur admission ki jaankari nahi hai.",
+    type: "info",
     kinds: ["school", "coaching", "other"],
     previous: [
+      "The fees and admission details are not on it, so a parent has to call the office to ask.",
+      "Usme fees aur admission ki jaankari nahi hai, to parent ko office phone karke poochna padta hai.",
       "Fees and admission details are not on the site, so a parent has to call the office to find out.",
       "Site pe fees aur admission ki details nahi hain, to parent ko office phone karke poochna padta hai.",
     ],
   },
-  /* The approved school sample names the old session it saw ("2023-24"). The
+  /* The approved school example names the old session it saw ("2023-24"). The
      year is whatever their site shows, so the sender types it: the send stays
      blocked until the [placeholder] is replaced (checkSend). */
   {
     id: "old_session",
     label: "Old admission session, no fees (type the session you saw)",
     en: "It still shows admissions for [the old session you saw], and the fees are not on it.",
-    hinglish: "Usme abhi bhi [jo purana session dikha] ke admission likhe hain aur fees kahin nahi hai.",
+    hinglish: "Usme abhi bhi [jo purana session dikha] ke admission likhe hain, aur fees kahin nahi hai.",
+    type: "old",
     kinds: ["school"],
+    previous: ["Usme abhi bhi [jo purana session dikha] ke admission likhe hain aur fees kahin nahi hai."],
   },
   {
     id: "no_batch_fees",
     label: "Batch timings and fees missing",
-    en: "The batch timings and fees are not on it, so a student has to call first.",
-    hinglish: "Usme batch ki timing aur fees kahin nahi mili, to student ko pehle call karna padta hai.",
+    en: "The batch timings and fees are not on it.",
+    hinglish: "Usme batch ki timing aur fees kahin nahi mili.",
+    type: "info",
     kinds: ["coaching"],
+    previous: [
+      "The batch timings and fees are not on it, so a student has to call first.",
+      "Usme batch ki timing aur fees kahin nahi mili, to student ko pehle call karna padta hai.",
+    ],
   },
   {
     id: "form_broken",
     label: "Contact form did not send",
-    en: "I filled in the contact form and it did not send, so enquiries may be getting lost.",
-    hinglish: "Maine contact form bhar ke dekha, wo send nahi hua, to enquiries shayad kho rahi hain.",
+    en: "I filled in the contact form and it did not send.",
+    hinglish: "Maine contact form bhar ke dekha, wo send nahi hua.",
+    type: "form",
     previous: [
+      "I filled in the contact form and it did not send, so enquiries may be getting lost.",
+      "Maine contact form bhar ke dekha, wo send nahi hua, to enquiries shayad kho rahi hain.",
       "I filled in the contact form on your site and it did not send, so enquiries may be getting lost.",
       "Maine aapki site ka contact form bhar ke dekha, wo send nahi hua, to enquiries shayad kho rahi hain.",
     ],
@@ -215,6 +247,7 @@ export const OBSERVATIONS: Observation[] = [
     label: "Site is http only",
     en: "It opens on http only, so Chrome shows \"Not secure\" next to the address.",
     hinglish: "Wo sirf http par khulti hai, isliye Chrome address ke saath \"Not secure\" dikhata hai.",
+    type: "trust",
     previous: [
       "Your site opens on http only, so Chrome marks it as \"Not secure\" next to the address.",
       "Aapki site sirf http pe khulti hai, isliye Chrome address ke saath \"Not secure\" dikhata hai.",
@@ -225,21 +258,23 @@ export const OBSERVATIONS: Observation[] = [
     label: "Site loads slowly",
     en: "It took a long time to load.",
     hinglish: "Use khulne mein kaafi der lagi.",
+    type: "site",
     previous: [
       "When I opened your site on my phone, it took a long time to load.",
       "Maine aapki site phone pe kholi to khulne mein kaafi der lagi.",
     ],
   },
-  /* Dental clinics only (28 Sep 2026). Short: each is said inside a first
-     WhatsApp message, which stays under about 450 characters. */
+  /* Dental clinics only (28 Sep 2026). */
   {
     id: "no_online_booking",
     label: "No online booking",
-    // "call or message", not "only by phone": the site may still have a WhatsApp button (30 Sep 2026).
-    en: "There is no way to book an appointment online, so a patient has to call or message the clinic.",
-    hinglish: "Usme online appointment ka option nahi hai, to patient ko call ya message karna padta hai.",
+    en: "There is no way to book an appointment online.",
+    hinglish: "Usme online appointment ka option nahi hai.",
+    type: "info",
     kinds: ["dental"],
     previous: [
+      "There is no way to book an appointment online, so a patient has to call or message the clinic.",
+      "Usme online appointment ka option nahi hai, to patient ko call ya message karna padta hai.",
       "Your site has no way to book an appointment online, so a patient has to call or message the clinic.",
       "Aapki site pe online appointment ka option nahi hai, patient ko call ya message karna padta hai.",
     ],
@@ -247,10 +282,13 @@ export const OBSERVATIONS: Observation[] = [
   {
     id: "no_whatsapp_button",
     label: "No WhatsApp button",
-    en: "There is no WhatsApp button, so a patient cannot message the clinic in one tap.",
-    hinglish: "Usme WhatsApp ka button nahi hai, to patient ek tap mein clinic ko message nahi kar sakta.",
+    en: "There is no WhatsApp button on it.",
+    hinglish: "Usme WhatsApp ka button nahi hai.",
+    type: "info",
     kinds: ["dental"],
     previous: [
+      "There is no WhatsApp button, so a patient cannot message the clinic in one tap.",
+      "Usme WhatsApp ka button nahi hai, to patient ek tap mein clinic ko message nahi kar sakta.",
       "Your site has no WhatsApp button, so a patient cannot message the clinic in one tap.",
       "Site pe WhatsApp ka button nahi hai, to patient ek tap mein clinic ko message nahi kar sakta.",
     ],
@@ -258,10 +296,13 @@ export const OBSERVATIONS: Observation[] = [
   {
     id: "no_treatment_pages",
     label: "No treatment pages",
-    en: "There is no page a patient can read about a treatment, such as a root canal or braces.",
-    hinglish: "Usme root canal ya braces jaise kisi treatment ke baare mein padhne ko koi page nahi hai.",
+    en: "There is no page about a treatment, such as a root canal or braces.",
+    hinglish: "Usme root canal ya braces jaise kisi treatment ke baare mein koi page nahi hai.",
+    type: "info",
     kinds: ["dental"],
     previous: [
+      "There is no page a patient can read about a treatment, such as a root canal or braces.",
+      "Usme root canal ya braces jaise kisi treatment ke baare mein padhne ko koi page nahi hai.",
       "Your site has no page a patient can read about a treatment, such as a root canal or braces.",
       "Site pe root canal ya braces jaise kisi treatment ke baare mein padhne ko koi page nahi hai.",
     ],
@@ -269,10 +310,13 @@ export const OBSERVATIONS: Observation[] = [
   {
     id: "no_doctor_details",
     label: "Doctor details missing",
-    en: "It does not name the dentists or their degrees, so a new patient cannot see who will treat them.",
-    hinglish: "Usme dentists ke naam aur degree nahi hain, to naya patient nahi dekh pata ki ilaaj kaun karega.",
+    en: "It does not name the dentists or their degrees.",
+    hinglish: "Usme dentists ke naam aur degree nahi hain.",
+    type: "info",
     kinds: ["dental"],
     previous: [
+      "It does not name the dentists or their degrees, so a new patient cannot see who will treat them.",
+      "Usme dentists ke naam aur degree nahi hain, to naya patient nahi dekh pata ki ilaaj kaun karega.",
       "The site does not name the dentists or their degrees, so a new patient cannot see who will treat them.",
       "Site pe dentists ke naam aur degree nahi hain, to naya patient nahi dekh pata ki ilaaj kaun karega.",
     ],
@@ -280,10 +324,13 @@ export const OBSERVATIONS: Observation[] = [
   {
     id: "no_timings",
     label: "Clinic timings missing",
-    en: "The clinic timings are not on it, so a patient has to phone to ask when you are open.",
-    hinglish: "Usme clinic ki timing kahin nahi dikhi, to patient ko phone karke poochna padta hai.",
+    en: "The clinic timings are not on it.",
+    hinglish: "Usme clinic ki timing kahin nahi dikhi.",
+    type: "info",
     kinds: ["dental"],
     previous: [
+      "The clinic timings are not on it, so a patient has to phone to ask when you are open.",
+      "Usme clinic ki timing kahin nahi dikhi, to patient ko phone karke poochna padta hai.",
       "Your site does not show the clinic timings, so a patient has to phone to ask when you are open.",
       "Clinic ki timing site pe nahi hai, to patient ko phone karke poochna padta hai ki clinic kab khula hai.",
     ],
@@ -292,39 +339,54 @@ export const OBSERVATIONS: Observation[] = [
   {
     id: "no_contact_details",
     label: "No phone or address on the home page",
-    en: "The home page shows no phone number or address, so a patient cannot reach the clinic from it.",
-    hinglish: "Home page par phone ya address nahi hai, to patient wahan se clinic ko contact nahi kar pata.",
+    en: "The home page shows no phone number or address.",
+    hinglish: "Home page par phone ya address nahi hai.",
+    type: "info",
     kinds: ["dental"],
     previous: [
+      "The home page shows no phone number or address, so a patient cannot reach the clinic from it.",
+      "Home page par phone ya address nahi hai, to patient wahan se clinic ko contact nahi kar pata.",
       "Your home page does not show a phone number or address, so a patient cannot reach the clinic from it.",
       "Aapke home page pe phone ya address nahi hai, to patient wahan se clinic ko contact nahi kar pata.",
     ],
   },
-  /* The approved specialty lines (30 Sep 2026): an implant or braces clinic
-     whose site has no process or cost, a children's clinic with nothing on the first visit. */
+  /* The specialty lines (30 Sep 2026): an implant or braces clinic whose site
+     has no process or cost, a children's clinic with nothing on the first visit. */
   {
     id: "no_implant_info",
     label: "No implant process or cost on the site",
-    en: "People look up the implant process and its cost before they decide, but your site does not have it.",
-    hinglish: "Log implant se pehle process aur kharche ki jaankari online dhoondhte hain, par aapki site par ye nahi mila.",
+    en: "It does not explain the implant process or its cost.",
+    hinglish: "Usme implant ka process aur kharche ki jaankari nahi mili.",
+    type: "implant",
     kinds: ["dental"],
-    namesSite: true,
+    previous: [
+      "People look up the implant process and its cost before they decide, but your site does not have it.",
+      "Log implant se pehle process aur kharche ki jaankari online dhoondhte hain, par aapki site par ye nahi mila.",
+    ],
   },
   {
     id: "no_braces_info",
     label: "No braces process or cost on the site",
-    en: "People look up how braces work and what they cost before they decide, but your site does not have it.",
-    hinglish: "Log braces se pehle process aur kharche ki jaankari online dhoondhte hain, par aapki site par ye nahi mila.",
+    en: "It does not explain how braces work or what they cost.",
+    hinglish: "Usme braces ka process aur kharche ki jaankari nahi mili.",
+    type: "braces",
     kinds: ["dental"],
-    namesSite: true,
+    previous: [
+      "People look up how braces work and what they cost before they decide, but your site does not have it.",
+      "Log braces se pehle process aur kharche ki jaankari online dhoondhte hain, par aapki site par ye nahi mila.",
+    ],
   },
   {
     id: "no_first_visit_info",
     label: "Nothing on a child's first visit",
-    en: "Parents look up what happens at a child's first visit before they book, but your site does not say.",
-    hinglish: "Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga, par aapki site par ye nahi mila.",
+    en: "It says nothing about what happens at a child's first visit.",
+    hinglish: "Usme bachche ki pehli visit ke baare mein kuch nahi likha.",
+    type: "first_visit",
     kinds: ["dental"],
-    namesSite: true,
+    previous: [
+      "Parents look up what happens at a child's first visit before they book, but your site does not say.",
+      "Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga, par aapki site par ye nahi mila.",
+    ],
   },
 ];
 
@@ -359,6 +421,25 @@ export function observationText(observation: string | undefined, language: Templ
   return language === "en" ? known.en : known.hinglish;
 }
 
+/**
+ * What kind of problem a lead's observation names: a known observation's own
+ * type; a sentence typed by hand is read for its words: "Not secure" or http
+ * (trust), a form (form), an old session (old), a site that does not open or
+ * load (site), else something missing (info). The approved dental example's
+ * "Wo theek se khul nahi rahi, aur timings kahin nahi dikhi." reads as site, the
+ * approved coaching example's "NEET batch ki timing aur fees kahin nahi mili." as info.
+ */
+export function problemType(observation: string | undefined | null): ProblemType {
+  const raw = (observation ?? "").trim();
+  const known = knownObservation(raw);
+  if (known) return known.type;
+  if (/not secure|\bhttp\b(?!s)/i.test(raw)) return "trust";
+  if (/\bform\b/i.test(raw)) return "form";
+  if (/\b20\d\d-\d\d\b|\bpuran[aie]\b|\bold\b|outdated/i.test(raw)) return "old";
+  if (/(nahi|na) khul|\bkhul(ti|ta|te|i|a)? nahi|khulne mein|(\bnot|n't) (open|load)|\bload|\bslow|der lag|scroll/i.test(raw)) return "site";
+  return "info";
+}
+
 /* ── The approved merge fields: greeting, sender, time of day ─────────────── */
 
 type KindKey = LeadKind;
@@ -383,13 +464,17 @@ const GREETING_FALLBACK: Record<TemplateLanguage, Record<KindKey, string>> = {
  * {greeting}: the contact's name and title as the lead stores them ("Dr. Mehta",
  * "Sharma Sir", "Principal Ma'am"). In Hinglish (and Hindi) a name without a
  * closing honorific gets " ji": "Dr. Mehta ji", "Verma ji", as in the approved
- * samples; "Mr." and "Mrs." names stay as they are. No name: Doctor for a
- * clinic, Principal (ji) for a school, Sir for anyone else.
+ * samples; "Mr." and "Mrs." names stay as they are. English keeps a title as
+ * stored ("Good afternoon Dr. Mehta"), and a bare name gets " ji" there too
+ * ("Good afternoon Verma ji", 1 Oct 2026): "Good afternoon Verma," reads rude
+ * to the people these messages go to. No name: Doctor for a clinic, Principal
+ * (ji) for a school, Sir for anyone else.
  */
 export function greetingFor(contactName: string | undefined | null, kind: string | undefined | null, language: TemplateLanguage): string {
   const name = (contactName ?? "").replace(/\s+/g, " ").trim();
   if (!name) return GREETING_FALLBACK[language][kindKey(kind)];
-  if (language === "en" || HONORIFIC_END.test(name) || NO_JI_TITLE.test(name)) return name;
+  if (HONORIFIC_END.test(name) || NO_JI_TITLE.test(name)) return name;
+  if (language === "en" && TITLE_START.test(name)) return name;
   return `${name} ${language === "hi" ? "जी" : "ji"}`;
 }
 
@@ -397,19 +482,21 @@ export function greetingFor(contactName: string | undefined | null, kind: string
  * {addressAs}: their name when a line opens with it, with no greeting word
  * before it, as the approved summary does: "Dr. Mehta, aaj ki baat ka summary:".
  * A name with a title or a closing honorific stays as stored ("Dr. Mehta",
- * "Sharma Sir", "Mrs. Rao"); a bare name or a bare title gets " ji" in Hinglish
- * and Hindi ("Verma ji", "Principal ji"), since "Verma," alone reads rude. No
- * name: the same fallback as {greeting}.
+ * "Sharma Sir", "Mrs. Rao"); a bare name gets " ji" in every language ("Verma
+ * ji, a quick note ..."), since "Verma," alone reads rude, and a bare title gets
+ * it in Hinglish and Hindi ("Principal ji"; English "Principal"). No name: the
+ * same fallback as {greeting}.
  */
 export function addressFor(contactName: string | undefined | null, kind: string | undefined | null, language: TemplateLanguage): string {
   const name = (contactName ?? "").replace(/\s+/g, " ").trim();
   if (!name) return GREETING_FALLBACK[language][kindKey(kind)];
-  if (language === "en" || HONORIFIC_END.test(name) || NO_JI_TITLE.test(name)) return name;
+  if (HONORIFIC_END.test(name) || NO_JI_TITLE.test(name)) return name;
   const titledName = TITLE_START.test(name) && name.replace(TITLE_START, "").trim() !== "";
-  return titledName ? name : `${name} ${language === "hi" ? "जी" : "ji"}`;
+  if (titledName || (language === "en" && TITLE_START.test(name))) return name;
+  return `${name} ${language === "hi" ? "जी" : "ji"}`;
 }
 
-/** True when a stored contact name carries a title or honorific, so "Good afternoon <name>" reads right in English. */
+/** True when a stored contact name carries a title or honorific; without one the English greeting adds " ji" ("Good afternoon Verma ji"). */
 export function hasTitle(contactName: string | undefined | null): boolean {
   const name = (contactName ?? "").trim();
   return TITLE_START.test(name) || HONORIFIC_END.test(name);
@@ -556,60 +643,229 @@ export function admissionSession(now: Date = new Date()): string {
 export interface OfferInput {
   kind: string | undefined | null;
   language: TemplateLanguage;
-  /** new_website (they have none) or fix_website (theirs fails on a phone). */
+  /** new_website (they have none) or fix_website (a new sample of theirs). */
   pitch: TemplatePitch;
   specialty?: DentalSpecialty;
   demo?: DemoFacts;
-  /** "offer": the message offers to make the sample, so it names what we would put on it. */
+  /** "offer": the message offers to make the sample, so it names what we would put on it, their number included. */
   sample?: "made" | "offer";
   now?: Date;
+  /** What the checked problem is about (problemType): a school whose site fails on a phone hears "Phone par jaldi khulne wali site" first. */
+  problem?: ProblemType;
 }
 
+/** Three bullet lines, as the approved examples set them out. */
+const bullets = (items: string[]): string => items.map((x) => `• ${x}`).join("\n");
+
 /**
- * {offer}: what the sample page has, exactly as the approved samples list it.
- * Dental, their site: the approved "ek tap mein call ya WhatsApp" is said only
- * when the clinic's number is on the demo (a template duplicate clears it, and
- * the Call and WhatsApp buttons then show nothing); a made demo without it
- * offers one-tap booking, which every dental demo has. School, their site: the
- * session the demo shows, else the computed one.
+ * {offer}: what the sample website has, as three bullets, the approved
+ * examples' words for each kind and pitch (1 Oct 2026). Every bullet is true of
+ * the demo: a template duplicate clears every contact, so one-tap call or
+ * WhatsApp (and a school's enquiry form, which sends to the school's WhatsApp)
+ * is named only when their own number is on the demo, or when the message
+ * offers to make the sample (it will carry the number from their listing).
+ * Without it the bullet is one every demo has: a site that opens fast on a
+ * phone, or one-tap appointment booking. An implant centre is never offered a
+ * cost range: the implant demo (d4) prices no implant ("Cost after consultation
+ * and X-ray"); the braces demo (d5) prices each kind of braces. School, their
+ * site: the session the demo shows, else the computed one. About their own site,
+ * the first bullet answers the problem checked: a site that opens fast on a
+ * phone when theirs does not ("site"), a secure site when Chrome calls theirs
+ * "Not secure" ("trust"; every demo is served over https).
  */
-export function offerFor({ kind, language: L, pitch, specialty = "general", demo, sample, now = new Date() }: OfferInput): string {
+export function offerFor({ kind, language: L, pitch, specialty = "general", demo, sample, now = new Date(), problem }: OfferInput): string {
   const fix = pitch === "fix_website";
   const k = kindKey(kind);
+  const phone = sample === "offer" || Boolean(demo?.phone);
+  const wa = sample === "offer" || Boolean(demo?.whatsapp);
+  // Hindi words where a Hindi message can say them (a school's); elsewhere the Hinglish.
+  const say = (en: string, hinglish: string, hi?: string) => pick(L, en, hinglish, hi ?? hinglish);
+  const FAST = say("A site that opens fast on a phone", "Phone par jaldi khulne wali site", "फ़ोन पर जल्दी खुलने वाली साइट");
+  const SECURE = say("A secure site, with no \"Not secure\" warning", "Secure site, jis par \"Not secure\" nahi dikhta", "सिक्योर साइट, जिस पर \"Not secure\" नहीं दिखता");
+  // The first bullet about their own site: the answer to "Not secure", else a site that opens fast.
+  const LEAD = problem === "trust" ? SECURE : FAST;
+  const BOOK = say("Online appointment booking", "Online appointment booking");
   if (k === "dental") {
-    if (specialty === "kids") {
-      return pick(L, "what happens at the first visit, timings and booking", "pehli visit ki jaankari, timings aur booking", "पहली विज़िट की जानकारी, टाइमिंग और बुकिंग");
-    }
-    // The braces demo (d5) prices each kind of braces, so it has a cost range. The implant demo (d4)
-    // prices no implant ("Cost after consultation and X-ray"; its consultation, scan and an itemised
-    // estimate are explained), so an implant centre is offered cost information, never a range.
-    if (specialty === "ortho") {
-      return pick(L, "how braces work, the cost range and appointment booking", "braces ka process, kharche ki range aur appointment booking", "ब्रेसेज़ का प्रोसेस, ख़र्च की रेंज और अपॉइंटमेंट बुकिंग");
-    }
     if (specialty === "implant") {
-      return pick(L, "the implant process, cost information and appointment booking", "implant ka process, kharche ki jaankari aur appointment booking", "इम्प्लांट का प्रोसेस, ख़र्च की जानकारी और अपॉइंटमेंट बुकिंग");
+      return bullets(fix
+        ? [LEAD, say("The implant process and cost information", "Implant ka process aur kharche ki jaankari"), BOOK]
+        : [say("The implant process, step by step", "Implant ka process, step by step"), say("Cost information", "Kharche ki jaankari"), BOOK]);
     }
-    if (!fix) return pick(L, "treatments, timings and one-tap booking", "treatments, timings aur one-tap booking", "ट्रीटमेंट, टाइमिंग और एक टैप में बुकिंग");
-    const call = sample === "offer" || Boolean(demo?.phone);
-    const wa = sample === "offer" || Boolean(demo?.whatsapp);
-    const en = call && wa ? "call or WhatsApp" : call ? "calling" : wa ? "WhatsApp" : "booking";
-    const hin = call && wa ? "call ya WhatsApp" : call ? "call" : wa ? "WhatsApp" : "booking";
-    const hi = call && wa ? "कॉल या WhatsApp" : call ? "कॉल" : wa ? "WhatsApp" : "बुकिंग";
-    // English keeps the order of both approved English samples ("treatments, timings and one-tap
-    // booking"); Hinglish keeps the approved poor-website sample's ("timing, treatments aur ek tap mein").
-    return pick(L, `treatments, timings and one-tap ${en}`, `timing, treatments aur ek tap mein ${hin}`, `टाइमिंग, ट्रीटमेंट और एक टैप में ${hi}`);
+    if (specialty === "ortho") {
+      return bullets(fix
+        ? [LEAD, say("How braces work, and the cost range for each kind", "Braces ka process aur har tarah ke kharche ki range"), BOOK]
+        : [say("How braces work, step by step", "Braces ka process, step by step"), say("The cost range for each kind of braces", "Har tarah ke braces ke kharche ki range"), BOOK]);
+    }
+    if (specialty === "kids") {
+      const visit = say("What happens at a child's first visit", "Bachche ki pehli visit mein kya hota hai");
+      return bullets(fix ? [LEAD, visit, BOOK] : [visit, say("Timings and treatments in one place", "Timings aur treatments ek jagah"), BOOK]);
+    }
+    if (!fix) {
+      const tap = phone && wa ? say("One tap to call or WhatsApp", "Ek tap mein call ya WhatsApp")
+        : phone ? say("One tap to call", "Ek tap mein call")
+        : wa ? say("One tap to WhatsApp", "Ek tap mein WhatsApp")
+        : FAST;
+      return bullets([say("All treatments and timings in one place", "Saare treatments aur timings ek jagah"), tap, BOOK]);
+    }
+    const tap = phone && wa ? say("One tap to call, WhatsApp or book", "Ek tap mein call, WhatsApp ya booking")
+      : phone ? say("One tap to call or book", "Ek tap mein call ya booking")
+      : wa ? say("One tap to WhatsApp or book", "Ek tap mein WhatsApp ya booking")
+      : say("One tap to book an appointment", "Ek tap mein appointment booking");
+    return bullets([LEAD, say("Timings and treatments on the first screen", "Timings aur treatments pehli screen par"), tap]);
   }
   if (k === "school") {
-    if (!fix) return pick(L, "admission details, fees and an enquiry form", "admission, fees aur enquiry form", "एडमिशन, फ़ीस और एनक्वायरी फ़ॉर्म");
+    // The demo's enquiry form opens WhatsApp to the school's number; with no number there is no form.
+    const form = wa ? say("An enquiry form that comes straight to your phone", "Enquiry form, jo seedha aapke phone par aata hai", "एनक्वायरी फ़ॉर्म, जो सीधे आपके फ़ोन पर आता है") : "";
+    if (!fix) {
+      return bullets([
+        say("The admission process and key dates", "Admission ka process aur zaroori dates", "एडमिशन का प्रोसेस और ज़रूरी तारीख़ें"),
+        say("Fees and facilities", "Fees aur facilities ki jaankari", "फ़ीस और सुविधाओं की जानकारी"),
+        form || FAST,
+      ]);
+    }
     const s = (demo?.sessionLabel ?? "").trim() || admissionSession(now);
-    return pick(L, `the ${s} admissions, fees and an enquiry form on one screen`, `${s} ke admission, fees aur enquiry ek hi screen par`, `${s} के एडमिशन, फ़ीस और एनक्वायरी एक ही स्क्रीन पर`);
+    const admission = say(`${s} admission details`, `${s} admission ki jaankari`, `${s} एडमिशन की जानकारी`);
+    const fees = say("The full fee structure", "Fees ka poora structure", "फ़ीस का पूरा स्ट्रक्चर");
+    if (problem === "site" || problem === "trust") {
+      return bullets(form ? [LEAD, say(`${s} admission and fee details`, `${s} admission aur fees ki poori jaankari`, `${s} एडमिशन और फ़ीस की पूरी जानकारी`), form] : [LEAD, admission, fees]);
+    }
+    return bullets([admission, fees, form || FAST]);
   }
   if (k === "coaching") {
-    return fix
-      ? pick(L, "all the batches, timings and fees in one place", "saare batches, timing aur fees ek jagah", "सारे बैच, टाइमिंग और फ़ीस एक जगह")
-      : pick(L, "courses, batch timings and an enquiry button", "courses, batch timing aur enquiry button", "कोर्स, बैच टाइमिंग और एनक्वायरी बटन");
+    if (!fix) {
+      const tap = phone && wa ? say("One tap to enquire, call or WhatsApp", "Ek tap mein enquiry, call ya WhatsApp")
+        : phone ? say("One tap to call", "Ek tap mein call")
+        : wa ? say("One tap to enquire or WhatsApp", "Ek tap mein enquiry ya WhatsApp")
+        : FAST;
+      return bullets([say("All courses and batch timings in one place", "Saare courses aur batch timings ek jagah"), say("Clear fee details", "Fees ki saaf jaankari"), tap]);
+    }
+    const last = wa ? say("A site that opens fast on a phone, with one-tap enquiry", "Phone par jaldi khulne wali site, ek tap mein enquiry")
+      : phone ? say("A site that opens fast on a phone, with one-tap calling", "Phone par jaldi khulne wali site, ek tap mein call")
+      : FAST;
+    const batches = say("All batches and timings in one place", "Saare batches aur timings ek jagah");
+    const fees = say("Every course's fees, clearly written", "Har course ki fees saaf likhi");
+    if (problem === "trust") return bullets([SECURE, batches, fees]);
+    return bullets(problem === "site" ? [last, batches, fees] : [batches, fees, last]);
   }
-  return pick(L, "services, timings and an enquiry button", "services, timing aur enquiry button", "सर्विसेज़, टाइमिंग और एनक्वायरी बटन");
+  const tap = phone && wa ? say("One tap to call or WhatsApp", "Ek tap mein call ya WhatsApp")
+    : phone ? say("One tap to call", "Ek tap mein call")
+    : wa ? say("One tap to WhatsApp", "Ek tap mein WhatsApp")
+    : say("A clear page about you", "Aapke baare mein saaf jaankari");
+  const services = say("Your services and timings in one place", "Aapki services aur timings ek jagah");
+  if (fix && (problem === "site" || problem === "trust")) return bullets([LEAD, services, tap]);
+  return bullets([services, FAST, tap]);
+}
+
+export interface ImpactInput {
+  kind: string | undefined | null;
+  language: TemplateLanguage;
+  pitch: TemplatePitch;
+  specialty?: DentalSpecialty;
+  /** What the checked problem is about, for a message about their own site (problemType). */
+  problem?: ProblemType;
+}
+
+/** One impact line: Hinglish, English and, where a Hindi message says it, Hindi. */
+type Line = { hinglish: string; en: string; hi?: string };
+type FixLines = Record<"site" | "info" | "form" | "trust", Line> & Partial<Record<ProblemType, Line>>;
+
+const CALL_NEXT_CLINIC = { hinglish: "Ye na mile to wo aksar agle clinic ko call kar lete hain.", en: "When they cannot find it, they often call the next clinic on the list." };
+
+/** A clinic's impact lines on its own site; `who` is its patients, or a children's clinic's parents. */
+function dentalFix(who: { hinglish: string; en: string }): FixLines {
+  return {
+    site: {
+      hinglish: `Zyaadatar ${who.hinglish} phone se hi dekhte hain. Site na khule to wo booking ki jagah doosra clinic dhoondh lete hain.`,
+      en: `Most ${who.en} look you up on their phone. If the site does not open well, they find another clinic instead of booking.`,
+    },
+    info: {
+      hinglish: `Zyaadatar ${who.hinglish} clinic chunne se pehle ye sab phone par hi dekhte hain. ${CALL_NEXT_CLINIC.hinglish}`,
+      en: `Most ${who.en} check this on their phone first. ${CALL_NEXT_CLINIC.en}`,
+    },
+    form: {
+      hinglish: `Form na chale to ${who.hinglish} ki enquiry aap tak nahi pahunchti. Jawab na milne par wo aksar agle clinic ko call kar lete hain.`,
+      en: `When the form does not work, the enquiry never reaches you. With no reply, ${who.en} often call the next clinic on the list.`,
+    },
+    trust: {
+      hinglish: `Kai ${who.hinglish} "Not secure" dekhkar site band kar dete hain, aur doosra clinic dhoondh lete hain.`,
+      en: `Many ${who.en} close a site that says "Not secure", and look for another clinic.`,
+    },
+    implant: { hinglish: `Log implant se pehle yahi jaankari online dhoondhte hain. ${CALL_NEXT_CLINIC.hinglish}`, en: `People look this up online before they decide on an implant. ${CALL_NEXT_CLINIC.en}` },
+    braces: { hinglish: `Log braces se pehle yahi jaankari online dhoondhte hain. ${CALL_NEXT_CLINIC.hinglish}`, en: `People look this up online before they decide on braces. ${CALL_NEXT_CLINIC.en}` },
+    first_visit: { hinglish: `Parents bachche ki pehli visit se pehle yahi online dekhte hain. ${CALL_NEXT_CLINIC.hinglish}`, en: `Parents look this up online before a child's first visit. ${CALL_NEXT_CLINIC.en}` },
+  };
+}
+
+/** The impact lines, by kind: no website of their own (new), and their own site (fix) by the kind of problem. */
+const IMPACT: Record<Exclude<KindKey, "dental">, { new: Line; fix: FixLines }> = {
+  school: {
+    new: {
+      hinglish: "Parents admission se pehle fees, facilities aur admission ka process online dhoondhte hain. Ye na mile to wo aksar doosre school mein enquiry kar lete hain.",
+      en: "Parents look up fees, facilities and the admission process online before they apply. When they cannot find them, they often enquire at another school.",
+      hi: "पेरेंट्स एडमिशन से पहले फ़ीस, सुविधाएँ और एडमिशन का प्रोसेस ऑनलाइन ढूँढते हैं। ये न मिले तो वो अक्सर दूसरे स्कूल में एनक्वायरी कर लेते हैं।",
+    },
+    fix: {
+      old: { hinglish: "Parents admission se pehle yahi sab online dekhte hain. Purani jaankari dekhkar wo aksar call hi nahi karte.", en: "Parents check all this online before admission. When the information is old, they often do not call at all." },
+      info: { hinglish: "Parents admission se pehle yahi sab online dekhte hain. Ye na mile to wo aksar doosre school mein enquiry kar lete hain.", en: "Parents check all this online before admission. When they cannot find it, they often enquire at another school." },
+      site: { hinglish: "Zyaadatar parents phone se hi dekhte hain. Site na khule to wo aksar doosre school mein enquiry kar lete hain.", en: "Most parents look you up on their phone. If the site does not open well, they often enquire at another school." },
+      form: { hinglish: "Form na chale to parents ki enquiry aap tak nahi pahunchti. Jawab na milne par wo aksar doosre school mein enquiry kar lete hain.", en: "When the form does not work, the enquiry never reaches you. With no reply, parents often enquire at another school." },
+      trust: { hinglish: "Kai parents \"Not secure\" dekhkar site band kar dete hain, aur doosre school mein enquiry kar lete hain.", en: "Many parents close a site that says \"Not secure\", and enquire at another school." },
+    },
+  },
+  coaching: {
+    new: {
+      hinglish: "Students join karne se pehle batch, timing aur fees online compare karte hain. Ye na mile to wo aksar doosre institute mein enquiry kar lete hain.",
+      en: "Students compare batches, timings and fees online before they join. When they cannot find them, they often enquire at another institute.",
+    },
+    fix: {
+      info: { hinglish: "Ye jaanne ke liye student ko pehle call karna padta hai. Kai students call karne ki jagah agla institute dekh lete hain.", en: "To find this out, a student has to call first. Many students look at the next institute instead of calling." },
+      site: { hinglish: "Zyaadatar students phone se hi dekhte hain. Site na khule to wo agla institute dekh lete hain.", en: "Most students look you up on their phone. If the site does not open well, they look at the next institute." },
+      form: { hinglish: "Form na chale to student ki enquiry aap tak nahi pahunchti. Jawab na milne par wo aksar agla institute dekh lete hain.", en: "When the form does not work, the enquiry never reaches you. With no reply, students often look at the next institute." },
+      trust: { hinglish: "Kai students \"Not secure\" dekhkar site band kar dete hain, aur agla institute dekh lete hain.", en: "Many students close a site that says \"Not secure\", and look at the next institute." },
+    },
+  },
+  other: {
+    new: {
+      hinglish: "Log pehle online dekhte hain ki aap kya karte hain aur kab khule hain. Ye na mile to wo aksar kisi aur ko call kar lete hain.",
+      en: "People check online what you offer and when you are open. When they cannot find it, they often call someone else.",
+    },
+    fix: {
+      info: { hinglish: "Log pehle yahi sab online dekhte hain. Ye na mile to wo aksar kisi aur ko call kar lete hain.", en: "People check all this online first. When they cannot find it, they often call someone else." },
+      site: { hinglish: "Zyaadatar log phone se hi dekhte hain. Site na khule to wo aksar kisi aur ko call kar lete hain.", en: "Most people look you up on their phone. If the site does not open well, they often call someone else." },
+      form: { hinglish: "Form na chale to enquiry aap tak nahi pahunchti. Jawab na milne par log aksar kisi aur ko call kar lete hain.", en: "When the form does not work, the enquiry never reaches you. With no reply, people often call someone else." },
+      trust: { hinglish: "Kai log \"Not secure\" dekhkar site band kar dete hain, aur kisi aur ko call kar lete hain.", en: "Many people close a site that says \"Not secure\", and call someone else." },
+    },
+  },
+};
+
+/**
+ * {impact}: one line on what the problem costs them, through the eyes of the
+ * people who look them up (1 Oct 2026, "pehle problem btao"). No numbers, no
+ * fear, never a statistic. With no website of their own, the kind's line (a
+ * specialist clinic's: why its patients look online first, the approved words
+ * of 30 Sep); about their own site, the line for the kind of problem checked,
+ * so a site that does not open is not answered with a line about missing fees.
+ * The approved examples' lines, word for word: a clinic with no website, a
+ * clinic whose site does not open, a school with none, a school showing an old
+ * session, a coaching institute with none, one whose batch timings are missing.
+ */
+export function impactFor({ kind, language: L, pitch, specialty = "general", problem = "info" }: ImpactInput): string {
+  const k = kindKey(kind);
+  const say = (line: Line) => pick(L, line.en, line.hinglish, line.hi ?? line.hinglish);
+  if (k === "dental") {
+    if (pitch !== "fix_website") {
+      if (specialty !== "general") return pick(L, `${SPECIALIST_NEED.en[specialty]}. ${CALL_NEXT_CLINIC.en}`, `${SPECIALIST_NEED.hinglish[specialty]}. ${CALL_NEXT_CLINIC.hinglish}`, `${SPECIALIST_NEED.hinglish[specialty]}. ${CALL_NEXT_CLINIC.hinglish}`);
+      return say({
+        hinglish: "Aaj patient clinic chunne se pehle timings, treatments aur fees online dekhte hain. Ye na mile to wo aksar agle clinic ko call kar lete hain.",
+        en: "Most patients check timings and book from their phone. When they cannot, they often call the next clinic on the list.",
+      });
+    }
+    const lines = dentalFix(specialty === "kids" ? { hinglish: "parents", en: "parents" } : { hinglish: "patient", en: "patients" });
+    return say(lines[problem] ?? lines.info);
+  }
+  const set = IMPACT[k];
+  if (pitch !== "fix_website") return say(set.new);
+  return say(set.fix[problem] ?? set.fix.info);
 }
 
 /* ── {callSlots}: two call times in the kind's good window ──────────────── */
@@ -776,40 +1032,15 @@ export const KIND_NOUN: Record<LeadKind, string> = {
 const kindNoun = (kind: string | undefined) => KIND_NOUN[kind as LeadKind] ?? kind ?? "";
 
 /**
- * The words a template says to this lead: its body, or one of its `variants`,
- * the approved specialist words of a dental WhatsApp first message. A "no
- * website" message to a specialist clinic (implant, braces, kids: its demo's
- * template, else its segment or name) says its specialty's words ("Google par
- * aapka kids dental clinic dekha. Parents ..."). A "their site" message whose
- * checked problem names the site itself (namesSite) opens "Google par aapka
- * ... dekha." as the approved implant sample does, but only for a lead found on
- * Google; otherwise "Aapke clinic ki website phone par kholi." stays. Every
- * variant has the body's merge fields, so checkSend reads the body.
- */
-export function bodyFor(
-  template: Pick<MessageTemplate, "body" | "variants" | "pitch" | "kind">,
-  lead: Partial<Pick<OutreachLead, "kind" | "instituteName" | "notes" | "observation" | "tags" | "source" | "placeId">>,
-  ctx: Pick<RenderContext, "demo" | "observation"> = {},
-): string {
-  const v = template.variants;
-  if (!v) return template.body;
-  if (template.pitch === "fix_website") {
-    const seen = knownObservation((ctx.observation ?? lead.observation ?? "").trim());
-    return v.found && seen?.namesSite && seenOnGoogle(lead) ? v.found : template.body;
-  }
-  if (kindKey(template.kind !== "any" ? template.kind : lead.kind) !== "dental") return template.body;
-  const specialty = dentalSpecialty(lead, ctx.demo);
-  return (specialty !== "general" && v[specialty]) || template.body;
-}
-
-/**
- * Fill a template for one lead: its body, or the approved specialist words a
- * dental WhatsApp has for this lead (bodyFor). Every known merge field is
- * replaced; a missing value becomes a safe fallback (the greeting) or empty text, and is reported
- * in `warnings` so the UI can say what to fill in. An e-mail gets "Regards,"
- * and the signature, always, once; a cold one (carriesOptOut) also gets the
- * REMOVE line, once, at the very end. A [placeholder] left in the text is
- * reported too (checkSend blocks it).
+ * Fill a template for one lead. Every known merge field is replaced; a missing
+ * value becomes a safe fallback (the greeting) or empty text, and is reported
+ * in `warnings` so the UI can say what to fill in. {impact} and {offer} follow
+ * the lead's kind, its dental specialty (the demo's template, else its segment
+ * or name), the pitch and the problem checked; the parts keep their blank
+ * lines, and the text goes into wa.me and mailto: links as it is (%0A for each
+ * line break). An e-mail gets "Regards," and the signature, always, once; a
+ * cold one (carriesOptOut) also gets the REMOVE line, once, at the very end. A
+ * [placeholder] left in the text is reported too (checkSend blocks it).
  */
 export function render(
   template: MessageTemplate,
@@ -817,8 +1048,7 @@ export function render(
   ctx: RenderContext = {},
 ): RenderResult {
   const warnings: string[] = [];
-  // The words for this lead: the body, or the approved specialist words (variants).
-  const said = bodyFor(template, lead, ctx);
+  const said = template.body;
   const used = new Set<string>();
   for (const m of `${template.subject ?? ""}\n${said}`.matchAll(/\{(\w+)\}/g)) used.add(m[1]);
 
@@ -828,12 +1058,13 @@ export function render(
   const kind = kindKey(template.kind !== "any" ? template.kind : lead.kind);
   const specialty = kind === "dental" ? dentalSpecialty(lead, ctx.demo) : "general";
   const pitch = template.pitch !== "any" ? template.pitch : effectivePitch(lead);
-  // An "other" business's demo is made from a school, coaching or clinic template: the offer names
-  // what a demo of that kind has, in the list that goes with "hai" (the kind's "no website" list).
+  const problem = problemType(ctx.observation ?? lead.observation);
+  // An "other" business's demo is made from a school, coaching or clinic template: the bullets name
+  // what a demo of that kind has (that kind's "no website" list).
   const demoKind = kind === "other" ? ctx.demo?.kind : undefined;
   const offer = demoKind
     ? offerFor({ kind: demoKind, language, pitch: "new_website", specialty: demoKind === "dental" ? dentalSpecialty(lead, ctx.demo) : "general", demo: ctx.demo, sample: template.sample, now })
-    : offerFor({ kind, language, pitch, specialty, demo: ctx.demo, sample: template.sample, now });
+    : offerFor({ kind, language, pitch, specialty, demo: ctx.demo, sample: template.sample, now, problem });
   const contact = (lead.contactName ?? "").trim();
   const senderName = (ctx.senderName ?? "").trim() || DEFAULT_SENDER_NAME;
   const values: Record<string, string> = {
@@ -850,6 +1081,7 @@ export function render(
     senderPhone: (ctx.senderPhone ?? "").trim() || DEFAULT_SENDER_PHONE,
     timeOfDay: timeOfDay(now),
     kindNoun: kindNounFor(kind, language, specialty),
+    impact: impactFor({ kind, language, pitch, specialty, problem }),
     offer,
     need: needFor(kind, language, specialty),
     visitor: visitorFor(kind, language, specialty),
@@ -860,7 +1092,7 @@ export function render(
   if (named && !contact) {
     warnings.push(`No contact name: the greeting says "${values[named]}".`);
   } else if ((used.has("greeting") || used.has("addressAs")) && language === "en" && !hasTitle(contact)) {
-    warnings.push(`The contact name "${contact}" has no title, so the English greeting reads "${contact}". Add Dr., Mr., Mrs., Sir or Ma'am to it on the lead.`);
+    warnings.push(`The contact name "${contact}" has no title, so the English greeting reads "${values.greeting}". If you know their title, add Dr., Mr., Mrs., Sir or Ma'am to the name on the lead.`);
   }
   if (used.has("instituteName") && !values.instituteName) warnings.push("Institute name is empty.");
   if (used.has("city") && !values.city) warnings.push("City is empty.");
@@ -1078,8 +1310,8 @@ export function inQuietHours(now: Date, quietStart = DEFAULT_QUIET_START, quietE
 
 /**
  * What a message tells the lead is already made for them, even with no link:
- * "Humne ... sample page banaya hai" (a demo) or "maine ek note likha hai" (a
- * pitch page). A message that offers to make one promises nothing. Every live
+ * "Isliye humne ... sample website banayi hai" (a demo) or "maine ek chhota note
+ * likha hai" (a pitch page). A message that offers to make one promises nothing. Every live
  * template says it itself (`promises`); the rules below read the retired ones.
  */
 export function promisedPage(

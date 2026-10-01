@@ -117,8 +117,8 @@ const CODE_TO_OBSERVATION: [RegExp, string][] = [
   A dental clinic is not asked about fees and admissions. For a dental lead
   no_contact and the dental checks (siteAudit.js dentalFindings) become the
   Outreach engine's own dental observations (ids), so a Hinglish message says
-  them in Hinglish and the first WhatsApp stays under 450 characters
-  (30 Sep 2026).
+  them in Hinglish, in one short problem line (30 Sep 2026; the first WhatsApp
+  is the five-part format of 1 Oct 2026).
 */
 const DENTAL_OBSERVATIONS: [string, string][] = [
   ["no_contact", "no_contact_details"],
