@@ -4,8 +4,10 @@ import { CleanObservations } from "./CleanObservations";
 
 /**
  * /crm/settings: the Outreach settings (sender, signature, the optional
- * WhatsApp limit, quiet hours, demo-open alerts, "Add every new demo to the
- * CRM"), then the data clean-up tools.
+ * WhatsApp limit, quiet hours, "Add every new demo to the CRM" with one line
+ * saying demo opens still show in the CRM), then the data clean-up tools.
+ * The demo-open alert switch is gone (1 Oct 2026): no e-mail is sent on an
+ * open any more (src/lib/demo/opens.ts).
  */
 export default function CrmSettings() {
   return (

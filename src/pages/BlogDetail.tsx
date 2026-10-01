@@ -14,6 +14,8 @@ import { staggerContainer, fadeUp } from "@/lib/motion";
 import { useCms, useCollection, useDeferredBodies } from "@/lib/cms/context";
 import { sanitizeRich } from "@/lib/sanitize";
 import type { BlogPost } from "@/lib/cms/types";
+import { postSeo } from "@/lib/seo/pages";
+import { blogPostingNode } from "@/lib/seo/schema";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -23,7 +25,12 @@ function formatDate(value: string) {
 
 /** Single article view for /blog/: slug. */
 export default function BlogDetail() {
-  const { slug } = useParams();
+  // /blogs/:id is the old site's address for a post (App.tsx keeps the route,
+  // vercel.json 301s it). It names its parameter `id`, so read either one: the
+  // lookup below already falls back to matching the id. The canonical is always
+  // /blog/<slug>.
+  const { slug: slugParam, id: idParam } = useParams();
+  const slug = slugParam ?? idParam;
   // The nine article bodies are ~38 KB of HTML and are not in the entry chunk;
   // the /blog grid runs entirely off the metadata in the seed. This asks for them.
   const bodiesReady = useDeferredBodies();
@@ -72,9 +79,14 @@ export default function BlogDetail() {
 
   return (
     <Layout>
+      {/* Title (post title + brand when it fits in 60), a description cut at a
+          sentence within 155, and the BlogPosting node: the same helpers the
+          build uses for this post's prerendered head (src/lib/seo/pages.ts,
+          schema.ts), so the two cannot disagree. */}
       <Seo
-        title={post.title}
-        description={post.excerpt}
+        title={postSeo(post).title}
+        fullTitle
+        description={postSeo(post).description}
         image={post.coverImage}
         path={`/blog/${post.slug}`}
         type="article"
@@ -83,68 +95,50 @@ export default function BlogDetail() {
           { name: "Blog", path: "/blog" },
           { name: post.title, path: `/blog/${post.slug}` },
         ]}
-        schema={{
-          /* BlogPosting, not the generic Article: these are blog posts on a
-             blog, and the narrower type is the one Google documents for the
-             Article rich result. It inherits every Article property below. */
-          "@type": "BlogPosting",
-          headline: post.title.slice(0, 110),
-          description: post.excerpt,
-...(post.coverImage ? { image: post.coverImage }: {}),
-          datePublished: post.publishDate,
-          inLanguage: "en-IN",
-          /* The byline is the studio, not a person: these posts are written by
-             the team and FACTS.md does not attribute any of them to a named
-             author. Inventing one would be a fabrication. */
-          author: { "@type": "Organization", name: post.author },
-          mainEntityOfPage: { "@type": "WebPage", "@id": `/blog/${post.slug}` },
-...(post.tags?.length ? { keywords: post.tags.join(", ") }: {}),
-        }}
+        schema={blogPostingNode(post)}
       />
 
       {/* Header */}
       <section className="section relative overflow-hidden pb-0">
         <Aurora />
+        {/* NO ENTRANCE MOTION ABOVE THE FOLD (1 Oct 2026): the h1 and the cover
+            image, the page's largest paint, sat inside <Reveal> at opacity 0
+            until JavaScript faded them in (SEO audit, P1-2). */}
         <div className="container-page relative">
-          <Reveal>
-            <Link
-              to="/blog"
-              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to blog
-            </Link>
-          </Reveal>
+          <Link
+            to="/blog"
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to blog
+          </Link>
 
           <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center gap-6 text-center">
             {post.tags?.length ? (
-              <Reveal>
-                <div className="flex flex-wrap justify-center gap-1.5">
-                  {post.tags.slice(0, 4).map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
-                    >
-                      {t}
-                    </span>
-))}
-                </div>
-              </Reveal>
-): null}
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {post.tags.slice(0, 4).map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            ) : null}
 
-            <Reveal delay={0.05}>
-              <h1 className="text-display font-display font-semibold text-balance">{post.title}</h1>
-            </Reveal>
+            <h1 className="text-display font-display font-semibold text-balance">{post.title}</h1>
 
-            <Reveal delay={0.1}>
-              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <PenLine className="h-3.5 w-3.5" /> {post.author}
-                </span>
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <PenLine className="h-3.5 w-3.5" aria-hidden="true" /> {post.author}
+              </span>
+              {/* No date unless the record has a real one (see seed.ts). */}
+              {post.publishDate && (
                 <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
                   <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(post.publishDate)}
                 </span>
-              </div>
-            </Reveal>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -153,21 +147,19 @@ export default function BlogDetail() {
       {post.coverImage && (
         <section className="section pt-10">
           <div className="container-page">
-            <Reveal>
-              <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-border bg-card/60">
-                {/* Decorative header image: the <h1> above it already carries the title. */}
-                <img
-                  src={post.coverImage}
-                  alt=""
-                  width={1200}
-                  height={675}
-                  // eslint-disable-next-line react/no-unknown-property
-                  {...({ fetchpriority: "high" } as Record<string, string>)}
-                  decoding="async"
-                  className="aspect-[16/9] w-full object-cover"
-                />
-              </div>
-            </Reveal>
+            <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-border bg-card/60">
+              {/* Decorative header image: the <h1> above it already carries the title. */}
+              <img
+                src={post.coverImage}
+                alt=""
+                width={1200}
+                height={675}
+                // eslint-disable-next-line react/no-unknown-property
+                {...({ fetchpriority: "high" } as Record<string, string>)}
+                decoding="async"
+                className="aspect-[16/9] w-full object-cover"
+              />
+            </div>
           </div>
         </section>
 )}
@@ -247,7 +239,7 @@ export default function BlogDetail() {
                   href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(post.title)}`}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card/40 px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Share2 className="h-4 w-4" /> Share
                 </a>
@@ -306,9 +298,11 @@ export default function BlogDetail() {
                       </h3>
                       <p className="line-clamp-3 text-sm text-muted-foreground">{p.excerpt}</p>
                       <div className="mt-auto flex items-center justify-between gap-4 pt-2 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
-                          <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(p.publishDate)}
-                        </span>
+                        {p.publishDate ? (
+                          <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
+                            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(p.publishDate)}
+                          </span>
+                        ) : <span aria-hidden="true" />}
                         <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                           <ArrowUpRight className="h-4 w-4" />
                         </span>

@@ -4,6 +4,7 @@ import { RefreshCw, Search } from "lucide-react";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useCrmData } from "../useCrmData";
 import { useOpenLead } from "../nav";
+import { MainSiteLink } from "../MainSiteLink";
 import { crm, EmptyState, PageHeader } from "../ui";
 import { cn } from "@/lib/utils";
 import { DEMO_VIEWS, inView, sortItems, toItems, type DemoItem, type DemoSort, type DemoSortKey, type DemoView } from "./model";
@@ -122,7 +123,11 @@ export default function CrmDemos() {
       {loading && !all.length ? (
         <EmptyState title="Loading demos..." />
       ) : !all.length ? (
-        <EmptyState title="No demos yet." body="Make one from a template or a poster in the admin (Templates). It shows here with a lead, so you can track who opened it." />
+        <EmptyState
+          title="No demos yet."
+          body="Make one from a template or a poster in the admin (Templates). It shows here with a lead, so you can track who opened it."
+          action={<MainSiteLink path="/admin/templates" newTab className={crm.btn}>Open Templates</MainSiteLink>}
+        />
       ) : !shown.length ? (
         <EmptyState title="No demo in this view." body={q ? "Clear the search, or pick another view." : "Pick another view above."} />
       ) : (

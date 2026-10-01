@@ -9,6 +9,7 @@ import { Seo } from "@/components/seo/Seo";
 import { CrmDataProvider, useCrmData } from "./useCrmData";
 import { GlobalSearch } from "./GlobalSearch";
 import { CRM, CRM_NAV, type CrmNavItem } from "./nav";
+import { mainSiteIsCrossOrigin } from "@/lib/host";
 import { cn } from "@/lib/utils";
 
 const RAIL_KEY = "ideovent_crm_rail_collapsed";
@@ -22,10 +23,11 @@ function readCollapsed(): boolean {
 }
 
 /**
- * THE CRM SHELL, at /crm. Full screen, its own tab, outside the admin shell
- * but behind the same sign-in. Left: a slim rail (collapsible, remembered per
- * browser). Top: lead search, New lead, Back to admin. Phones: a bottom tab
- * bar with the four daily screens and "More".
+ * THE CRM SHELL, at /crm on the main site, or at the root of its own
+ * subdomain (crm.ideovent.in, see nav.ts). Full screen, its own tab, outside
+ * the admin shell but behind the same sign-in. Left: a slim rail (collapsible,
+ * remembered per browser). Top: lead search, New lead, Back to admin. Phones:
+ * a bottom tab bar with the four daily screens and "More".
  */
 export default function CrmLayout() {
   const { mode, actions } = useCms();
@@ -132,6 +134,25 @@ function Rail() {
   );
 }
 
+/**
+ * "Back to admin". The admin lives on the main site: from the CRM's own
+ * subdomain that is another origin, which a router <Link> cannot leave to, so
+ * there it is a plain link to MAIN_ORIGIN/admin. On the main site it is the
+ * same in-app link as before.
+ */
+function BackToAdmin({ className }: { className: string }) {
+  const label = (
+    <>
+      <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to admin
+    </>
+  );
+  return mainSiteIsCrossOrigin() ? (
+    <a href={CRM.admin} className={className} data-testid="crm-back-to-admin">{label}</a>
+  ) : (
+    <Link to={CRM.admin} className={className} data-testid="crm-back-to-admin">{label}</Link>
+  );
+}
+
 function BottomBar() {
   const [more, setMore] = useState(false);
   const { pathname } = useLocation();
@@ -156,9 +177,7 @@ function BottomBar() {
               <Badge item={item} />
             </NavLink>
           ))}
-          <Link to={CRM.admin} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted">
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to admin
-          </Link>
+          <BackToAdmin className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted" />
         </div>
       )}
       <nav aria-label="CRM tabs" className="fixed inset-x-0 bottom-0 z-50 flex border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
@@ -210,9 +229,7 @@ function CrmShell() {
               <span className="lg:hidden">{mode === "supabase" ? "Live" : "Local"}</span>
               <span className="hidden lg:inline">{mode === "supabase" ? "Live" : "Local mode"}</span>
             </span>
-            <Link to={CRM.admin} className={cn(topBtn, "hidden border border-border px-3 text-muted-foreground hover:bg-muted hover:text-foreground sm:inline-flex")}>
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to admin
-            </Link>
+            <BackToAdmin className={cn(topBtn, "hidden border border-border px-3 text-muted-foreground hover:bg-muted hover:text-foreground sm:inline-flex")} />
             <ThemeToggle />
           </div>
         </header>

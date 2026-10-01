@@ -44,7 +44,7 @@ const Ctx = createContext<OutreachValue | null>(null);
 export function OutreachProvider({ children }: { children: ReactNode }) {
   const store = useMemo(() => getOutreachStore(), []);
   const { data } = useCms();
-  const opens = useMemo(() => ((data as any).demoSiteOpens as DemoSiteOpen[] | undefined) || [], [data]);
+  const opens = useMemo(() => (data as unknown as { demoSiteOpens?: DemoSiteOpen[] }).demoSiteOpens || [], [data]);
 
   const [leads, setLeads] = useState<OutreachLead[]>([]);
   const [events, setEvents] = useState<OutreachEvent[]>([]);

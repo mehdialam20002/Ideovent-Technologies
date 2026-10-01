@@ -215,17 +215,50 @@ export function proofBySlug(slug: string): ProofEntry | undefined {
  * institute, even with its link down: the relevance is worth more than the
  * click, and the card is explicit about why there is no click. A school leads
  * with it too, then moves to the builds that answer what a school asks about
- * next, galleries and slow connections.
+ * next, galleries and slow connections. A dental clinic has its own order,
+ * below, without HighQ Classes.
  */
 export function defaultProofOrder(instituteType?: PitchInstituteType): string[] {
+  if (instituteType === "dental") return [...DENTAL_PROOF_ORDER];
   return instituteType === "coaching"
     ? ["highq-classes", "gym-map", "tamkuhi-bazaar", "lead-crm", "atelier-co"]
     : ["highq-classes", "wedart-films", "tamkuhi-bazaar", "hrms-lite", "atelier-co"];
 }
 
-/** The entries for a list of slugs, skipping any that do not exist. */
-export function proofEntries(slugs: string[]): ProofEntry[] {
-  return slugs.map(proofBySlug).filter((e): e is ProofEntry => e !== undefined);
+/*
+ * A DENTAL CLINIC (28 Sep 2026). We have built no dental site for a client,
+ * so no card pretends to be one: HighQ Classes is left out (a coaching site
+ * with its link down proves nothing to a dentist), and GYM MAP leads because
+ * enquiry to sign-up is the same problem as enquiry to appointment. Only the
+ * `relevance` line changes, as INTL_RELEVANCE does in ./international.ts:
+ * the facts (what is live, the images) stay in one place. Read only when
+ * defaultProofOrder is called, never at module load, so declaring it after
+ * the function is safe.
+ */
+const DENTAL_PROOF_ORDER: readonly string[] = ["gym-map", "wedart-films", "tamkuhi-bazaar", "lead-crm", "atelier-co"];
+
+const DENTAL_RELEVANCE: Record<string, string> = {
+  "gym-map":
+    "Enquiry to sign-up, built as one flow. It is the same problem as a patient asking for an appointment, in a different industry.",
+  "wedart-films":
+    "If photographs of your clinic, your team and your equipment matter, this is the build that proves we can carry them without the page crawling.",
+  "tamkuhi-bazaar":
+    "Built for exactly the network your patients are on. Not a metro-only site that falls over outside a city.",
+  "lead-crm":
+    "This is where appointment requests go when a phone number in a register stops being enough.",
+  "atelier-co":
+    "Proof we can take an online payment properly, for the day you want a consultation fee or an advance paid on the site.",
+};
+
+/**
+ * The entries for a list of slugs, skipping any that do not exist. Given
+ * "dental", each card's `relevance` is the dental line where one is written.
+ */
+export function proofEntries(slugs: string[], instituteType?: PitchInstituteType): ProofEntry[] {
+  return slugs
+    .map(proofBySlug)
+    .filter((e): e is ProofEntry => e !== undefined)
+    .map((e) => (instituteType === "dental" && DENTAL_RELEVANCE[e.slug] ? { ...e, relevance: DENTAL_RELEVANCE[e.slug] } : e));
 }
 
 export const allProof = ENTRIES;

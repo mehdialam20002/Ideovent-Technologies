@@ -170,11 +170,18 @@ function freshBrowser() {
 freshBrowser();
 {
   const s = site("sunrise-public", { instituteName: "Sunrise Public School" });
-  const before = sends.length;
+  /* 1 Oct 2026: Mehdi turned the e-mail off. Opening a sent demo records the
+     open (the CRM shows it) and sends nothing. The alert function below is
+     kept, and still checked, for an explicit decision to bring it back. */
+  const opened = sends.length;
   await M.recordDemoOpen(s.id, { site: s, enabled: undefined });
+  await settle();
+  check(sends.length === opened, `opening a sent demo sends no e-mail (got ${sends.length - opened})`);
+  const before = sends.length;
+  await M.maybeAlertDemoOpen({ site: s, enabled: undefined });
   await until(() => sends.length > before);
   await settle();
-  check(sends.length - before === 1, `sent demo: exactly one e-mail (got ${sends.length - before})`);
+  check(sends.length - before === 1, `the kept alert, called directly: exactly one e-mail (got ${sends.length - before})`);
   const p = sends[sends.length - 1]?.params || {};
   check(sends[sends.length - 1]?.service === "service_q5dptxe", "sent through service_q5dptxe");
   check(sends[sends.length - 1]?.template === "template_v6zkm1n", "sent with template_v6zkm1n");
@@ -187,7 +194,7 @@ freshBrowser();
 
   /* 2. Same browser, same day: nothing more. Next day: one more. */
   const again = await alert({ site: s }, DAY1_LATER);
-  await M.recordDemoOpen(s.id, { site: s });
+  await M.maybeAlertDemoOpen({ site: s });
   await settle();
   check(again !== "sent" && sends.length - before === 1, `same demo twice in a day: still one e-mail (got ${sends.length - before})`);
 }

@@ -63,7 +63,7 @@ export interface DemoSlugContext {
 export function demoSlugIssue(slug: string, ctx: DemoSlugContext = {}): string | null {
   const s = (slug || "").trim();
   if (!s) {
-    return "A demo needs a link. It is the part after /site/ that you send to the institute.";
+    return "A demo needs a link. It is the part after /site/ that you send to the institute or clinic.";
   }
   if (!isWellFormedDemoSlug(s)) {
     return `"${s}" is not a usable link. Use lower-case letters, numbers and single hyphens only, with no spaces, dots or slashes.`;
@@ -78,7 +78,7 @@ export function demoSlugIssue(slug: string, ctx: DemoSlugContext = {}): string |
      template's id or preview slug with the 404 (src/pages/DemoSiteRoute.tsx),
      so a real demo given one of those links would be sent and never open. */
   if (isTemplateSlug(s)) {
-    return `"${s}" is the name of one of the ten templates, and the public link refuses template names. Pick the institute's own name instead.`;
+    return `"${s}" is the name of one of the ready-made templates, and the public link refuses template names. Pick the institute's or clinic's own name instead.`;
   }
   const pitch = (ctx.pitchPages || []).find((p) => (p.slug || "").toLowerCase() === s.toLowerCase());
   if (pitch) {

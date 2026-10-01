@@ -8,6 +8,11 @@
  * The desktop nav switches on the HEADER's own width (a container query in
  * dental.css, .dn-hdr), not the viewport's: inside the admin preview frame a
  * 1280px window leaves the site about 958px, where the full nav overflowed.
+ *
+ * The English / Hindi switch is in the bar at every width (1 Oct 2026), as on
+ * the school and coaching headers; it was only in the menu sheet below 1180px.
+ * Under 768px it takes its compact form (./LangSwitch). The sheet opens under
+ * the header, so the bar's switch stays in view and the sheet has none.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -16,8 +21,8 @@ import { tr } from "@/lib/demo/site/bilingual";
 import { useSite } from "@/lib/demo/site/context";
 import { SHELL_COPY } from "@/lib/demo/site/copy";
 import { BookButton, CallLink, DENTAL_COPY, WhatsAppButton } from "@/lib/demo/ui/dental";
-import { DemoLanguageToggle } from "@/pages/site/DemoLanguageToggle";
 import { SiteLink } from "@/pages/site/kit/motion";
+import { DentalLangSwitch } from "./LangSwitch";
 
 const MORE = { en: "More", hi: "और" };
 
@@ -53,14 +58,25 @@ export function DentalHeader() {
   const extra = main.slice(5);
   const home = href("home") || "";
   const solid = family !== "luxury" || scrolled || page.id !== "home" || open;
-  const toggle = langOffered ? <DemoLanguageToggle lang={lang} onChange={setLang} tone="ds" /> : null;
+  const toggle = langOffered ? <DentalLangSwitch lang={lang} onChange={setLang} /> : null;
 
   return (
     <header ref={headerRef} data-solid={solid ? "" : undefined}
       className={`sticky top-0 z-40 transition-colors ${open ? "bg-[hsl(var(--ds-bg))]" : solid ? "bg-[hsl(var(--ds-bg))]/95 shadow-[var(--dn-shadow-1)] backdrop-blur" : "bg-transparent"}`}>
       <div className="dn-hdr">
       <div className="mx-auto flex h-[var(--dn-header-h)] max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6 2xl:max-w-[1400px]">
-        <SiteLink to={home} className="min-w-0 shrink-0 line-clamp-2 text-base leading-tight sm:truncate sm:whitespace-nowrap font-semibold sm:text-lg [font-family:var(--ds-display)] max-lg:shrink">
+        {/* The name may shrink at every width and wraps to two lines when it has
+            to, as on a phone (1 Oct 2026). It was shrink-0 and one line from
+            1024px up, so a long clinic name pushed Book appointment off the right
+            edge: 3 of the 40 dental demos of 28 Sep at 1440px, 14 at 1280px.
+            A name that fits stays on one line, as before. Under 640px it is
+            15px and may take three lines, since the language switch now
+            shares the row (measured: names to about 37 characters stay whole
+            at 360 and 390px, in both languages). The 3px of top padding is
+            inside the clamp's overflow box, so the top matras of a Hindi
+            name's first line (रि, बें) are no longer shaved off; none at the
+            bottom, where it let a clamped name's next line show through. */}
+        <SiteLink to={home} className="min-w-0 shrink line-clamp-3 pt-[3px] text-[15px] leading-[1.2] font-semibold sm:line-clamp-2 sm:text-lg sm:leading-tight [font-family:var(--ds-display)]">
           {site.shortName || site.instituteName}
         </SiteLink>
         <nav aria-label={tr(SHELL_COPY.menu, lang)} className="dn-hdr-nav ml-auto">
@@ -101,7 +117,7 @@ export function DentalHeader() {
           </ul>
         </nav>
         <div className="dn-hdr-end ml-auto flex items-center gap-2 sm:gap-3">
-          <span className="dn-hdr-wide">{toggle}</span>
+          {toggle}
           <CallLink className="dn-hdr-call whitespace-nowrap text-sm" />
           <BookButton className="whitespace-nowrap max-sm:px-3.5">
             <span className="sm:hidden">{tr(DENTAL_COPY.bookShort, lang)}</span>
@@ -122,7 +138,6 @@ export function DentalHeader() {
               return to ? <li key={p.id}><SiteLink to={to} onNavigate={() => setOpen(false)} className="block py-3">{tr(p.label, lang)}</SiteLink></li> : null;
             })}
           </ul>
-          {toggle && <div className="mt-4">{toggle}</div>}
           <div className="mt-6 grid gap-3">
             <BookButton size="lg" />
             <WhatsAppButton size="lg" />

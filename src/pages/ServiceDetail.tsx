@@ -1,6 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, Check, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Search } from "lucide-react";
+import { GST_LINE, servicePrice } from "@/lib/pricing";
+import { keepNumberCompounds, unbreakable } from "@/lib/typography";
 import Layout from "@/components/layout/Layout";
 import { Seo } from "@/components/seo/Seo";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -13,6 +15,12 @@ import { cn } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import ProcessSection from "@/components/sections/ProcessSection";
+// Search: title, description, h1 and JSON-LD come from the same helpers the
+// build uses for this page's prerendered head (scripts/prerender-heads.mjs).
+import { SEO as SEO_PRICES } from "@/lib/pricing";
+import { serviceSeo } from "@/lib/seo/pages";
+import { faqPageNode, serviceNode, serviceOffers } from "@/lib/seo/schema";
+import { FaqList } from "@/components/ui/faq-list";
 
 /*
   WORK_STEPS IS DELETED, NOT REWRITTEN.
@@ -38,6 +46,7 @@ import ProcessSection from "@/components/sections/ProcessSection";
 export default function ServiceDetail() {
   const { slug } = useParams();
   const services = useCollection("services");
+  const faqs = useCollection("faqs");
   const service = services.find((s) => s.slug === slug);
   const { loading } = useCms();
 
@@ -66,43 +75,29 @@ export default function ServiceDetail() {
   }
 
   const Icon = getIcon(service.icon);
+  const price = servicePrice(service.slug);
   const related = services.filter((s) => s.id !== service.id).slice(0, 3);
   /* The hero only splits in two when the right column has real content to hold. */
   const heroTwoCol = (service.deliverables?.length ?? 0) > 0;
+  const seo = serviceSeo(service);
+  /* This service's own questions, from the `faqs` collection. They are marked up
+     here and nowhere else (FAQ.tsx skips categories a service page owns), so
+     each question is marked up once across the site, as Google asks. */
+  const ownFaqs = service.faqCategory ? faqs.filter((f) => f.category === service.faqCategory) : [];
+  const faqNode = faqPageNode(ownFaqs);
 
   return (
     <Layout>
       <Seo
-        title={service.title}
-        description={service.shortDescription}
+        title={seo.title}
+        fullTitle
+        description={seo.description}
         path={`/services/${service.slug}`}
         breadcrumbs={[
           { name: "Services", path: "/services" },
           { name: service.title, path: `/services/${service.slug}` },
         ]}
-        schema={{
-          "@type": "Service",
-          name: service.title,
-          serviceType: service.title,
-          description: service.longDescription || service.shortDescription,
-          areaServed: [
-            { "@type": "City", name: "New Delhi" },
-            { "@type": "AdministrativeArea", name: "Delhi NCR" },
-            { "@type": "Country", name: "India" },
-          ],
-...(service.deliverables?.length
-            ? {
-                hasOfferCatalog: {
-                  "@type": "OfferCatalog",
-                  name: `${service.title} deliverables`,
-                  itemListElement: service.deliverables.map((d) => ({
-                    "@type": "Offer",
-                    itemOffered: { "@type": "Service", name: d },
-                  })),
-                },
-              }
-: {}),
-        }}
+        schema={[serviceNode(service, serviceOffers(service.slug, SEO_PRICES)), ...(faqNode ? [faqNode] : [])]}
       />
 
       {/* Hero */}
@@ -130,15 +125,13 @@ export default function ServiceDetail() {
             site that came back covered. 112px clears the bar's 96px with 16px
             to spare, and md/lg were already past it. */}
         <div className="container-page relative pt-28 pb-14 md:pb-20 lg:pt-32">
-          <Reveal>
-            <Link
-              to="/services"
-              className="inline-flex min-h-6 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              All services
-            </Link>
-          </Reveal>
+          <Link
+            to="/services"
+            className="inline-flex min-h-6 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            All services
+          </Link>
 
           {/*
             TWO-COLUMN WHEN THERE IS SOMETHING TRUE TO PUT ON THE RIGHT.
@@ -164,43 +157,37 @@ export default function ServiceDetail() {
                 : "mx-auto max-w-3xl text-center"
 )}
           >
+            {/* NO ENTRANCE MOTION IN THIS COLUMN (1 Oct 2026). The h1 and the
+                paragraph under it were each inside a <Reveal delay>, i.e. at
+                opacity 0 until JavaScript faded them in, which the audit measured
+                as the page's largest paint arriving 0.35 to 1.3 s late on a phone.
+                The first screen now paints as soon as it renders; the deliverables
+                card on the right and everything below still reveal. */}
             <div className={cn("flex flex-col gap-6", heroTwoCol ? "items-start" : "items-center")}>
-              <Reveal>
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-card text-primary shadow-[0_0_40px_-12px_hsl(var(--primary)/0.6)]">
-                  <Icon className="h-7 w-7" />
-                </div>
-              </Reveal>
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-card text-primary">
+                <Icon className="h-7 w-7" aria-hidden="true" />
+              </div>
 
-              {service.category && (
-                <Reveal delay={0.05}>
-                  <Eyebrow>{service.category}</Eyebrow>
-                </Reveal>
-)}
+              {service.category && <Eyebrow>{service.category}</Eyebrow>}
 
-              <Reveal delay={0.1}>
-                <h1 className="text-display font-display font-semibold">
-                  {service.title}
-                </h1>
-              </Reveal>
+              {/* The h1 is the page in search words ("Local SEO services in
+                  Delhi..."), from the record's `h1`, else its title. */}
+              <h1 className="text-display font-display font-semibold text-balance">{seo.h1}</h1>
 
-              <Reveal delay={0.15}>
-                <p className={cn("text-lg text-muted-foreground text-pretty", !heroTwoCol && "mx-auto")}>
-                  {service.longDescription || service.shortDescription}
-                </p>
-              </Reveal>
+              <p className={cn("text-lg text-muted-foreground text-pretty", !heroTwoCol && "mx-auto")}>
+                {service.intro || service.longDescription || service.shortDescription}
+              </p>
 
-              <Reveal delay={0.2}>
-                {/* /pricing had no inbound link anywhere in src/ before this pass, and
-                    a service page is where the cost question is asked. /work rather
-                    than /portfolio: the latter is a client-side <Navigate> that
-                    returns HTTP 200 for the old URL, so an internal link to it passes
-                    no authority on. */}
-                <div className={cn("mt-2 flex flex-wrap gap-3", !heroTwoCol && "justify-center")}>
-                  <CtaButton cta={{ label: "Start your project", href: "/contact" }} />
-                  <CtaButton cta={{ label: "See what it costs", href: "/pricing", variant: "outline" }} />
-                  <CtaButton cta={{ label: "See our work", href: "/work", variant: "ghost" }} />
-                </div>
-              </Reveal>
+              {/* /pricing had no inbound link anywhere in src/ before this pass, and
+                  a service page is where the cost question is asked. /work rather
+                  than /portfolio: the latter is a client-side <Navigate> that
+                  returns HTTP 200 for the old URL, so an internal link to it passes
+                  no authority on. */}
+              <div className={cn("mt-2 flex flex-wrap gap-3", !heroTwoCol && "justify-center")}>
+                <CtaButton cta={{ label: "Start your project", href: "/contact" }} />
+                <CtaButton cta={{ label: "See what it costs", href: "/pricing", variant: "outline" }} />
+                <CtaButton cta={{ label: "See our work", href: "/work", variant: "ghost" }} />
+              </div>
             </div>
 
             {heroTwoCol && (
@@ -219,15 +206,128 @@ export default function ServiceDetail() {
                       </li>
 ))}
                   </ul>
-                  <p className="mt-6 border-t border-border/60 pt-5 text-xs text-muted-foreground text-pretty">
-                    Two revision rounds per design stage, and 30 days of support after launch.
-                  </p>
+                  {/* A monthly service (SEO, a care plan) says its own terms here:
+                      revision rounds are a project term. "" prints nothing. */}
+                  {(service.deliverablesNote ?? "Two revision rounds per design stage, and 30 days of support after launch.") && (
+                    <p className="mt-6 border-t border-border/60 pt-5 text-xs text-muted-foreground text-pretty">
+                      {service.deliverablesNote ?? "Two revision rounds per design stage, and 30 days of support after launch."}
+                    </p>
+                  )}
                 </div>
               </Reveal>
 )}
           </div>
         </div>
       </section>
+
+      {/* WHAT IT COSTS, from src/lib/pricing.ts (1 Oct 2026), the module
+          /pricing, the home page and the lead form read too. Only services
+          FACTS.md prices get a block: website development (monthly plan and
+          one-time) and SEO. The others print no figure rather than an
+          invented one, and keep their links to /pricing. */}
+      {price && (
+        <section className="pb-12 md:pb-16" aria-labelledby="service-price-heading">
+          <div className="container-page">
+            <div className="rule-gold grid gap-6 pt-6 md:grid-cols-[0.8fr_1.2fr] md:gap-12">
+              <div>
+                <h2 id="service-price-heading" className="font-display text-2xl font-semibold md:text-3xl">
+                  {price.heading}
+                </h2>
+                <p className="mt-2 max-w-sm text-xs leading-relaxed text-muted-foreground">{GST_LINE}</p>
+                <Link
+                  to={price.href}
+                  className="group mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary transition-colors duration-200 hover:text-foreground"
+                >
+                  {price.linkLabel}
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" aria-hidden="true" />
+                </Link>
+              </div>
+              <dl className="divide-y divide-border/70">
+                {price.lines.map((l) => (
+                  <div key={l.label} className="py-4 first:pt-0 last:pb-0">
+                    <dt className="text-sm text-muted-foreground">{l.label}</dt>
+                    <dd className="mt-1 font-display text-xl font-semibold tabular-nums text-foreground md:text-2xl">
+                      {unbreakable(l.value)}
+                    </dd>
+                    {l.note && <dd className="mt-1 text-sm text-muted-foreground text-pretty">{keepNumberCompounds(l.note)}</dd>}
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* THE SERVICE'S OWN SECTIONS (1 Oct 2026), from the record's `sections`:
+          what the monthly work is, how it runs, what it cannot promise, with
+          internal links that say where they go. One gold rule opens the run;
+          the blocks under it are divided by hairlines. */}
+      {(service.sections?.length ?? 0) > 0 && (
+        <section className="pb-12 md:pb-16">
+          <div className="container-page">
+            <div className="rule-gold divide-y divide-border/70 pt-2">
+              {service.sections!.map((sec, i) => (
+                <div key={sec.heading} className="grid gap-4 py-8 md:grid-cols-[0.8fr_1.2fr] md:gap-12">
+                  <h2 id={`service-section-${i}`} className="font-display text-2xl font-semibold text-balance md:text-3xl">
+                    {sec.heading}
+                  </h2>
+                  <div className="max-w-2xl">
+                    {sec.body && <p className="text-muted-foreground text-pretty">{sec.body}</p>}
+                    {(sec.items?.length ?? 0) > 0 && (
+                      <ul className={cn("space-y-3", sec.body && "mt-5")}>
+                        {sec.items!.map((item) => (
+                          <li key={item} className="flex items-start gap-3">
+                            <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                              <Check className="h-3 w-3" aria-hidden="true" />
+                            </span>
+                            <span className="text-foreground/90 text-pretty">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {(sec.links?.length ?? 0) > 0 && (
+                      <div className="mt-6 flex flex-wrap gap-2">
+                        {sec.links!.map((l) => (
+                          <Link
+                            key={l.href + l.label}
+                            to={l.href}
+                            className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
+                          >
+                            {l.label}
+                            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" aria-hidden="true" />
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* This service's questions, answered in the HTML (native <details>, see
+          ui/faq-list.tsx) and marked up as this page's FAQPage above. */}
+      {ownFaqs.length > 0 && (
+        <section className="pb-12 md:pb-16" aria-labelledby="service-faq-heading">
+          <div className="container-page grid gap-6 border-t border-border pt-8 md:grid-cols-[0.8fr_1.2fr] md:gap-12">
+            <div>
+              <h2 id="service-faq-heading" className="font-display text-2xl font-semibold text-balance md:text-3xl">
+                Questions about {service.title}
+              </h2>
+              <Link
+                to="/faq"
+                className="group mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary transition-colors duration-200 hover:text-foreground"
+              >
+                Every question we get asked
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" aria-hidden="true" />
+              </Link>
+            </div>
+            <FaqList faqs={ownFaqs} />
+          </div>
+        </section>
+      )}
 
       {/* The four real stages, out of the CMS, with the commitments the signed
           agreement carries. This replaces the three adjective cards that used
@@ -241,7 +341,9 @@ export default function ServiceDetail() {
           numerals to 4.49:1, i.e. under the bar by six hundredths. The gold
           rule the rail is hung from already separates this band from the hero
           above it, so the tint was buying nothing and costing that. */}
-      <ProcessSection />
+      {/* Off for a monthly service (SEO, care plans): 50/30/20 and "code on the
+          final payment" are project terms and would misdescribe it. */}
+      {!service.hideProcess && <ProcessSection />}
 
       {/* Related services.
           `.section-tight`, not `.section`: a row of sideways links is the least

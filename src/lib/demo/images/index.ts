@@ -1,7 +1,7 @@
 /**
  * THE STOCK PHOTO LIBRARY FOR DEMO SITES, typed.
  *
- * Files:  public/demo/img/{school,coaching,people}/<name>-<width>.webp
+ * Files:  public/demo/img/{school,coaching,dental,people}/<name>-<width>.webp
  * Data:   ./data.generated.ts, a trimmed copy of public/demo/img/manifest.json
  *         (run ./sync-manifest.mjs after editing the manifest; the template
  *         test fails when the two drift).
@@ -12,8 +12,9 @@
  * pasted from the browser still gets the full srcset.
  *
  * WHAT THESE PHOTOS ARE. Licensed stock (Pexels and Unsplash) of real Indian
- * classrooms and teachers, standing in for a fictional institute. The alt
- * text describes the scene and never names an institute. A demo made for a
+ * classrooms and teachers and, since 28 Sep 2026, of dental clinics and
+ * dentists (dental/, people/dentist-*), standing in for a fictional institute
+ * or clinic. The alt text describes the scene and never names anybody. A demo made for a
  * real institute starts with them and should replace the hero before it goes
  * out; `stockPhotoUse` below tells the checklist whether it still has them.
  */
@@ -156,13 +157,23 @@ export function facultyPhotoSrc(f: Pick<DemoFaculty, "photo" | "photoConsent"> |
 /**
  * Where a record still shows stock photos, for the sample-content checklist:
  * "Photos are stock photos from the template". `hero` is the one that
- * matters most: a real institute's demo should open on its own building.
+ * matters most: a real institute's demo should open on its own building, and
+ * a clinic's on its own clinic.
+ *
+ * A DENTAL record (30 Sep 2026) keeps most of its photos in the dental block,
+ * which the first version of this count never looked at, so a d1 to d7
+ * duplicate reported only its hero. The doctors' portraits count with the
+ * faculty's (both are portraits of the people), and the photos on treatments,
+ * technology and branches count as `dental`.
  */
 export interface StockPhotoUse {
   hero: boolean;
   sections: string[];
+  /** Stock portraits: the faculty's and, on a dental record, the doctors'. */
   faculty: number;
   gallery: number;
+  /** Dental only: stock photos on treatments, technology and branches. */
+  dental: number;
   total: number;
 }
 
@@ -171,11 +182,19 @@ export function stockPhotoUse(site: Partial<DemoSite>): StockPhotoUse {
   const sections = Object.entries(site.sectionPhotos || {})
     .filter(([, v]) => isStockPhoto(v))
     .map(([k]) => k);
-  const faculty = (site.faculty || []).filter((f) => isStockPhoto(f?.photo)).length;
+  const d = site.dental;
+  const faculty =
+    (site.faculty || []).filter((f) => isStockPhoto(f?.photo)).length +
+    (d?.doctors || []).filter((x) => isStockPhoto(x?.photo)).length;
   const gallery =
     (site.photos || []).filter((p) => isStockPhoto(p?.src)).length +
     (site.gallery || []).filter((g) => isStockPhoto(g?.src)).length;
-  return { hero, sections, faculty, gallery, total: (hero ? 1 : 0) + sections.length + faculty + gallery };
+  const dental = [
+    ...(d?.treatments || []).map((t) => t?.image),
+    ...(d?.technology || []).map((t) => t?.image),
+    ...(d?.branches || []).map((b) => b?.photo),
+  ].filter((v) => isStockPhoto(v)).length;
+  return { hero, sections, faculty, gallery, dental, total: (hero ? 1 : 0) + sections.length + faculty + gallery + dental };
 }
 
 /** The checklist line, in both languages of the admin. */

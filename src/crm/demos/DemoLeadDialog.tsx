@@ -4,7 +4,7 @@ import type { DemoSite } from "@/lib/cms/types";
 import { demoContact, leadKindForDemo, matchLeadForDemo } from "@/lib/outreach/demoLead";
 import type { LeadKind, OutreachLead } from "@/lib/outreach/types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { prettyPhone } from "@/admin/outreach/ui";
+import { KIND_LABEL, LEAD_KINDS, prettyPhone } from "@/admin/outreach/ui";
 import { searchLeads } from "../GlobalSearch";
 import { crm, StatusDot } from "../ui";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ export function DemoLeadDialog({
   const c = demoContact(demo);
   const [v, setV] = useState<NewLeadFromDemo>({
     instituteName: demo.instituteName || "",
+    // A dental demo's lead starts as a dental lead (leadKindForDemo maps "dental" since 28 Sep 2026).
     kind: leadKindForDemo(demo.kind),
     city: demo.city || "",
     phone: c.phone || c.whatsapp || "",
@@ -58,7 +59,7 @@ export function DemoLeadDialog({
   };
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!v.instituteName.trim()) return setErr("Type the institute's name.");
+    if (!v.instituteName.trim()) return setErr(v.kind === "dental" ? "Type the clinic's name." : "Type the institute's name.");
     void run(() => onCreate(v));
   };
   const set = (k: keyof NewLeadFromDemo) => (e: { target: { value: string } }) => setV((x) => ({ ...x, [k]: e.target.value }));
@@ -96,13 +97,11 @@ export function DemoLeadDialog({
                 </button>
               </div>
             )}
-            <L id="dl-name" label="Institute name"><input id="dl-name" className={crm.input} value={v.instituteName} onChange={set("instituteName")} required /></L>
+            <L id="dl-name" label={v.kind === "dental" ? "Clinic name" : "Institute name"}><input id="dl-name" className={crm.input} value={v.instituteName} onChange={set("instituteName")} required /></L>
             <div className="grid grid-cols-2 gap-3">
               <L id="dl-kind" label="Kind">
                 <select id="dl-kind" className={crm.input} value={v.kind} onChange={(e) => setV((x) => ({ ...x, kind: e.target.value as LeadKind }))}>
-                  <option value="school">School</option>
-                  <option value="coaching">Coaching</option>
-                  <option value="other">Other</option>
+                  {LEAD_KINDS.map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
                 </select>
               </L>
               <L id="dl-city" label="City"><input id="dl-city" className={crm.input} value={v.city} onChange={set("city")} /></L>

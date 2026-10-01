@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { Check, ExternalLink, Files, Link2Off, Pencil, Search, Send } from "lucide-react";
 import type { DemoSite, DemoSiteSlot, PitchPage } from "@/lib/cms/types";
 import { useCms } from "@/lib/cms/context";
 import { demoStatus, demoPreviewPath } from "@/lib/demo/record";
 import { TEMPLATES, loadTemplate, templateMeta, type TemplateId } from "@/lib/demo/templates";
 import { fromTemplate, type DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
+import { dentalTemplateFor, looksDental } from "@/lib/demo/templates/dentalPick";
 import { DuplicateTemplateDialog } from "@/admin/DuplicateTemplateDialog";
+import { MainSiteLink } from "@/crm/MainSiteLink";
 import { demoLinkFor, pitchLinkFor } from "@/lib/outreach/engine";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { demosForPicker, markDemoSent } from "./demoActions";
-import { btnGhost, btnPrimary, btnSecondary, inputCls } from "./ui";
+import { KIND_LABEL, btnGhost, btnPrimary, btnSecondary, inputCls } from "./ui";
 import { cn } from "@/lib/utils";
 
 type Mode = "template" | "existing" | "pitch";
@@ -19,6 +20,19 @@ type Mode = "template" | "existing" | "pitch";
 /** The demo record behind a lead: by id, else by slug (imported leads carry only the slug). */
 export function leadDemo(lead: OutreachLead, sites: DemoSite[]): DemoSite | undefined {
   return (lead.demoId && sites.find((s) => s.id === lead.demoId)) || (lead.demoSlug ? sites.find((s) => s.slug === lead.demoSlug) : undefined);
+}
+
+/**
+ * The template a lead's demo starts from: for a dental lead (or an "Other"
+ * lead whose name says dental) the one dentalTemplateFor picks from its name,
+ * notes, observation and tags (the CSV import keeps the sheet's segment, e.g.
+ * DENTAL_KIDS, as a tag, and a segment decides first); for everyone else
+ * nothing, so Mehdi chooses.
+ */
+export function dentalDefault(lead: Pick<OutreachLead, "kind" | "instituteName" | "notes" | "observation" | "tags">): TemplateId | "" {
+  const words = [lead.instituteName, lead.notes, lead.observation];
+  if (lead.kind === "dental" || (lead.kind === "other" && looksDental(...words))) return dentalTemplateFor(...words, ...(lead.tags || []));
+  return "";
 }
 
 /**
@@ -31,13 +45,19 @@ export function leadDemo(lead: OutreachLead, sites: DemoSite[]): DemoSite | unde
  * pitch page. A demo's public link only works once it is marked Sent, so a
  * draft gets a one-tap "Mark sent", which writes the same slot record the
  * Demo sites screen writes.
+ *
+ * A dental clinic is offered the seven dental templates (d1 to d7), starting
+ * on the one dentalTemplateFor picks from its name, notes and observation,
+ * and "Use existing" lists the dental demos first. Open and Edit demo lead to
+ * the main site (MainSiteLink), which is another origin once the CRM has its
+ * own subdomain.
  */
 export function DemoPicker({ lead }: { lead: OutreachLead }) {
   const { data, actions } = useCms();
   const { saveLead, addEvent } = useOutreach();
-  const sites = ((data.demoSites as DemoSite[]) || []).filter((s) => !(s as any).isExample);
+  const sites = ((data.demoSites as DemoSite[]) || []).filter((s) => !(s as DemoSite & { isExample?: boolean }).isExample);
   const pitches = (data.pitchPages as PitchPage[]) || [];
-  const slots = ((data as any).demoSiteSlots as DemoSiteSlot[]) || [];
+  const slots = (data as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || [];
   const demo = leadDemo(lead, sites);
   const demoState = demo ? demoStatus(demo) : null;
   const slug = demo?.slug || lead.demoSlug;
@@ -46,7 +66,12 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
   const [open, setOpen] = useState(!hasPage);
   const [mode, setMode] = useState<Mode>("template");
   const [q, setQ] = useState("");
-  const [tpl, setTpl] = useState<TemplateId | "">("");
+  // A dental clinic starts on the dental template its own words point to (a kids' clinic on d6, an
+  // implant centre on d4, else d1). Only a default, and it follows the lead (a kind changed to Dental
+  // clinic under Edit) until Mehdi picks a template himself; every template of the kind stays listed.
+  const suggested = dentalDefault(lead);
+  const [picked, setTpl] = useState<TemplateId | "" | null>(null);
+  const tpl = picked ?? suggested;
   const [asking, setAsking] = useState<TemplateId | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -111,9 +136,9 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
               </button>
             )}
             {demo ? (
-              <Link to={demoPreviewPath(demo.slug)} target="_blank" className={btnGhost}>
+              <MainSiteLink path={demoPreviewPath(demo.slug)} newTab className={btnGhost} data-testid="demo-open">
                 <ExternalLink className="h-4 w-4" aria-hidden="true" /> Open
-              </Link>
+              </MainSiteLink>
             ) : (
               <a href={demoLinkFor(slug)} target="_blank" rel="noreferrer" className={btnGhost}>
                 <ExternalLink className="h-4 w-4" aria-hidden="true" /> Open
@@ -158,7 +183,7 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
               <select id="tpl-pick" className={inputCls + " mt-0"} value={tpl} onChange={(e) => setTpl(e.target.value as TemplateId)}>
                 <option value="">Choose a template</option>
                 {templates.map((t) => (
-                  <option key={t.id} value={t.id}>{t.id.slice(0, 2).toUpperCase()} · {t.label}</option>
+                  <option key={t.id} value={t.id}>{t.id.slice(0, 2).toUpperCase()} · {t.label}{t.id === suggested ? " (suggested)" : ""}</option>
                 ))}
               </select>
               {tpl && <p className="text-xs text-muted-foreground">{templateMeta(tpl)?.description}</p>}
@@ -182,7 +207,7 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
                       className="flex min-h-11 w-full items-center justify-between gap-2 px-1 py-2 text-left text-sm hover:text-primary disabled:opacity-60">
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{s.instituteName}</span>
-                        <span className="block truncate text-xs text-muted-foreground">/site/{s.slug} · {s.kind} · {demoStatus(s)}{s.city ? ` · ${s.city}` : ""}</span>
+                        <span className="block truncate text-xs text-muted-foreground">/site/{s.slug} · {KIND_LABEL[s.kind] || s.kind} · {demoStatus(s)}{s.city ? ` · ${s.city}` : ""}</span>
                       </span>
                       {s.id === demo?.id ? <Check className="h-4 w-4 text-success" aria-hidden="true" /> : <span className="text-xs text-primary">Use</span>}
                     </button>
@@ -208,7 +233,11 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
 
           {(demo || slug) && (
             <div className="mt-3 flex flex-wrap gap-1 border-t border-border/60 pt-2">
-              {demo && <Link to={`/admin/c/demoSites?edit=${encodeURIComponent(demo.id)}`} className={btnGhost}>Edit demo</Link>}
+              {demo && (
+                <MainSiteLink path={`/admin/c/demoSites?edit=${encodeURIComponent(demo.id)}`} newTab className={btnGhost} data-testid="demo-edit">
+                  Edit demo
+                </MainSiteLink>
+              )}
               <button type="button" className={btnGhost} onClick={() => void unlink()}>
                 <Link2Off className="h-4 w-4" aria-hidden="true" /> Unlink demo
               </button>
@@ -221,6 +250,8 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
       {asking && (
         <DuplicateTemplateDialog
           templateLabel={templateMeta(asking)?.label || asking}
+          /* A dental template asks for the clinic's name, as the Templates tab's Duplicate does. */
+          kind={templateMeta(asking)?.kind}
           busy={busy}
           error={err}
           initial={{ name: lead.instituteName, city: lead.city || "" }}

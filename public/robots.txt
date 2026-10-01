@@ -7,11 +7,16 @@ Allow: /
 
 # The admin panel (and the CRM at /crm, same sign-in) is a login wall. Nothing behind it belongs in an
 # index, and every route under it renders the login page to a signed-out client
-# which sends robots noindex, nofollow.
+# which sends robots noindex, nofollow. /api/ holds the server functions (payments,
+# the share cards, the lead finder): nothing there is a page. A link preview of a
+# pitch page still works, because a scraper asks for /pitch/<slug>, not for /api.
+# The CRM's own subdomain, crm.ideovent.in, does not read this file: vercel.json
+# answers /robots.txt there with robots-crm.txt (Disallow: /) and sends noindex.
 Disallow: /admin
 Disallow: /admin/
 Disallow: /crm
 Disallow: /crm/
+Disallow: /api/
 
 # Social and messaging scrapers do not run JavaScript, so they only ever see the
 # fallback tags in index.html. Listed explicitly so nothing blocks them.
@@ -29,6 +34,7 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /crm
 Disallow: /crm/
+Disallow: /api/
 
 User-agent: facebookexternalhit
 Allow: /
@@ -36,6 +42,7 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /crm
 Disallow: /crm/
+Disallow: /api/
 
 User-agent: LinkedInBot
 Allow: /
@@ -43,6 +50,7 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /crm
 Disallow: /crm/
+Disallow: /api/
 
 User-agent: WhatsApp
 Allow: /
@@ -50,6 +58,7 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /crm
 Disallow: /crm/
+Disallow: /api/
 
 User-agent: Slackbot-LinkExpanding
 Allow: /
@@ -57,5 +66,6 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /crm
 Disallow: /crm/
+Disallow: /api/
 
 Sitemap: https://ideovent.vercel.app/sitemap.xml

@@ -10,10 +10,13 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { CtaButton } from "@/components/ui/cta-button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Reveal } from "@/components/motion/Reveal";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { FaqList } from "@/components/ui/faq-list";
 import { staggerContainer, fadeUp } from "@/lib/motion";
+import { PAGE_SEO } from "@/lib/seo/pages";
+import { faqPageNode } from "@/lib/seo/schema";
 import type { Faq } from "@/lib/cms/types";
 import { unbreakable } from "@/lib/typography";
+import { liveEmail, whatsappInstead } from "@/lib/mailbox";
 
 /** Human-friendly copy for known categories; unknown ones fall back to a title-cased label. */
 const CATEGORY_META: Record<string, { eyebrow: string; title: string; accent: string; subtitle: string }> = {
@@ -22,6 +25,12 @@ const CATEGORY_META: Record<string, { eyebrow: string; title: string; accent: st
     title: "Working ",
     accent: "with us",
     subtitle: "How our engagements are scoped, run and delivered from kickoff to launch.",
+  },
+  seo: {
+    eyebrow: "Local SEO",
+    title: "Showing up on ",
+    accent: "Google Maps",
+    subtitle: "What local SEO costs, how long it takes, who owns your profile, and what nobody can honestly promise.",
   },
   internship: {
     eyebrow: "Ideovent LaunchPad",
@@ -52,7 +61,11 @@ const titleCase = (value: string) =>
 
 export default function FAQ() {
   const faqs = useCollection("faqs");
+  const services = useCollection("services");
   const contact = useSingleton("contact");
+  // Email only once contact@ideovent.in has a mailbox; WhatsApp until then.
+  const email = liveEmail(contact);
+  const whatsapp = whatsappInstead(contact.whatsappNumber);
 
   const groups = useMemo(() => {
     const order: string[] = [];
@@ -66,7 +79,7 @@ export default function FAQ() {
       map.get(key)!.push(faq);
     }
     // Keep the canonical order first, then any custom categories as they appear.
-    const preferred = ["services", "eduflow", "internship", "general"];
+    const preferred = ["services", "seo", "eduflow", "internship", "general"];
     const sorted = [
 ...preferred.filter((c) => map.has(c)),
 ...order.filter((c) => !preferred.includes(c)),
@@ -78,36 +91,19 @@ export default function FAQ() {
      requires the marked-up Q&A to be visible on the page, so this must never be
      hand-written or extended beyond `faqs`. Skipped entirely when there are no
      FAQs, rather than emitting an empty FAQPage. */
-  const faqSchema = useMemo(
-    () =>
-      faqs.length
-        ? {
-            "@type": "FAQPage",
-            mainEntity: faqs.map((f) => ({
-              "@type": "Question",
-              name: f.question,
-              acceptedAnswer: { "@type": "Answer", text: f.answer },
-            })),
-          }
-: undefined,
-    [faqs],
-);
+  /* A category that a service page shows as its own (the SEO questions on
+     /services/seo) is marked up THERE, not here: Google asks for each question
+     to be marked up once across a site. Every question still appears on this
+     page. The answers are visible in the HTML (native <details>, ui/faq-list). */
+  const faqSchema = useMemo(() => {
+    const owned = new Set(services.map((s) => s.faqCategory).filter(Boolean));
+    return faqPageNode(faqs.filter((f) => !owned.has(f.category)));
+  }, [faqs, services]);
 
   return (
     <Layout>
-      <Seo
-        title="FAQ"
-        description="Answers to what people actually ask Ideovent Technologies, what a project costs, how long it takes, what happens after launch, and how the LaunchPad internship and its verifiable certificate work."
-        path="/faq"
-        keywords={[
-          "web development FAQ India",
-          "how long does a website take India",
-          "website cost questions New Delhi",
-          "Ideovent internship questions",
-        ]}
-        breadcrumbs={[{ name: "FAQ", path: "/faq" }]}
-        schema={faqSchema}
-      />
+      {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/faq"]). */}
+      <Seo path="/faq" breadcrumbs={[{ name: "FAQ", path: "/faq" }]} schema={faqSchema} />
 
       {/* 1. Hero */}
       <section className="relative overflow-hidden pt-36 pb-20 md:pt-44 md:pb-24">
@@ -116,29 +112,28 @@ export default function FAQ() {
 
         <div className="container-page relative">
           <div className="mx-auto max-w-3xl text-center">
-            <Reveal>
-              <Eyebrow>FAQ</Eyebrow>
-            </Reveal>
-            <Reveal delay={0.05}>
-              <h1 className="mt-6 text-hero font-display font-semibold">
-                Questions, <span className="accent-italic text-gradient">answered</span>
-              </h1>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-pretty">
-                Everything you might want to know before we start working together, from how our
-                projects run to the details of our internship programme. Still stuck? We’re one
-                message away.
-              </p>
-            </Reveal>
+            {/* The h1 in search words where the eyebrow pill was; the display
+                line is a paragraph, so the page keeps one h1. No entrance
+                motion above the fold (it delayed the largest paint). */}
+            <h1 className="mx-auto max-w-2xl font-display text-base font-semibold text-primary text-balance md:text-lg">
+              {PAGE_SEO["/faq"].h1}
+            </h1>
+            <p className="mt-5 text-hero font-display font-semibold">
+              Questions, <span className="accent-italic text-gradient">answered</span>
+            </p>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-pretty">
+              Everything you might want to know before we start working together: what it costs,
+              how projects run, local SEO, and the details of our internship programme. Still
+              stuck? We’re one message away.
+            </p>
             <Reveal delay={0.15}>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                 <CtaButton cta={{ label: "Talk to us", href: "/contact" }} />
-                {contact.emailHref && (
-                  <CtaButton
-                    cta={{ label: "Email us", href: contact.emailHref, variant: "outline" }}
-                  />
-)}
+                {email ? (
+                  <CtaButton cta={{ label: "Email us", href: email.href, variant: "outline" }} />
+                ) : whatsapp ? (
+                  <CtaButton cta={{ label: "WhatsApp us", href: whatsapp, variant: "outline" }} />
+                ) : null}
               </div>
             </Reveal>
           </div>
@@ -185,22 +180,12 @@ export default function FAQ() {
                 </div>
 
                 <Reveal>
-                  <Accordion type="single" collapsible className="w-full card-surface px-6 py-2 md:px-8">
-                    {group.items.map((faq) => (
-                      <AccordionItem
-                        key={faq.id}
-                        value={faq.id}
-                        className="border-border/60 last:border-b-0"
-                      >
-                        <AccordionTrigger className="font-display text-base font-medium">
-                          {faq.question}
-                        </AccordionTrigger>
-                        <AccordionContent className="text-base text-muted-foreground text-pretty">
-                          {faq.answer}
-                        </AccordionContent>
-                      </AccordionItem>
-))}
-                  </Accordion>
+                  {/* Native <details>: the answers are in the HTML whether a
+                      question is open or not (ui/faq-list.tsx). */}
+                  <FaqList
+                    faqs={group.items}
+                    className="card-surface px-6 py-2 md:px-8 [&>details:last-child]:border-b-0 [&>details]:border-border/60"
+                  />
                 </Reveal>
               </div>
             </section>

@@ -18,6 +18,9 @@ import rawCerts from "./data/certificates.seed.json";
 // 03-legal-docs/policies/*.md. Do not hand-edit either file, edit the Markdown
 // source and re-run that script, then re-run split-content.mjs.
 import rawLegal from "./data/legal.meta.json";
+// Prices for the service records' search descriptions. A namespace import on
+// purpose, so it can never collide with a named import of the same module.
+import * as ServicePrices from "../pricing";
 
 // Base path prefix so local /public assets resolve under a subpath deploy (e.g. GitHub Pages).
 const B = import.meta.env.BASE_URL; // "/" locally, "/Ideovent-Technologies/" on Pages
@@ -40,11 +43,26 @@ const asset = (p?: string): string => {
   return `${B}${p.replace(/^\//, "")}`;
 };
 
+/* Search titles for the posts whose own title runs past 60 characters with the
+ * brand (keyword plan, 1 Oct 2026). The page keeps the full title as its h1; this
+ * is only the <title> and the share card. Keyed by post id. */
+const POST_SEO_TITLES: Record<string, string> = {
+  "3": "Why a Fast Website Matters for Small Business | Ideovent",
+  "4": "10 Common Website Mistakes Small Businesses Make | Ideovent",
+  "6": "One Team for Design, Build and SEO | Ideovent",
+  "7": "How Ideovent Helps Small Businesses in New Delhi",
+  "9": "Digital Transformation and Business Growth | Ideovent",
+};
+
 /* Map the legacy public/blogs.json shape → typed BlogPost */
 const seedPosts: BlogPost[] = (rawBlogs as any[]).map((b, i) => ({
+  ...(POST_SEO_TITLES[String(b.id ?? i + 1)] ? { seo: { title: POST_SEO_TITLES[String(b.id ?? i + 1)] } } : {}),
   id: String(b.id ?? i + 1),
   title: b.title,
-  slug: slugify(b.title),
+  // The URL is the stored slug (added to blogs.seed.json on 1 Oct 2026, equal to
+  // what the title produced that day), so editing a title no longer moves the
+  // post to a new address and leaves a "not found" at the old one.
+  slug: b.slug || slugify(b.title),
   excerpt: (b.description || "").toString(),
   coverImage: asset(b.image) || `${B}placeholder.svg`,
   // Empty on purpose: the article HTML is fetched by./deferredBodies.ts when a
@@ -53,7 +71,11 @@ const seedPosts: BlogPost[] = (rawBlogs as any[]).map((b, i) => ({
   // skeleton on.
   body: "",
   author: "Ideovent Team",
-  publishDate: "2025-06-01",
+  // EMPTY ON PURPOSE (1 Oct 2026). Every imported post carried "2025-06-01",
+  // printed on the page and sent to Google as datePublished, and it was the
+  // date of none of them. The real dates are not recorded anywhere, so no date
+  // is shown or marked up until a post has one (set it in /admin → Posts).
+  publishDate: "",
   tags: ["Insights"],
   status: "published",
   featured: i < 2,
@@ -175,9 +197,12 @@ export const seed: ContentData = {
       // reads. Leads with what the searcher typed, our name last. This is also
       // the fallback title for every page without its own: keep it for any
       // growing business, not one trade.
-      title: "Websites, apps and software for growing businesses | Ideovent, New Delhi",
-      description:
-        "Websites your customers can find on Google, that open fast on a phone and send every enquiry to you. Apps and software too. Free website check, fixed price in writing.",
+      // 1 Oct 2026: the keyword plan's home title (53 characters, the old one ran
+      // to 72 and lost the brand in results). The home page itself takes both
+      // values from src/lib/seo/pages.ts (PAGE_SEO["/"]); these are the fallback
+      // for any page that sets neither, and index.html carries the same pair.
+      title: "Web Design & Software Company in New Delhi | Ideovent",
+      description: `Websites, web apps and software for businesses, built in Saket, New Delhi. Buy outright from ${ServicePrices.inr(ServicePrices.ONE_TIME.landing.min)}, or ${ServicePrices.inr(ServicePrices.PLANS.starter.monthly)}/month + ${ServicePrices.inr(ServicePrices.SETUP_FEE)} setup on a ${ServicePrices.TERM_MONTHS}-month plan.`,
       keywords: [
         "web development company Saket",
         "website development New Delhi",
@@ -405,14 +430,21 @@ export const seed: ContentData = {
       tagline:
         "A web and software studio in Saket, New Delhi. Websites, apps and software for growing businesses.",
       columns: [
+        /* 1 Oct 2026: the footer's first link column is now SERVICES, built by
+           Footer.tsx from the services collection (every service with "Show in
+           footer" on), so each service page has a plain link from every page
+           that a crawler can follow. The navbar's panel renders its links only
+           while open. To keep four columns, "Work with us" and "Company" are one
+           column now. */
         {
-          heading: "Work with us",
+          heading: "Company",
           links: [
-            { label: "Services", href: "/services" },
+            { label: "About Ideovent", href: "/about" },
             // /pricing had ZERO inbound links anywhere in src/. It was reachable
             // only by typing the URL.
             { label: "Pricing", href: "/pricing" },
             { label: "Our work", href: "/work" },
+            { label: "Writing", href: "/blog" },
             { label: "Questions we get asked", href: "/faq" },
             { label: "Contact", href: "/contact" },
           ],
@@ -425,13 +457,6 @@ export const seed: ContentData = {
             { label: "EduFlow, in development", href: "/eduflow" },
             { label: "LaunchPad internship", href: "/internship" },
             { label: "Verify a certificate", href: "/verify" },
-          ],
-        },
-        {
-          heading: "Company",
-          links: [
-            { label: "About Ideovent", href: "/about" },
-            { label: "Writing", href: "/blog" },
           ],
         },
         {
@@ -499,6 +524,62 @@ export const seed: ContentData = {
    * anything beyond the call that is already how every enquiry is handled.
    * ────────────────────────────────────────────────────────────────────────── */
   home: {
+    // THE HOME HERO SINCE 1 OCT 2026 (Hero.tsx reads this block and nothing
+    // else). Mehdi: the old hero "looks AI-generated". Out: the pill, the
+    // gradient italic line, the glow and the grid. In: plain words, a real
+    // phone number, the partners' names and screenshots of our own templates.
+    // Brief: seo-pricing/hero-brief.md. Every fact is from _assets/FACTS.md:
+    // Saket, New Delhi; founded 2024; Udyam UDYAM-BR-13-0030570; two partners.
+    // "The code stays yours" is NOT here: a site on a monthly plan is licensed
+    // while the plan runs, so only the domain is yours on every plan.
+    hero: {
+      lines: ["Your customers look you up before they call.", "We build the website they find."],
+      sub: "We make websites and software for businesses in India and abroad, with the scope and the price in writing before you pay anything.",
+      primary: { label: "Get a free website check", href: "/#contact", variant: "primary" },
+      whatsapp: {
+        label: "WhatsApp +91 77619 21786",
+        href: `https://wa.me/917761921786?text=${encodeURIComponent("Hi Ideovent, I saw your website and have a question.")}`,
+        variant: "outline",
+      },
+      // NO PRICE IN THE FIRST SCREEN (repair, 1 Oct 2026). Mehdi on 26 Sep:
+      // "ye pricing starting me hi kyu dikha rahe?", and the hero brief keeps
+      // price out of the hero for that reason. So this is a plain link with no
+      // figure; the figures, each with its setup fee and 12-month term beside
+      // it, are on /pricing#monthly and in the price block further down this
+      // page (PriceSummary.tsx). Hero.tsx still fills a "{starter}" token from
+      // src/lib/pricing.ts if one is ever typed in /admin, so a monthly figure
+      // can never print here without the setup fee and the term (drip pricing,
+      // CCPA dark-pattern guidelines, 2023).
+      plansLink: { label: "See the monthly website plans", href: "/pricing#monthly" },
+      trust: [
+        "Saket, New Delhi",
+        "Since 2024",
+        "Udyam-registered MSME",
+        "Your domain stays in your name",
+        "You talk directly to the partners, Mehdi Alam and Abhishek Tiwari",
+      ],
+      // Our own templates at 390px, 2x, top 540 CSS px (above every sample
+      // rating and every photo of a person), captured 1 Oct 2026 from the
+      // admin preview with the demo ribbon hidden. Never a prospect's demo.
+      // CHOSEN FOR THE FEWEST TEMPLATE HABITS (repair, 1 Oct 2026). The first
+      // set opened with the kids' dental sample, whose pill chip and
+      // underlined "first tooth" were the generated-page look Mehdi asked us
+      // to remove, and it also carried a boarding school with tracked capitals
+      // and a coaching page with pill tags. The first frame, the one a phone
+      // sees first, now has no chip, no italic and no highlight; two clinics
+      // and two coaching pages, so education is not the whole picture
+      // (Ideovent builds for every kind of business).
+      frames: [
+        { src: `${B}home/sample-c2-hindi-tuition.webp`, width: 780, height: 1080, label: "Tuition centre, in Hindi", alt: "Sample website in Hindi for a tuition centre, the top of its home page on a phone" },
+        { src: `${B}home/sample-d5-ortho-clinic.webp`, width: 780, height: 1080, label: "Orthodontic clinic", alt: "Sample website for an orthodontic clinic, the top of its home page on a phone" },
+        { src: `${B}home/sample-c3-science-coaching.webp`, width: 780, height: 1080, label: "Science coaching", alt: "Sample website for a science coaching institute, the top of its home page on a phone" },
+        { src: `${B}home/sample-d1-family-dental.webp`, width: 780, height: 1080, label: "Family dental clinic", alt: "Sample website for a family dental clinic, the top of its home page on a phone" },
+      ],
+      framesCaption: "Sample sites from our own templates, as they open on a phone. The names and numbers in them are made up.",
+      framesLink: { label: "Sites we built for clients", href: "/work" },
+    },
+    // ── Everything below, down to `stat`, is the hero before 1 Oct 2026 and
+    // is no longer rendered, except `priceTeaser` (PriceSummary.tsx). ──────
     // Kept short enough to stay on ONE line inside the eyebrow pill at 375px:
     // the longer "Web & software studio · Saket, New Delhi" wrapped to two, which
     // costs ~28px of a fold that has three answers to fit into. What the studio
@@ -535,19 +616,20 @@ export const seed: ContentData = {
       { label: "Get a free website check", href: "/#contact", variant: "primary" },
       { label: "See what we have built", href: "/work", variant: "outline" },
     ],
-    // NOT RENDERED IN THE HERO ANY MORE. Mehdi, 26 Sep 2026: no price in the
-    // first screen. PriceSummary.tsx shows it at section 9 of the home page,
-    // after the problems, the work, the offer and the process. Figures are the
-    // FACTS.md CURRENT table (CORRECTIONS section 2), lowest first. The first
-    // row was mislabelled "Business website": that is the USD $600-$1,400 tier.
+    // NOT READ BY ANY PAGE SINCE 1 OCT 2026. The home price block
+    // (PriceSummary.tsx) now takes every figure from src/lib/pricing.ts, the
+    // module /pricing, the service pages and the lead form read, because the
+    // live Supabase `home` row overrode this key and kept the old one-time-only
+    // prices on the live page (seo-audit P0-2). Kept so older CMS snapshots and
+    // the admin form still load. Mehdi, 26 Sep 2026: no price in the hero.
     priceTeaser: {
       heading: "What it usually costs",
       rows: [
-        { label: "Landing page or single page", range: "₹8,000-₹20,000" },
-        { label: "Website", range: "₹20,000-₹45,000" },
-        { label: "Portal or web app", range: "₹40,000-₹85,000" },
+        { label: "Landing page or single page", range: ServicePrices.bandRange(ServicePrices.ONE_TIME.landing) },
+        { label: "Website", range: ServicePrices.bandRange(ServicePrices.ONE_TIME.website) },
+        { label: "Portal or web app", range: ServicePrices.bandRange(ServicePrices.ONE_TIME.portal) },
       ],
-      more: "Custom software from ₹90,000. Care plan ₹1,000-₹3,500 a month, optional. Outside India from $300.",
+      more: `Custom software ${ServicePrices.bandRange(ServicePrices.ONE_TIME.software).toLowerCase()}. Care plan ${ServicePrices.inr(ServicePrices.CARE[0].monthly)}-${ServicePrices.inr(ServicePrices.CARE[2].monthly)} a month, optional. Outside India from ${ServicePrices.usd(ServicePrices.ABROAD[0].min)}.`,
       note: "Indicative · non-GST · fixed in writing after one call",
       link: { label: "Every tier, with what it includes and what it does not", href: "/pricing", variant: "ghost" },
       link2: { label: "Not sure which fits? Get the free check", href: "/#contact", variant: "ghost" },
@@ -674,7 +756,7 @@ export const seed: ContentData = {
       "Applications are read by a partner, not a filter. You will get a straight answer either way.",
       "The certificate is issued only against the published rubric, after the capstone is merged and the handover note is filed.",
       "A certificate can be revoked if something comes to light later: the verification page renders an explicit revoked state, so it is visible rather than quiet.",
-      "We store your name, email, phone, college and stream to process your application and to contact you about this programme, and nothing else. Ask us at contact@ideovent.in and we will delete it.",
+      "We store your name, email, phone, college and stream to process your application and to contact you about this programme, and nothing else. Ask us on WhatsApp at +91 77619 21786 and we will delete it.",
       "Your application is never copied into a marketing list. It was collected to process an application, and that is all it is used for.",
     ],
     pricing: { amount: "₹799", label: "Commitment fee", note: "One-time · payable only after a place has been offered to you" },
@@ -794,7 +876,7 @@ export const seed: ContentData = {
     demoUrl: "",
     roadmapUrl: "",
     todayAlternative:
-      "If you need something running this session, do not wait for EduFlow. The same modules can be built now as a portal for your institution alone: a normal project, with a normal timeline, from ₹40,000, with ongoing care from ₹1,000 a month. Tell us that on the first call and we will quote that instead.",
+      `If you need something running this session, do not wait for EduFlow. The same modules can be built now as a portal for your institution alone: a normal project, with a normal timeline, from ${ServicePrices.inr(ServicePrices.ONE_TIME.portal.min)}, with ongoing care from ${ServicePrices.inr(ServicePrices.CARE[0].monthly)} a month. Tell us that on the first call and we will quote that instead.`,
 
     earlyAccessEyebrow: "Early access · Delhi",
     earlyAccessHeading: "Be one of the first, and help decide what gets built next",
@@ -863,29 +945,124 @@ export const seed: ContentData = {
       // stack), none of the banned words.
       shortDescription: "A site that says what you do in one screen, and sends every enquiry straight to you.",
       longDescription: "Built for your visitors' phones first, with pages Google can read and content your staff can update without calling us.",
-      deliverables: ["Responsive web design", "E-commerce solutions", "Progressive web apps", "CMS integration", "Performance optimization"] },
-    { id: "uiux", title: "UI/UX Design", slug: "ui-ux-design", icon: "PenTool", category: "Design", showOnHome: true, showInFooter: true, order: 1,
+      deliverables: ["Responsive web design", "E-commerce solutions", "Progressive web apps", "CMS integration", "Performance optimization"],
+      // Search fields, keyword plan 1 Oct 2026. Prices from src/lib/pricing.ts,
+      // and the monthly price only ever with its setup fee and term beside it.
+      seoTitle: "Website Development Company in Delhi | Ideovent",
+      metaDescription: `Business websites that open fast on a phone and send every enquiry to you. One-time from ${ServicePrices.inr(ServicePrices.ONE_TIME.landing.min)}, or ${ServicePrices.inr(ServicePrices.PLANS.starter.monthly)}/month + ${ServicePrices.inr(ServicePrices.SETUP_FEE)} setup (${ServicePrices.TERM_MONTHS} months). Saket, Delhi.`,
+      h1: "Website design and development in Delhi" },
+    { id: "uiux", title: "UI/UX Design", slug: "ui-ux-design", icon: "PenTool", category: "Design", showOnHome: true, showInFooter: true, order: 5,
       shortDescription: "Screens planned around what your visitor came to do, so they find it without asking.",
       longDescription: "We start from the questions your visitors ask, then design pages and admin screens that answer them. Two rounds of changes at each design stage are in the agreement.",
-      deliverables: ["User research", "Wireframing & prototyping", "Interface design", "Usability testing", "Design systems"] },
-    { id: "seo", title: "SEO & Digital Marketing", slug: "seo-digital-marketing", icon: "Globe", category: "Marketing", showOnHome: true, showInFooter: true, order: 2,
-      shortDescription: "Pages Google can read, with your name, address and map on each, so it knows who and where you are.",
-      longDescription: "Clear page titles, your address and map on every page, a proper preview when your link is shared, and a plain report of how people found you. No ranking is promised, because nobody can honestly promise one.",
-      // Content marketing, Social media strategy and Email marketing are left
-      // as they were: Mehdi to confirm they are really offered (deck decision 13).
-      deliverables: ["Search engine optimization", "Content marketing", "Social media strategy", "Email marketing", "Analytics & reporting"] },
+      deliverables: ["User research", "Wireframing & prototyping", "Interface design", "Usability testing", "Design systems"],
+      seoTitle: "UI/UX Design Services in New Delhi | Ideovent",
+      metaDescription: "Screens planned around what your visitors came to do: research, wireframes, interface design and usability checks. Two rounds of changes per design stage.",
+      h1: "UI/UX design for websites and apps" },
+    /* LOCAL SEO, 1 Oct 2026 (Mehdi: "SEO v daal de service me ache se"; his
+       pricing of the same day: a local SEO add-on from Rs 4,999 a month in India,
+       SEO from USD 149 a month for clients abroad). It replaces "SEO & Digital
+       Marketing" at /services/seo-digital-marketing, which now 301s here
+       (vercel.json, App.tsx). Its unconfirmed deliverables (content marketing,
+       social media, email marketing) are gone. No figure is typed here: the
+       price block and the meta description read src/lib/pricing.ts. Nothing on
+       this page may promise a position, "No. 1" or a result. */
+    { id: "seo", title: "Local SEO", slug: "seo", icon: "MapPin", category: "Marketing", showOnHome: true, showInFooter: true, order: 2,
+      shortDescription: "Show up on Google Maps and in local searches: your Business Profile, local pages, real reviews and a report every month.",
+      longDescription: "We set up and look after your Google Business Profile, the pages that answer local searches and the reviews you ask real customers for, and report every month in plain words. No ranking is promised, because nobody can honestly promise one.",
+      deliverables: [...ServicePrices.SEO.includes],
+      deliverablesNote: "Every month. The fee, what it covers and any minimum term are written into your quote before you pay anything.",
+      seoTitle: "Local SEO Services in Delhi for Small Businesses | Ideovent",
+      metaDescription: `Google Business Profile, local pages, on-page SEO, a reviews plan and a monthly report. From ${ServicePrices.inr(ServicePrices.SEO.indiaFrom)}/month in India, ${ServicePrices.usdWord(ServicePrices.SEO.abroadFromUsd)} abroad. No ranking promises.`,
+      h1: "Local SEO services in Delhi, and SEO for small businesses abroad",
+      intro: "When someone nearby searches for what you sell, local SEO helps them find you on Google Maps and in local results, and call. We set up and look after your Google Business Profile, the pages that answer those searches and the reviews you ask real customers for. Results take months, and nobody can honestly promise a position on Google, so we do not.",
+      hideProcess: true,
+      faqCategory: "seo",
+      sections: [
+        { heading: "What we do every month", items: [
+          "Google Business Profile: set up or cleaned up, with the right categories, services, hours and photos. Your business stays the owner; we are added as a manager.",
+          "Local pages on your website: a clear page for each service you sell, saying where you serve, written around what people actually type.",
+          "On-page SEO: page titles, descriptions, headings, internal links, structured data and speed basics, on the pages that matter.",
+          "A reviews plan: your review link and QR code, and a short message to send every customer. We never buy, write or filter reviews.",
+          "A monthly report in plain words: searches, calls, website clicks and direction requests from Google, and the work done that month.",
+        ] },
+        { heading: "The first three months", body: "Typical, not promised: every business starts from a different place.", items: [
+          "Month 1: we check your profile, your website and the searches that matter to you, and fix what is broken first.",
+          "Months 2 and 3: local pages, profile updates and the reviews routine.",
+          "After that: the same work every month, and a report that says what moved and what did not.",
+        ] },
+        { heading: "What SEO cannot promise", body: "Google says it plainly: \"No one can guarantee a #1 ranking on Google.\" Local results depend on how many businesses compete for the same searches, on your reviews, and on how far the searcher is from you. So we promise the work in your plan, done every month, and an honest report. Not a position.", items: [
+          "No \"No. 1 on Google\" or first-page guarantees",
+          "No bought links, and no bought, fake or filtered reviews",
+          "No keywords stuffed into your business name or your pages",
+        ] },
+        { heading: "SEO for small businesses outside India", body: `The same work for a small business in the US, the UK, the UAE or Australia, in English, with a report every month, from ${ServicePrices.usdWord(ServicePrices.SEO.abroadFromUsd)} a month. The price for your business is fixed in writing before you pay.` },
+        { heading: "Where to start", body: "Local SEO is an add-on to a website. If we built your website or look after it, SEO can start on it. If someone else built it, send us the address: we check it first and tell you in writing whether SEO can start on it as it is, or what needs fixing first and what that costs.", links: [
+          { label: "Get a free website check", href: "/contact" },
+          { label: "Website prices and monthly plans", href: "/pricing#monthly" },
+          { label: "Website design and development", href: "/services/website-development" },
+        ] },
+      ] },
     { id: "ecommerce", title: "E-Commerce Development", slug: "ecommerce-development", icon: "ShoppingCart", category: "Web", showOnHome: true, showInFooter: true, order: 3,
       shortDescription: "An online store where a customer finds the product, pays, and gets a receipt, and you see the order.",
       longDescription: "Product pages, a secure online checkout (Razorpay in India), and an order list your staff can work from.",
-      deliverables: ["Storefront design & build", "Secure checkout", "Payment gateway integration", "Inventory & orders", "Conversion optimization"] },
+      deliverables: ["Storefront design & build", "Secure checkout", "Payment gateway integration", "Inventory & orders", "Conversion optimization"],
+      seoTitle: "E-commerce Website Development in Delhi | Ideovent",
+      metaDescription: "Online stores with product pages, Razorpay checkout and an order list your staff can use. Fixed price in writing. See Atelier Co., a store we built.",
+      h1: "E-commerce website development" },
     { id: "mobile", title: "Mobile App Development", slug: "mobile-app-development", icon: "Smartphone", category: "Mobile", showOnHome: true, showInFooter: true, order: 4,
       shortDescription: "An app your customers or staff open every day, on Android and iPhone.",
       longDescription: "Planned with you screen by screen, built, tested on the phones your users actually have, and published to the app stores.",
-      deliverables: ["iOS & Android development", "Android and iPhone apps", "Mobile UI/UX design", "App store optimization", "Maintenance & support"] },
-    { id: "brand", title: "Brand Identity", slug: "brand-identity", icon: "Sparkles", category: "Design", showOnHome: false, showInFooter: false, order: 5,
+      deliverables: ["iOS & Android development", "Android and iPhone apps", "Mobile UI/UX design", "App store optimization", "Maintenance & support"],
+      seoTitle: "Mobile App Development Company in Delhi | Ideovent",
+      metaDescription: "Android and iPhone apps planned screen by screen, tested on the phones your users have and published to the stores. Scope and price fixed in writing first.",
+      h1: "Mobile app development for Android and iPhone" },
+    { id: "brand", title: "Brand Identity", slug: "brand-identity", icon: "Sparkles", category: "Design", showOnHome: false, showInFooter: false, order: 7,
       shortDescription: "A logo and a few simple rules, so your name looks the same on your shopfront, your WhatsApp and your website.",
       longDescription: "Logo, colours, type and a short guide, so whoever makes your next banner or brochure gets it right.",
-      deliverables: ["Logo design", "Visual identity", "Brand guidelines", "Marketing collateral", "Brand strategy"] },
+      deliverables: ["Logo design", "Visual identity", "Brand guidelines", "Marketing collateral", "Brand strategy"],
+      seoTitle: "Logo & Brand Identity Design, New Delhi | Ideovent",
+      metaDescription: "A logo, colours, type and a short guide, so your name looks the same on your shopfront, your WhatsApp and your website.",
+      h1: "Logo and brand identity design" },
+    /* Two services FACTS.md lists ("Custom SaaS", "Maintenance & Support") that had
+       no page of their own (keyword plan, 1 Oct 2026). Every commitment below is
+       one the site already prints on /pricing (stages, care-plan rows, reply
+       times) or FACTS.md records; the price blocks come from src/lib/pricing.ts. */
+    { id: "software", title: "Custom Software & Web Apps", slug: "custom-software-development", icon: "Layers", category: "Web", showOnHome: true, showInFooter: true, order: 1,
+      shortDescription: "CRMs, portals, dashboards and internal tools, built around how your business already works.",
+      longDescription: "We map how work moves through your business today, then build the system that replaces the sheets, registers and WhatsApp groups: logins for each role, the records you keep and the reports you need.",
+      deliverables: ["Written scope with an exclusions list", "Accounts, roles and permissions", "Admin dashboard and reports", "Payments and third-party integrations", "Written technical handover"],
+      seoTitle: "Custom Software & Web App Development, Delhi | Ideovent",
+      metaDescription: `CRMs, portals, dashboards and SaaS built around how your business works. Scoped in writing, priced in stages: portals from ${ServicePrices.inr(ServicePrices.ONE_TIME.portal.min)}, software from ${ServicePrices.inr(ServicePrices.ONE_TIME.software.min)}.`,
+      h1: "Custom software and web app development",
+      sections: [
+        { heading: "What we build", items: [
+          "Lead trackers and CRMs",
+          "Portals for students, members or customers",
+          "Dashboards and internal tools for your staff",
+          "SaaS products you sell to other businesses",
+        ] },
+        { heading: "How custom software is priced", body: "In three stages: discovery at a fixed fee agreed before it starts, the build at a fixed price from the discovery document, then running it on a care plan or a development retainer. A portal or web app is priced as one project. Payment runs 50% to start, 30% at the design-and-build milestone and 20% before handover, and the code is yours on the final payment." },
+        { heading: "Work you can check", body: "HRMS Lite and Lead CRM are client software we built. Both sit behind a login, so each case study says what the product does and what we cannot claim. EduFlow, our own software for schools and coaching institutes, is in development.", links: [
+          { label: "HRMS Lite case study", href: "/work/hrms-lite" },
+          { label: "Lead CRM case study", href: "/work/lead-crm" },
+          { label: "EduFlow, in development", href: "/eduflow" },
+        ] },
+      ] },
+    { id: "care", title: "Website Maintenance", slug: "website-maintenance", icon: "Wrench", category: "Web", showOnHome: false, showInFooter: true, order: 6,
+      shortDescription: "Updates, backups, fixes and small changes for a website you already own, on a monthly care plan.",
+      longDescription: "A care plan keeps a website working after launch: security updates, backups, fixes when something breaks and the small changes you ask for, with reply times written into the plan.",
+      deliverables: ["Uptime monitoring", "Off-site backups", "Security updates, tested before release", "Content-change hours every month", "A first reply within 48 working hours, 24 working hours or the same working day, by plan"],
+      deliverablesNote: "Monthly, or a year paid in advance. Cancel with 30 days' notice.",
+      seoTitle: "Website Maintenance & AMC Plans in Delhi | Ideovent",
+      metaDescription: `Care plans for a website you already own: updates, backups, fixes and small changes, from ${ServicePrices.inr(ServicePrices.CARE[0].monthly)} a month or ${ServicePrices.inr(ServicePrices.CARE[0].yearly)} a year upfront. Reply times in writing.`,
+      h1: "Website maintenance and care plans",
+      hideProcess: true,
+      sections: [
+        { heading: "Care plan or monthly website plan?", body: `A care plan looks after a website you own. The monthly website plan is something else: the website itself on a licence, with hosting and changes included, from ${ServicePrices.monthlyLine(ServicePrices.PLANS.starter)} on a ${ServicePrices.termLine(ServicePrices.PLANS.starter)}.`, links: [
+          { label: "Monthly website plans", href: "/pricing#monthly" },
+        ] },
+        { heading: "Who a care plan is for", body: "Owners of a website we built, once the 30 days of free fixes that come with every launch are over. If someone else built your website, send us the address first: we look at it and tell you in writing whether we can take it on." },
+      ] },
   ],
 
   // EMPTY ON PURPOSE. The four testimonials that used to live here were invented, 
@@ -1078,10 +1255,12 @@ export const seed: ContentData = {
       summary: "This site. A React and Vite studio site with its own admin CMS, where every user-facing string is an editable field rather than hard-coded copy, plus a Supabase-backed content store, an internship application flow, and QR certificate verification at /verify that anyone holding a certificate can check.",
       technologies: ["React", "TypeScript", "Vite", "Tailwind CSS", "Supabase"],
       coverImage: "", gallery: [],
+      // 1 Oct 2026: ideovent.in is live (FACTS.md, 30 Sep correction, point 5).
+      // The three lines here used to say it "is not resolving".
       noImageReason:
-        "No screenshot yet, because the public domain is not resolving. We would rather say that than show you a picture of a site you cannot open, see the note below.",
+        "No screenshot: this is the site you are reading now.",
       noLiveUrlReason:
-        "You are already on it. ideovent.in is not resolving yet, so this build has no public address to send you to. Which is the single biggest item on our own fix list.",
+        "You are already on it: www.ideovent.in.",
       tryThis: "Open /verify/INT2025A74 in another tab. That page is part of this build: an intern’s certificate, checked by ID, in about four seconds, without emailing anybody.",
       challenge: "A studio site that needs a developer every time a price or a phone number changes will drift out of date, and an out-of-date site is a liability. It had to be editable by the people who own the content.",
       solution: "Every string on the site is a typed field in a single content model, edited from an admin panel and stored either locally or in Supabase. The same model drives the internship application flow and the QR certificate-verification page, so an intern’s certificate can be checked by anyone holding it.",
@@ -1090,7 +1269,7 @@ export const seed: ContentData = {
         "The admin CMS, the application capture and the certificate verification at /verify are all part of this build and all reachable from this site.",
         "The source is on GitHub.",
       ],
-      noClaims: "The public domain ideovent.in does not currently resolve, so there is no live production address to send you to. That is stated here rather than left for you to discover, and it is the single biggest thing on our own fix list." },
+      noClaims: "No visitor numbers, no ranking and no speed score: none has been measured on www.ideovent.in yet, so none is claimed here." },
 
     /* ── The founder's work elsewhere: the employer is named, and this is
      *    never presented as Ideovent client work. ────────────────────────── */
@@ -1232,13 +1411,16 @@ export const seed: ContentData = {
      * ₹8,000-₹20,000 band is a "landing page or single page" (FACTS.md).
      * f2 timelines come from Pricing.tsx, not FACTS.md: Mehdi to confirm. */
     { id: "f10", question: "We already have a website. Why change?", answer: "Often you should not. If your site opens fast on a phone, shows your prices and timings, and enquiries reach you, keep it. The free check will tell you honestly. If it is fine, we say so.", category: "services", order: 0 },
-    { id: "f1", question: "How much does it cost?", answer: "Roughly: a landing page or single page ₹8,000-₹20,000, a website ₹20,000-₹45,000, a portal or web app ₹40,000-₹85,000, and custom software from ₹90,000. After one call you get a written scope, a list of what is not included, and a fixed price. It does not change unless you approve a written change note.", category: "services", order: 1 },
+    // f1, f3, f7 and f6 answer for BOTH ways to buy since 1 Oct 2026 (seo-audit
+    // P1-8): the monthly plan and the one-time project. Every figure comes from
+    // src/lib/pricing.ts, the module /pricing reads, so they cannot drift.
+    { id: "f1", question: "How much does it cost?", answer: `You can pay monthly or buy it outright. Monthly: ${ServicePrices.monthlyLine(ServicePrices.PLANS.starter)}, ${ServicePrices.termLine(ServicePrices.PLANS.starter)}, with hosting and changes included. Outright: a landing page or single page ${ServicePrices.bandRange(ServicePrices.ONE_TIME.landing)}, a website ${ServicePrices.bandRange(ServicePrices.ONE_TIME.website)}, a portal or web app ${ServicePrices.bandRange(ServicePrices.ONE_TIME.portal)}, and custom software ${ServicePrices.bandRange(ServicePrices.ONE_TIME.software).toLowerCase()}. For a one-time project, after one call you get a written scope, a list of what is not included, and a fixed price. It does not change unless you approve a written change note.`, category: "services", order: 1 },
     { id: "f11", question: "Will the price grow after we start?", answer: "No. The fixed price is in the agreement you sign. If you ask for something outside the written scope, we send a change note with its price first. Nothing changes unless you approve it in writing.", category: "services", order: 2 },
     { id: "f2", question: "How long does it take?", answer: "A landing page takes 2 to 3 weeks. A website takes 3 to 5 weeks. A portal or web app takes 6 to 10 weeks. Custom software takes 10 weeks or more. The clock starts when the advance is paid and your content is with us.", category: "services", order: 3 },
-    { id: "f3", question: "Who will update it after launch?", answer: "Your team can. On a website with editable pages, you change text, photos, prices and notices yourself. If something breaks in the first 30 days, we fix it free, with or without a care plan. After that, a care plan is optional: ₹1,000, ₹2,000 or ₹3,500 a month, with a first reply within 48 working hours, 24 working hours or the same working day. Cancel with 30 days’ notice. You keep the code, the accounts, the backups and your domain.", category: "services", order: 4 },
+    { id: "f3", question: "Who will update it after launch?", answer: `On a monthly plan, we do: ${ServicePrices.PLANS.starter.changesPerMonth} content changes a month on Starter, ${ServicePrices.PLANS.growth.changesPerMonth} on Growth. On a site you bought outright, your team can: on a website with editable pages, you change text, photos, prices and notices yourself. If something breaks in the first 30 days, we fix it free, with or without a care plan. After that, a care plan is optional: ${ServicePrices.inr(ServicePrices.CARE[0].monthly)}, ${ServicePrices.inr(ServicePrices.CARE[1].monthly)} or ${ServicePrices.inr(ServicePrices.CARE[2].monthly)} a month, with a first reply within 48 working hours, 24 working hours or the same working day. Cancel with 30 days’ notice. You keep the code, the accounts, the backups and your domain.`, category: "services", order: 4 },
     { id: "f12", question: "What if you disappear after launch?", answer: "You are not stuck. On the final payment, the code and admin logins are handed to you, and your domain stays under your control. Any developer can pick it up from there. We fix anything that breaks in the first 30 days for free. After that, the optional care plan gives you written reply times.", category: "services", order: 5 },
-    { id: "f7", question: "Do I own the website?", answer: "Yes. The code we write for you becomes yours on the final payment, and the admin logins are handed to you. Your domain stays under your control. We build on some parts we reuse across projects. Those stay ours, and you get a free licence to use them in your site, for as long as you want.", category: "services", order: 6 },
-    { id: "f6", question: "How does payment work?", answer: "50% when you sign. 30% at the design-and-build stage, when you can see the work. 20% before handover. Invoices are due within 7 days. We are not registered under GST, so the price we quote is the full amount you pay.", category: "services", order: 7 },
+    { id: "f7", question: "Do I own the website?", answer: "If you buy it outright, yes. The code we write for you becomes yours on the final payment, and the admin logins are handed to you. We build on some parts we reuse across projects. Those stay ours, and you get a free licence to use them in your site, for as long as you want. On a monthly plan the website is licensed to you while the plan runs, and you can buy it out at any time. Either way your domain is registered in your name and stays yours.", category: "services", order: 6 },
+    { id: "f6", question: "How does payment work?", answer: `For a website bought outright: 50% when you sign, 30% at the design-and-build stage, when you can see the work, and 20% before handover. Invoices are due within 7 days. On a monthly plan: the ${ServicePrices.inr(ServicePrices.SETUP_FEE)} setup once, then the monthly fee for ${ServicePrices.TERM_MONTHS} months, by UPI AutoPay or card through Razorpay once online payment is live, or by UPI or bank transfer on WhatsApp. We are not registered under GST, so the price we quote is the full amount you pay.`, category: "services", order: 7 },
     { id: "f13", question: "Do you build apps and software too?", answer: "Yes. Web apps, portals, SaaS products, and Android and iPhone apps. We built HRMS Lite and Lead CRM for clients, and our own app Aura Orbit is live with Razorpay payments. Tell us the process or the idea. The first call is free.", category: "services", order: 8 },
     { id: "f14", question: "Do you work with schools and coaching institutes?", answer: "Yes, it is one of the fields we know well. We built the website and admin panel for HighQ Classes, a coaching institute. We can show you a sample site made for your school or institute. We are also building EduFlow, software for schools and coaching, which is still in development.", category: "services", order: 9 },
 
@@ -1252,7 +1434,7 @@ export const seed: ContentData = {
      * a school actually does. See _assets/FACTS.md, EDUFLOW STATUS. */
     { id: "ef1", question: "Is EduFlow live? Can we see a demo?", answer: "EduFlow is in development. There is no public demo and no school running it in production today. What is built, we will open on a laptop in your office and let you click yourself. What is not built, we will name.", category: "eduflow", order: 9 },
     { id: "ef2", question: "Which schools are using it?", answer: "None yet. We are not going to give you a name that does not exist. The institutions joining now are the first, and they get a price and a level of attention that will not be available later.", category: "eduflow", order: 10 },
-    { id: "ef3", question: "What does it cost?", answer: "We do not quote a number before seeing how your office works. The early-access price is agreed with you before you start, and the price after that is fixed in writing at the same time. If you would rather have a portal built for your institution alone, that is a normal project from ₹40,000, with ongoing care from ₹1,000 a month.", category: "eduflow", order: 11 },
+    { id: "ef3", question: "What does it cost?", answer: `We do not quote a number before seeing how your office works. The early-access price is agreed with you before you start, and the price after that is fixed in writing at the same time. If you would rather have a portal built for your institution alone, that is a normal project from ${ServicePrices.inr(ServicePrices.ONE_TIME.portal.min)}, with ongoing care from ${ServicePrices.inr(ServicePrices.CARE[0].monthly)} a month.`, category: "eduflow", order: 11 },
     { id: "ef4", question: "What if you stop building it?", answer: "A fair question, so here is the plain answer. You can export all of your data yourself, at any time, without asking us. If we ever wind the product down you get written notice, your complete data and support to the end of that period. And the length of that notice is written into your agreement before you start, not decided afterwards. That does not make the risk zero. It makes it a risk you control.", category: "eduflow", order: 12 },
     { id: "ef5", question: "Can we get our data out if we leave?", answer: "Yes, whenever you want, without asking. The export format is named in your agreement before you start. We would rather be chosen every year than be difficult to leave.", category: "eduflow", order: 13 },
     { id: "ef6", question: "Does it work on a basic Android phone?", answer: "It is built for the phones parents and teachers actually have, on mobile data, not on office wifi. If it does not work on a low-end phone, it does not work.", category: "eduflow", order: 14 },
@@ -1261,6 +1443,19 @@ export const seed: ContentData = {
     { id: "ef9", question: "We already have software. Why change?", answer: "Often you should not. If your current vendor answers the phone and makes the changes you ask for, stay. Talk to us when they do not.", category: "eduflow", order: 17 },
     { id: "ef10", question: "Do you only work with schools in Delhi?", answer: "Early access is Delhi only, because it includes going to your office. Once EduFlow is released that changes.", category: "eduflow", order: 18 },
     { id: "ef11", question: "Is there a GST invoice?", answer: "Ideovent Technologies is not registered under GST today, so invoices are non-GST and say so on their face. If your institution needs a GST invoice, tell us on the first call and we will give you a straight answer.", category: "eduflow", order: 19 },
+
+    /* Local SEO (1 Oct 2026). Shown on /services/seo, which carries their FAQPage
+     * markup, and listed on /faq. Every question is one people type into Google
+     * (keyword plan, section 5). No answer promises a position or a date. */
+    { id: "seo1", question: "How much does SEO cost per month?", answer: `Local SEO starts at ${ServicePrices.inr(ServicePrices.SEO.indiaFrom)} a month in India, and SEO for a business outside India at ${ServicePrices.usdWord(ServicePrices.SEO.abroadFromUsd)} a month. What your business pays is fixed in writing after a free check, before you pay anything. GST not applicable: we are not registered under GST.`, category: "seo", order: 20 },
+    { id: "seo2", question: "How long does SEO take to show results?", answer: "Months, not weeks. Google usually picks up changes to your profile and your pages within a few weeks, but moving up in local results depends on how many businesses compete for the same searches, on your reviews and on how far the searcher is from you. The monthly report shows what changed, including when nothing did.", category: "seo", order: 21 },
+    { id: "seo3", question: "Can you guarantee the first page or No. 1 on Google?", answer: "No. Nobody honest can, and Google says so itself: \"No one can guarantee a #1 ranking on Google.\" What we promise is the work in your plan, done every month, and a plain report of what it did.", category: "seo", order: 22 },
+    { id: "seo4", question: "What is local SEO, in simple words?", answer: "It is the work that helps your business show up when someone nearby searches for what you sell, on Google Maps and in the local results above the ordinary links. Most of it is your Google Business Profile, your reviews, and pages on your website that say clearly what you do and where.", category: "seo", order: 23 },
+    { id: "seo5", question: "Why is my business not showing on Google Maps?", answer: "The usual reasons are a profile that is not verified or has been suspended, the wrong main category, a wrong or hidden address, very few reviews, or a second listing for the same business. Send us your business name and we will tell you which of these applies.", category: "seo", order: 24 },
+    { id: "seo6", question: "Who owns my Google Business Profile?", answer: "You do. The profile stays in your business's own Google account and we are added as a manager. If you stop working with us, you remove our access and keep everything.", category: "seo", order: 25 },
+    { id: "seo7", question: "How do you get more Google reviews?", answer: "We set up your review link and a QR code, and give you a short message to send every customer after a job. Every customer, not only the happy ones: Google does not allow asking only satisfied customers, or paying or rewarding anyone for a review.", category: "seo", order: 26 },
+    { id: "seo8", question: "Do I need a new website to start SEO?", answer: "Not always. If we built your website or look after it, SEO can start on it. If someone else built it, send us the address: we check it first and tell you in writing whether SEO can start on it as it is, or what needs fixing first and what that costs.", category: "seo", order: 27 },
+    { id: "seo9", question: "Do you do SEO for businesses outside India?", answer: `Yes, for small businesses in the US, the UK, the UAE and Australia, in English, from ${ServicePrices.usdWord(ServicePrices.SEO.abroadFromUsd)} a month. What that covers for your business is written into the quote before you pay.`, category: "seo", order: 28 },
   ],
 
   /* ──────────────────────────────────────────────────────────────────────────
@@ -1397,6 +1592,41 @@ export const seed: ContentData = {
       preparedOn: "2026-09-25",
       validUntil: "2026-10-25",
       order: 0,
+    },
+    {
+      /* The dental clinic variant (30 Sep 2026). The page argues for patients,
+         not parents: BENEFITS.dental, PATIENT_SEARCH in place of the admission
+         season, defaultProofOrder("dental") without HighQ Classes, and the
+         package in a clinic's words ("Clinic website", same price). This
+         record exists so that branch can actually be opened. It is the state
+         most dental leads are in: no website found and nothing measured, so
+         the page says so rather than inventing a fault. Same rules as the two
+         above: the clinic and the doctor do not exist, and there is no
+         contact detail. */
+      id: "pp_example_dental",
+      slug: "example-dental-clinic",
+      status: "live",
+      isExample: true,
+      instituteName: "Example Dental Clinic",
+      instituteType: "dental",
+      market: "india",
+      city: "New Delhi",
+      state: "Delhi",
+      country: "India",
+      directorName: "Dr. Example Name",
+      directorTitle: "",
+      teamNames: [],
+      currentWebsite: "",
+      observedProblems: [],
+      proposedScope: [
+        "Pages for home, treatments, doctors, starting prices, about and contact",
+        "Appointment requests that reach your phone on WhatsApp and email",
+        "Timings, directions and what to do about tooth pain after hours",
+        "Built for the phone first, because that is how patients look you up",
+      ],
+      recommendedPackage: "school-website",
+      preparedOn: "2026-09-30",
+      validUntil: "2026-10-30",
     },
 
     /* ── The INTERNATIONAL examples ───────────────────────────────────────

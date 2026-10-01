@@ -77,11 +77,25 @@
    The container sits on an inner wrapper: on the <header> itself, its layout
    containment would trap the fixed-position phone menu sheet. */
 .dn-hdr { container: dnhdr / inline-size; }
-.dn-hdr-nav, .dn-hdr-wide, .dn-hdr-call { display: none; }
+.dn-hdr-nav, .dn-hdr-call { display: none; }
 .dn-hdr-burger { display: inline-flex; }
+/* The language switch is in the bar at every width (1 Oct 2026): its
+   compact form under 768px, where the row also carries Book and the menu
+   button, the shared control from 768px. Two classes deep, so these beat
+   the shared control's own inline-flex utility. See shell/LangSwitch.tsx. */
+.dn-hdr .dn-hdr-lang-full { display: none; }
+.dn-hdr .dn-hdr-lang-compact { display: inline-flex; }
+@container dnhdr (min-width: 768px) {
+  .dn-hdr .dn-hdr-lang-full { display: inline-flex; }
+  .dn-hdr .dn-hdr-lang-compact { display: none; }
+}
+/* On a phone the header's Book keeps its word and drops the calendar icon:
+   the clinic's name needs those 24px more, beside the switch. */
+@container dnhdr (max-width: 639px) {
+  .dn-hdr-end .dn-book svg { display: none; }
+}
 @container dnhdr (min-width: 1180px) {
   .dn-hdr-nav { display: block; }
-  .dn-hdr-wide { display: inline-flex; }
   .dn-hdr-end { margin-left: 1.5rem; }
   .dn-hdr-burger { display: none; }
 }

@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { ScrollToTop } from "@/components/util/ScrollToTop";
 import { RouteErrorBoundary, RouteRendered } from "@/components/util/RouteErrorBoundary";
+import { crmMovedOut, crmOriginUrl, isCrmHost, mainSiteUrl } from "@/lib/host";
 
 import Index from "./pages/Index"; // eager: landing page
 
@@ -17,6 +18,8 @@ const Internship = lazy(() => import("./pages/Internship"));
 const EduFlow = lazy(() => import("./pages/EduFlow"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const CheckoutResult = lazy(() => import("./pages/CheckoutResult"));
 const Legal = lazy(() => import("./pages/Legal"));
 const CertificateVerify = lazy(() => import("./pages/CertificateVerify"));
 const Pitch = lazy(() => import("./pages/Pitch"));
@@ -39,8 +42,10 @@ const AdminTemplatePreview = lazy(() => import("./pages/admin/AdminTemplatePrevi
 const AdminAiKeys = lazy(() => import("./pages/admin/AdminAiKeys"));
 const OutreachRedirect = lazy(() => import("@/crm/OutreachRedirect"));
 const AdminLeadFinder = lazy(() => import("./pages/admin/AdminLeadFinder"));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 
-/* The CRM: its own full-screen app at /crm, same sign-in as /admin. */
+/* The CRM: its own full-screen app at /crm (or at the root of crm.ideovent.in,
+   see CRM_HOST_ROUTES below), same sign-in as /admin. */
 const CrmLayout = lazy(() => import("@/crm/CrmLayout"));
 const CrmDashboard = lazy(() => import("@/crm/dashboard/CrmDashboard"));
 const CrmLeads = lazy(() => import("@/crm/leads/CrmLeads"));
@@ -59,6 +64,101 @@ function PageLoader() {
     </div>
   );
 }
+
+/*
+  THE CRM ON ITS OWN SUBDOMAIN (30 Sep 2026).
+
+  One build serves two hosts. On the main site (ideovent.vercel.app today,
+  www.ideovent.in later) the CRM is the /crm section, exactly as before. On
+  crm.ideovent.in (crm.localhost in development) the app is ONLY the CRM: its
+  screens sit at the root, /login is the sign-in, and no public page is served
+  there. Read once: a page's host never changes without a full page load.
+*/
+const ON_CRM_HOST = isCrmHost();
+
+/* The CRM's screens, relative to wherever it is mounted (/crm or /). CRM.* in
+   src/crm/nav.ts builds the links to them from the same host test. */
+const CRM_SCREENS = (
+  <>
+    <Route index element={<CrmDashboard />} />
+    <Route path="leads" element={<CrmLeads />} />
+    <Route path="leads/:id" element={<CrmLeadPage />} />
+    <Route path="pipeline" element={<CrmPipeline />} />
+    <Route path="today" element={<CrmToday />} />
+    <Route path="demos" element={<CrmDemos />} />
+    <Route path="finder" element={<CrmFinder />} />
+    <Route path="import" element={<CrmImport />} />
+    <Route path="settings" element={<CrmSettings />} />
+  </>
+);
+
+/** A whole-page move to another origin, which a router <Navigate> cannot make. */
+function LeaveFor({ href }: { href: string }) {
+  useEffect(() => {
+    window.location.replace(href);
+  }, [href]);
+  return <PageLoader />;
+}
+
+/*
+  /crm ON THE MAIN SITE. Today (VITE_CRM_URL empty), and always on localhost:
+  the CRM itself, behind the same guard as /admin. Once the CRM has its own
+  subdomain (crmMovedOut in lib/host.ts): the same screen there, query and all,
+  /crm/leads/ol_1?view=all -> https://crm.ideovent.in/leads/ol_1?view=all.
+*/
+function CrmOnMainSite() {
+  const { pathname, search, hash } = useLocation();
+  if (crmMovedOut()) return <LeaveFor href={crmOriginUrl(pathname + search + hash)} />;
+  return (
+    <AdminAuthProvider>
+      <ProtectedRoute>
+        <CrmLayout />
+      </ProtectedRoute>
+    </AdminAuthProvider>
+  );
+}
+
+/* On the CRM host: an admin page or a demo, both of which live on the main site. */
+function ToMainSite() {
+  const { pathname, search, hash } = useLocation();
+  const href = mainSiteUrl(pathname + search + hash);
+  // Never back to this very host (VITE_PUBLIC_URL pointing here would loop).
+  if (!/^https?:\/\//i.test(href) || new URL(href).host === window.location.host) return <Navigate to="/" replace />;
+  return <LeaveFor href={href} />;
+}
+
+/* On the CRM host: an address copied from the main site's /crm, as the same screen here. */
+function WithoutCrmPrefix() {
+  const { pathname, search, hash } = useLocation();
+  return <Navigate to={(pathname.replace(/^\/crm(?=\/|$)/, "") || "/") + search + hash} replace />;
+}
+
+/*
+  THE ROUTE TABLE ON THE CRM HOST. Keep the two marker comments: the sitemap
+  script (scripts/generate-sitemap.mjs) skips every line between them, because
+  none of these addresses exists on the main site.
+*/
+const CRM_HOST_ROUTES = (
+  <Routes>
+    {/* crm-host-routes:start */}
+    <Route path="/" element={<AdminAuthProvider><Outlet /></AdminAuthProvider>}>
+      <Route path="login" element={<AdminLogin />} />
+      <Route element={<ProtectedRoute><CrmLayout /></ProtectedRoute>}>
+        {CRM_SCREENS}
+      </Route>
+      {/* Old /admin/outreach?lead=<id> links: the matching CRM screen, on this host. */}
+      <Route path="admin/outreach" element={<OutreachRedirect />} />
+      {/* The admin and every demo are on the main site. */}
+      <Route path="admin/*" element={<ToMainSite />} />
+      <Route path="site/*" element={<ToMainSite />} />
+      <Route path="pitch/*" element={<ToMainSite />} />
+      <Route path="crm/*" element={<WithoutCrmPrefix />} />
+      {/* Anything else, the public pages included: the CRM dashboard. */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Route>
+    {/* crm-host-routes:end */}
+  </Routes>
+);
 
 /*
   TWO TOAST SYSTEMS WERE MOUNTED HERE AND NEITHER WAS EVER USED.
@@ -94,6 +194,8 @@ const App = () => (
     */}
     <RouteErrorBoundary>
     <Suspense fallback={<PageLoader />}>
+      {/* crm.ideovent.in renders only the CRM (CRM_HOST_ROUTES above); every other host, the site. */}
+      {ON_CRM_HOST ? CRM_HOST_ROUTES : (
       <Routes>
         {/* Public */}
         <Route path="/" element={<Index />} />
@@ -110,6 +212,12 @@ const App = () => (
         <Route path="/eduflow" element={<EduFlow />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/faq" element={<FAQ />} />
+        {/* Paying for a monthly or yearly website plan with Razorpay (noindex,
+            and out of the sitemap: every route here is parameterised or a
+            <Navigate>). The flow and its fallback: src/pages/Checkout.tsx. */}
+        <Route path="/checkout" element={<Navigate to="/pricing" replace />} />
+        <Route path="/checkout/:plan" element={<Checkout />} />
+        <Route path="/checkout/:plan/:outcome" element={<CheckoutResult />} />
         <Route path="/privacy" element={<Legal kind="privacy" />} />
         <Route path="/terms" element={<Legal kind="terms" />} />
         <Route path="/refund" element={<Legal kind="refund" />} />
@@ -122,6 +230,9 @@ const App = () => (
         <Route path="/projects" element={<Navigate to="/work" replace />} />
         <Route path="/portfolio" element={<Navigate to="/work" replace />} />
         <Route path="/ii" element={<Navigate to="/internship" replace />} />
+        {/* The SEO service moved to /services/seo on 1 Oct 2026; vercel.json
+            301s the old address, this covers a click inside the app. */}
+        <Route path="/services/seo-digital-marketing" element={<Navigate to="/services/seo" replace />} />
         {/* The programme is called Ideovent LaunchPad everywhere in
             13-launchpad/. /internship stays the canonical URL because it is
             what is already linked and indexed; this is an alias, not a move. */}
@@ -159,6 +270,9 @@ const App = () => (
                 including ?lead=<id>, land on the matching CRM screen. */}
             <Route path="outreach" element={<OutreachRedirect />} />
             <Route path="lead-finder" element={<AdminLeadFinder />} />
+            {/* Razorpay subscriptions and payments, from the signed webhook
+                (public.payment_events, migration 0010). */}
+            <Route path="payments" element={<AdminPayments />} />
           </Route>
           {/*
             A template rendered by the real demo page, full width rather than
@@ -173,17 +287,10 @@ const App = () => (
           top bar), but behind the SAME guard: AdminAuthProvider + ProtectedRoute,
           exactly as /admin. Leads live in the outreach store (0007_outreach.sql
           or localStorage ideovent_outreach_v1), never in the CMS content.
+          After go-live CrmOnMainSite hands every /crm address to crm.ideovent.in.
         */}
-        <Route path="/crm" element={<AdminAuthProvider><ProtectedRoute><CrmLayout /></ProtectedRoute></AdminAuthProvider>}>
-          <Route index element={<CrmDashboard />} />
-          <Route path="leads" element={<CrmLeads />} />
-          <Route path="leads/:id" element={<CrmLeadPage />} />
-          <Route path="pipeline" element={<CrmPipeline />} />
-          <Route path="today" element={<CrmToday />} />
-          <Route path="demos" element={<CrmDemos />} />
-          <Route path="finder" element={<CrmFinder />} />
-          <Route path="import" element={<CrmImport />} />
-          <Route path="settings" element={<CrmSettings />} />
+        <Route path="/crm" element={<CrmOnMainSite />}>
+          {CRM_SCREENS}
           <Route path="*" element={<Navigate to="/crm" replace />} />
         </Route>
 
@@ -229,6 +336,7 @@ const App = () => (
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      )}
       {/* A sibling of <Routes> in the same Suspense, so it commits only once
           the routed page has: that is what clears the reload guard. */}
       <RouteRendered />

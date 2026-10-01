@@ -106,7 +106,7 @@ export function Photo({ src, alt, ratio = "4 / 3", priority, className, sizes }:
     return (
       <div className={`flex flex-col items-center justify-center gap-3 bg-[hsl(var(--ds-surface-2))] p-6 text-center text-sm text-[hsl(var(--ds-ink-soft))] ${className || ""}`} style={{ aspectRatio: ratio }}>
         <Monogram size="sm" />
-        <span>{tr(kind === "school" ? EMPTY_COPY.noPhoto : EMPTY_COPY.noPhotoCoaching, lang)}</span>
+        <span>{tr(kind === "school" ? EMPTY_COPY.noPhoto : kind === "dental" ? EMPTY_COPY.noPhotoDental : EMPTY_COPY.noPhotoCoaching, lang)}</span>
       </div>
     );
   }

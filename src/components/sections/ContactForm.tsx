@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Clock, ArrowRight, MessageCircle } from "lucide-re
 import { useSingleton } from "@/lib/cms/context";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { unbreakable } from "@/lib/typography";
+import { liveEmail } from "@/lib/mailbox";
 import { whatsappToUs } from "@/components/lead/core";
 
 /*
@@ -81,10 +82,12 @@ const linkClass =
 export default function ContactForm({ sourcePage = "contact" }: { sourcePage?: string }) {
   const contact = useSingleton("contact");
   const wa = whatsappToUs(contact.whatsappNumber);
+  const email = liveEmail(contact);
 
   const rows = [
     { icon: Phone, label: "Call or WhatsApp", value: unbreakable(contact.phoneDisplay), href: contact.phoneHref },
-    { icon: Mail, label: "Email", value: contact.emailDisplay, href: contact.emailHref },
+    // Shown only once contact@ideovent.in has a mailbox (src/lib/mailbox.ts).
+    ...(email ? [{ icon: Mail, label: "Email", value: email.display, href: email.href }] : []),
     // Area only: FACTS.md has no confirmed street address or postal code.
     { icon: MapPin, label: "Where", value: [contact.address.line1, contact.address.city].filter(Boolean).join(", ") },
     { icon: Clock, label: "Hours", value: contact.businessHours },
@@ -98,12 +101,10 @@ export default function ContactForm({ sourcePage = "contact" }: { sourcePage?: s
         <SectionHeading
           align="left"
           eyebrow="Free website check"
-          title={
-            <>
-              Send us your website address.{" "}
-              <span className="text-muted-foreground">We will tell you what your customers see.</span>
-            </>
-          }
+          // One sentence pair in one colour (1 Oct 2026): a dark first half
+          // with a greyed second half is the two-tone headline habit the
+          // repair took off the rest of the site.
+          title="Send us your website address. We will tell you what your customers see."
           subtitle={contact.responseTimePromise}
         />
         {/* No urgency on the page. The admission-calendar line was true only

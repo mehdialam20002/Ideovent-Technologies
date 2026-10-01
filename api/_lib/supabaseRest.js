@@ -8,6 +8,10 @@
  * lead and every key. Without one, the function can do exactly what the
  * signed-in admin could do from the browser, and RLS in 0006 is the check.
  * The anon key and URL are the public ones Vite already ships to the browser.
+ *
+ * One call has no caller's token: recordPaymentEvent, for the Razorpay webhook.
+ * It is written so it does not need one (the database checks an ingest token
+ * whose SHA-256 the admin stored); read its comment before copying the pattern.
  */
 
 export function supabaseEnv() {
@@ -18,12 +22,14 @@ export function supabaseEnv() {
 
 const TIMEOUT = 8000;
 
-async function call(env, token, path, init = {}) {
+/* token null = no Authorization header at all, so PostgREST runs the call as the
+   anon role (recordPaymentEvent below). Every other call passes the admin's token. */
+async function call(env, token, path, init = {}, timeoutMs = TIMEOUT) {
   return fetch(`${env.url}${path}`, {
     ...init,
-    headers: { apikey: env.anon, authorization: `Bearer ${token}`, "content-type": "application/json",
+    headers: { apikey: env.anon, ...(token ? { authorization: `Bearer ${token}` } : {}), "content-type": "application/json",
       ...(init.headers || {}) },
-    signal: AbortSignal.timeout(TIMEOUT),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 }
 
@@ -129,4 +135,79 @@ export async function recordAttempts(env, token, logged) {
   const results = await Promise.allSettled(jobs);
   const failed = results.filter((r) => r.status === "rejected" || !r.value.ok).length;
   if (failed) console.error(`poster: ${failed} of ${jobs.length} log writes failed`);
+}
+
+/**
+ * One call to a 0010 payments function. Resolves the function's JSON answer;
+ * throws with PostgREST's code and message (ours, raised in 0010, or
+ * Postgres's; neither ever carries a token, a secret or a body). `missing` is
+ * set when the function does not exist yet, that is when 0010 has not been run.
+ */
+async function paymentsRpc(env, token, fn, args, timeoutMs) {
+  const res = await call(env, token, `/rest/v1/rpc/${fn}`, { method: "POST", body: JSON.stringify(args) }, timeoutMs);
+  const text = await res.text().catch(() => "");
+  if (!res.ok) {
+    let why = `HTTP ${res.status}`;
+    let code = "";
+    try {
+      const e = JSON.parse(text);
+      code = String(e.code || "");
+      why = [e.code, e.message].filter(Boolean).join(" ").slice(0, 200) || why;
+    } catch {
+      /* not JSON: keep the status */
+    }
+    const missing = /PGRST202|42883/.test(code) || (res.status === 404 && !code);
+    throw Object.assign(new Error(`${fn}: ${why}`), { status: res.status, missing });
+  }
+  return JSON.parse(text || "null");
+}
+
+/**
+ * Record one Razorpay webhook event: api/razorpay/webhook.js, migration 0010.
+ *
+ * The one call in this file made WITHOUT a signed-in admin, because Razorpay is
+ * the caller. It still uses no service_role key: it sends the public anon key,
+ * the event exactly as Razorpay sent it, and the webhook's INGEST TOKEN
+ * (ingestToken in api/_lib/razorpay.js, derived from the webhook secret after
+ * the signature was checked). public.record_payment_event inserts only when
+ * SHA-256 of that token is the fingerprint the admin stored with "Connect".
+ * The anon key is public, so that check is what stops anyone who has it from
+ * writing a fake "payment captured" row: the table itself grants nobody an
+ * insert. The webhook secret itself is never sent.
+ *
+ * Resolves "recorded", or "duplicate" for an event already stored (Razorpay
+ * delivers at least once). Throws on anything else, so the webhook answers 500
+ * and Razorpay retries it for up to 24 hours. Four seconds at most: Razorpay
+ * counts an answer slower than five seconds as a failure.
+ */
+export async function recordPaymentEvent(env, { token, eventId, body, mode }, timeoutMs = 4000) {
+  const out = await paymentsRpc(env, null, "record_payment_event",
+    { p_token: token, p_event_id: eventId, p_body: body, p_mode: mode || null }, timeoutMs);
+  if (out !== "recorded" && out !== "duplicate") throw new Error(`record_payment_event: unexpected answer ${String(JSON.stringify(out)).slice(0, 60)}`);
+  return out;
+}
+
+/**
+ * "Connect" in /admin/payments (api/razorpay/connect.js): store the webhook's
+ * fingerprint, AS THE SIGNED-IN ADMIN (their token; is_admin() in 0010 is the
+ * check). `sha256` is the fingerprint, never the token or the secret.
+ * Resolves the time it was stored.
+ */
+export async function setPaymentIngest(env, token, sha256) {
+  const at = await paymentsRpc(env, token, "set_payment_ingest", { p_sha256: sha256 }, TIMEOUT);
+  return typeof at === "string" ? at : null;
+}
+
+/**
+ * Is a fingerprint stored, and is it this one? As the signed-in admin.
+ * Resolves { connected, current, connectedAt }. `sha256` may be null (no
+ * webhook secret on the server): `current` is then false.
+ */
+export async function paymentIngestStatus(env, token, sha256) {
+  const s = await paymentsRpc(env, token, "payment_ingest_status", { p_sha256: sha256 || null }, TIMEOUT);
+  return {
+    connected: Boolean(s && s.connected),
+    current: Boolean(s && s.matches),
+    connectedAt: s && typeof s.connectedAt === "string" ? s.connectedAt : null,
+  };
 }

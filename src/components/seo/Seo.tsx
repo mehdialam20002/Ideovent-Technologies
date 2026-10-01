@@ -10,18 +10,29 @@ import {
   type Crumb,
   type Json,
 } from "@/lib/seo/schema";
+import { PAGE_SEO } from "@/lib/seo/pages";
 
 export type { Crumb };
 
 interface SeoProps {
   title?: string;
+  /**
+   * `title` is already the complete <title>, brand included (the helpers in
+   * src/lib/seo/pages.ts build them that way). Without it, a title that does
+   * not name Ideovent gets " · Ideovent Technologies" appended, as before.
+   */
+  fullTitle?: boolean;
   description?: string;
   /** Site-relative ("/og/x.png") or absolute. Made absolute before it is emitted. */
   image?: string;
   path?: string;
   type?: "website" | "article";
   noindex?: boolean;
-  /** Page-specific keywords. Falls back to the site defaults. */
+  /**
+   * IGNORED since 1 Oct 2026. `meta name="keywords"` has no effect in Google or
+   * Bing and only published the target phrases to competitors, so it is no
+   * longer emitted. The prop stays so existing call sites still compile.
+   */
   keywords?: string[];
   /** Trail BELOW Home. Home is prepended for you. */
   breadcrumbs?: Crumb[];
@@ -43,12 +54,12 @@ interface SeoProps {
  */
 export function Seo({
   title,
+  fullTitle: titleIsComplete,
   description,
   image,
   path,
   type = "website",
   noindex,
-  keywords,
   breadcrumbs,
   schema,
   publishedTime,
@@ -60,8 +71,25 @@ export function Seo({
   const d = settings.defaultSeo;
   const host = d.canonicalHost.replace(/\/$/, "");
 
-  const fullTitle = title ? `${title} · ${settings.siteName}`: d.title;
-  const desc = description || d.description;
+  /*
+    A static public route listed in src/lib/seo/pages.ts takes its title and
+    description FROM THERE, whatever the page passes: the same two values are
+    written into that route's prerendered HTML at build time
+    (scripts/prerender-heads.mjs), and a title that changed once JavaScript ran
+    would be one page telling Google two things. Edit them in pages.ts. A
+    noindex render (a not-found state that reuses a list page's path) is left
+    alone.
+  */
+  const registered = !noindex && path ? PAGE_SEO[path] : undefined;
+  const fullTitle = registered
+    ? registered.title
+    : title
+      ? titleIsComplete || /ideovent/i.test(title)
+        ? title
+        : `${title} · ${settings.siteName}`
+      : d.title;
+  const desc = registered?.description || description || d.description;
+  if (!image && registered?.image) image = registered.image;
   /* Everything under /og/ is a generated 1200x630 card, scripts/build_brand_assets.py
      builds every file in that folder to exactly that size from the real logo, so
      the dimensions below can be asserted for any of them. A blog cover or a case
@@ -70,7 +98,6 @@ export function Seo({
   const img = absolute(host, image || d.ogImage);
   const isGeneratedCard = !image || /(^|\/)og\/[^/]+$/.test(image);
   const url = `${host}${path || "/"}`;
-  const kw = (keywords?.length ? keywords: d.keywords).join(", ");
 
   const graph: Json[] = [
     organizationNode(settings, contact, socials),
@@ -102,16 +129,19 @@ export function Seo({
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={desc} />
-      <meta name="keywords" content={kw} />
-      <meta name="robots" content={noindex ? "noindex, nofollow": "index, follow"} />
-      <link rel="canonical" href={url} />
+      <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"} />
+      {/* No canonical on a noindex render (1 Oct 2026). A not-found state, the
+          admin login, a pitch or a checkout page said "noindex" and, in the same
+          head, "the real copy of this page is <url>", which for a render with no
+          path was the home page: two signals that contradict each other. */}
+      {!noindex && <link rel="canonical" href={url} />}
 
       <meta property="og:site_name" content={settings.siteName} />
       <meta property="og:locale" content="en_IN" />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={desc} />
       <meta property="og:type" content={type} />
-      <meta property="og:url" content={url} />
+      {(!noindex || path) && <meta property="og:url" content={url} />}
       <meta property="og:image" content={img} />
       {isGeneratedCard && <meta property="og:image:width" content="1200" />}
       {isGeneratedCard && <meta property="og:image:height" content="630" />}

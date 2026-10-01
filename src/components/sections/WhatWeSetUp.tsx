@@ -15,11 +15,14 @@ import { staggerContainer, fadeUp } from "@/lib/motion";
  * line, deliverable chips, the arrow link), fed three rows by the outcome the
  * owner wants: be found and contacted, take busywork off the team, build your
  * own product. Schools and coaching keep one chip in row 1, as one industry
- * among many. Copy: _assets/HOMEPAGE-COPY-DECK-V2.md A4.
+ * among many, and (28 Sep 2026) dental clinics one more, for the same reason:
+ * an industry we have ready designs for, never the studio's identity.
+ * Copy: _assets/HOMEPAGE-COPY-DECK-V2.md A4.
  *
- * Every chip is something we build. Google Business Profile setup, SEO
- * rankings and WhatsApp automation are deliberately NOT here until Mehdi
- * confirms they are offered (deck V2 decision G2).
+ * Every chip is something we build or do. Local SEO (Google Business Profile,
+ * local pages, reviews plan, monthly report) joined on 1 Oct 2026 when Mehdi
+ * priced it; rankings are never promised. WhatsApp automation stays out until
+ * Mehdi confirms it is offered (deck V2 decision G2).
  *
  * Strings are inline, as the proof band's are in Index.tsx.
  */
@@ -32,8 +35,19 @@ const ROWS = [
       "Google Maps location", "Call and WhatsApp buttons", "Enquiry form that reaches you",
       "Prices and timings on a page", "Your real photos", "Pages you update yourself",
       "Online store with Razorpay payments", "Schools and coaching: fees, batch timings, admission form",
+      "Dental clinics: treatments, starting prices, appointment requests",
     ],
-    link: { label: "See what is included", href: "/services/website-development" },
+    link: { label: "Website development", href: "/services/website-development" },
+  },
+  /* 1 Oct 2026: Mehdi confirmed local SEO as a monthly add-on (his pricing of
+     that day), so it has a row. Same honesty as the service page: no position
+     is promised. The link text says where it goes. */
+  {
+    title: "Show up when people nearby search",
+    pill: "Local SEO, monthly",
+    line: "Your Google Business Profile set up and kept current, pages that answer what people search for in your area, a way to ask every customer for a review, and a plain report every month. Nobody can promise a position on Google, and we do not.",
+    chips: ["Google Business Profile", "Local pages on your site", "On-page SEO", "Reviews plan", "Monthly report"],
+    link: { label: "Local SEO services", href: "/services/seo" },
   },
   {
     title: "Take busywork off your team",
@@ -43,7 +57,7 @@ const ROWS = [
       "Lead tracker", "Staff and attendance", "Orders and stock", "Bookings", "Admin dashboard",
       "Logins for each role", "Reports to Excel",
     ],
-    link: { label: "Every service", href: "/services" },
+    link: { label: "Custom software", href: "/services/custom-software-development" },
   },
   {
     title: "Build your own product",
@@ -68,11 +82,10 @@ export default function WhatWeSetUp() {
           <div className="flex flex-col gap-5 border-t-2 border-secondary/70 pt-8 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
               <Eyebrow>What we set up</Eyebrow>
-              {/* Weight contrast, no serif: the accent is spent on the hero and
-                  the work section. */}
-              <h2 className="mt-5 text-display font-display font-light">
-                Built around how your customers choose,{" "}
-                <span className="font-extrabold">and how your team works</span>.
+              {/* One weight, no accent (1 Oct 2026, see `.font-thin-display` in
+                  src/index.css). */}
+              <h2 className="mt-3 text-display font-display font-semibold">
+                Built around how your customers choose, and how your team works.
               </h2>
             </div>
             <p className="max-w-sm text-sm text-muted-foreground text-pretty md:pb-2">
@@ -139,7 +152,7 @@ export default function WhatWeSetUp() {
         <Reveal className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <Link
             to="/services"
-            className="group inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-5 text-sm
+            className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-5 text-sm
                        font-medium transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
           >
             Every service in full

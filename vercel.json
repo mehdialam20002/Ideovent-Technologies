@@ -13,6 +13,17 @@
   },
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "ideovent.vercel.app"
+        }
+      ],
+      "destination": "https://www.ideovent.in/:path*",
+      "permanent": true
+    },
+    {
       "source": "/portfolio",
       "destination": "/work",
       "permanent": true
@@ -51,6 +62,67 @@
       "source": "/cookie-policy",
       "destination": "/privacy",
       "permanent": true
+    },
+    {
+      "source": "/robots.txt",
+      "has": [
+        {
+          "type": "host",
+          "value": "crm.ideovent.in"
+        }
+      ],
+      "destination": "/robots-crm.txt",
+      "permanent": false
+    },
+    {
+      "source": "/services/seo-digital-marketing",
+      "destination": "/services/seo",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/1",
+      "destination": "/blog/how-seo-can-boost-your-business-growth",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/2",
+      "destination": "/blog/why-every-business-must-have-a-website-in-2025",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/3",
+      "destination": "/blog/why-a-high-performance-website-is-essential-for-small-business-growth-and-how-id",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/4",
+      "destination": "/blog/10-common-website-mistakes-small-businesses-make-and-how-ideovent-fixes-them",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/5",
+      "destination": "/blog/what-to-look-for-in-a-tech-partner-and-how-we-work",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/6",
+      "destination": "/blog/one-team-for-design-build-and-seo-why-it-beats-juggling-vendors",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/7",
+      "destination": "/blog/how-ideovent-technologies-empowers-small-businesses-in-new-delhi",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/8",
+      "destination": "/blog/what-working-with-ideovent-technologies-is-like",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/9",
+      "destination": "/blog/why-digital-transformation-is-the-key-to-business-growth-in-2025-an-ideovent-per",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -88,7 +160,7 @@
       "destination": "/api/share?kind=pitch&slug=:slug"
     },
     {
-      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|crm|demos|disclaimer|eduflow|faq|finder|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|work)/?$)[^/.]+)",
+      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|work)/?$)[^/.]+)",
       "has": [
         {
           "type": "header",
@@ -148,6 +220,15 @@
       ]
     },
     {
+      "source": "/(work|blog-covers|og|icons)/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
       "source": "/pitch/(.*)",
       "headers": [
         {
@@ -166,7 +247,31 @@
       ]
     },
     {
-      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|contact|cookie-policy|crm|demos|disclaimer|eduflow|faq|finder|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|work)/?$)[^/.]+)",
+      "source": "/checkout/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|work)/?$)[^/.]+)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "crm.ideovent.in"
+        }
+      ],
       "headers": [
         {
           "key": "X-Robots-Tag",

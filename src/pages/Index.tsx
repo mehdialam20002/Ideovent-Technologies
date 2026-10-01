@@ -14,23 +14,16 @@ import Testimonials from "@/components/sections/Testimonials";
 import FaqSection from "@/components/sections/FaqSection";
 import ContactForm from "@/components/sections/ContactForm";
 import { Reveal } from "@/components/motion/Reveal";
-import { Marquee } from "@/components/ui/marquee";
 
 /*
-  The strip: what any growing business needs online.
-
-  It used to be sixteen framework names (React, Next.js, Supabase and so on),
-  then a list of school-site items. Mehdi, 26 Sep 2026: the page must be about
-  the buyer's business, and the studio builds for every kind of business, not
-  only schools. So the strip carries what we set up, in the owner's words, with
-  one trust item last and no rupee figure. The tech stack lives on /services.
-  Copy: _assets/HOMEPAGE-COPY-DECK-V2.md A2.
+  NO STRIP UNDER THE HERO (1 Oct 2026). A scrolling band of ten phrases
+  ("Found on Google Maps · Opens fast on a phone · ...") sat here. The hero
+  brief (scratchpad seo-pricing/hero-brief.md, item 8) lists it as the ticker
+  slot every generated page has under its hero, and Mehdi's complaint was that
+  the top of the page looks AI-made. The hero's sample frames now close the
+  first section, and what we set up is said in WhatWeSetUp with its links.
+  src/components/ui/marquee.tsx is left in place, unused.
 */
-const WHAT_WE_SET_UP = [
-  "Found on Google Maps", "Opens fast on a phone", "WhatsApp button",
-  "Enquiry form that reaches you", "Online payments", "Bookings", "Orders",
-  "Staff dashboard", "Your own app", "Fixed price in writing",
-];
 
 /*
   The proof band's links. Client sites from _assets/FACTS.md (VERIFIED CLIENT
@@ -47,7 +40,7 @@ const LIVE_SITES = [
 ];
 
 const PROOF_PILL =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4 text-xs font-medium " +
+  "inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-4 text-xs font-medium " +
   "transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70";
 
 /**
@@ -61,7 +54,7 @@ const PROOF_PILL =
  * value before the pitch, price after value.
  *
  *      1. Hero            who it is for, what they want, one free next step
- *      2. Strip           what we set up for any business (was framework names)
+ *      2. (Strip)         removed 1 Oct 2026, see the note at the top of this file
  *      3. CustomerProblems what stops a customer, what slows a team, and the fix
  *      4. WhatWeSetUp     be found / take busywork off / build your product
  *      5. WorkShowcase    proof anyone can open
@@ -79,8 +72,7 @@ const PROOF_PILL =
  * generated page feels." So the vertical padding steps deliberately and no two
  * neighbours share a value:
  *
- *     hero            its own top padding, tight bottom
- *     strip           a 24px band, a rule rather than a section
+ *     hero            its own top padding, tight bottom (ends on the sample frames)
  *     problems        pt-12 pb-2 → lg pt-20           a box, the next opens on a rule
  *     what we set up  pt-16 pb-4 → lg pt-24 pb-8      opens on a gold rule; short
  *                                                     bottom, the work brings its own top
@@ -124,24 +116,6 @@ export default function Index() {
       <Seo path="/" />
       <Hero />
 
-      {/* Decorative strip (what we set up for your business). A band, not a section: it is a hairline rule with
-          words in it, and it is what separates the hero from the work without
-          spending a screen height on nothing.
-
-          The duplicated half of the marquee is hidden from assistive tech so the
-          list is not read out twice; the /70 opacity that used to sit on this
-          text measured 4.48:1 against the old near-black background, just under
-          the 4.5:1 AA floor, so it is full muted-foreground instead. Re-measured
-          on the navy-and-gold palette: #A3B3D1 on #081738 is 8.34:1 in dark and
-          #48566A on #F8FAFC is 7.13:1 in light. Do not put an opacity back on it. */}
-      <div className="border-y border-border/60 py-6">
-        <Marquee duration={40} label="What we set up for your business">
-          {WHAT_WE_SET_UP.map((t) => (
-            <span key={t} className="mx-8 font-display text-lg font-medium text-muted-foreground">{t}</span>
-          ))}
-        </Marquee>
-      </div>
-
       {/* Value before the pitch: what stops a customer and what slows a team,
           then what we set up about it, for any growing business. */}
       <CustomerProblems />
@@ -168,14 +142,13 @@ export default function Index() {
         <div className="container-page">
           <Reveal>
             <div className="rounded-3xl border border-border bg-card/50 p-6 sm:p-10">
-              <h2 className="max-w-xl font-display text-xl font-light leading-snug sm:text-2xl">
-                You do not have to take{" "}
-                <span className="font-extrabold">our word</span> for any of it
+              <h2 className="max-w-xl font-display text-xl font-semibold leading-snug sm:text-2xl">
+                You do not have to take our word for any of it
               </h2>
 
               <dl className="mt-7 grid gap-x-8 gap-y-7 sm:grid-cols-3">
                 <div>
-                  <dt className="font-display text-sm font-semibold uppercase tracking-wider text-primary">
+                  <dt className="font-display text-base font-semibold text-foreground">
                     Open the live sites
                   </dt>
                   <dd className="mt-2 text-sm text-muted-foreground text-pretty">
@@ -199,7 +172,7 @@ export default function Index() {
                 </div>
 
                 <div>
-                  <dt className="font-display text-sm font-semibold uppercase tracking-wider text-primary">
+                  <dt className="font-display text-base font-semibold text-foreground">
                     Read how the software works
                   </dt>
                   {/* No "open it and click around": signed out, both apps are a
@@ -223,7 +196,7 @@ export default function Index() {
                 </div>
 
                 <div>
-                  <dt className="font-display text-sm font-semibold uppercase tracking-wider text-primary">
+                  <dt className="font-display text-base font-semibold text-foreground">
                     Get it in writing
                   </dt>
                   {/* Was "Read the price first" with a "See what it costs" link.

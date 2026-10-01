@@ -248,6 +248,45 @@ export function packagesForMarket(market: PitchMarket): PitchPackageOption[] {
 }
 
 /**
+ * THE SAME PACKAGES, IN A DENTAL CLINIC'S WORDS (30 Sep 2026).
+ *
+ * Two India rows are named for schools, "School website" and "Coaching or
+ * school portal". That reads right on a school's page and wrong on a
+ * dentist's, where "built around admission season" would prove the page was a
+ * blast. On a record whose `instituteType` is "dental" the label, the summary
+ * and the list change. The id, the range, the timeline and the link do not,
+ * so a clinic is quoted exactly the figure /pricing shows. The portal row
+ * takes /pricing's own heading, "Portal or web app".
+ */
+const DENTAL_WORDS: Record<string, Pick<PitchPackageOption, "label" | "summary" | "includes">> = {
+  "school-website": {
+    label: "Clinic website",
+    summary: "Up to eight pages, built around appointment requests.",
+    includes: [
+      "Up to eight pages",
+      "Appointment request form delivered to you",
+      "Notices and timings area you update yourselves",
+      "Photo gallery",
+      "Doctor and staff listing",
+      "Mobile first, SSL and analytics",
+      "Two revision rounds at the design stage",
+    ],
+  },
+  portal: {
+    label: "Portal or web app",
+    summary: "A system that runs the front desk, not a website with a login on it.",
+    includes: [
+      "Patient records",
+      "Payment records with printable receipts",
+      "Daily staff attendance marking",
+      "Enquiry and appointment request capture",
+      "One admin role",
+      "Reports exportable to Excel",
+    ],
+  },
+};
+
+/**
  * The recommended package, or null.
  *
  * Null is a normal state and both designs must handle it: Mehdi often has a
@@ -255,13 +294,17 @@ export function packagesForMarket(market: PitchMarket): PitchPackageOption[] {
  * anyone has looked at the scope is a page that gets argued with.
  *
  * A record whose package belongs to the other market also returns null rather
- * than quoting rupees to a prospect in Manchester.
+ * than quoting rupees to a prospect in Manchester. A dental clinic's record
+ * gets the package in its own words (DENTAL_WORDS above), at the same price.
  */
-export function pitchPackage(page: Pick<PitchPage, "recommendedPackage" | "market">): PitchPackageOption | null {
+export function pitchPackage(
+  page: Pick<PitchPage, "recommendedPackage" | "market"> & Partial<Pick<PitchPage, "instituteType">>,
+): PitchPackageOption | null {
   if (!page.recommendedPackage) return null;
   const found = PITCH_PACKAGES.find((p) => p.id === page.recommendedPackage);
-  if (!found) return null;
-  return found.market === pitchMarket(page) ? found : null;
+  if (!found || found.market !== pitchMarket(page)) return null;
+  const words = page.instituteType === "dental" ? DENTAL_WORDS[found.id] : undefined;
+  return words ? { ...found, ...words } : found;
 }
 
 /* ── Slugs ────────────────────────────────────────────────────────────── */

@@ -24,9 +24,10 @@ import {
   editedLabel, matchesFilters, openLabel, slotFor, slotIndex, sortDemoSites,
 } from "@/lib/demo/slots";
 /* Meta and loaders only; no template content is imported here. */
-import { templateMeta } from "@/lib/demo/templates";
+import { TEMPLATES, templateMeta, templatesOfKind } from "@/lib/demo/templates";
 import { hasProvisionalTemplateSlug } from "@/lib/demo/templates/fromTemplate";
 import { AdminField } from "./fields";
+import { demoFormFields, nameFieldFor } from "./demoSiteFormFields";
 import { DemoCarriedPanel } from "./DemoCarriedPanel";
 import { usePosterImport } from "./poster/usePosterImport";
 import { LinkNotes } from "./DemoLinkNotes";
@@ -75,7 +76,8 @@ import { cn } from "@/lib/utils";
  * every other collection, so a field added there appears here with no work.
  * Only `slug`, `status` and `kind` are drawn by this component, and each for a
  * stated reason: the slug is validated, the status asks a question, and the
- * kind picks which of the two templates renders with no safe default.
+ * kind picks which design renders (school, coaching or dental clinic) with no
+ * safe default.
  */
 
 const STATUS_STYLES: Record<DemoStatus, string> = {
@@ -90,6 +92,12 @@ const KIND_LABEL: Record<DemoKind, string> = {
   coaching: "Coaching",
   dental: "Dental clinic",
 };
+
+/* A dental record is a clinic (28 Sep 2026): which fields the form shows, and in
+   whose words, is ./demoSiteFormFields.ts (demoFormFields, nameFieldFor). */
+
+/** "the institute" or "the clinic", for the sentences below. */
+const whoIs = (kind: DemoKind | undefined) => (kind === "dental" ? "clinic" : "institute");
 
 function Chip({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -157,7 +165,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
     : null;
   const nameError =
     editing && !(editing.instituteName || "").trim()
-      ? "An institute name is required. It is the masthead of what they will read as their own website."
+      ? `${editing.kind === "dental" ? "A clinic" : "An institute"} name is required. It is the masthead of what they will read as their own website.`
       : null;
 
   /* ── Opening records ──────────────────────────────────────────────────── */
@@ -382,7 +390,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
       <div className="mb-6 rounded-2xl border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
         <p className="font-medium text-foreground">How these work</p>
         <p className="mt-1">
-          One demo per institute, at <code className="rounded bg-muted px-1">/site/their-name</code>
+          One demo per institute or clinic, at <code className="rounded bg-muted px-1">/site/their-name</code>
           . It is their own website with their name on it, not a proposal: the pitch page at{" "}
           <code className="rounded bg-muted px-1">/their-name</code> is the one that argues and
           quotes a price. Only a demo set to{" "}
@@ -392,12 +400,17 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
           behind this login.
         </p>
         <p className="mt-2">
-          <strong className="text-foreground">Starting from a ready design?</strong> The ten fixed
-          designs are in{" "}
+          <strong className="text-foreground">Starting from a ready design?</strong> The{" "}
+          {TEMPLATES.length} fixed designs ({templatesOfKind("school").length} school,{" "}
+          {templatesOfKind("coaching").length} coaching, {templatesOfKind("dental").length} dental
+          clinic) are in{" "}
           <Link to="/admin/templates" className="text-primary underline underline-offset-2">
             Templates
           </Link>
-          . Duplicating one lands here as a draft with the example institute’s facts cleared.
+          . Duplicating one lands here as a draft with the example institute’s or clinic’s contact
+          details cleared. A demo made from a template or a poster is also added to the CRM as a
+          lead (a dental lead for a clinic) while the CRM setting “Add every new demo to the CRM”
+          is on.
         </p>
         <p className="mt-2">
           <strong className="text-foreground">Duplicate rather than reuse.</strong> Editing a demo
@@ -413,9 +426,10 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
         </p>
         <p className="mt-2">
           A phone number, an email or an address goes on a record{" "}
-          <strong className="text-foreground">only if you copied it from their own site</strong>.
-          Never a plausible one. A wrong number is published on a page a parent believes is the
-          school’s, and a real stranger takes the calls.
+          <strong className="text-foreground">only if you copied it from their own site</strong>{" "}
+          (or, for a poster import, from their own poster or visiting card). Never a plausible one.
+          A wrong number is published on a page a parent or a patient believes is the school’s or
+          the clinic’s, and a real stranger takes the calls.
         </p>
       </div>
 
@@ -637,12 +651,12 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                         setSending(site);
                         setSentTo(slotFor(site.id, slots).sentTo || "");
                       }}
-                      aria-label={`Mark the demo for ${site.instituteName || "an unnamed institute"} as sent`}
+                      aria-label={`Mark the demo for ${site.instituteName || `an unnamed ${whoIs(site.kind)}`} as sent`}
                       disabled={Boolean(issue) || !(site.instituteName || "").trim()}
                       title={
                         issue ||
                         (!(site.instituteName || "").trim()
-                          ? "Give it the institute's name first. A fresh duplicate of a template has none."
+                          ? `Give it the ${whoIs(site.kind)}'s name first. A fresh duplicate of a template has none.`
                           : undefined)
                       }
                       className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs hover:border-success/50 disabled:cursor-not-allowed disabled:opacity-40"
@@ -834,7 +848,7 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
               {/* Name and link, wired together and validated. */}
               <div className="sm:col-span-2">
                 <AdminField
-                  field={schema.fields[0]}
+                  field={nameFieldFor(schema.fields[0], editing.kind)}
                   value={editing.instituteName}
                   onChange={(v) => {
                     // The link follows the name only while it has not been
@@ -914,8 +928,9 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                 />
               </div>
 
-              {/* Kind. Drawn here because it decides which of the two templates
-                  renders and there is no safe default to fall back on. */}
+              {/* Kind. Drawn here because it decides which design renders
+                  (school, coaching or dental clinic) and there is no safe
+                  default to fall back on. */}
               <div>
                 <label htmlFor="demo-kind" className="text-sm font-medium">
                   What they are
@@ -966,8 +981,9 @@ export function DemoSitesEditor({ schema }: { schema: CollectionSchema }) {
                 <DemoPhotoSlots site={editing} onChange={setEditing} />
               </div>
 
-              {/* The rest of the form, straight from the schema. */}
-              {schema.fields.slice(1).map((f) => (
+              {/* The rest of the form, straight from the schema (a clinic's
+                  words and pages on a dental record, see demoFormFields). */}
+              {demoFormFields(schema.fields.slice(1), editing, sites.find((s) => s.id === editing.id)).map((f) => (
                 <div key={f.name} className={cn(f.full && "sm:col-span-2")}>
                   <AdminField
                     field={f}

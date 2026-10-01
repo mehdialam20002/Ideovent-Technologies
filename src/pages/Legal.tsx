@@ -5,6 +5,8 @@ import { Reveal } from "@/components/motion/Reveal";
 import { useDeferredBodies, useSingleton } from "@/lib/cms/context";
 import { sanitizeRich } from "@/lib/sanitize";
 import type { LegalKind } from "@/lib/cms/types";
+import { legalSeo } from "@/lib/seo/pages";
+import { liveEmail, whatsappInstead } from "@/lib/mailbox";
 
 /** Route path for each legal document. Keep in sync with App.tsx and public/_redirects. */
 const PATHS: Record<LegalKind, string> = {
@@ -41,6 +43,10 @@ export default function Legal({ kind }: { kind: LegalKind }) {
   // and the chunk landing, and it is what the skeleton below waits on.
   const bodiesReady = useDeferredBodies();
   const legal = useSingleton("legal");
+  const contact = useSingleton("contact");
+  // No email until contact@ideovent.in has a mailbox (src/lib/mailbox.ts).
+  const email = liveEmail(contact);
+  const whatsapp = whatsappInstead(contact.whatsappNumber, "Hi Ideovent, I have a question about one of your policies.");
   const doc = legal[kind];
   const path = PATHS[kind];
 
@@ -55,9 +61,12 @@ export default function Legal({ kind }: { kind: LegalKind }) {
           previously noindex, which is why nothing external could ever link to them.
           A draft page is the one exception. It should not be indexed while it is
           still full of blanks. */}
+      {/* "Privacy Policy | Ideovent" and the description: legalSeo(), the same
+          helper the build uses for this page's prerendered head. */}
       <Seo
-        title={doc.title}
-        description={BLURBS[kind]}
+        title={legalSeo(kind, doc.title).title}
+        fullTitle
+        description={legalSeo(kind, doc.title).description}
         path={path}
         noindex={isDraft}
         breadcrumbs={[{ name: doc.title, path }]}
@@ -113,14 +122,28 @@ export default function Legal({ kind }: { kind: LegalKind }) {
                     either side.
                   </p>
                   <p className="mt-3">
-                    If you need a position on anything here before then, email{" "}
-                    <a
-                      className="text-primary underline underline-offset-4"
-                      href="mailto:contact@ideovent.in"
-                    >
-                      contact@ideovent.in
-                    </a>
-.
+                    If you need a position on anything here before then,{" "}
+                    {email ? (
+                      <>
+                        email{" "}
+                        <a className="text-primary underline underline-offset-4" href={email.href}>
+                          {email.display}
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        message us on WhatsApp at{" "}
+                        <a
+                          className="whitespace-nowrap text-primary underline underline-offset-4"
+                          href={whatsapp || contact.phoneHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {contact.phoneDisplay}
+                        </a>
+                      </>
+                    )}
+                    .
                   </p>
                 </div>
 )}
@@ -130,7 +153,12 @@ export default function Legal({ kind }: { kind: LegalKind }) {
                    aria-busy + a polite live region means a screen reader is told the
                    document is arriving rather than being handed an empty <article>;
                    the bars are aria-hidden because they say nothing. */
-                <div aria-busy="true" aria-live="polite">
+                /* min-h: the skeleton holds roughly the policy's own height, so the
+                   footer does not jump down a whole page when the text lands. That
+                   jump measured CLS 0.31 to 0.38 on /privacy (SEO audit, 1 Oct 2026;
+                   0.1 is the limit Google calls good). The shortest policy is about
+                   two and a half phone screens long. */
+                <div aria-busy="true" aria-live="polite" className="min-h-[250vh] md:min-h-[180vh]">
                   <p className="sr-only">Loading the policy text.</p>
                   <div aria-hidden="true" className="space-y-3">
                     {[

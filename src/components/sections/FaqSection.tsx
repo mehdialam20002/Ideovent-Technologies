@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { useCollection } from "@/lib/cms/context";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Reveal } from "@/components/motion/Reveal";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { FaqList } from "@/components/ui/faq-list";
 
 export default function FaqSection({
   category,
@@ -21,22 +21,16 @@ export default function FaqSection({
           <SectionHeading
             align="left"
             eyebrow="FAQ"
-            /* Weight contrast, not the serif accent: this block is embedded on
-               the home page, /services and /pricing, so an accent here would be
-               charged against three pages' budget of two. */
-            title={<><span className="font-light">Questions,</span> <span className="font-extrabold">answered</span></>}
+            /* Plain since 1 Oct 2026: one weight, no accent. */
+            title="Questions, answered"
             subtitle="What owners ask us first. The answers match the agreement you sign."
           />
 )}
         <Reveal>
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((f) => (
-              <AccordionItem key={f.id} value={f.id} className="border-border">
-                <AccordionTrigger className="font-display text-base font-medium">{f.question}</AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
-              </AccordionItem>
-))}
-          </Accordion>
+          {/* Native <details>: every answer is in the page's HTML, closed or
+              open. The Radix accordion rendered only the open one, so none of
+              these answers could be read by a search engine. See ui/faq-list. */}
+          <FaqList faqs={faqs} />
 
           {/*
             /faq had exactly one inbound link in the whole of src/: the footer.
@@ -48,7 +42,7 @@ export default function FaqSection({
           {showAllLink && (
             <Link
               to="/faq"
-              className="group mt-8 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-5 text-sm
+              className="group mt-8 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-5 text-sm
                          font-medium transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
             >
               Every question we get asked

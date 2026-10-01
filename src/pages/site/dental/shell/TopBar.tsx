@@ -6,7 +6,7 @@
  */
 
 import { MessageCircle, Phone } from "lucide-react";
-import { tr, trf } from "@/lib/demo/site/bilingual";
+import { bi, tr, trf } from "@/lib/demo/site/bilingual";
 import { useSite } from "@/lib/demo/site/context";
 import { DENTAL_COPY, OpenNowChip, dentalContact, useBooking, whatsappHref } from "@/lib/demo/ui/dental";
 
@@ -21,7 +21,10 @@ export function TopBar() {
       <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 2xl:max-w-[1400px]">
         <div className="flex min-w-0 items-center gap-3">
           <OpenNowChip className="text-[13px]" />
-          <span className="hidden truncate opacity-85 md:inline">{site.city}</span>
+          {/* The city in the reader's language (hi.city on the Hindi page), as
+              every other page prints it; the English city when there is no
+              Hindi one (1 Oct 2026). */}
+          <span className="hidden truncate opacity-85 md:inline">{bi(site, "city", lang)}</span>
         </div>
         <div className="flex items-center gap-4">
           {c.emergencyTel && (

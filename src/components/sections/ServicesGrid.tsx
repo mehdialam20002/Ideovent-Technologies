@@ -52,22 +52,11 @@ export default function ServicesGrid({
             <div className="flex flex-col gap-5 border-t-2 border-secondary/70 pt-8 md:flex-row md:items-end md:justify-between">
               <div className="max-w-2xl">
                 <Eyebrow>What we do</Eyebrow>
-                {/*
-                  Weight contrast inside the headline, not a second serif accent:
-                  _assets/DESIGN-DIRECTION.md §3 ("Set display headings at 300
-                  with a single 800 word, or the reverse. The jump is the
-                  design") and §1 (the serif accent runs twice per page at most,
-                  and on this page both of those are spent, on the work section
-                  and on the closing call to action).
-
-                  font-light is Sora 300 and font-extrabold is Sora 800, both of
-                  which the page now loads: the family is requested as
-                  wght@300..800 rather than as the old 400 and 600, which is the
-                  pair the brief calls "looks like nobody chose".
-                */}
-                <h2 className="mt-5 text-display font-display font-light">
-                  What we build,{" "}
-                  <span className="font-extrabold">and what is in it</span>.
+                {/* One weight, no accent (1 Oct 2026). The 300-to-800 jump and
+                    the serif accent both read as generated next to the plain
+                    hero; see `.font-thin-display` in src/index.css. */}
+                <h2 className="mt-3 text-display font-display font-semibold">
+                  What we build, and what is in it.
                 </h2>
               </div>
               <p className="max-w-sm text-sm text-muted-foreground text-pretty md:pb-2">
@@ -154,7 +143,7 @@ export default function ServicesGrid({
           <Reveal className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Link
               to="/services"
-              className="group inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-5 text-sm
+              className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-5 text-sm
                          font-medium transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
             >
               Every service in full
@@ -167,7 +156,7 @@ export default function ServicesGrid({
             */}
             <Link
               to="/pricing"
-              className="group inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-5 text-sm
+              className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-5 text-sm
                          font-medium text-primary transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
             >
               What each one costs, tier by tier

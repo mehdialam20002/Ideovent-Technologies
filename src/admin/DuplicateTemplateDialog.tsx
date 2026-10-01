@@ -56,7 +56,7 @@ export function DuplicateTemplateDialog({
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {clinic
-            ? "The copy arrives already filled: treatments, fees, doctors, reviews, cases, photos and every Hindi line. The example clinic’s name becomes this one everywhere. Contact details, branch addresses and the emergency number are left empty for you to add from their own website. Reviews, trust figures, doctors and before-after stay labelled as sample until you replace them."
+            ? "The copy arrives already filled: treatments, fees, doctors, reviews, cases, photos and every Hindi line. The example clinic’s name becomes this one everywhere. Contact details, branch addresses and the emergency number are left empty for you to add from their own website. Reviews, trust figures, doctors, before-after and the history on the About page stay labelled as sample until you replace them."
             : "The copy arrives already filled: courses, fees, teachers, results, reviews, photos and every Hindi line. The example institute’s name becomes this one everywhere. Contact details are left empty for you to add from their own website."}
         </p>
 

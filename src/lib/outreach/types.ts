@@ -1,5 +1,6 @@
 /**
- * Outreach: the admin's mini CRM for cold outreach (schools and coaching).
+ * Outreach: the admin's mini CRM for cold outreach (schools, coaching
+ * institutes and, from 28 Sep 2026, dental clinics).
  *
  * These records live in their own Supabase tables (0007_outreach.sql), behind
  * admin-only RLS, and in LOCAL mode in localStorage under `ideovent_outreach_v1`.
@@ -43,7 +44,16 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   do_not_contact: "Do not contact",
 };
 
-export type LeadKind = "school" | "coaching" | "other";
+/** "dental" added 28 Sep 2026: dental clinics are a lead kind of their own (templates d1 to d7). */
+export type LeadKind = "school" | "coaching" | "dental" | "other";
+export const LEAD_KIND_VALUES: LeadKind[] = ["school", "coaching", "dental", "other"];
+/** Same words as the admin's KIND_LABEL (src/admin/outreach/ui.tsx). */
+export const LEAD_KIND_LABELS: Record<LeadKind, string> = {
+  school: "School",
+  coaching: "Coaching",
+  dental: "Dental clinic",
+  other: "Other",
+};
 export type LeadPitch = "new_website" | "fix_website";
 /** The value of `source` on a lead the Lead Finder added. */
 export const LEAD_FINDER_SOURCE = "lead-finder";
@@ -108,7 +118,11 @@ export interface OutreachEvent {
 }
 
 export interface OutreachSettings {
-  /** The Google account Gmail compose opens in (authuser=). Empty = browser default. */
+  /**
+   * RETIRED (28 Sep 2026): the "Gmail account for Open in Gmail" setting.
+   * E-mail opens in the mail app only and nothing reads this; it is kept so
+   * old saved settings still load and save.
+   */
   senderGmail?: string;
   signature: string;
   /**

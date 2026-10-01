@@ -27,6 +27,8 @@ export const SHELL_COPY = {
   demoClass: { en: "Free demo class", hi: "फ्री डेमो क्लास" },
   bookDemo: { en: "Book a free demo", hi: "फ्री डेमो बुक करें" },
   coursesAndFees: { en: "Courses and fees", hi: "कोर्स और फीस" },
+  /* The dental "book" page's own label (src/lib/demo/site/pages.ts). */
+  bookAppointment: { en: "Book appointment", hi: "अपॉइंटमेंट बुक करें" },
   login: { en: "Login", hi: "लॉगिन" },
   findUs: { en: "Find us on the map", hi: "मैप पर देखें" },
   moreLinks: { en: "More", hi: "और" },
@@ -50,8 +52,14 @@ export const EMPTY_COPY = {
     en: "The institute has not added this part of the site yet. Courses and contact details are ready.",
     hi: "यह हिस्सा अभी जोड़ा नहीं गया है। कोर्स और संपर्क की जानकारी तैयार है।",
   },
+  /* A dental clinic's page (30 Sep 2026) never says courses, campus or centre. */
+  bodyDental: {
+    en: "The clinic has not added this part of the site yet. Appointments and contact details are ready.",
+    hi: "यह हिस्सा अभी जोड़ा नहीं गया है। अपॉइंटमेंट और संपर्क की जानकारी तैयार है।",
+  },
   noPhoto: { en: "Photographs of the campus will appear here", hi: "कैंपस की तस्वीरें यहाँ दिखेंगी" },
   noPhotoCoaching: { en: "Photographs of the centre will appear here", hi: "सेंटर की तस्वीरें यहाँ दिखेंगी" },
+  noPhotoDental: { en: "Photographs of the clinic will appear here", hi: "क्लिनिक की तस्वीरें यहाँ दिखेंगी" },
 } satisfies Record<string, Bilingual>;
 
 /** The footer's four groups, per kind. */

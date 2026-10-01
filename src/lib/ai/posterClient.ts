@@ -19,7 +19,8 @@
 import type { TemplateId } from "@/lib/demo/templates/ids";
 import { supabaseEnabled } from "@/lib/cms/config";
 import { getAdminAccessToken, listKeys } from "./keys";
-import { normalizeExtract, type PosterAttempt, type PosterExtract, type PosterKind } from "./posterSchema";
+import { normalizeExtract, type PosterAttempt, type PosterKind } from "./posterSchema";
+import { normalizeDentalExtract, type AnyPosterExtract, type AnyPosterKind } from "./dentalPosterSchema";
 
 export const MAX_SIDE = 1600;
 export const TARGET_BYTES = 1_000_000;
@@ -138,7 +139,8 @@ export { ACCEPTED as ACCEPTED_IMAGE_TYPES };
 export interface PosterReadResult {
   provider: string;
   model: string;
-  extracted: PosterExtract;
+  /** A school or coaching extract, or (28 Sep 2026) a dental clinic's. */
+  extracted: AnyPosterExtract;
   suggestedTemplate?: TemplateId;
   attempts: PosterAttempt[];
 }
@@ -222,10 +224,15 @@ const STATUS_CODE: Record<number, string> = {
 /**
  * Send the prepared image to /api/poster. Resolves with the extract (already
  * normalised) or throws a PosterError whose message is ready to print.
+ *
+ * A DENTAL CLINIC (28 Sep 2026): when the admin said "dental", or said
+ * nothing and the reader answered "dental", the extract is kept as a clinic
+ * (normalizeDentalExtract), so its doctors, treatments, timings and fees
+ * survive. Everything else is normalised as a school or coaching poster.
  */
 export async function readPoster(
   image: Pick<PreparedImage, "mimeType" | "data">,
-  opts: { kind?: PosterKind | "auto"; templateHint?: TemplateId | "auto"; signal?: AbortSignal } = {},
+  opts: { kind?: AnyPosterKind | "auto"; templateHint?: TemplateId | "auto"; signal?: AbortSignal } = {},
 ): Promise<PosterReadResult> {
   const token = await tokenOrThrow();
   let res: Response;
@@ -255,14 +262,18 @@ export async function readPoster(
     const code = (typeof body.code === "string" && body.code) || STATUS_CODE[res.status] || "http";
     throw new PosterError(code, posterErrorMessage(code, res.status, attempts), attempts);
   }
-  if (!body.extracted || typeof body.extracted !== "object") {
+  const raw = body.extracted as Record<string, unknown> | undefined;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new PosterError("bad_response", posterErrorMessage("bad_response"), attempts);
   }
+  /* The admin's kind wins, as it does on the server; else what the reader said. */
+  const told = opts.kind === "school" || opts.kind === "coaching" || opts.kind === "dental";
+  const dental = opts.kind === "dental" || (!told && raw.kind === "dental");
   const fallbackKind: PosterKind = opts.kind === "school" || opts.kind === "coaching" ? opts.kind : "coaching";
   return {
     provider: String(body.provider || ""),
     model: String(body.model || ""),
-    extracted: normalizeExtract(body.extracted, fallbackKind),
+    extracted: dental ? normalizeDentalExtract(raw) : normalizeExtract(raw, fallbackKind),
     suggestedTemplate: typeof body.suggestedTemplate === "string" ? (body.suggestedTemplate as TemplateId) : undefined,
     attempts,
   };

@@ -14,6 +14,7 @@ import { staggerContainer, fadeUp } from "@/lib/motion";
 import { useCollection } from "@/lib/cms/context";
 import { cn } from "@/lib/utils";
 import type { BlogPost } from "@/lib/cms/types";
+import { PAGE_SEO } from "@/lib/seo/pages";
 
 const ALL = "All";
 
@@ -49,16 +50,9 @@ export default function Blog() {
 
   return (
     <Layout>
+      {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/blog"]). */}
       <Seo
-        title="Blog"
-        description="Practical writing from the Ideovent team, websites that load fast, the mistakes small-business sites keep making, local SEO, and what working with a small studio in New Delhi is actually like."
         path="/blog"
-        keywords={[
-          "website tips for small business India",
-          "local SEO New Delhi",
-          "website performance guide India",
-          "choosing a web development partner Delhi",
-        ]}
         breadcrumbs={[{ name: "Blog", path: "/blog" }]}
         schema={{
           "@type": "Blog",
@@ -71,21 +65,20 @@ export default function Blog() {
       <section className="section relative overflow-hidden">
         <Aurora />
         <div className="container-page relative">
+          {/* The h1 in search words where the eyebrow pill was; the display line
+              is a paragraph, so the page has one h1. No entrance motion above the
+              fold (SEO audit, 1 Oct 2026). */}
           <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
-            <Reveal>
-              <Eyebrow>Insights &amp; Blog</Eyebrow>
-            </Reveal>
-            <Reveal delay={0.05}>
-              <h1 className="text-display font-display font-semibold">
-                Ideas worth <span className="accent-italic text-gradient">building</span> on
-              </h1>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <p className="text-base text-muted-foreground text-pretty md:text-lg">
-                Practical guides, opinionated takes, and behind-the-scenes notes on design,
-                engineering, and growing digital products.
-              </p>
-            </Reveal>
+            <h1 className="mt-8 max-w-2xl font-display text-base font-semibold text-primary text-balance md:mt-0 md:text-lg">
+              {PAGE_SEO["/blog"].h1}
+            </h1>
+            <p className="text-display font-display font-semibold">
+              Ideas worth <span className="accent-italic text-gradient">building</span> on
+            </p>
+            <p className="text-base text-muted-foreground text-pretty md:text-lg">
+              Plain notes for business owners: websites that load fast, the mistakes small-business
+              sites keep making, local SEO, and choosing who builds for you.
+            </p>
           </div>
         </div>
       </section>
@@ -149,9 +142,11 @@ export default function Blog() {
                           <span className="inline-flex items-center gap-1.5">
                             <PenLine className="h-3.5 w-3.5" /> {featured.author}
                           </span>
-                          <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
-                            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(featured.publishDate)}
-                          </span>
+                          {featured.publishDate ? (
+                            <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
+                              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(featured.publishDate)}
+                            </span>
+                          ) : <span aria-hidden="true" />}
                         </div>
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                           <ArrowUpRight className="h-4 w-4" />
@@ -221,7 +216,7 @@ export default function Blog() {
                   <button
                     type="button"
                     onClick={() => setActiveTag(ALL)}
-                    className="mt-6 inline-flex min-h-11 items-center rounded-full border border-border px-5 text-sm font-medium
+                    className="mt-6 inline-flex min-h-11 items-center rounded-lg border border-border px-5 text-sm font-medium
                                transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
                   >
                     Show every article
@@ -270,9 +265,11 @@ export default function Blog() {
                             <span className="inline-flex items-center gap-1.5">
                               <PenLine className="h-3.5 w-3.5" /> {p.author}
                             </span>
-                            <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
-                              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(p.publishDate)}
-                            </span>
+                            {p.publishDate ? (
+                              <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
+                                <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(p.publishDate)}
+                              </span>
+                            ) : <span aria-hidden="true" />}
                           </div>
                         </div>
                       </Link>

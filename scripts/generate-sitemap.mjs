@@ -12,7 +12,14 @@
  * this file exists.
  *
  * DELIBERATELY EXCLUDED
- *   /admin/*            login wall; also noindex,nofollow at the page level
+ *   /admin/*, /crm/*    login wall; also noindex,nofollow at the page level
+ *   the CRM host        crm.ideovent.in serves the same build, but App.tsx
+ *                       renders only the CRM there (/, /login, /leads...). Those
+ *                       routes sit between the crm-host-routes:start and
+ *                       crm-host-routes:end markers in App.tsx and are skipped;
+ *                       a host starting with crm. is refused outright. That
+ *                       host is noindex by header and Disallow: / by its own
+ *                       robots file (vercel.json, sync-noindex-header.mjs).
  *   /verify/:certId     one page per named intern: name, photograph and grade.
  *                       The URL travels on a printed QR code and a LinkedIn
  *                       credential link, so it has to be REACHABLE, not
@@ -24,7 +31,9 @@
  *                       automatically, because the loop below skips any
  *                       parameterised route. Do NOT add the pitchPages
  *                       collection to the data-driven section further down.
- *   <Navigate> routes   legacy aliases; public/_redirects 301s them instead
+ *   <Navigate> routes   legacy aliases; vercel.json 301s them instead
+ *   checkout, payment   payment steps (NOT_FOR_SEARCH below); the pages also
+ *                       send noindex themselves
  *   /blogs/:id          legacy alias of /blog/:slug; duplicate content
  *   legal drafts        a policy still holding [[TOKEN]] blanks is noindex, so
  *                       it is left out until the blanks are filled
@@ -84,21 +93,47 @@ async function loadDotEnv() {
 }
 await loadDotEnv();
 
+/**
+ * Static routes that exist but must never be submitted: checkout and payment
+ * steps. Any segment, so /pricing/checkout is caught as well as /checkout.
+ */
+const NOT_FOR_SEARCH = /(^|\/)(checkout|pay|payment|payments|thank-you|thanks|success|failed|cancelled|subscribe)(\/|$)/i;
+
 /** Every <Route path="/…"> in App.tsx that a crawler should be handed. */
 async function staticRoutes() {
   const src = await readFile(APP, "utf8");
   const routes = [];
   const legal = [];
+  // The CRM host's own route table: those addresses exist only on crm.ideovent.in.
+  let inCrmHostBlock = false;
+  let sawCrmHostBlock = false;
   for (const line of src.split("\n")) {
+    if (line.includes("crm-host-routes:start")) {
+      inCrmHostBlock = sawCrmHostBlock = true;
+      continue;
+    }
+    if (line.includes("crm-host-routes:end")) {
+      inCrmHostBlock = false;
+      continue;
+    }
+    if (inCrmHostBlock) continue;
     const m = line.match(/<Route\s+path="(\/[^"]*)"/);
     if (!m) continue;
     const route = m[1];
     if (route.includes(":") || route.includes("*")) continue; // parameterised
     if (route === "/admin" || route.startsWith("/admin/") || route === "/crm" || route.startsWith("/crm/")) continue;
+    // Payment steps are not pages anyone should land on from a search (P1-7 of
+    // the SEO audit, 1 Oct 2026): a checkout, a result or a thank-you screen.
+    if (NOT_FOR_SEARCH.test(route)) continue;
     if (line.includes("<Navigate")) continue; // legacy alias, 301 in _redirects
     const kind = line.match(/<Legal\s+kind="([a-z]+)"/);
     if (kind) legal.push([kind[1], route]);
     else routes.push(route);
+  }
+  // A start marker with no end would silently drop every route after it.
+  if (inCrmHostBlock) throw new Error("src/App.tsx: crm-host-routes:start has no crm-host-routes:end");
+  if (/\bisCrmHost\s*\(/.test(src) && !sawCrmHostBlock) {
+    throw new Error("src/App.tsx renders CRM-host routes but the crm-host-routes markers are gone; put them back around that route table");
   }
   return { routes, legal };
 }
@@ -131,6 +166,10 @@ ${urls.map((u) => `  <url><loc>${host}${u}</loc></url>`).join("\n")}
 const { seed, cleanup } = await loadSeed();
 try {
   const host = seed.settings.defaultSeo.canonicalHost.replace(/\/$/, "");
+  // The CRM's subdomain is a private app: no sitemap may ever point at it.
+  if (/^https?:\/\/crm\./i.test(host)) {
+    throw new Error(`the sitemap host is ${host}, the CRM's own subdomain. VITE_PUBLIC_URL must be the main site (VITE_CRM_URL is the CRM's).`);
+  }
   const { routes, legal } = await staticRoutes();
 
   const services = seed.services.map((s) => `/services/${s.slug}`);

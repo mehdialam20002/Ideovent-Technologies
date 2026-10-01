@@ -14,7 +14,7 @@ export const leadListCls = "divide-y divide-border/60 rounded-2xl border border-
  * same screen, the button just says what the screen is for.
  * showStatus=false drops the chip where the group heading already says it
  * (every row under "Not contacted yet" is New); on a phone the chip cost
- * the name half its width ("Verma Coaching Ac...").
+ * the name half its width ("Example Coaching Ac...").
  */
 export function LeadRow({ lead, onOpen, extra, showStatus = true }: { lead: OutreachLead; onOpen: (id: string) => void; extra?: ReactNode; showStatus?: boolean }) {
   const { opens } = useOutreach();
@@ -27,7 +27,7 @@ export function LeadRow({ lead, onOpen, extra, showStatus = true }: { lead: Outr
         aria-label={`Open ${lead.instituteName}`}
         className="min-w-0 flex-1 rounded-lg py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {/* On a phone the name wraps instead of being cut ("Verma Coaching Ac..."); from sm up one line is enough room. */}
+        {/* On a phone the name wraps instead of being cut ("Example Coaching Ac..."); from sm up one line is enough room. */}
         <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
           <span className="min-w-0 break-words font-medium sm:truncate">{lead.instituteName || "(no name)"}</span>
           {showStatus && <StatusPill status={lead.status} />}

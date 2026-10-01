@@ -9,6 +9,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import ContactForm from "@/components/sections/ContactForm";
 import FaqSection from "@/components/sections/FaqSection";
 import { cn } from "@/lib/utils";
+import { PAGE_SEO } from "@/lib/seo/pages";
 
 /*
   A CROSS-ORIGIN IFRAME CANNOT SHOW A FOCUS RING BY ITSELF, AND IT IS A TAB STOP.
@@ -63,15 +64,10 @@ export default function Contact() {
 
   return (
     <Layout>
+      {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/contact"]). The
+          old description gave contact@ideovent.in, which has no mailbox yet. */}
       <Seo
-        title="Contact"
-        description="Talk to Ideovent Technologies about a website, a web app or a custom build, email contact@ideovent.in, call +91 77619 21786, or send the form. We work from Saket, New Delhi."
         path="/contact"
-        keywords={[
-          "contact web developer New Delhi",
-          "website quote Delhi NCR",
-          "hire web development studio Saket",
-        ]}
         breadcrumbs={[{ name: "Contact", path: "/contact" }]}
         schema={{ "@type": "ContactPage", name: "Contact Ideovent Technologies" }}
       />
@@ -86,34 +82,31 @@ export default function Contact() {
             centred grid is the shape _assets/DESIGN-DIRECTION.md describes as
             the tell, and this page had three of them in a row. */}
         <div className="container-page relative">
-          <Reveal>
-            <Eyebrow>Contact</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            {/* Deliberately not "Tell us what is not working": that is the
-                heading on the footer CTA band, which renders on this page too.
-                Same request, said once at 96px and once at 40px would read as
-                a template repeating itself. */}
-            <h1 className="mt-6 max-w-4xl text-hero font-display font-semibold">
-              Start with the{" "}
-              <span className="accent-italic text-gradient">problem</span>
-            </h1>
-          </Reveal>
+          {/* The h1 in search words where the eyebrow pill was; the display line
+              is a paragraph, so the page has one h1. No entrance motion above
+              the fold (SEO audit, 1 Oct 2026). */}
+          <h1 className="max-w-3xl font-display text-base font-semibold text-primary text-balance md:text-lg">
+            {PAGE_SEO["/contact"].h1}
+          </h1>
+          {/* Deliberately not "Tell us what is not working": that is the
+              heading on the footer CTA band, which renders on this page too.
+              Same request, said once at 96px and once at 40px would read as
+              a template repeating itself. */}
+          <p className="mt-5 max-w-4xl text-hero font-display font-semibold">
+            Start with the{" "}
+            <span className="accent-italic text-gradient">problem</span>
+          </p>
 
           <div className="mt-8 grid gap-x-14 gap-y-5 lg:grid-cols-2">
-            <Reveal delay={0.1}>
-              <p className="text-lg text-foreground/85 text-pretty">
-                That is a better first message than a brief.{" "}
-                {contact.responseTimePromise || "We reply to new enquiries within two working days."}
-              </p>
-            </Reveal>
-            <Reveal delay={0.15}>
-              <p className="text-base text-muted-foreground text-pretty">
-                Nobody will put a call in your calendar, and there is no sequence of follow-up
-                emails behind this form. If the answer turns out to be that you do not need us, or
-                that somebody else is a better fit, we will say so in the reply.
-              </p>
-            </Reveal>
+            <p className="text-lg text-foreground/85 text-pretty">
+              That is a better first message than a brief.{" "}
+              {contact.responseTimePromise || "We reply to new enquiries within two working days."}
+            </p>
+            <p className="text-base text-muted-foreground text-pretty">
+              Nobody will put a call in your calendar, and there is no sequence of follow-up
+              emails behind this form. If the answer turns out to be that you do not need us, or
+              that somebody else is a better fit, we will say so in the reply.
+            </p>
           </div>
         </div>
       </section>

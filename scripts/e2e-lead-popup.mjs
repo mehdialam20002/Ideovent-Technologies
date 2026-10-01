@@ -472,6 +472,15 @@ async function t(fn) {
     check(!/Thank you/.test((await v.page.locator("#contact").textContent()) || ""), "contact form 412: no thank-you");
     await v.ctx.close();
   });
+  await t(async () => {
+    const v = await visitor({ emailStatus: 200 });
+    // prefillFromQuery in core.ts (28 Sep 2026): for=dental and for=clinic both map to "clinic".
+    await v.go("/contact?for=dental");
+    check(await v.page.isChecked("#cf-need-clinic"), "/contact?for=dental preselects Clinic or salon");
+    await v.go("/contact?for=clinic");
+    check(await v.page.isChecked("#cf-need-clinic"), "/contact?for=clinic preselects Clinic or salon");
+    await v.ctx.close();
+  });
 
   /* 9. Spam guards. */
   await t(async () => {

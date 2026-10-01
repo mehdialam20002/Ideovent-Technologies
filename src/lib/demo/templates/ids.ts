@@ -8,7 +8,7 @@
  *   src/pages/DemoSiteRoute.tsx refuses to serve a template at /site/<id>.
  *   It is the PUBLIC demo route, so anything it imports is in the chunk a
  *   director downloads. This file is a list of strings; the registry next to
- *   it holds labels, descriptions and ten lazy loaders.
+ *   it holds labels, descriptions and seventeen lazy loaders.
  *
  *   src/lib/demo/reservedRoutes.ts refuses a real demo whose slug would be
  *   one of these, so the public 404 above can never hide a real, sent demo.

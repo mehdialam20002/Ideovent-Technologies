@@ -1,0 +1,7 @@
+# crm.ideovent.in: the Ideovent CRM, a private sign-in app. Nothing on this
+# host is for a search engine. vercel.json sends /robots.txt here on this host
+# only, and every page here also carries X-Robots-Tag: noindex, nofollow.
+# The main site's robots.txt is public/robots.txt.
+
+User-agent: *
+Disallow: /

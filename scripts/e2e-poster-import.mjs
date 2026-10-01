@@ -20,16 +20,41 @@
  *      prefilled with the name typed in step 1, which makes a draft.
  *   C. 390 PX. The review step does not scroll sideways on a phone.
  *
+ * A DENTAL CLINIC (28 Sep 2026), every name and number fictional:
+ *
+ *   D. A CLINIC'S CARD, "Let AI choose". The reader answers kind "dental":
+ *      the review is the clinic form (Clinic name, treatments, timings,
+ *      doctors), lists what the Dental Council code keeps off, offers the
+ *      seven dental templates, and resolves "Let AI choose" by
+ *      dentalTemplateFor (name and treatments), not by the reader's own
+ *      pick. Mehdi picks another; Create makes a dental draft with the
+ *      card's doctor, phone and hours and none of its offers, a private note
+ *      naming what was left out, and a DENTAL lead in the CRM linked to it.
+ *      The editor says "Clinic name", shows the dental pages, and the kind
+ *      filter finds it.
+ *   E. MANUAL ENTRY FOR A CLINIC. A dental template picked in step 1 sends
+ *      kind "dental"; every provider fails; "Type the poster's details into
+ *      the form" opens the clinic form; a made-up title is flagged and kept
+ *      off; the draft and its dental lead are made.
+ *   F. FILL MANUALLY, DENTAL. The Duplicate dialog asks for the clinic's name
+ *      and the copy becomes a dental lead.
+ *   G. THE TEMPLATES TAB'S DUPLICATE on a dental template, for a clinic the
+ *      CRM already holds as an unsorted lead: the copy asks for the clinic's
+ *      name, and that lead is linked and made dental, never added twice.
+ *
+ *   node scripts/e2e-poster-import.mjs http://localhost:5403
+ *
  * PROVING THE TEST CAN FAIL
  *
  *   E2E_NEGATIVE=1 node scripts/e2e-poster-import.mjs
  *
  * makes the mocked reader return an extract with nothing in it but the kind.
- * Scenario A's assertions about the poster's name, phone and results must
- * then fail and the run must exit 1.
+ * Scenario A's and D's assertions about the poster's name, phone, results
+ * and doctors must then fail and the run must exit 1.
  */
 import { chromium } from "playwright-core";
 import { deflateSync } from "node:zlib";
+import { isDeepStrictEqual } from "node:util";
 
 const BASE = process.argv[2] || "http://localhost:5199";
 const NEGATIVE = Boolean(process.env.E2E_NEGATIVE);
@@ -107,6 +132,27 @@ const EXTRACT = NEGATIVE
       posterLanguage: "en",
     };
 
+/* A clinic's visiting card. It carries a "painless" tagline and a free
+   check-up offer, which must stay off the demo. */
+const DENTAL_NAME = "Example Family Dental Clinic";
+const DENTAL_EXTRACT = NEGATIVE
+  ? { kind: "dental" }
+  : {
+      kind: "dental",
+      instituteName: DENTAL_NAME,
+      tagline: "Painless treatment for the whole family",
+      city: "Ranchi",
+      state: "Jharkhand",
+      locality: "Lalpur",
+      doctors: [{ name: "Dr. Example Name", degrees: "BDS, MDS (Orthodontics)", registration: "Reg. No. A-00000", specialisation: "Orthodontist", days: "Mon to Sat" }],
+      treatments: ["Root canal treatment", "Braces and aligners", "Teeth cleaning"],
+      timings: "Mon to Sat 10 am to 8 pm",
+      fees: [{ treatment: "Consultation", fee: "₹300" }],
+      contact: { phones: ["+91 98765 43210"], whatsapp: "98765 43210" },
+      offers: ["Free dental check-up every Sunday"],
+      posterLanguage: "en",
+    };
+
 let scenario = "success";
 const calls = [];
 
@@ -131,6 +177,21 @@ async function mockReader(route) {
           { provider: "gemini", status: "error", error: "model not found" },
           { provider: "openai", status: "error", error: "invalid key" },
         ],
+      }),
+    });
+  }
+  if (scenario === "dental") {
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        provider: "gemini",
+        model: "gemini-2.5-flash",
+        extracted: DENTAL_EXTRACT,
+        /* The reader's own pick. For a clinic the browser must not follow it. */
+        suggestedTemplate: "d3-smile-studio",
+        attempts: [{ provider: "gemini", status: "ok" }],
       }),
     });
   }
@@ -192,6 +253,29 @@ const readStore = (page) =>
 
 const inputValues = (page) =>
   page.evaluate(() => [...document.querySelectorAll("input, textarea")].map((i) => i.value));
+
+/* The CRM's local store (src/lib/outreach/store.ts, OUTREACH_LOCAL_KEY). */
+const readLeads = (page) =>
+  page.evaluate(() => {
+    try {
+      return JSON.parse(localStorage.getItem("ideovent_outreach_v1") || "{}").leads || [];
+    } catch {
+      return [];
+    }
+  });
+
+/** The saved demo by name, its private slot, and the CRM lead linked to it. */
+async function madeWithLead(page, name) {
+  const store = await readStore(page);
+  const made = (store.demoSites || []).find((d) => d.instituteName === name);
+  const slot = made ? (store.demoSiteSlots || []).find((s) => s.id === made.id) : undefined;
+  const lead = made ? (await readLeads(page)).find((l) => l.demoId === made.id) : undefined;
+  return { made, slot, lead };
+}
+
+/** The label text of the control with this id. */
+const labelOf = (page, id) =>
+  page.evaluate((i) => document.querySelector(`label[for="${i}"]`)?.textContent?.trim() || "", id);
 
 async function uploadAndRead(page) {
   await page.locator('[data-testid="poster-file"]').setInputFiles(PNG);
@@ -316,6 +400,201 @@ const browser = await launch();
   const create = page.getByRole("button", { name: /^Create demo/ });
   expect(await create.isVisible().catch(() => false), "the Create button is reachable at 390 px");
   await page.screenshot({ path: process.env.E2E_SHOT || "poster-review-390.png", fullPage: false }).catch(() => {});
+  await context.close();
+}
+
+/* ── D. A clinic's card, "Let AI choose" ─────────────────────────────────── */
+{
+  scenario = "dental";
+  calls.length = 0;
+  const { page, errors, context } = await newPage(browser, { width: 1280, height: 900 });
+  await page.goto(BASE + "/admin/c/demoSites", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "New demo from poster" }).first().click();
+  expect((await labelOf(page, "poster-name")).startsWith("Institute or clinic name"), "step 1 asks for an institute or clinic name while the AI chooses");
+  await uploadAndRead(page);
+  await page.getByText("Check what was read").waitFor({ timeout: 10000 }).catch(() => {});
+  expect(calls.length === 1 && calls[0].body.kind === "auto", `the reader was left to decide the kind (${calls[0]?.body?.kind})`);
+
+  const nameBox = page.getByLabel("Clinic name (required)");
+  expect((await nameBox.count()) === 1 && (await nameBox.inputValue().catch(() => "")) === DENTAL_NAME, "the review is the clinic form, with the card's name");
+  expect(await page.getByRole("radio", { name: "Dental clinic" }).isChecked().catch(() => false), "the kind reads Dental clinic");
+  expect(/Braces and aligners/.test(await page.locator("#px-treatments").inputValue().catch(() => "")), "the card's treatments are in the form");
+  expect((await page.locator("#px-timings").inputValue().catch(() => "")) === "Mon to Sat 10 am to 8 pm", "the card's timings are in the form");
+  expect((await page.locator("#px-d0-reg").inputValue().catch(() => "")) === "Reg. No. A-00000", "the doctor's printed registration is in the form");
+  expect((await page.locator("#px-board").count()) === 0, "no school field on a clinic's form");
+  const leftOut = (await page.getByTestId("dental-left-out").textContent().catch(() => "")) || "";
+  expect(/Free dental check-up every Sunday/.test(leftOut) && /Painless treatment/.test(leftOut), `the offer and the claim are listed as kept off (${leftOut.slice(0, 160)})`);
+
+  const dentalOptions = await page.evaluate(() =>
+    [...document.querySelectorAll('#poster-review-template optgroup[label="Dental clinic"] option')].map((o) => o.value));
+  expect(dentalOptions.length === 7 && dentalOptions.every((v) => v.startsWith("d")), `the review offers the seven dental templates (${dentalOptions.join(", ")})`);
+  const createBtn = page.getByRole("button", { name: /^Create demo/ });
+  const autoLabel = (await createBtn.textContent().catch(() => "")) || "";
+  expect(/Orthodontic and aligner clinic/.test(autoLabel), `Let AI choose is dentalTemplateFor(name, treatments), not the reader's own pick (${autoLabel.trim()})`);
+  await page.locator("#poster-review-template").selectOption("d1-family-dentist");
+  const picked = (await createBtn.textContent().catch(() => "")) || "";
+  expect(/Family dental clinic/.test(picked), `Mehdi can pick another dental template (${picked.trim()})`);
+  expect(await page.getByTestId("poster-add-crm").isChecked().catch(() => false), "Also add to CRM starts ticked");
+  await createBtn.click();
+  await page.waitForTimeout(1500);
+
+  const { made, slot, lead } = await madeWithLead(page, DENTAL_NAME);
+  expect(Boolean(made), "the clinic's draft is saved in demoSites");
+  if (made) {
+    const json = JSON.stringify(made);
+    expect(made.kind === "dental" && made.templateId === "d1-family-dentist" && made.status === "draft", `a dental draft of the template Mehdi picked (${made.kind}, ${made.templateId})`);
+    const doc = made.dental?.doctors?.[0];
+    expect(made.dental?.doctors?.length === 1 && doc?.name === "Dr. Example Name" && doc?.regNo === "Reg. No. A-00000" && !doc?.photo,
+      "the card's doctor replaced the template's, with the registration and no stock photo");
+    expect(made.contact?.phone === "+91 98765 43210" && made.contact?.whatsapp === "919876543210" && made.contact?.hours === "Mon to Sat 10 am to 8 pm",
+      "phone, WhatsApp and hours are the card's");
+    expect(!/Free dental check-up|Painless/i.test(json), "neither the offer nor the claim reached the public record");
+    expect(made.sample?.from === "d1-family-dentist" && !made.sample?.real, "everything else stays the template's labelled sample");
+    expect(!json.includes("gemini-2.5-flash"), "the reader stays off the public record");
+    expect(slot?.poster?.provider === "gemini" && /Dental Council/.test(slot?.internalNotes || "") && /Free dental check-up/.test(slot?.internalNotes || ""),
+      "the private slot names the reader and what was kept off");
+    expect(lead?.kind === "dental" && lead?.demoSlug === made.slug && lead?.instituteName === DENTAL_NAME && lead?.source === "demo-created",
+      `a DENTAL lead is in the CRM, linked to the demo (${JSON.stringify(lead ? { kind: lead.kind, source: lead.source } : null)})`);
+
+    /* The editor, open on the new draft. */
+    expect((await page.getByLabel("Clinic name", { exact: true }).inputValue().catch(() => "")) === DENTAL_NAME, "the editor opens on the draft and calls the name field Clinic name");
+    expect(await page.getByText("Dental clinic pages (dental demos only)").isVisible().catch(() => false), "the editor shows the dental pages for a clinic");
+    await page.getByRole("button", { name: "Close the editor" }).click();
+
+    /* A school demo beside it (the local seed has none), made by hand: its
+       form says Institute name and has no dental pages. */
+    await page.getByRole("button", { name: "New demo site" }).click();
+    const schoolName = page.getByLabel("Institute name", { exact: true });
+    expect((await schoolName.count()) === 1 && (await page.getByLabel("Clinic name", { exact: true }).count()) === 0, "a school record's form still says Institute name");
+    expect(!(await page.getByText("Dental clinic pages (dental demos only)").isVisible().catch(() => false)), "a school record's form has no dental pages");
+    await schoolName.fill("Example Filter School");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await page.waitForTimeout(800);
+
+    const names = () => page.locator("p.truncate.font-medium").allTextContents();
+    const everyRow = await names();
+    const filter = page.getByLabel("Filter by kind");
+    await filter.selectOption("dental");
+    const onlyDental = await names();
+    await filter.selectOption("school");
+    const onlySchool = await names();
+    await filter.selectOption("all");
+    expect(isDeepStrictEqual(onlyDental, [DENTAL_NAME]) && isDeepStrictEqual(onlySchool, ["Example Filter School"]) && everyRow.length === 2,
+      `the kind filter finds the clinic and only dental demos (all: ${everyRow.join(", ")}; dental: ${onlyDental.join(", ")}; school: ${onlySchool.join(", ")})`);
+    const chips = await page.evaluate((n) => {
+      const p = [...document.querySelectorAll("p.truncate.font-medium")].find((x) => x.textContent === n);
+      return p ? [...p.parentElement.querySelectorAll("span")].map((s) => s.textContent.trim()) : [];
+    }, DENTAL_NAME);
+    expect(chips.includes("Dental clinic"), `the row is labelled Dental clinic (${chips.join(", ")})`);
+
+    await page.goto(`${BASE}/admin/preview/site/${made.slug}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+    const text = (await page.locator("body").innerText().catch(() => "")) || "";
+    expect(text.includes(DENTAL_NAME), "the clinic's preview prints its name");
+    expect(/98765\s*43210/.test(text) || (await page.locator('a[href^="tel:"]').count()) > 0, "the clinic's preview carries the card's phone");
+    expect(!/Free dental check-up|Painless/i.test(text), "the preview prints neither the offer nor the claim");
+  }
+  expect(!errors.length, `no page errors (${errors.join(" | ")})`);
+  await context.close();
+}
+
+/* ── E. Manual entry for a clinic: every provider fails ──────────────────── */
+{
+  scenario = "all_failed";
+  calls.length = 0;
+  const { page, errors, context } = await newPage(browser, { width: 1280, height: 900 });
+  await page.goto(BASE + "/admin/c/demoSites", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "New demo from poster" }).first().click();
+  await page.locator("#poster-template").selectOption("d4-implant-centre");
+  expect((await labelOf(page, "poster-name")).startsWith("Clinic name"), "a dental template makes step 1 ask for the clinic's name");
+  await page.locator("#poster-name").fill("Example Implant Centre");
+  await uploadAndRead(page);
+  await page.getByTestId("poster-error").waitFor({ timeout: 10000 }).catch(() => {});
+  const sent = calls[0]?.body || {};
+  expect(sent.kind === "dental" && sent.templateHint === "d4-implant-centre", `the reader was told it is a clinic (${sent.kind}, ${sent.templateHint})`);
+  await page.getByRole("button", { name: /Type the poster.s details into the form/ }).click();
+  const nameBox = page.getByLabel("Clinic name (required)");
+  expect((await nameBox.inputValue().catch(() => "")) === "Example Implant Centre", "the clinic form opens, with the name typed in step 1");
+  expect(await page.getByRole("radio", { name: "Dental clinic" }).isChecked().catch(() => false), "the form is a clinic's");
+  await page.locator("#px-treatments").fill("Dental implants\nFull mouth rehabilitation");
+  await page.getByRole("button", { name: "Add a doctor" }).click();
+  await page.locator("#px-d0-name").fill("Dr. Example Surgeon");
+  await page.locator("#px-d0-degrees").fill("BDS, MDS (Prosthodontics)");
+  await page.locator("#px-d0-spec").fill("Implantologist");
+  const specBox = (await page.locator("#px-d0-spec").locator("xpath=..").textContent().catch(() => "")) || "";
+  expect(/not a specialist title/.test(specBox), "a made-up specialist title is flagged as it is typed");
+  const createBtn = page.getByRole("button", { name: /^Create demo/ });
+  expect(/Dental implant and full-mouth centre/.test((await createBtn.textContent().catch(() => "")) || ""), "the template picked in step 1 carries over");
+  await createBtn.click();
+  await page.waitForTimeout(1500);
+
+  const { made, slot, lead } = await madeWithLead(page, "Example Implant Centre");
+  expect(made?.kind === "dental" && made?.templateId === "d4-implant-centre", "the typed-in clinic becomes a dental draft of that template");
+  const doc = made?.dental?.doctors?.[0];
+  expect(made?.dental?.doctors?.length === 1 && doc?.name === "Dr. Example Surgeon" && doc?.qualification === "BDS, MDS (Prosthodontics)" && !doc?.specialisation,
+    "the typed doctor replaces the template's, and the made-up title is kept off");
+  const tx = made?.dental?.treatments || [];
+  expect(tx.length > 2 && tx[0].featured && tx[1].featured && tx[1].name === "Full mouth rehabilitation", "the typed treatments lead the list, the template's pages follow");
+  expect(/typed in by hand/.test(slot?.internalNotes || "") && /Implantologist/.test(slot?.internalNotes || ""), "the private note says it was typed in, and what was kept off");
+  expect(lead?.kind === "dental" && lead?.demoId === made?.id, "the clinic is a dental lead in the CRM");
+  expect(!errors.length, `no page errors (${errors.join(" | ")})`);
+  await context.close();
+}
+
+/* ── F. Fill manually, dental: the Duplicate dialog asks for the clinic ──── */
+{
+  scenario = "all_failed";
+  const { page, errors, context } = await newPage(browser, { width: 1280, height: 900 });
+  await page.goto(BASE + "/admin/c/demoSites", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "New demo from poster" }).first().click();
+  await page.locator("#poster-template").selectOption("d6-kids-dental");
+  await page.locator("#poster-name").fill("Example Kids Dental");
+  await page.getByRole("button", { name: "Fill manually instead" }).click();
+  await page.getByRole("button", { name: "Fill manually instead" }).click();
+  const dupName = page.locator("#dup-name");
+  await dupName.waitFor({ timeout: 5000 }).catch(() => {});
+  const asked = await labelOf(page, "dup-name");
+  expect(asked === "Clinic name", `the Duplicate dialog asks for the clinic's name (${asked})`);
+  expect((await dupName.inputValue().catch(() => "")) === "Example Kids Dental", "prefilled with the name typed in step 1");
+  expect(await page.getByText("Duplicate Children's dental clinic").isVisible().catch(() => false), "it duplicates the chosen dental template");
+  await page.getByRole("button", { name: "Make the draft" }).click();
+  await page.waitForTimeout(1500);
+  const { made, lead } = await madeWithLead(page, "Example Kids Dental");
+  expect(made?.kind === "dental" && made?.templateId === "d6-kids-dental", "the manual path makes a dental draft");
+  expect(lead?.kind === "dental" && lead?.source === "demo-created", "and a dental lead in the CRM (the setting is on by default)");
+  expect(!errors.length, `no page errors (${errors.join(" | ")})`);
+  await context.close();
+}
+
+/* ── G. The Templates tab's Duplicate, on a dental template, for a clinic
+      the CRM already has (imported, kind never set): linked, not added twice ── */
+{
+  const { page, errors, context } = await newPage(browser, { width: 1280, height: 900 });
+  await page.goto(BASE + "/admin/templates?kind=dental", { waitUntil: "networkidle" });
+  await page.evaluate(() =>
+    localStorage.setItem("ideovent_outreach_v1", JSON.stringify({
+      leads: [{ id: "ol_e2e_chain", instituteName: "Example Dental Chain", kind: "other", city: "Pune", status: "new",
+        source: "csv", createdAt: "2026-09-29T10:00:00.000Z", updatedAt: "2026-09-29T10:00:00.000Z" }],
+      events: [],
+      settings: null,
+    })));
+  await page.getByRole("button", { name: "Duplicate the Multi-branch dental chain template into a new draft demo" }).click();
+  await page.locator("#dup-name").waitFor({ timeout: 5000 }).catch(() => {});
+  const asked = await labelOf(page, "dup-name");
+  expect(asked === "Clinic name", `Duplicate on a dental template asks for the clinic's name (${asked})`);
+  await page.locator("#dup-name").fill("Example Dental Chain");
+  await page.locator("#dup-city").fill("Pune");
+  await page.getByRole("button", { name: "Make the draft" }).click();
+  await page.waitForURL(/\/admin\/c\/demoSites/, { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  const { made, lead } = await madeWithLead(page, "Example Dental Chain");
+  expect(made?.kind === "dental" && made?.templateId === "d7-dental-chain" && made?.city === "Pune", "the copy is a dental draft in the city typed");
+  const sameName = (await readLeads(page)).filter((l) => l.instituteName === "Example Dental Chain");
+  expect(sameName.length === 1 && lead?.id === "ol_e2e_chain" && lead?.demoId === made?.id,
+    `the clinic's existing lead is linked to the copy, not added twice (${sameName.map((l) => l.id).join(", ")})`);
+  expect(lead?.kind === "dental", `the unsorted lead becomes a dental lead (${lead?.kind})`);
+  expect((await page.getByLabel("Clinic name", { exact: true }).inputValue().catch(() => "")) === "Example Dental Chain", "the editor opens on it and says Clinic name");
+  expect(!errors.length, `no page errors (${errors.join(" | ")})`);
   await context.close();
 }
 

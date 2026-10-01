@@ -73,13 +73,13 @@ console.log("A school demo, as a scraper reads it\n");
 
 console.log("\nA pitch page\n");
 {
-  const { html } = await run("/api/share?kind=pitch&slug=gyan-bharati-school");
+  const { html } = await run("/api/share?kind=pitch&slug=example-public-school");
   check("og:title is the institute", parseMeta(html, ["property", "og:title"]),
-    (v) => v === "Gyan Bharati School");
+    (v) => v === "Example Public School");
   check("description says proposal, not demonstration", parseMeta(html, ["property", "og:description"]),
     (v) => /proposal/i.test(v) && !/not their live site/i.test(v));
   check("og:url uses the /pitch/ path", parseMeta(html, ["property", "og:url"]),
-    (v) => v === "https://ideovent.vercel.app/pitch/gyan-bharati-school");
+    (v) => v === "https://ideovent.vercel.app/pitch/example-public-school");
 }
 
 console.log("\nSmall words and edge cases\n");

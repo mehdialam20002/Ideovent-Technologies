@@ -4,7 +4,8 @@
  *   founder   the founder's story, typed name and role; a portrait only with
  *             consent, otherwise the family's monogram
  *   about     the institute's own paragraph, with the `about` section
- *             photo beside it when the record has one
+ *             photo beside it when the record has one, and SampleNote
+ *             "story" under it while it is the template's (30 Sep 2026)
  *   values    vision and mission, and the class-size promise as a concrete
  *             number rather than a superlative
  *   centre    a strip of real photos with the lightbox; the Gallery page is
@@ -25,6 +26,7 @@ import { PhotoGrid } from "@/lib/demo/ui/coaching/Lightbox";
 import { SectionPhoto, sectionPhoto } from "@/lib/demo/ui/coaching/photos";
 import { PageHead } from "../kit/Hero";
 import { SiteLink } from "../kit/motion";
+import { SampleNote } from "../kit/SampleNote";
 import { CardGrid, FactTable, Section } from "../kit/Section";
 import { Bi, Monogram } from "../kit/Text";
 
@@ -85,7 +87,11 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
       {bi(site, "about", lang) && (
         <Section n={++n} title={tr(COPY.who, lang)}>
           <div className={sectionPhoto(site, "about") ? "grid gap-8 md:grid-cols-[3fr_2fr] md:items-start lg:gap-12" : ""}>
-            <Bi of={site} k="about" as="p" className="max-w-[68ch] whitespace-pre-line text-lg leading-relaxed" />
+            <div>
+              <Bi of={site} k="about" as="p" className="max-w-[68ch] whitespace-pre-line text-lg leading-relaxed" />
+              {/* The template's history ("since 2011", here and in the head), until the institute's own replace it. */}
+              <SampleNote block="story" className="mt-6" />
+            </div>
             <SectionPhoto slot="about" sizes="(min-width: 1152px) 440px, (min-width: 768px) 38vw, calc(100vw - 32px)" />
           </div>
         </Section>

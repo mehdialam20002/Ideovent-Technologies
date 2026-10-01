@@ -1,8 +1,9 @@
 /**
  * Look at one business's website and say, in one word, whether it could use
- * a better one: none, broken, poor or ok. Every verdict carries its evidence
- * (plain sentences the admin can read aloud to the owner), plus the phone
- * numbers and emails the site itself publishes.
+ * a better one: none, broken, poor or ok, or "unchecked" when the page is
+ * drawn by scripts and nothing that can be checked was wrong. Every verdict
+ * carries its evidence (plain sentences the admin can read aloud to the
+ * owner), plus the phone numbers and emails the site itself publishes.
  *
  * STORAGE. The phones and emails found here are the business's OWN published
  * details, so the admin may keep them on a lead. That is not true of Google's
@@ -252,11 +253,52 @@ export function copyrightYear(text) {
   return best;
 }
 
+/* Dental checks (28 Sep 2026), run only for a dental clinic's site. Each is
+   generous on purpose: any sign of the thing counts as having it, so the
+   finder never tells a clinic it lacks something it has. */
+const BOOKING_HOSTS = ["practo.com", "calendly.com", "setmore.com", "simplybook.me", "zocdoc.com", "lybrate.com", "clinicspots.com",
+  "appointy.com", "youcanbook.me", "bookings.zoho.com", "zohobookings.in", "square.site", "picktime.com", "docpulse.com"];
+const BOOKING_WORDS = /\b(book (an |a |your )?(appointment|consultation|visit|slot|now)|request (an |a )?(appointment|call ?back)|schedule (an |a |your )?(appointment|visit|consultation)|appointment (form|booking)|online appointment|make an appointment)\b/i;
+const WHATSAPP_LINK = /wa\.me\/|api\.whatsapp\.com|web\.whatsapp\.com\/send|chat\.whatsapp\.com|whatsapp:\/\//i;
+const TREATMENT_WORDS = /(treatments?|services|root[- ]?canal|\brct\b|implants?|braces|aligners?|orthodont|whitening|veneers?|crowns?|bridges?|dentures?|extraction|scaling|fillings?|smile[- ]?design|cosmetic|paediatric|pediatric|gum)/i;
+
+/**
+ * A page drawn by scripts: its HTML carries almost no text, so what it SHOWS a
+ * visitor (a phone number, a booking button, treatment pages) cannot be read
+ * here. Such a page is never told it lacks them (30 Sep 2026).
+ */
+export const drawnByScripts = (html, text) => text.length < 300 && /<script/i.test(String(html));
+
+/** What a dental clinic's home page is missing. Skipped for a page drawn by scripts, where the HTML says little. */
+export function dentalFindings(html, text) {
+  const out = [];
+  if (drawnByScripts(html, text)) return out;
+  const links = [...String(html).matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi)].map((m) => ({
+    href: /href\s*=\s*["']([^"']*)["']/i.exec(m[1])?.[1] || "",
+    text: visibleText(m[2]),
+  }));
+  const booked = BOOKING_WORDS.test(text) || links.some((l) => BOOKING_WORDS.test(l.text) || /appointment|booking|book-now/i.test(l.href)
+    || BOOKING_HOSTS.some((h) => l.href.toLowerCase().includes(h)));
+  if (!booked) out.push({ code: "no_booking", text: "No online booking: no 'Book appointment' link or booking form on the home page" });
+  if (!WHATSAPP_LINK.test(html)) out.push({ code: "no_whatsapp", text: "No WhatsApp button: patients cannot message the clinic in one tap" });
+  const pages = links.some((l) => !/^(tel:|mailto:|#|javascript:)/i.test(l.href) && (TREATMENT_WORDS.test(l.href) || TREATMENT_WORDS.test(l.text)));
+  /* No treatment names in this sentence: it is saved in the lead's notes, and the lead page's demo picker reads the
+     notes with dentalTemplateFor, so "implants, braces" here preselected d5 (orthodontic) for every such clinic (30 Sep 2026). */
+  if (!pages) out.push({ code: "no_treatments", text: "No treatment pages: no link to a page that explains a treatment" });
+  return out;
+}
+
 /**
  * Judge a fetched page. Pure: no network, so the fixtures in the test drive it.
  * page: { finalUrl (URL), status, html, ms, redirected }. start: the URL asked for.
+ * opts.kind "dental" adds the dental checks.
+ *
+ * A page drawn by scripts gets only the checks that do not read its text
+ * (free builder, phone viewport, HTTPS, speed). When none of them finds
+ * anything, the verdict is "unchecked", shown as "Could not check": not
+ * "ok", which would say it opens fine with contact details (30 Sep 2026).
  */
-export function classify(page, start, nowMs = deps.now()) {
+export function classify(page, start, nowMs = deps.now(), opts = {}) {
   const evidence = [];
   const add = (code, text) => evidence.push({ code, text });
   const host = page.finalUrl.hostname.toLowerCase();
@@ -283,20 +325,33 @@ export function classify(page, start, nowMs = deps.now()) {
   const thisYear = new Date(nowMs).getUTCFullYear();
   if (year && year < thisYear - 3) add("stale", `The copyright says ${year}: it looks untouched for ${thisYear - year} years`);
   const hasContactLink = /href\s*=\s*["'](tel:|mailto:|https?:\/\/(wa\.me|api\.whatsapp\.com))/i.test(page.html);
-  if (!CONTACT_WORDS.test(text) && !hasContactLink) add("no_contact", "The home page shows no way to get in touch: no phone, email, WhatsApp, fees or contact details");
+  /* The finder tells a clinic "your home page does not show a phone number", so that is never said when the
+     page shows a number or an e-mail in its text (30 Sep 2026), nor, for any kind, when the page is drawn by
+     scripts and this check cannot see what it shows. */
+  const scripted = drawnByScripts(page.html, text);
+  const shown = opts.kind === "dental" ? extractContacts(page.html) : null;
+  const clinicContact = Boolean(shown) && (shown.phones.length > 0 || shown.emails.length > 0);
+  if (!scripted && !CONTACT_WORDS.test(text) && !hasContactLink && !clinicContact) add("no_contact", "The home page shows no way to get in touch: no phone, email, WhatsApp, fees or contact details");
   if (page.ms > SLOW_MS) add("slow", `Very slow: the page took ${(page.ms / 1000).toFixed(1)} s to load`);
-  return { verdict: evidence.length ? "poor" : "ok", evidence };
+  if (opts.kind === "dental") evidence.push(...dentalFindings(page.html, text));
+  if (evidence.length) return { verdict: "poor", evidence };
+  if (scripted) {
+    add("scripted", "Could not check what the page shows: it is drawn by scripts, so open it and look");
+    return { verdict: "unchecked", evidence };
+  }
+  return { verdict: "ok", evidence };
 }
 
 /**
  * The whole audit for one URL. Never throws.
  * Returns { verdict, url, finalUrl, status, ms, https, title, evidence[], phones[], emails[] }.
  */
-export async function auditSite(raw, { totalMs = TOTAL_MS } = {}) {
+export async function auditSite(raw, { totalMs = TOTAL_MS, kind = null } = {}) {
   const base = { url: raw ? String(raw).slice(0, 500) : null, finalUrl: null, status: null, ms: null, https: null,
     title: null, evidence: [], phones: [], emails: [] };
   if (!raw || !String(raw).trim()) {
-    return { ...base, verdict: "none", evidence: [{ code: "no_website", text: "No website listed on Google Maps" }] };
+    // The listing may be Google's or OpenStreetMap's: the sentence names neither.
+    return { ...base, verdict: "none", evidence: [{ code: "no_website", text: "No website listed for it on the map" }] };
   }
   const start = normaliseUrl(raw);
   if (!start) return { ...base, verdict: "broken", evidence: [{ code: "bad_url", text: "The website address is not a valid web address" }] };
@@ -326,7 +381,7 @@ export async function auditSite(raw, { totalMs = TOTAL_MS } = {}) {
     }
   }
 
-  const { verdict, evidence } = classify(page, start);
+  const { verdict, evidence } = classify(page, start, deps.now(), { kind });
   const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(page.html)?.[1];
   const found = page.status < 400 ? extractContacts(page.html) : { phones: [], emails: [] };
   return {

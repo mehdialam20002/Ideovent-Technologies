@@ -130,10 +130,11 @@ export default function DemoSiteRoute() {
     to a JEE director has stopped being about them, and one that leads with
     last year's ranks to a nursery school has never been about them.
 
-    Both templates are live. There is no stand-in left and there is no
-    default branch either: `kind` is required on the record, so the ternary
-    covers the union exactly and a third kind would be a type error here
-    rather than a blank page for a director.
+    All three kinds are live: school, coaching and (28 Sep 2026) dental
+    clinic. DemoSiteView (./site/DemoSiteView) makes the choice from `kind`
+    and the theme, the same component the admin preview renders, so a
+    template previewed is a template sent. `kind` is required on the record,
+    so there is no default branch to fall into.
 
     Each template renders its own demo ribbon and marker from
     ./site/DemoMarker. That is one thing a template CAN forget, so it is the

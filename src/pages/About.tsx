@@ -88,18 +88,12 @@ export default function About() {
 
   return (
     <Layout>
+      {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/about"]). */}
       <Seo
-        title="About"
         /* HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
-           Original: "... founded in 2024, whose partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi, working from ..." */
-        description="Ideovent Technologies is a partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024 and working from Saket, New Delhi. Meet the people who design and build the websites and software."
+           Original: "... founded in 2024, whose partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi, working from ..."
+           (This description moved to src/lib/seo/pages.ts on 1 Oct 2026, two partners.) */
         path="/about"
-        keywords={[
-          "about Ideovent Technologies",
-          "web development team New Delhi",
-          "software studio Saket",
-          "Mehdi Alam Ideovent",
-        ]}
         breadcrumbs={[{ name: "About", path: "/about" }]}
       />
 

@@ -8,11 +8,17 @@ const ITEMS: { key: keyof FinderFilters; label: string }[] = [
   { key: "reviews20", label: "20+ reviews" },
 ];
 
-/** Toggle chips over the results. Several can be on; a result must pass all of them. */
-export function Filters({ value, onChange }: { value: FinderFilters; onChange: (f: FinderFilters) => void }) {
+const RATING_KEYS: (keyof FinderFilters)[] = ["rating4", "reviews20"];
+
+/**
+ * Toggle chips over the results. Several can be on; a result must pass all of
+ * them. `ratings` false (an OpenStreetMap list, which has no ratings) hides
+ * the rating and review chips.
+ */
+export function Filters({ value, onChange, ratings = true }: { value: FinderFilters; onChange: (f: FinderFilters) => void; ratings?: boolean }) {
   return (
     <div role="group" aria-label="Filters" className="flex flex-wrap gap-2">
-      {ITEMS.map(({ key, label }) => (
+      {ITEMS.filter(({ key }) => ratings || !RATING_KEYS.includes(key)).map(({ key, label }) => (
         <button
           key={key}
           type="button"

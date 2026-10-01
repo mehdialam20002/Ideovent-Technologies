@@ -112,9 +112,12 @@ async function insertOpenRow(demoId: string): Promise<void> {
 export async function recordDemoOpen(demoId: string, alert?: DemoOpenAlertContext): Promise<void> {
   if (!demoId) return;
   if (typeof window === "undefined") return;
-  // The alert has its own guards (per day, not per tab) and never waits on,
-  // or is stopped by, the row below.
-  if (alert) void maybeAlertDemoOpen(alert);
+  // NO E-MAIL ON AN OPEN (1 Oct 2026). Mehdi: "mai demo opened wala mail nhi
+  // chahta". The open is still recorded below and shows in the CRM; nothing is
+  // sent. maybeAlertDemoOpen stays for its tests and an explicit decision to
+  // bring it back. This also stops test browsers that open sent demos from
+  // spending the EmailJS monthly quota, which they did in September.
+  void alert;
   if (!firstInThisSession(demoId)) return;
 
   try {
