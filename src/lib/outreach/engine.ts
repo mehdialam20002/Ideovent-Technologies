@@ -12,7 +12,12 @@
  *
  * THE RULES (30 Sep 2026: Mehdi's approved wording, 04-sales-kit/APPROVED-MESSAGES-2026-09-30.md,
  * and the research behind it, OUTREACH-APPROACH-PLAYBOOK-2026-09-30.md):
- *   - no link in any first message, on either channel: the link goes after a yes;
+ *   - no link in any first message, on either channel: their sample's link goes after a yes.
+ *     The one exception (1 Oct 2026, Mehdi approved it for this one purpose): a WhatsApp
+ *     first message that says the sample is made, to a clinic, a school or a coaching
+ *     institute, carries exactly one link, its kind's picture page ({previewLink},
+ *     preview.ts), which WhatsApp shows as the picture card. Nothing else, and no other
+ *     message, may carry it (checkSend);
  *   - one message, then wait: ONE WhatsApp follow-up four days later, and up to
  *     three e-mail follow-ups (day 4, 9 and 16), sent as replies in the same thread;
  *   - quiet hours end at 10:00 India time (TRAI's 10:00 to 21:00 window), and a
@@ -54,13 +59,18 @@
  *   {visitor}         who looks them up, for "the way a new patient would": a new patient;
  *                     a parent for a children's clinic or a school; a student for coaching.
  *   {callSlots}       the next two working-day call times in the kind's good window.
+ *   {previewLink}     the kind's picture page, https://www.ideovent.in/w/dental, /w/school or
+ *                     /w/coaching (preview.ts previewLinkFor); for any other kind it is empty
+ *                     and render() drops the whole line that carries it.
  *   {contactName} {instituteName} {city} {demoLink} {pitchLink} {observation}
  *   {senderName} {senderPhone} as before.
  */
 
 import type { LeadKind, OutreachLead, OutreachSettings } from "./types";
+import { previewLinkFor } from "./preview";
 import {
   SPECIALIST_NEED,
+  carriesPreview,
   templateNotFor,
   type MessageTemplate,
   type TemplateChannel,
@@ -70,6 +80,9 @@ import {
 } from "./templates";
 import { MAIN_ORIGIN } from "@/lib/host";
 import { dentalTemplateFor } from "@/lib/demo/templates/dentalPick";
+
+/** The picture pages, for callers that read the engine (preview.ts holds them). */
+export { PREVIEW_ORIGIN, PREVIEW_PAGES, previewFor, previewImageUrlFor, previewLinkFor } from "./preview";
 
 /* ── Constants ──────────────────────────────────────────────────────────── */
 
@@ -1003,9 +1016,31 @@ export interface RenderResult {
 const LINK_FIELDS = ["demoLink", "pitchLink"];
 const URL_RE = /\bhttps?:\/\/\S+|\bwww\.\S+|\b[a-z0-9-]+\.(?:vercel\.app|com|in|org|net)\/\S*/i;
 
-/** True when a text carries a link or a link merge field. */
+/** True when a text carries a link or a link merge field ({demoLink}, {pitchLink}, {previewLink}). */
 export function containsLink(text: string): boolean {
-  return /\{(demoLink|pitchLink)\}/.test(text) || URL_RE.test(text);
+  return /\{(demoLink|pitchLink|previewLink)\}/.test(text) || URL_RE.test(text);
+}
+
+/**
+ * A text less one copy of its picture link, the address exactly as previewLinkFor
+ * writes it: followed by a space, a line end, the end of the text or a stop, never
+ * by more address ("/w/dentalx" or "/w/dental/x" is another link and stays).
+ */
+function lessPreviewLink(text: string, preview: string): string {
+  if (!preview) return text;
+  const at = new RegExp(`${preview.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}(?=$|[\\s.,;:!?)\\]])`);
+  return text.replace(at, "");
+}
+
+/**
+ * The links in a first message's text other than its one picture link: [] is
+ * what may go. `preview` is previewLinkFor(the kind), "" when the message
+ * carries none (an e-mail, the "offer" twin, the pitch-page message, any other
+ * business): then every link in it is listed.
+ */
+export function extraLinks(text: string, preview: string): string[] {
+  const rest = lessPreviewLink(text, preview);
+  return rest.match(new RegExp(URL_RE.source, "gi")) ?? [];
 }
 
 /** The lead's pitch: its own (the sheet, the Lead Finder), else "their site" when it has one, else "no website". */
@@ -1086,6 +1121,7 @@ export function render(
     need: needFor(kind, language, specialty),
     visitor: visitorFor(kind, language, specialty),
     callSlots: (ctx.callSlots ?? "").trim() || formatCallSlots(callSlots(kind, now), language),
+    previewLink: previewLinkFor(kind),
   };
 
   const named = ["greeting", "addressAs", "contactName"].find((f) => used.has(f));
@@ -1108,6 +1144,8 @@ export function render(
   if (!template.allowsLink && [...used].some((f) => LINK_FIELDS.includes(f))) {
     warnings.push("This template must not carry a link, but it uses a link field.");
   }
+  if (used.has("previewLink") && template.stage !== "first") warnings.push("Only a first message may carry the picture link.");
+  else if (used.has("previewLink") && !values.previewLink) warnings.push(`No picture for this kind of lead (${kindNoun(kind)}), so the picture line is left out.`);
   // Every line about Google must be true for this lead: the first message says you saw them there,
   // the day-9 e-mail talks about their Google listing.
   if (/\bGoogle\b/.test(said) && !seenOnGoogle(lead)) {
@@ -1119,8 +1157,10 @@ export function render(
   const fill = (text: string) =>
     text.replace(/\{(\w+)\}/g, (whole, key: string) => (key in values ? values[key] : whole));
 
+  // A kind with no picture page gets no picture line at all, not "Ek jhalak yahan dekhiye:" and nothing after it.
+  const spoken = values.previewLink ? said : said.split("\n").filter((line) => !line.includes("{previewLink}")).join("\n");
   const subject = template.subject !== undefined ? tidy(fill(template.subject)) : undefined;
-  let body = tidy(fill(said));
+  let body = tidy(fill(spoken));
 
   if (template.channel === "email") {
     const signature = (ctx.signature ?? "").trim() || DEFAULT_SIGNATURE;
@@ -1379,10 +1419,18 @@ export function checkSend(
   }
   if (channel === "whatsapp" && !leadWhatsappNumber(lead)) blockers.push("No valid phone or WhatsApp number for this lead.");
 
-  // Links: none in a first message on either channel; the link goes after they say yes.
-  if (template.stage === "first" && (template.allowsLink || containsLink(text) || typedLink)) {
-    blockers.push("A first message must not carry a link. Send the link after they say yes.");
-  } else if (!template.allowsLink && (containsLink(text) || typedLink)) {
+  // Links: none in a first message on either channel; their sample's link goes after they say yes.
+  // The one exception (1 Oct 2026): a first message whose template has the picture link may carry
+  // that link, its kind's picture page, once. Nothing else: not a second copy, not another kind's
+  // page, not the address typed into an e-mail or into the twin that offers to make a sample.
+  const withPreview = template.stage === "first" && carriesPreview(template);
+  const preview = withPreview ? previewLinkFor(kindKey(template.kind !== "any" ? template.kind : lead.kind)) : "";
+  const ownText = withPreview ? text.replace("{previewLink}", "") : text;
+  if (template.stage === "first" && (template.allowsLink || containsLink(ownText) || (typed !== undefined && extraLinks(typed, preview).length > 0))) {
+    blockers.push(withPreview
+      ? "A first message must not carry a link, except its one picture link. Send their sample's link after they say yes."
+      : "A first message must not carry a link. Send the link after they say yes.");
+  } else if (template.stage !== "first" && !template.allowsLink && (containsLink(text) || typedLink)) {
     blockers.push("This template is marked no-link but contains a link.");
   }
   if (/\{demoLink\}/.test(text) && !hasDemo) blockers.push("Pick or create a demo first: this message carries the demo link.");

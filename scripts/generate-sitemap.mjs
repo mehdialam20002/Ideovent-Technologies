@@ -37,6 +37,9 @@
  *   /blogs/:id          legacy alias of /blog/:slug; duplicate content
  *   legal drafts        a policy still holding [[TOKEN]] blanks is noindex, so
  *                       it is left out until the blanks are filled
+ *   /w/<kind>           the first message's picture pages (public/w/), static
+ *                       files for WhatsApp's link card, noindex; this script
+ *                       never walks public/, so they stay out by themselves
  *
  * NO <lastmod>, <changefreq> or <priority>: the CMS carries no real per-page
  * modification date, Google ignores the other two, and stamping today's date on

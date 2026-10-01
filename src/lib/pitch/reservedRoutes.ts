@@ -57,6 +57,7 @@ const STATIC_PATHS = [
   "home", // the home hero's screenshots (public/home/), since 1 Oct 2026
   "icons",
   "og",
+  "w", // the first message's picture pages and their JPEGs (public/w/), since 1 Oct 2026
   "work", // also a real route; listed here because it is a folder too
 ];
 

@@ -3,7 +3,8 @@ import { AlertTriangle, ArrowRight, Ban, Check, Copy, Mail, MessageCircle, Monit
 import type { DemoSite } from "@/lib/cms/types";
 import { useCms } from "@/lib/cms/context";
 import { demoStatus } from "@/lib/demo/record";
-import { LANGUAGE_LABELS, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";
+import { LANGUAGE_LABELS, carriesPreview, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";
+import { previewFor } from "@/lib/outreach/preview";
 import {
   OBSERVATIONS,
   callSlots,
@@ -111,6 +112,15 @@ const ENGAGED = new Set<OutreachLead["status"]>(["replied", "demo_opened", "call
  * mail app cuts) and one short line says so. The old "Gmail account" setting
  * (senderGmail) may still be stored; nothing reads it (the engine's
  * free-mailbox warning that did was removed on 30 Sep 2026).
+ *
+ * THE PICTURE (1 Oct 2026, src/lib/outreach/preview.ts). A first WhatsApp to a
+ * clinic, school or coaching institute that says the sample is made carries
+ * one link, its kind's picture page, which WhatsApp shows as a picture card.
+ * Under the text, the picture itself (CreativeCard in MessageBox): Copy image
+ * (a PNG; Ctrl+V in WhatsApp Web attaches it), Share (the phone's share sheet
+ * with the picture and the text; it records the send unless Open in WhatsApp
+ * already did) and Download. The twin that offers to make a sample has no
+ * picture, since the picture says the sample is built, and the box says so.
  */
 export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name: string; open: () => void } }) {
   const { leads, events, settings, saveLead, addEvent } = useOutreach();
@@ -151,6 +161,8 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   // Call times Mehdi typed for {callSlots}, for one channel and template of this lead.
   const [slotState, setSlotState] = useState<{ key: string; text: string } | null>(null);
   const [sentNow, setSentNow] = useState(false);
+  // The lead, channel and template of the last send recorded here: Share records a send only when it is not this one again.
+  const [sentKey, setSentKey] = useState("");
   // A reply, a call or a proposal marked anywhere (the menu below, the call script card, the status
   // buttons) moves the lead to a new stage, so a stage pinned by the last send is let go. A send's own
   // New to Contacted is not one of these: that pin is what stops a second tap sending the follow-up.
@@ -292,6 +304,7 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
       language: lead.language || template.language,
     });
     setSentNow(true);
+    setSentKey(editKey);
   };
 
   /* ── What happened (the small menu under Send) ─────────────────────── */
@@ -346,6 +359,20 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   const note = looksLikeNote(saved) || savedForeign ? saved : "";
   const usesObservation = Boolean(template && /\{observation\}/.test(`${template.subject || ""}${template.body}`));
   const isEmail = channel === "email";
+
+  /* ── The picture (1 Oct 2026, preview.ts) ───────────────────────────── */
+  // Under a first WhatsApp that carries the picture link: the picture of the kind the link is for (the
+  // template's own kind, as render() picks it). A kind without one (any other business) shows nothing.
+  const pictureKind = template ? (template.kind !== "any" ? template.kind : lead.kind) : undefined;
+  const firstWa = !isEmail && template?.stage === "first";
+  const picturePage = firstWa && template && carriesPreview(template) ? previewFor(pictureKind) : undefined;
+  const picture = picturePage
+    ? { page: picturePage, shareBlocked: blocked, onShared: () => { if (sentKey !== editKey) void recordSend("the share sheet"); } }
+    : null;
+  // The twin that offers to make a sample has none: the picture says the sample website is already built.
+  const pictureNote = firstWa && template?.sample === "offer" && previewFor(pictureKind)
+    ? "No picture with this message: the picture says the sample website is already built. Make the demo in step 1 and the message that says so, with the picture, comes up."
+    : "";
 
   return (
     <div className="space-y-8" data-testid="compose">
@@ -430,7 +457,8 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
         )}
         {template && (
           <MessageBox isEmail={isEmail} subject={subject} body={body} pieces={piecesOf(baseBody, fills)} blanks={blanks} fills={fills}
-            onSubject={(v) => change({ subject: v })} onBody={(v) => change({ body: v })} onFill={fill} now={new Date()} />
+            onSubject={(v) => change({ subject: v })} onBody={(v) => change({ body: v })} onFill={fill} now={new Date()}
+            picture={picture} pictureNote={pictureNote} />
         )}
       </Step>
 
