@@ -8,6 +8,10 @@
  *   2. Round trip: upsert, get, list, update keeps createdAt, events, settings,
  *      delete removes the lead AND its events, data sits under
  *      ideovent_outreach_v1 and nowhere near the CMS key ideovent_cms_v1.
+ *      Settings (30 Sep 2026): no WhatsApp limit by default, quiet hours 20:00
+ *      to 10:00, the approved two-line signature; a row saved with the old
+ *      defaults (09:00, the four-line signature) reads as the new ones, and
+ *      anything Mehdi chose himself is kept.
  *   3. Duplicate detection across formats ("098100 12345" vs "+91-98100-12345",
  *      "A@B.in" vs "a@b.in"), including the WhatsApp number, with excludeId.
  *   4. CSV import: LEAD-SHEET-TEMPLATE.csv (its placeholder row is skipped),
@@ -18,6 +22,23 @@
  *      storage write (local) and exactly one upsert of every row (Supabase,
  *      through a fake client that counts calls); a failed write saves
  *      nothing; the downloadable template CSV imports exactly its one example.
+ *   7. DENTAL (28 Sep 2026): every DENTAL_* segment (and CLINIC_DENTAL,
+ *      INTL_DENTAL), a type column saying dental / dentist / dental clinic, a
+ *      Maps-style dental category (Orthodontist, Oral surgeon), and a dental
+ *      name (checked before the school and coaching name rules) map to kind
+ *      dental; no school or coaching name, category or row ever does,
+ *      including every real CSV in the sales kit; the import template names
+ *      the DENTAL segments. What to offer (ICP 5.1, 30 / 70): a pitch cell,
+ *      else website_state, becomes the lead's pitch (a Practo-only clinic is a
+ *      new-website lead), and nothing is invented without them.
+ *
+ *   OUTREACH_DENTAL_NEGATIVE=1 node scripts/test-outreach-store.mjs
+ *   removes the dental rules from kindFrom and makes pitchFrom ignore the
+ *   sheet; the dental and pitch checks must then FAIL.
+ *
+ *   OUTREACH_SETTINGS_NEGATIVE=1 node scripts/test-outreach-store.mjs
+ *   puts quiet hours back to 09:00 and drops the migration of old rows; the
+ *   settings checks must then FAIL.
  *
  * Same harness as test-from-template.mjs: esbuild bundles the real TypeScript,
  * nothing is mocked except localStorage (an in-memory StorageLike).
@@ -41,6 +62,10 @@ const ROOT = resolve(here, "..");
 const SRC = join(ROOT, "src");
 const KIT = resolve(ROOT, "..", "..", "04-sales-kit");
 const NEGATIVE = Boolean(process.env.OUTREACH_NEGATIVE);
+/* OUTREACH_DENTAL_NEGATIVE=1 removes the dental rules from kindFrom and the sheet's pitch: those checks must then FAIL. */
+const DENTAL_NEGATIVE = Boolean(process.env.OUTREACH_DENTAL_NEGATIVE);
+/* OUTREACH_SETTINGS_NEGATIVE=1 puts quiet hours back to 09:00 and drops the old-row migration: the settings checks must then FAIL. */
+const SETTINGS_NEGATIVE = Boolean(process.env.OUTREACH_SETTINGS_NEGATIVE);
 
 /* ── Bundle the real module ──────────────────────────────────────────────── */
 
@@ -54,15 +79,32 @@ const alias = {
       loader: "js",
     }));
     b.onResolve({ filter: /^@\// }, (args) => ({ path: resolveTs(join(SRC, args.path.slice(2))) }));
-    if (NEGATIVE) {
+    if (NEGATIVE || DENTAL_NEGATIVE || SETTINGS_NEGATIVE) {
       b.onLoad({ filter: /outreach[\\/]store\.ts$/ }, (args) => {
-        const src = readFileSync(args.path, "utf8");
-        const sig = "export function normalizePhone(raw?: string | null): string | undefined {";
-        if (!src.includes(sig)) throw new Error("negative control: normalizePhone signature not found");
-        return {
-          contents: src.replace(sig, sig + "\n  return raw ? raw.trim() || undefined : undefined;"),
-          loader: "ts",
-        };
+        let src = readFileSync(args.path, "utf8");
+        if (SETTINGS_NEGATIVE) {
+          const migrate = 'if (/^0?9:00$/.test((m.quietEnd || "").trim())) m.quietEnd = DEFAULT_OUTREACH_SETTINGS.quietEnd;';
+          if (!src.includes(migrate) || !src.includes('quietEnd: "10:00",')) throw new Error("settings negative control: quiet-hours code not found");
+          src = src.replace(migrate, "").replace('quietEnd: "10:00",', 'quietEnd: "09:00",');
+        }
+        if (NEGATIVE) {
+          const sig = "export function normalizePhone(raw?: string | null): string | undefined {";
+          if (!src.includes(sig)) throw new Error("negative control: normalizePhone signature not found");
+          src = src.replace(sig, sig + "\n  return raw ? raw.trim() || undefined : undefined;");
+        }
+        if (DENTAL_NEGATIVE) {
+          // The dental rules vanish from kindFrom: DENTAL rows and dental names fall back to the old mapping.
+          const rules = ['if (isDentalSegment(segment) || [segment, ...types].some(isDentalType)) return "dental";', 'if (looksDental(name)) return "dental";'];
+          for (const r of rules) {
+            if (!src.includes(r)) throw new Error("dental negative control: rule not found: " + r);
+            src = src.replace(r, "");
+          }
+          // ...and the lead sheet's pitch / website_state is ignored again (every dental row loses its 30 / 70 pitch).
+          const pitchSig = "export function pitchFrom(pitch?: string, websiteState?: string): LeadPitch | undefined {";
+          if (!src.includes(pitchSig)) throw new Error("dental negative control: pitchFrom signature not found");
+          src = src.replace(pitchSig, pitchSig + "\n  return undefined;");
+        }
+        return { contents: src, loader: "ts" };
       });
     }
   },
@@ -77,7 +119,7 @@ function resolveTs(base) {
 
 const out = join(tmpdir(), `ideovent-test-outreach-${process.pid}.mjs`);
 const bundled = await build({
-  stdin: { contents: `export * from "@/lib/outreach/store";`, resolveDir: ROOT, loader: "ts" },
+  stdin: { contents: `export * from "@/lib/outreach/store"; export * from "@/lib/outreach/types";`, resolveDir: ROOT, loader: "ts" },
   bundle: true,
   format: "esm",
   platform: "node",
@@ -164,8 +206,21 @@ check(allEv[0].leadId === b.id, "listEvents is newest first");
 check(M.countSentToday(allEv, "whatsapp") === 2 && M.countSentToday(allEv, "email") === 0, "countSentToday counts today's sends per channel");
 
 const s0 = await store.getSettings();
-check(s0.whatsappDailyLimit === undefined && s0.autoAddDemos === true && s0.quietStart === "20:00" && s0.quietEnd === "09:00", "default settings: no WhatsApp limit, add demos to the CRM, quiet 20:00-09:00");
+check(s0.whatsappDailyLimit === undefined && s0.autoAddDemos === true && s0.quietStart === "20:00" && s0.quietEnd === "10:00", "default settings: no WhatsApp limit, add demos to the CRM, quiet 20:00 to 10:00 (TRAI's window opens at 10:00)");
 check(/Mehdi Alam/.test(s0.signature) && /\+91 77619 21786/.test(s0.signature), "default signature carries the real sender");
+check(s0.signature === "Mehdi Alam, Ideovent Technologies, Saket, New Delhi\n+91 77619 21786", "default signature is the approved two lines");
+/* 30 Sep 2026: a row saved before carries the old defaults (quiet hours to 09:00, the four-line
+   signature), which nobody chose; they read as the new defaults. A time or signature Mehdi set is kept. */
+{
+  const old = memStorage();
+  old.setItem(M.OUTREACH_LOCAL_KEY, JSON.stringify({ leads: [], events: [], settings: { signature: M.PREVIOUS_DEFAULT_SIGNATURE, quietStart: "20:00", quietEnd: "09:00", alertOnDemoOpen: true } }));
+  const migrated = await new M.LocalOutreachStore(old).getSettings();
+  check(migrated.quietEnd === "10:00" && migrated.signature === M.DEFAULT_SIGNATURE, `an old settings row moves to quiet hours ending 10:00 and the approved signature (${migrated.quietEnd})`);
+  const chosen = memStorage();
+  chosen.setItem(M.OUTREACH_LOCAL_KEY, JSON.stringify({ leads: [], events: [], settings: { signature: "Mehdi\nIdeovent", quietStart: "21:00", quietEnd: "10:30", alertOnDemoOpen: false } }));
+  const kept = await new M.LocalOutreachStore(chosen).getSettings();
+  check(kept.quietEnd === "10:30" && kept.quietStart === "21:00" && kept.signature === "Mehdi\nIdeovent", "times and a signature Mehdi chose are kept");
+}
 await store.saveSettings({ senderGmail: "mehdi@example.com", whatsappDailyLimit: 8 });
 const s1 = await new M.LocalOutreachStore(mem).getSettings();
 check(s1.senderGmail === "mehdi@example.com" && s1.whatsappDailyLimit === 8 && s1.signature === s0.signature, "settings persist and merge");
@@ -354,9 +409,109 @@ console.log("      template columns: " + M.LEAD_TEMPLATE_COLUMNS.join(","));
   check(after.length === 2 && after.every((l) => !l.observation) && after.find((l) => l.id === a1.id)?.createdAt === a1.createdAt, "upsertLeads clears the fields and keeps createdAt");
 }
 
+/* ── 7. Dental clinics: the CSV contract (28 Sep 2026) ─────────────────────── */
+{
+  const SEGMENTS = ["DENTAL_SINGLE", "DENTAL_MULTI", "DENTAL_COSMETIC", "DENTAL_IMPLANT", "DENTAL_ORTHO", "DENTAL_KIDS", "DENTAL_CHAIN"];
+  for (const s of SEGMENTS) check(M.kindFrom(s, "Example Care Centre") === "dental", `segment ${s} is dental`);
+  check(M.kindFrom("dental_single", "x") === "dental" && M.kindFrom("CLINIC_DENTAL", "x") === "dental" && M.kindFrom("INTL_DENTAL", "x") === "dental", "lower-case DENTAL_ and the sales kit's CLINIC_DENTAL / INTL_DENTAL are dental");
+  check(M.kindFrom("CLINIC_EYE", "Example Eye Care") === "other", "CLINIC_EYE is not dental");
+  for (const v of ["dental", "Dentist", "Dental clinic", "DENTAL CLINIC", "dental_clinic", "dentists"]) {
+    check(M.kindFrom(v, "Example Care Centre") === "dental", `type value "${v}" is dental`);
+  }
+  check(M.kindFrom("OTHER", "Example Care Centre", ["dental clinic"]) === "dental", "a type column saying dental wins over a segment of OTHER");
+  // No segment or type: the name decides, dental BEFORE the school and coaching name rules.
+  for (const n of ["Example Dental Clinic", "Example Smile Dental Care", "Example Dental Academy", "Example Orthodontic Centre", "Dr. Example's Dentistry", "Example Tooth Care Institute"]) {
+    check(M.kindFrom(undefined, n) === "dental" && M.kindFrom("OTHER", n) === "dental", `"${n}" is dental by name`);
+  }
+  for (const [n, k] of [["Sunrise Public School", "school"], ["Green Valley School", "school"], ["Test Vidya Mandir", "school"], ["Vidya Coaching Centre", "coaching"], ["Apex Classes", "coaching"], ["Example Tutorials", "coaching"], ["Example IAS Academy", "coaching"]]) {
+    check(M.kindFrom(undefined, n) === k, `"${n}" stays ${k}, never dental`);
+  }
+  check(M.kindFrom(undefined, "Example Tuition Centre") !== "dental", `"Example Tuition Centre" is never dental`);
+  check(M.kindFrom("SCHOOL_CBSE", "Example Dental Public School") === "school", "a SCHOOL segment is kept even when the name mentions dental");
+  check(M.LEAD_KIND_LABELS.dental === "Dental clinic" && M.LEAD_KIND_VALUES.includes("dental"), "kind label: Dental clinic");
+  // A Maps-style category column: a dental category is dental whatever the name; school and coaching categories never are.
+  for (const c of ["Orthodontist", "Cosmetic dentist", "Pediatric dentist", "Oral surgeon", "Endodontist", "Dental implants periodontist"]) {
+    check(M.kindFrom(c, "Example Care Centre") === "dental" && M.mapCsvRow({ name: "Example Care Centre", phone: "98765 43210", category: c }).lead?.kind === "dental", `category "${c}" is dental`);
+  }
+  for (const [c, k] of [["school", "school"], ["School", "school"], ["coaching", "coaching"], ["Coaching center", "coaching"], ["Tutoring service", "other"], ["Eye care center", "other"]]) {
+    check(M.kindFrom(c, "Example Care Centre") === k, `category "${c}" maps to ${k}, never dental`);
+  }
+
+  // A lead sheet with DENTAL rows imports them as dental leads, the segment kept as a tag.
+  const dRows = SEGMENTS.map((s, i) => ({ lead_id: `IDV-D-${i + 1}`, segment: s, org_name: `Example Dental Clinic ${i + 1}`, contact_phone: `+91 98765 4321${i}`, city_locality: "Saket, New Delhi" }));
+  dRows.push({ segment: "OTHER", org_name: "Example Smile Dental", contact_phone: "+91 98765 43299" });
+  dRows.push({ type: "Dentist", name: "Example Family Care", phone: "98765 43298" });
+  dRows.push({ segment: "COACHING_TUITION", org_name: "Example Tutorials", contact_phone: "98765 43297" });
+  const dRes = await new M.LocalOutreachStore(memStorage()).importLeads(dRows);
+  const dental = dRes.added.filter((l) => l.kind === "dental");
+  check(dental.length === 9, `9 of 10 rows import as dental leads (got ${dental.length})`);
+  check(dRes.added.find((l) => l.instituteName === "Example Tutorials")?.kind === "coaching", "a coaching row in the same sheet stays coaching");
+  check(SEGMENTS.every((s) => dental.some((l) => l.tags?.includes(s))), "every DENTAL segment is kept as a tag (the template choice reads it)");
+  const plainDental = M.parseCsv("name,phone,type\nExample Dental Clinic,9876543210,dental clinic\n");
+  check(M.mapCsvRow(plainDental[0]).lead?.kind === "dental", "a plain sheet with type 'dental clinic' maps to dental");
+
+  // Real sales-kit files: no school or coaching row ever becomes dental; any dental lead sheet imports as dental.
+  const kitCsvs = [join(KIT, "PROSPECTS-DELHI-NCR.csv")];
+  for (const d of readdirSync(KIT)) {
+    const p = join(KIT, d);
+    if (/^outreach-/.test(d) && existsSync(p)) for (const f of readdirSync(p)) if (/\.csv$/i.test(f)) kitCsvs.push(join(p, f));
+    if (/dental.*\.csv$/i.test(d)) kitCsvs.push(p);
+  }
+  for (const f of kitCsvs.filter(existsSync)) {
+    const rows = M.parseCsv(readFileSync(f, "utf8"));
+    const name = f.slice(KIT.length + 1);
+    const mapped = rows.map((r) => ({ r, m: M.mapCsvRow(r) })).filter((x) => "lead" in x.m);
+    const eduRows = mapped.filter((x) => /^(SCHOOL|COACHING)/i.test(x.r.segment || ""));
+    const dentalRows = mapped.filter((x) => M.isDentalSegment(x.r.segment));
+    check(eduRows.every((x) => x.m.lead.kind !== "dental"), `${name}: no school or coaching row becomes dental (${eduRows.length} rows)`);
+    check(dentalRows.every((x) => x.m.lead.kind === "dental"), `${name}: every DENTAL row is a dental lead (${dentalRows.length} rows)`);
+    console.log(`      ${name}: ${mapped.length} leads, ${mapped.filter((x) => x.m.lead.kind === "dental").length} dental`);
+  }
+
+  // The downloadable template documents the dental segments, and still imports exactly one example.
+  const tplDoc = M.leadImportTemplateCsv();
+  check(/DENTAL_SINGLE/.test(tplDoc) && /DENTAL_CHAIN/.test(tplDoc) && /\bdental\b/.test(tplDoc), "the import template names the DENTAL segments and the dental type");
+  check(M.parseCsv(tplDoc).length === 1, "the import template still has one example row");
+  check(M.LEAD_TEMPLATE_COLUMNS.includes("website_state") && /DIRECTORY_ONLY/.test(tplDoc) && /NOT_MOBILE/.test(tplDoc), "the import template carries website_state and says which values mean new or fix");
+
+  // What to offer (ICP 5.1, the dental 30 / 70 split): a pitch cell wins, else website_state.
+  for (const [ws, want] of [["NONE", "new_website"], ["SOCIAL_ONLY", "new_website"], ["DIRECTORY_ONLY", "new_website"], ["BROKEN", "fix_website"], ["NOT_MOBILE", "fix_website"], ["NO_ENQUIRY_FORM", "fix_website"], ["DATED", "fix_website"], ["GOOD", undefined], ["", undefined]]) {
+    check(M.pitchFrom(undefined, ws) === want, `website_state ${ws || "(blank)"}: pitch ${want}`);
+  }
+  check(M.pitchFrom("fix_website", "NONE") === "fix_website" && M.pitchFrom("new", "NOT_MOBILE") === "new_website" && M.pitchFrom("New Website") === "new_website", "a pitch cell wins over website_state, in any spelling");
+  const practo = M.mapCsvRow({ segment: "DENTAL_SINGLE", org_name: "Example Dental Clinic", contact_phone: "+91 98765 43210", website_url: "https://www.practo.com/example", website_state: "DIRECTORY_ONLY" });
+  check(practo.lead?.kind === "dental" && practo.lead?.pitch === "new_website", "a dental row whose only 'website' is a directory page is a new-website lead");
+  const fixRow = M.mapCsvRow({ segment: "DENTAL_MULTI", org_name: "Example Dental Centre", contact_phone: "+91 98765 43211", website_url: "https://example.org", website_state: "NOT_MOBILE" });
+  check(fixRow.lead?.pitch === "fix_website", "a dental row whose site fails on a phone is a fix-website lead");
+  check(!("pitch" in (M.mapCsvRow({ org_name: "Example Dental Clinic", phone: "98765 43212" }).lead || {})), "no pitch or website_state: no pitch is invented");
+  check(M.mapCsvRow({ org_name: "Example", phone: "98765 43213", website_state: "NONE|SOCIAL_ONLY|DIRECTORY_ONLY" }).lead?.pitch === undefined, "the template's placeholder website_state is ignored");
+  const tplLead = M.mapCsvRow(M.parseCsv(tplDoc)[0]).lead;
+  check(tplLead?.pitch === "fix_website", "the template's example row (NO_ENQUIRY_FORM) imports as a fix-website lead");
+}
+
 /* ── Result ──────────────────────────────────────────────────────────────── */
 
-console.log(`\n${passes} passed, ${failures.length} failed${NEGATIVE ? " (NEGATIVE CONTROL: failures expected)" : ""}`);
+console.log(`\n${passes} passed, ${failures.length} failed${NEGATIVE || DENTAL_NEGATIVE || SETTINGS_NEGATIVE ? " (NEGATIVE CONTROL: failures expected)" : ""}`);
+if (SETTINGS_NEGATIVE) {
+  const expected = [/quiet 20:00 to 10:00/, /moves to quiet hours ending 10:00/];
+  const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
+  if (missed.length) {
+    console.log("SETTINGS NEGATIVE CONTROL FAILED: undetected " + missed.join(", "));
+    process.exit(1);
+  }
+  console.log("Settings negative control failed as it should.");
+  process.exit(0);
+}
+if (DENTAL_NEGATIVE) {
+  const expected = [/segment DENTAL_SINGLE is dental/, /is dental by name/, /import as dental leads/, /category "Orthodontist" is dental/, /directory page is a new-website lead/];
+  const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
+  if (missed.length) {
+    console.log("DENTAL NEGATIVE CONTROL FAILED: undetected " + missed.join(", "));
+    process.exit(1);
+  }
+  console.log("Dental negative control failed as it should.");
+  process.exit(0);
+}
 if (NEGATIVE) {
   if (failures.length === 0) {
     console.log("NEGATIVE CONTROL DID NOT FAIL: the checks are not reaching the phone matching.");

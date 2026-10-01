@@ -8,24 +8,27 @@ export type AuditState =
   | { state: "error"; message: string }
   | { state: "done"; audit: SiteAudit };
 
-const LABEL: Record<AuditVerdict, string> = { none: "None", broken: "Broken", poor: "Poor", ok: "OK" };
+const LABEL: Record<AuditVerdict, string> = { none: "None", broken: "Broken", poor: "Poor", ok: "OK", unchecked: "Could not check" };
 const TONE: Record<AuditVerdict, string> = {
   none: "border-destructive/40 bg-destructive/10 text-destructive",
   broken: "border-destructive/40 bg-destructive/10 text-destructive",
   poor: "border-warning/50 bg-warning/15 text-warning",
   ok: "border-success/40 bg-success/10 text-success",
+  unchecked: "border-border bg-muted text-muted-foreground",
 };
 const MEANING: Record<AuditVerdict, string> = {
   none: "No website",
   broken: "Website broken",
   poor: "Website poor",
   ok: "Website OK",
+  unchecked: "Website could not be checked",
 };
 
 /**
  * The website verdict. Hover shows the evidence (title); a click unfolds it,
  * which is the way on a phone. None and Broken are the best leads: they need
- * a site. Poor needs theirs fixed. OK is shown plainly, not hidden.
+ * a site. Poor needs theirs fixed. OK is shown plainly, not hidden. "Could
+ * not check" is a page drawn by scripts: open it and judge it yourself.
  */
 export function WebsiteBadge({ st }: { st: AuditState }) {
   if (st.state === "idle") return <span className="text-xs text-muted-foreground">Not checked</span>;

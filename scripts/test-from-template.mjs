@@ -24,7 +24,20 @@
  *   5. PHOTOS are carried; the copy shares no object with the template and
  *      the template is not mutated;
  *   6. SAMPLE marks: results and reviews carry the sample line until edited
- *      or marked real.
+ *      or marked real. The founding story and year (30 Sep 2026) carry their
+ *      own line on the About page until edited, whatever the switch says; a
+ *      record made before that block (no story print) shows no story line
+ *      and its checklist is exactly what it was;
+ *   7. THE HINDI SLOTS: a line naming the template, planted in each Hindi
+ *      slot, is renamed like every other Hindi string;
+ *   8. THE SHORT NAME (1 Oct 2026) is empty in both languages, so the English
+ *      page never reads the Hindi one through bi()'s fallback (the English
+ *      Contact title printed the Devanagari name), and each page names the
+ *      clinic in its own language;
+ *   9. THE HERO'S DOCTOR LINE (1 Oct 2026, dental): the kids and calm heroes
+ *      name the template's sample doctor, so the line ends in "(sample)"
+ *      while the doctors block is the template's, never twice, and never
+ *      on a line that names somebody else.
  *
  * HOW IT RUNS WITHOUT A TEST RUNNER. esbuild (the WebAssembly build is what
  * node_modules/esbuild is on this machine) bundles the real TypeScript modules
@@ -40,6 +53,17 @@
  * the template's own), so the Hindi twins keep the template's name. Every one of the
  * ten templates must then FAIL. If that run passes, the assertions are not
  * reaching the Hindi copy and a green run means nothing.
+ *
+ *   FROM_TEMPLATE_NEGATIVE=short node scripts/test-from-template.mjs
+ *
+ * keeps the template's Hindi short name on the copy, renamed, as
+ * fromTemplate did until 1 Oct 2026. Exactly the templates that carry one
+ * (the seven dental ones) must then fail the short-name checks (8).
+ *
+ *   FROM_TEMPLATE_NEGATIVE=hero node scripts/test-from-template.mjs
+ *
+ * reads the hero's doctor line with no mark at all, as the page did until
+ * 1 Oct 2026. d6 (kids) and d7 (calm) must then fail checks (9).
  */
 import { build } from "esbuild";
 import { readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -50,7 +74,12 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(here, "..");
 const SRC = join(ROOT, "src");
-const NEGATIVE = Boolean(process.env.FROM_TEMPLATE_NEGATIVE);
+/* "short" and "hero" are the two narrow controls above; any other value skips the Hindi replacement. */
+const NEGATIVE_MODE = process.env.FROM_TEMPLATE_NEGATIVE || "";
+const NEGATIVE = Boolean(NEGATIVE_MODE);
+const KEEP_HI_SHORT = NEGATIVE_MODE === "short";
+const NO_HERO_MARK = NEGATIVE_MODE === "hero";
+const SKIP_HINDI = NEGATIVE && !KEEP_HI_SHORT && !NO_HERO_MARK;
 
 /* ── Bundle the real modules ─────────────────────────────────────────────── */
 
@@ -61,8 +90,14 @@ export { visiblePages, matchPage, pagesOfKind } from "@/lib/demo/site/pages";
 export { DENTAL_PAGE_SETS } from "@/lib/demo/site/pageSets";
 export { demoSlugIssue } from "@/lib/demo/reservedRoutes";
 export { resolveDemoSite, isWellFormedDemoSlug } from "@/lib/demo/record";
-export { samplePrints, showSampleLine, isCarried } from "@/lib/demo/site/sample";
+export { samplePrints, showSampleLine, isCarried, SAMPLE_BLOCKS, SAMPLE_BLOCK_LABEL, SAMPLE_COPY } from "@/lib/demo/site/sample";
 export { STOCK_PHOTOS, getStockPhoto, isStockPhoto, stockPhoto, facultyPhotoSrc, stockPhotoUse, DEMO_PHOTO_SLOTS } from "@/lib/demo/images";
+export { demoFormFields, NOT_ON_A_CLINIC } from "@/admin/demoSiteFormFields";
+export { collectionSchemas, pitchPackageOptionsFor } from "@/admin/schemas";
+export { pitchPackage, PITCH_PACKAGES } from "@/lib/pitch/record";
+export { EMPTY_COPY, SHELL_COPY } from "@/lib/demo/site/copy";
+export { bi } from "@/lib/demo/site/bilingual";
+export { heroCredential, heroDoctorMark, leadDoctorCredit, SAMPLE_MARK } from "@/lib/demo/ui/dental/logic";
 `;
 
 const aliasAndRaw = {
@@ -191,7 +226,23 @@ const NAMES = [
   { name: "Riverbend Public School", hiName: "रिवरबेंड पब्लिक स्कूल" },
   { name: "St. Mary's Convent School" },
   { name: "Apex Classes", city: "Patna" },
+  /* d1's own city: the city stays, the neighbourhood still goes (30 Sep 2026). */
+  { name: "Example Care Clinic", city: "Lucknow" },
 ];
+
+/* The neighbourhood each single-clinic dental template names beside its
+   city, in both scripts. Written here from the content files, not read from
+   fromTemplate, so an area its table forgets still fails this test. With a
+   city typed, none of them may survive (30 Sep 2026: a d4 demo for Indore
+   read "Dental implant centre, Baner, Indore"). */
+const AREAS = {
+  "d1-family-dentist": ["Gomti Nagar", "गोमती नगर"],
+  "d2-multispeciality": ["Kondapur", "कोंडापुर"],
+  "d3-smile-studio": ["Bandra West", "बांद्रा वेस्ट"],
+  "d4-implant-centre": ["Baner", "बाणेर"],
+  "d5-ortho-aligners": ["Malviya Nagar", "मालवीय नगर"],
+  "d6-kids-dental": ["Sector 35", "सेक्टर 35"],
+};
 
 /* An independent list of each template's distinctive name word, in both
    scripts. Written here, not read from fromTemplate, so a form the table in
@@ -247,13 +298,23 @@ function expecter(t, who, table) {
   const moving = Boolean(who.city) && who.city.toLowerCase() !== oldCity.toLowerCase();
   const pair = moving && oldCity && c.state ? wordRe([`${oldCity}, ${c.state}`]) : null;
   const city = moving ? wordRe([oldCity, ...table.cityHi]) : null;
+  /* With a city typed: "<area>, " before the template's city goes, and any
+     other mention of the area becomes the city (the template's own spelling,
+     Devanagari in Hindi, when the city stays). */
+  const areas = who.city ? AREAS[t.meta.id] || [] : [];
+  const cityWords = wordRe([oldCity, ...table.cityHi]);
+  const areaPrefix = areas.length && cityWords ? new RegExp(`${wordRe(areas).source}, (?=${cityWords.source})`, "gu") : null;
+  const area = areas.length ? wordRe(areas) : null;
+  const here = (inHi) => (moving ? who.city : (inHi && table.cityHi[0]) || oldCity);
   const enRe = wordRe(en);
   const hiRe = wordRe(table.hi);
   return (s, inHi) => {
     const nn = inHi ? who.hiName || who.name : who.name;
     let o = s;
+    if (areaPrefix) o = o.replace(areaPrefix, "");
     if (pair) o = o.replace(pair, () => who.city);
     if (city) o = o.replace(city, () => who.city);
+    if (area) o = o.replace(area, () => here(inHi));
     if (enRe) o = o.replace(enRe, () => nn);
     if (hiRe) o = o.replace(hiRe, () => nn);
     return o;
@@ -313,7 +374,22 @@ function skipHindi(copy, template) {
   walk(copy, template);
   return copy;
 }
+/**
+ * The sabotage for FROM_TEMPLATE_NEGATIVE=short: the copy keeps the
+ * template's Hindi short name, renamed, which is what fromTemplate did
+ * before 1 Oct 2026.
+ */
+function keepHiShort(copy, template, expect) {
+  const hs = template.hi?.shortName;
+  if (hs) copy.hi = { ...(copy.hi || {}), shortName: expect(hs, true) };
+  return copy;
+}
+const sabotage = (copy, template, expect) =>
+  KEEP_HI_SHORT ? keepHiShort(copy, template, expect) : SKIP_HINDI ? skipHindi(copy, template) : copy;
 const failedTemplates = new Set();
+/* The templates that carry a Hindi short name, and those that failed check 8. */
+const withHiShort = new Set();
+const failedShort = new Set();
 
 for (const meta of TEMPLATES) {
   const t = await M.loadTemplate(meta.id);
@@ -330,18 +406,24 @@ for (const meta of TEMPLATES) {
     const tag = `${meta.id} as "${who.name}"`;
     const tcheck = (ok, msg) => { if (!ok) failedTemplates.add(meta.id); check(ok, `${tag}: ${msg}`); };
     const ctx = { sites: EXISTING, pitchPages: [], now: NOW, newId: () => "ds_fixed" };
-    const copy = NEGATIVE ? skipHindi(M.fromTemplate(t, ctx, who), source) : M.fromTemplate(t, ctx, who);
+    const expect = expecter(t, who, table);
+    const copy = sabotage(M.fromTemplate(t, ctx, who), source, expect);
     const cj = json(copy);
 
     /* 1. CONTENT */
-    const expect = expecter(t, who, table);
+    const moving = Boolean(who.city) && who.city.toLowerCase() !== (c.city || "").trim().toLowerCase();
     const diffs = [];
     for (const k of Object.keys(source)) {
       if (NOT_CONTENT.has(k) || source[k] === undefined) continue;
-      /* hi.instituteName is the typed Hindi name, not template copy: checked below. */
+      /* hi.instituteName is the typed Hindi name, not template copy: checked below.
+         hi.state leaves with the English state when the city moves: checked below.
+         hi.shortName leaves with the English short name (1 Oct 2026): check 8. */
       const noName = (h) => (h ? (({ instituteName: _n, ...rest }) => rest)(h) : h);
-      compare(k === "hi" ? noName(source[k]) : source[k], k === "hi" ? noName(copy[k]) : copy[k], k, k === "hi", expect, diffs);
+      const noState = (h) => (h && moving ? (({ state: _s, ...rest }) => rest)(h) : h);
+      const noShort = (h) => (h ? (({ shortName: _h, ...rest }) => rest)(h) : h);
+      compare(k === "hi" ? noShort(noState(noName(source[k]))) : source[k], k === "hi" ? noName(copy[k]) : copy[k], k, k === "hi", expect, diffs);
     }
+    if (moving) tcheck(copy.hi?.state === undefined, "the template's Hindi state goes with its English one");
     if (c.disclosure) {
       const want = structuredClone(c.disclosure);
       for (const r of ["address", "email", "phone"]) if (want.rows) delete want.rows[r];
@@ -350,6 +432,23 @@ for (const meta of TEMPLATES) {
     compare(c.contact?.hours || "", copy.contact?.hours || "", "contact.hours", false, expect, diffs);
     if (c.dental) compare(expectedDental(c.dental), copy.dental, "dental", false, expect, diffs);
     tcheck((copy.hi?.instituteName || "") === (who.hiName || "").trim(), "hi.instituteName holds the Hindi name typed, and only that");
+
+    /* 8. THE SHORT NAME (1 Oct 2026). Pages read it with bi(), which falls
+       back to the Hindi value when the English is empty: a kept hi.shortName
+       put the Devanagari name in the English Contact page's title. The
+       names below are read exactly as that title reads them. */
+    if (c.hi?.shortName) withHiShort.add(meta.id);
+    const enShown = M.bi(copy, "shortName", "en") || M.bi(copy, "instituteName", "en");
+    const hiShown = M.bi(copy, "shortName", "hi") || M.bi(copy, "instituteName", "hi");
+    const shortChecks = [
+      [copy.shortName === "" && copy.hi?.shortName === undefined, `the short name is empty and its Hindi twin is gone (hi.shortName ${JSON.stringify(copy.hi?.shortName)})`],
+      [enShown === who.name && !/[ऀ-ॿ]/.test(enShown), `the English page names the clinic in English (${enShown})`],
+      [hiShown === (who.hiName || who.name), `the Hindi page names it by the Hindi name typed, else the English one (${hiShown})`],
+    ];
+    for (const [ok, msg] of shortChecks) {
+      if (!ok) failedShort.add(meta.id);
+      tcheck(ok, msg);
+    }
     tcheck(diffs.length === 0, `content equals the template's with the name replaced${diffs.length ? "\n      " + diffs.join("\n      ") : ""}`);
 
     /* 2. CONTACT */
@@ -398,6 +497,12 @@ for (const meta of TEMPLATES) {
       const left = [...new Set(cj.match(cityRe) || [])];
       tcheck(left.length === 0, `the template's city is replaced everywhere (found ${left.join(", ")})`);
     }
+    if (who.city && AREAS[meta.id]) {
+      const left = [...new Set(cj.match(wordRe(AREAS[meta.id], "gu")) || [])];
+      tcheck(left.length === 0, `the template's neighbourhood is gone once a city is typed (found ${left.join(", ")})`);
+      const twice = wordRe([`${who.city}, ${who.city}`, `${who.city} ${who.city}`, ...table.cityHi.map((h) => `${h}, ${h}`)], "gu");
+      tcheck(!twice.test(cj), `the city is never written twice in a row (${who.city})`);
+    }
 
     /* 5. PHOTOS, REFERENCES, NO MUTATION */
     tcheck(copy.heroImage === c.heroImage, "the hero photo is carried");
@@ -406,6 +511,9 @@ for (const meta of TEMPLATES) {
     tcheck(equal((copy.photos || []).map((g) => g.src), (c.photos || []).map((g) => g.src)), "library photos are carried");
     tcheck(equal(Object.keys(copy.sectionPhotos || {}), Object.keys(c.sectionPhotos || {})), "section photos are carried");
     tcheck(equal((copy.dental?.doctors || []).map((d) => d.photo || ""), (c.dental?.doctors || []).map((d) => d.photo || "")), "doctor portraits are carried");
+    /* The admin's stock notice (30 Sep 2026) counts a clinic's doctors with the faculty: both are portraits. */
+    const stockPortraits = [...(copy.faculty || []), ...(copy.dental?.doctors || [])].filter((p) => M.isStockPhoto(p.photo)).length;
+    tcheck(M.stockPhotoUse(copy).faculty === stockPortraits, `the stock notice counts every stock portrait (${stockPortraits})`);
     tcheck((c.dental?.cases || []).every((x) => !x.before && !x.after && !x.consent), "no template case carries a photo or a consent flag");
     const shared = [...objectsIn(copy)].filter((o) => templateObjects.has(o));
     tcheck(shared.length === 0, `shares no object with the template module (${shared.length} shared)`);
@@ -436,6 +544,45 @@ for (const meta of TEMPLATES) {
     const real = { ...copy, sample: { ...copy.sample, real: true } };
     tcheck(!M.showSampleLine(real, "results") && !M.showSampleLine(real, "reviews"), "marking them real removes both lines");
     tcheck(!M.showSampleLine(JSON.parse(cj), "results") === !M.showSampleLine(copy, "results"), "a store round trip does not read as an edit");
+
+    /* 6b. THE STORY (30 Sep 2026): the founding story and year the About page
+       prints, every kind, with a line of its own that only an edit removes. */
+    const storyOf = (s) => [s.about, s.established, s.establishedYear, s.hi?.about, s.hi?.established, s.hi?.establishedYear];
+    if (storyOf(c).some((v) => (v || "").trim())) {
+      tcheck(Boolean(copy.sample?.prints?.story), "the founding story is fingerprinted at duplication");
+      tcheck(M.showSampleLine(copy, "story") && M.isCarried(copy, "story"), "the founding story carries the sample line and is on the checklist");
+      tcheck(M.showSampleLine(real, "story"), "ticking 'the institute's real ones' leaves the history's line");
+      tcheck(M.showSampleLine(JSON.parse(cj), "story"), "a store round trip does not read as an edit of the story");
+      /* The form saves an untouched input as "": still untouched. */
+      const form = JSON.parse(cj);
+      for (const k of ["about", "established", "establishedYear"]) form[k] = form[k] ?? "";
+      form.hi = { ...(form.hi || {}), about: form.hi?.about ?? "", established: form.hi?.established ?? "" };
+      tcheck(M.showSampleLine(form, "story"), "an input the form saves as \"\" does not read as an edit of the story");
+      const edits = [
+        ["the about text", (s) => { s.about = `${s.about || ""} Edited.`; }],
+        ["the founding year", (s) => { s.establishedYear = "1999"; s.established = "Since 1999"; }],
+        ["the Hindi about text", (s) => { s.hi = { ...(s.hi || {}), about: `${s.hi?.about || ""} बदला गया।` }; }],
+      ];
+      for (const [what, edit] of edits) {
+        const e = structuredClone(copy);
+        edit(e);
+        tcheck(!M.showSampleLine(e, "story") && !M.isCarried(e, "story"), `editing ${what} removes the history's line and its checklist entry`);
+      }
+      /* A demo made before the story block: its prints are the other blocks'
+         alone. No story line, and its checklist and other lines are what they
+         were, so nothing on it reads as edited. */
+      const old = structuredClone(copy);
+      delete old.sample.prints.story;
+      tcheck(!M.showSampleLine(old, "story") && !M.isCarried(old, "story"), "a demo made before the story block shows no history line");
+      const carriedNow = M.SAMPLE_BLOCKS.filter((b) => M.isCarried(copy, b));
+      const carriedOld = M.SAMPLE_BLOCKS.filter((b) => M.isCarried(old, b));
+      tcheck(equal(carriedOld, carriedNow.filter((b) => b !== "story")), `the older demo's checklist is unchanged (${carriedOld.join(", ")})`);
+      tcheck(["results", "reviews", "stats", "cases", "doctors"].every((b) => M.showSampleLine(old, b) === M.showSampleLine(copy, b)), "the older demo's other lines are unchanged");
+      const oldReal = { ...old, sample: { ...old.sample, real: true } };
+      tcheck(!M.showSampleLine(oldReal, "story"), "the switch on an older demo does not bring a history line either");
+    } else {
+      tcheck(!copy.sample?.prints?.story && !M.showSampleLine(copy, "story"), "a template without a story carries no story line");
+    }
 
     /* 7. THE HINDI SLOTS (26 Sep 2026) are renamed like any other Hindi string.
        A line naming the template (in Hindi) is planted in each slot of a
@@ -474,7 +621,7 @@ for (const meta of TEMPLATES) {
         planted.push(["feesPolicy.hi.paymentModes[0]", (x) => x.feesPolicy?.hi?.paymentModes?.[0], pm[0]]);
       }
       const src2 = { ...k2, kind: meta.kind, theme: meta.theme };
-      const copy2 = NEGATIVE ? skipHindi(M.fromTemplate(t2, ctx, who), src2) : M.fromTemplate(t2, ctx, who);
+      const copy2 = sabotage(M.fromTemplate(t2, ctx, who), src2, expect);
       for (const [path, get, value] of planted) {
         const want = expect(value, true);
         tcheck(want !== value && get(copy2) === want, `the Hindi slot ${path} is renamed (want ${JSON.stringify(want)}, got ${JSON.stringify(get(copy2))})`);
@@ -487,14 +634,10 @@ let refused = false;
 try { M.fromTemplate(await M.loadTemplate("s1-urban-cbse"), { sites: [], pitchPages: [] }, { name: "  " }); } catch { refused = true; }
 check(refused, "fromTemplate refuses an empty name");
 
-if (NEGATIVE) {
-  const missed = TEMPLATES.map((t) => t.id).filter((id) => !failedTemplates.has(id));
-  console.log(`NEGATIVE: ${failedTemplates.size} of ${TEMPLATES.length} templates failed.`);
-  if (missed.length) {
-    console.log(`NEGATIVE run did not fail for: ${missed.join(", ")}. The assertions miss the Hindi copy there.`);
-    process.exit(1);
-  }
-}
+/* The story's line (30 Sep 2026): both languages, no em dash, and a name on the checklist. */
+check(Boolean(M.SAMPLE_COPY.story?.en && M.SAMPLE_COPY.story?.hi) && !EM_DASH.test(M.SAMPLE_COPY.story.en + M.SAMPLE_COPY.story.hi),
+  `the story's line has English and Hindi and no em dash (${M.SAMPLE_COPY.story?.en})`);
+check(M.SAMPLE_BLOCKS.includes("story") && Boolean(M.SAMPLE_BLOCK_LABEL.story), `the checklist names the story (${M.SAMPLE_BLOCK_LABEL.story})`);
 
 /* ── 2c. The stock photo library matches the manifest and the disk ──────── */
 /* src/lib/demo/images/data.generated.ts is a trimmed copy of
@@ -534,12 +677,28 @@ if (NEGATIVE) {
     const site = M.templatePreviewSite(t);
     const shown = M.visiblePages(site, "2026-09-28").map((p) => p.id);
     for (const must of ["home", "book", "contact"]) check(shown.includes(must), `${tid}: ${must} is always shown`);
+    /* Mehdi sells from the preview: its About page labels the history as the duplicate's will. */
+    check(M.showSampleLine(site, "story"), `${tid}: the preview's About page labels the template's history`);
   }
   check(M.matchPage("dental", "treatments/root-canal")?.def.id === "treatment" && M.matchPage("dental", "treatments/root-canal")?.param === "root-canal", "dental: treatments/<slug> routes to the treatment page");
   check(M.matchPage("dental", "doctors/aditi-rao")?.def.id === "doctor", "dental: doctors/<slug> routes to the doctor page");
   check(M.matchPage("dental", "clinics/dwarka")?.def.id === "clinic", "dental: clinics/<slug> routes to the branch page");
   check(M.matchPage("dental", "before-after")?.def.id === "before-after", "dental: before-after routes");
   check(M.matchPage("school", "treatments") === null, "a school record has no treatments page");
+}
+
+/* ── 2d½. Photo slots (30 Sep 2026) ──────────────────────────────────────── */
+/* A dental record offers exactly the two section slots its pages read (the
+   About page, the clinic photo in the Visit block), and every slot's stock
+   picker has photos under each category it names. */
+{
+  const dentalSlots = M.DEMO_PHOTO_SLOTS.filter((d) => d.kinds.includes("dental")).map((d) => d.slot);
+  check(equal(dentalSlots, ["about", "campus"]), `photo slots: a dental record gets about and campus (${dentalSlots.join(", ")})`);
+  const cats = new Set(M.STOCK_PHOTOS.map((p) => p.category));
+  for (const d of M.DEMO_PHOTO_SLOTS) {
+    const missing = d.categories.filter((cat) => !cats.has(cat));
+    check(missing.length === 0, `photo slots: every category of "${d.slot}" has stock photos (missing ${missing.join(", ")})`);
+  }
 }
 
 /* ── 2e. Dental contact clearing, on planted data ────────────────────────── */
@@ -565,6 +724,43 @@ if (NEGATIVE) {
   check(t.content.dental.branches[0].phone === "+91 00000 00011", "dental fixture: the template clone is not mutated");
 }
 
+/* ── 2f. The hero's doctor line (1 Oct 2026) ─────────────────────────────── */
+/* The kids hero (d6) credits the lead doctor and the calm heroes (d4, d7)
+   print a credential naming one. On a duplicate that doctor is the
+   template's fiction, so the line ends in "(sample)" / "(नमूना)" while the
+   doctors block is the template's, on the preview too (Mehdi sells from it).
+   Never twice (d4's credential already says so), never once the doctors are
+   edited or marked real, never on a line that names somebody else. */
+const failedHero = new Set();
+{
+  const heroMark = NO_HERO_MARK ? () => "" : M.heroDoctorMark;
+  const hcheck = (id, ok, msg) => { if (!ok) failedHero.add(id); check(ok, `hero ${id}: ${msg}`); };
+  const lineOf = {
+    kids: (s, l) => { const c = M.leadDoctorCredit(s, l); return c ? [c.name, ...c.rest].join(", ") : ""; },
+    calm: (s, l) => M.heroCredential(s, l),
+  };
+  /* The line each hero prints, and whether the template's own words already mark it. */
+  const HEROES = { "d6-kids-dental": ["kids", false], "d4-implant-centre": ["calm", true], "d7-dental-chain": ["calm", false] };
+  for (const [id, [kind, marked]] of Object.entries(HEROES)) {
+    const t = await M.loadTemplate(id);
+    const copy = M.fromTemplate(t, { sites: [], pitchPages: [], now: NOW }, { name: "Example Care Clinic", hiName: "एग्ज़ाम्पल केयर क्लिनिक" });
+    const preview = M.templatePreviewSite(t);
+    for (const lang of ["en", "hi"]) {
+      const line = lineOf[kind](copy, lang);
+      const want = marked ? "" : M.SAMPLE_MARK[lang];
+      hcheck(id, Boolean(line) && marked === /\((sample|नमूना)\)/.test(line), `the ${kind} hero's ${lang} line ${marked ? "already says" : "does not itself say"} it is a sample (${line})`);
+      hcheck(id, heroMark(copy, line, lang) === want, `a duplicate's ${lang} line gets ${JSON.stringify(want)} (got ${JSON.stringify(heroMark(copy, line, lang))})`);
+      hcheck(id, heroMark(preview, lineOf[kind](preview, lang), lang) === want, `the preview's ${lang} line gets ${JSON.stringify(want)}`);
+      const edited = structuredClone(copy);
+      edited.dental.doctors[0].focus = `${edited.dental.doctors[0].focus || ""} Edited.`;
+      hcheck(id, heroMark(edited, lineOf[kind](edited, lang), lang) === "", `no mark once the doctors are edited (${lang})`);
+      hcheck(id, heroMark({ ...copy, sample: { ...copy.sample, real: true } }, line, lang) === "", `no mark once the doctors are marked real (${lang})`);
+      hcheck(id, heroMark(copy, "Dr. Someone Else, BDS", lang) === "", `no mark on a line naming somebody else (${lang})`);
+      hcheck(id, heroMark({ ...copy, sample: undefined }, line, lang) === "", `no mark on a demo not made from a template (${lang})`);
+    }
+  }
+}
+
 /* ── 3. Names a real demo can never take ─────────────────────────────────── */
 
 for (const s of ["s1-urban-cbse", "c5-government-jobs", "template-c1-jee-neet-urban", "d3-smile-studio", "template-d7-dental-chain"]) {
@@ -580,6 +776,79 @@ check(
   !M.hasProvisionalTemplateSlug({ slug: "harsingar-school", templateId: "s1-urban-cbse" }),
   "a named slug is no longer provisional",
 );
+
+/* ── 4. A clinic in the admin, and a clinic's empty page (30 Sep 2026) ───── */
+{
+  /* The demo form: a dental record shows a clinic's fields, in a clinic's words. */
+  const fields = M.collectionSchemas.demoSites.fields.slice(1);
+  const d1 = M.fromTemplate(await M.loadTemplate("d1-family-dentist"), { sites: [], pitchPages: [] }, { name: "Example Care Clinic", city: "Indore" });
+  const shown = M.demoFormFields(fields, d1);
+  const names = new Set(shown.map((f) => f.name));
+  const leftOn = [...M.NOT_ON_A_CLINIC].filter((n) => names.has(n));
+  check(leftOn.length === 0, `demo form: a clinic's form has no school or coaching fields (${leftOn.join(", ")})`);
+  const notFields = [...M.NOT_ON_A_CLINIC].filter((n) => !fields.some((f) => f.name === n));
+  check(notFields.length === 0, `demo form: every field it hides is a real field of the form (${notFields.join(", ")})`);
+  for (const keep of ["about", "faq", "posts", "reviews", "stats", "rating", "photos", "vision", "mission", "contact", "dental"]) {
+    check(names.has(keep), `demo form: a clinic keeps "${keep}", which its pages print`);
+  }
+  const labelOf = (list, name) => list.find((f) => f.name === name)?.label;
+  check(labelOf(shown, "faq") === "Questions patients ask" && labelOf(shown, "about") === "About the clinic" && labelOf(shown, "posts") === "Blog posts",
+    `demo form: a clinic's words (${labelOf(shown, "faq")}, ${labelOf(shown, "about")}, ${labelOf(shown, "posts")})`);
+  const hiNames = (shown.find((f) => f.name === "hi")?.fields || []).map((g) => g.name);
+  check(hiNames.includes("instituteName") && !hiNames.some((n) => ["principalMessage", "admissionsHeadline", "resultsHeading", "classSizePromise"].includes(n)),
+    `demo form: the Hindi group keeps the clinic's name and drops the school and coaching lines (${hiNames.join(", ")})`);
+  /* Data is never hidden: a record switched to dental keeps a field that carries something, now or when opened. */
+  const switched = { ...d1, courses: [{ name: "Old coaching course" }] };
+  check(M.demoFormFields(fields, switched).some((f) => f.name === "courses"), "demo form: a clinic that still carries courses keeps Courses on screen");
+  check(M.demoFormFields(fields, { ...switched, courses: [] }, switched).some((f) => f.name === "courses"), "demo form: a field the saved record carried stays while its last row is deleted");
+  /* A school's form is exactly the schema, less the dental block. */
+  const school = M.fromTemplate(await M.loadTemplate("s1-urban-cbse"), { sites: [], pitchPages: [] }, { name: "Example Public School" });
+  const schoolShown = M.demoFormFields(fields, school);
+  check(equal(schoolShown.map((f) => `${f.name}:${f.label}`), fields.filter((f) => f.name !== "dental").map((f) => `${f.name}:${f.label}`)),
+    "demo form: a school's form is unchanged");
+
+  /* The pitch editor's package list reads, for a clinic, what the clinic's page prints. */
+  const clinicOpts = M.pitchPackageOptionsFor("dental");
+  const printed = (id) => M.pitchPackage({ recommendedPackage: id, market: M.PITCH_PACKAGES.find((p) => p.id === id).market, instituteType: "dental" });
+  check(M.PITCH_PACKAGES.every((p) => clinicOpts.find((o) => o.value === p.id)?.label.includes(`${printed(p.id).label}, ${p.range}`)),
+    "pitch packages: every clinic option reads the label and the range the clinic's page prints");
+  check(!clinicOpts.some((o) => /School website|Coaching or school portal/.test(o.label)) && clinicOpts.some((o) => o.label === "India: Clinic website, ₹20,000 to ₹45,000"),
+    `pitch packages: a clinic is offered "Clinic website", never a school's package (${clinicOpts.map((o) => o.label).join(" | ")})`);
+  check(M.pitchPackageOptionsFor().some((o) => o.label === "India: School website, ₹20,000 to ₹45,000"), "pitch packages: a school still reads School website");
+
+  /* A dental page with nothing on it, and a missing photograph, never speak of courses, a centre or a campus. */
+  const dentalWords = [M.EMPTY_COPY.bodyDental.en, M.EMPTY_COPY.noPhotoDental.en].join(" ");
+  check(/clinic/i.test(dentalWords) && !/course|centre|campus|admission|school|institute/i.test(dentalWords), `empty states: the dental lines are a clinic's (${dentalWords})`);
+  check(Boolean(M.EMPTY_COPY.bodyDental.hi && M.EMPTY_COPY.noPhotoDental.hi), "empty states: the dental lines have Hindi");
+  const bookPage = M.pagesOfKind("dental").find((p) => p.id === "book");
+  check(equal(M.SHELL_COPY.bookAppointment, bookPage?.label), "empty states: the stub's Book appointment button reads the dental book page's own label");
+}
+
+/* ── The negative runs: each must fail where, and only where, it should ──── */
+if (NEGATIVE) {
+  const ids = TEMPLATES.map((t) => t.id);
+  let wrong = "";
+  if (KEEP_HI_SHORT) {
+    const missed = [...withHiShort].filter((id) => !failedShort.has(id));
+    const extra = [...failedShort].filter((id) => !withHiShort.has(id));
+    console.log(`NEGATIVE (short): ${failedShort.size} of the ${withHiShort.size} templates with a Hindi short name failed check 8.`);
+    if (!withHiShort.size) wrong = "no template carries a Hindi short name, so check 8 was never exercised";
+    else if (missed.length) wrong = `check 8 did not fail for: ${missed.join(", ")}`;
+    else if (extra.length) wrong = `check 8 failed for templates without a Hindi short name: ${extra.join(", ")}`;
+  } else if (NO_HERO_MARK) {
+    const missed = ["d6-kids-dental", "d7-dental-chain"].filter((id) => !failedHero.has(id));
+    console.log(`NEGATIVE (hero): check 9 failed for ${[...failedHero].join(", ") || "nothing"}.`);
+    if (missed.length) wrong = `check 9 did not fail for: ${missed.join(", ")}`;
+  } else {
+    const missed = ids.filter((id) => !failedTemplates.has(id));
+    console.log(`NEGATIVE: ${failedTemplates.size} of ${ids.length} templates failed.`);
+    if (missed.length) wrong = `did not fail for: ${missed.join(", ")}. The assertions miss the Hindi copy there.`;
+  }
+  if (wrong) {
+    console.log(`NEGATIVE run ${wrong}`);
+    process.exit(1);
+  }
+}
 
 console.log(
   `\n${passes} assertions passed, ${failures.length} failed${NEGATIVE ? " (NEGATIVE run: failures are expected)" : ""}`,

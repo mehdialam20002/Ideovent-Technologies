@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { OutreachLead } from "@/lib/outreach/types";
-import { nextStep, todayQueue } from "@/admin/outreach/compose";
+import { nextStep, repliedChanges, todayQueue } from "@/admin/outreach/compose";
 import { endOfToday, sentToday } from "@/admin/outreach/derive";
 import { dueLabel } from "@/admin/outreach/ui";
 import { useCrmData } from "../useCrmData";
@@ -79,11 +79,13 @@ export default function CrmToday() {
   }, [run, updateLead]);
 
   const replied = useCallback((lead: OutreachLead) => {
+    // The same reply event and due date the lead page's "They replied" writes (compose.ts repliedChanges).
+    const c = repliedChanges(lead);
     void run(lead, async () => {
       await setStatus(lead.id, "replied");
-      await addEvent({ leadId: lead.id, type: "replied", detail: "They replied. Next: send the demo link (After they replied)." });
-      await updateLead(lead.id, { nextActionAt: new Date().toISOString() });
-    }, `${lead.instituteName} marked as replied. Next: send the demo link.`);
+      await addEvent(c.event);
+      await updateLead(lead.id, { nextActionAt: c.lead.nextActionAt });
+    }, `${lead.instituteName} marked as replied. Next: After they say yes, send the sample link within the hour.`);
   }, [run, setStatus, addEvent, updateLead]);
 
   const focusRow = (i: number) => {

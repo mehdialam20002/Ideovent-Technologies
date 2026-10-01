@@ -31,8 +31,9 @@ export function demoContact(demo: Pick<DemoSite, "contact">): { phone?: string; 
   };
 }
 
+/** A demo's kind as a lead kind. A dental demo makes a dental lead (28 Sep 2026; it used to become "other"). */
 export function leadKindForDemo(kind: unknown): LeadKind {
-  return kind === "school" || kind === "coaching" ? kind : "other";
+  return kind === "school" || kind === "coaching" || kind === "dental" ? kind : "other";
 }
 
 const norm = (s?: string) =>
@@ -98,11 +99,18 @@ export async function addDemoToCrm(
   let result: AddDemoResult;
   if (match) {
     const was = match.lead.demoSlug && match.lead.demoSlug !== demo.slug ? ` (was /site/${match.lead.demoSlug})` : "";
+    /* A lead whose kind was never set ("other") takes the demo's kind, so a
+       dental demo linked to an unsorted lead makes it a dental lead. A kind
+       someone chose (school, coaching, dental) is never overwritten. */
+    const kind = leadKindForDemo(demo.kind);
+    const takeKind = (!match.lead.kind || match.lead.kind === "other") && kind !== "other";
+    const alreadyLinked = match.by === "demo" && match.lead.demoId === demo.id;
     const lead =
-      match.by === "demo" && match.lead.demoId === demo.id
+      alreadyLinked && !takeKind
         ? match.lead
-        : await store.upsertLead({ ...match.lead, demoId: demo.id, demoSlug: demo.slug });
-    await store.addEvent({ leadId: lead.id, type: "note", detail: `Demo made from ${how} and linked: /site/${demo.slug}${was}` });
+        : await store.upsertLead({ ...match.lead, demoId: demo.id, demoSlug: demo.slug, ...(takeKind ? { kind } : {}) });
+    const kindNote = takeKind ? `, kind set to ${kind}` : "";
+    await store.addEvent({ leadId: lead.id, type: "note", detail: `Demo made from ${how} and linked: /site/${demo.slug}${was}${kindNote}` });
     result = { lead, created: false };
   } else {
     const c = demoContact(demo);

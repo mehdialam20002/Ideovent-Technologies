@@ -78,15 +78,14 @@ export default function FreeCheck() {
         <Reveal>
           <div className="rounded-3xl border border-border bg-card/50 p-6 sm:p-10">
             <Eyebrow>Free website check</Eyebrow>
-            <h2 className="mt-5 max-w-xl font-display text-xl font-light leading-snug sm:text-2xl">
-              We check your site the way your customer does.{" "}
-              <span className="font-extrabold">Free.</span>
+            <h2 className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug sm:text-2xl">
+              We check your site the way your customer does. Free.
             </h2>
 
             <dl className="mt-7 grid gap-x-8 gap-y-7 sm:grid-cols-3">
               {COLUMNS.map((col) => (
                 <div key={col.dt}>
-                  <dt className="font-display text-sm font-semibold uppercase tracking-wider text-primary">
+                  <dt className="font-display text-base font-semibold text-foreground">
                     {col.dt}
                   </dt>
                   {col.items.map((item) => (

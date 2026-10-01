@@ -17,6 +17,8 @@
  * 24 KB. Nothing in the delivery half is needed to paint a page.
  */
 
+import { BUDGET_CHOICES } from "@/lib/pricing";
+
 /* ───────────────────────────── The choices ───────────────────────────── */
 
 /**
@@ -80,20 +82,17 @@ export const TIMELINES = [
 export type TimelineId = (typeof TIMELINES)[number]["id"];
 
 /**
- * Budget options. EVERY FIGURE IS FROM THE CURRENT TABLE IN _assets/FACTS.md
- * ("CORRECTIONS CONFIRMED BY MEHDI, 24 Sep 2026", §2) and matches /pricing.
- * Cheapest first, per the presentation rule in the same section. The ranges
- * overlap (a website and a portal share 40,000 to 45,000) because the
- * canonical ranges do; the hint says which offer each one is.
+ * Budget options. THE FIGURES ARE NOT TYPED HERE ANY MORE (1 Oct 2026): they
+ * come from src/lib/pricing.ts, the one module /pricing, the home page and the
+ * service pages read, so the pop-up can never quote a price the site has moved
+ * on from. The monthly website plans come first (the lowest number leads), and
+ * each carries its one-time setup fee in the label itself, because the label
+ * is what the enquiry e-mail and the WhatsApp message print. The one-time
+ * ranges overlap (a website and a portal share 40,000 to 45,000) because the
+ * canonical ranges do; the hint says which offer each one is. The old ids are
+ * unchanged.
  */
-export const BUDGETS = [
-  { id: "8k-20k", label: "₹8,000-₹20,000", hint: "landing page or single page" },
-  { id: "20k-45k", label: "₹20,000-₹45,000", hint: "website" },
-  { id: "40k-85k", label: "₹40,000-₹85,000", hint: "portal or web app" },
-  { id: "90k-plus", label: "From ₹90,000", hint: "custom software" },
-  { id: "usd", label: "Outside India, from $300", hint: "priced in US dollars" },
-  { id: "not-sure", label: "Not sure yet", hint: "" },
-] as const;
+export const BUDGETS = BUDGET_CHOICES;
 export type BudgetId = (typeof BUDGETS)[number]["id"];
 
 export const needLabel = (id?: string) => NEEDS.find((n) => n.id === id)?.label ?? "";
@@ -108,11 +107,13 @@ export const budgetLabel = (id?: string) => {
  * links and pitch pages. School and coaching both map to "education" so the
  * visitor does not answer the same question twice. "business" is too broad to
  * pick a type for them, so it preselects nothing. "abroad" is a market, not a
- * need, so it preselects the dollar budget instead.
+ * need, so it preselects the dollar budget instead. "dental" and "clinic"
+ * (28 Sep 2026, for links sent to dental clinics) preselect "Clinic or salon".
  */
 export function prefillFromQuery(search: string): { need?: NeedId; budget?: BudgetId } {
   const v = new URLSearchParams(search).get("for");
   if (v === "school" || v === "coaching") return { need: "education" };
+  if (v === "dental" || v === "clinic") return { need: "clinic" };
   if (v === "abroad") return { budget: "usd" };
   return {};
 }

@@ -1,6 +1,6 @@
 import type { DemoSite, DemoSiteSlot } from "@/lib/cms/types";
 import { demoStatus } from "@/lib/demo/record";
-import { LEAD_FINDER_SOURCE, type OutreachLead } from "@/lib/outreach/types";
+import { LEAD_FINDER_SOURCE, LEAD_KIND_LABELS, type OutreachLead } from "@/lib/outreach/types";
 import type { DemoRow } from "../metrics";
 
 /**
@@ -109,8 +109,10 @@ export function sortItems(items: DemoItem[], s: DemoSort): DemoItem[] {
   });
 }
 
-/** Label for a DemoKind, including kinds added later (e.g. dental). */
+/** Label for a DemoKind: the lead kinds' words (dental is "Dental clinic"), else the kind capitalised. */
 export function kindLabel(kind: unknown): string {
   const k = String(kind || "");
+  const known = (LEAD_KIND_LABELS as Record<string, string>)[k];
+  if (known) return known;
   return k ? k.charAt(0).toUpperCase() + k.slice(1) : "-";
 }

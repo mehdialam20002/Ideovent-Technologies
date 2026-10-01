@@ -14,12 +14,14 @@
  * for duplicate matching; emails are lower-cased and trimmed.
  */
 import { supabaseEnabled } from "@/lib/cms/config";
+import { looksDental } from "@/lib/demo/templates/dentalPick";
 import type {
   EventInput,
   ImportOptions,
   ImportResult,
   LeadInput,
   LeadKind,
+  LeadPitch,
   LeadStatus,
   OutreachEvent,
   OutreachLead,
@@ -28,7 +30,18 @@ import type {
 
 export const OUTREACH_LOCAL_KEY = "ideovent_outreach_v1";
 
+/**
+ * The e-mail signature Mehdi approved (30 Sep 2026): name, firm and place on
+ * one line, the phone on the next; the engine puts "Regards," above it. Same
+ * text as engine.ts DEFAULT_SIGNATURE.
+ */
 export const DEFAULT_SIGNATURE = [
+  "Mehdi Alam, Ideovent Technologies, Saket, New Delhi",
+  "+91 77619 21786",
+].join("\n");
+
+/** The four-line default before 30 Sep 2026: a settings row still carrying it reads as the new default. */
+export const PREVIOUS_DEFAULT_SIGNATURE = [
   "Mehdi Alam",
   "Ideovent Technologies",
   "Saket, New Delhi",
@@ -36,10 +49,10 @@ export const DEFAULT_SIGNATURE = [
 ].join("\n");
 
 export const DEFAULT_OUTREACH_SETTINGS: OutreachSettings = {
-  senderGmail: "",
   signature: DEFAULT_SIGNATURE,
   quietStart: "20:00",
-  quietEnd: "09:00",
+  /* 10:00, when TRAI's window for commercial calls and messages opens (30 Sep 2026; it was 09:00). */
+  quietEnd: "10:00",
   alertOnDemoOpen: true,
   alertEmail: "",
   autoAddDemos: true,
@@ -154,7 +167,7 @@ export function countSentToday(events: OutreachEvent[], channel: "whatsapp" | "e
 
 /** RFC 4180 CSV (quoted fields, "" escapes, CRLF) into header-keyed rows. */
 export function parseCsv(text: string): Record<string, string>[] {
-  const src = text.replace(/^﻿/, "");
+  const src = text.replace(/^\uFEFF/, "");
   const table: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -201,6 +214,8 @@ const COLS = {
   state: ["state"],
   source: ["source"],
   segment: ["segment", "kind", "type", "category"],
+  websiteState: ["website_state"],
+  pitch: ["pitch"],
   stage: ["stage", "status"],
   observation: ["buying_signal", "observation"],
   notes: ["notes", "note"],
@@ -230,10 +245,45 @@ function isPlaceholder(v?: string): boolean {
 
 const val = (v?: string) => (isPlaceholder(v) ? undefined : v);
 
-export function kindFrom(segment?: string, name?: string): LeadKind {
+/**
+ * A segment that names a dental practice: DENTAL_SINGLE, DENTAL_MULTI,
+ * DENTAL_COSMETIC, DENTAL_IMPLANT, DENTAL_ORTHO, DENTAL_KIDS, DENTAL_CHAIN (the
+ * dental lead sheets, 28 Sep 2026), and the sales kit's CLINIC_DENTAL and
+ * INTL_DENTAL. CLINIC_EYE is not dental.
+ */
+export function isDentalSegment(segment?: string): boolean {
+  const s = (segment || "").trim().toUpperCase();
+  return s.startsWith("DENTAL") || /(^|[_\s-])DENTAL([_\s-]|$)/.test(s);
+}
+
+/**
+ * A type / kind / category cell that says dental: "dental", "dentist", "Dental
+ * clinic" and close spellings, or a dental category as a Maps export writes it
+ * ("Orthodontist", "Cosmetic dentist", "Oral surgeon"), read by looksDental.
+ */
+export function isDentalType(value?: string): boolean {
+  const v = (value || "").trim().toLowerCase().replace(/[\s_-]+/g, " ");
+  if (!v) return false;
+  return /^(dental( (clinic|clinics|care|centre|center|hospital|practice|surgery))?|dentists?|dental surgeon)$/.test(v) || looksDental(v);
+}
+
+/**
+ * The lead kind of a row. In order (the dental CSV contract, 28 Sep 2026):
+ *  1. a DENTAL segment, or a type / kind / category cell saying dental: dental;
+ *  2. a SCHOOL or COACHING segment: that kind;
+ *  3. a dental name ("Example Dental Clinic", "Example Smile Dental Care"): dental,
+ *     checked BEFORE the school and coaching name rules, so "Example Dental
+ *     Academy" is a clinic, not a coaching centre;
+ *  4. the school and coaching name rules; else other.
+ * `types` are the row's other kind-ish cells (kind, type, category), which the
+ * segment column may have hidden.
+ */
+export function kindFrom(segment?: string, name?: string, types: Array<string | undefined> = []): LeadKind {
   const s = (segment || "").toUpperCase();
+  if (isDentalSegment(segment) || [segment, ...types].some(isDentalType)) return "dental";
   if (s.startsWith("SCHOOL") || s === "SCHOOL") return "school";
   if (s.startsWith("COACHING") || s === "COACHING") return "coaching";
+  if (looksDental(name)) return "dental";
   const n = (name || "").toLowerCase();
   if (/\b(school|vidyalaya|vidya mandir|academy school|convent|public school)\b/.test(n)) return "school";
   if (/\b(coaching|classes|tutorials?|institute|academy|ias|jee|neet)\b/.test(n)) return "coaching";
@@ -265,6 +315,24 @@ export function statusFrom(stage?: string, doNotContact?: string): LeadStatus {
     return s as LeadStatus;
   }
   return STAGE_TO_STATUS[s.toUpperCase().replace(/[\s-]+/g, "_")] || "new";
+}
+
+/**
+ * What to offer a row (ICP-AND-TARGETING.md 5.1, the dental 30 / 70 split): a
+ * `pitch` cell (fix_website / new_website, or fix / new) wins; else the lead
+ * sheet's `website_state`. NONE, SOCIAL_ONLY and DIRECTORY_ONLY have no site of
+ * their own (a Practo or Facebook link is not one): a new website. BROKEN,
+ * NOT_MOBILE, NO_ENQUIRY_FORM and DATED have one that fails a visitor on a
+ * phone: fix it. GOOD, blank or anything else: no pitch.
+ */
+export function pitchFrom(pitch?: string, websiteState?: string): LeadPitch | undefined {
+  const p = (pitch || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (p === "fix_website" || p === "fix") return "fix_website";
+  if (p === "new_website" || p === "new") return "new_website";
+  const s = (websiteState || "").trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if (["NONE", "SOCIAL_ONLY", "DIRECTORY_ONLY"].includes(s)) return "new_website";
+  if (["BROKEN", "NOT_MOBILE", "NO_ENQUIRY_FORM", "DATED"].includes(s)) return "fix_website";
+  return undefined;
 }
 
 /** The last path segment of .../site/<slug> or .../<slug>. */
@@ -309,12 +377,13 @@ export function mapCsvRow(row: Record<string, string>): { lead: LeadInput } | { 
   const tags = [segment, pick(row, COLS.leadId)].filter((t): t is string => Boolean(t));
   const lead: LeadInput = {
     instituteName,
-    kind: kindFrom(segment, instituteName),
+    kind: kindFrom(segment, instituteName, [row.kind, row.type, row.category].map(val)),
     contactName: g("contactName"),
     phone,
     whatsapp: waCol || (waOk ? phone : undefined),
     email,
     website: g("website"),
+    pitch: pitchFrom(g("pitch"), g("websiteState")),
     city: g("city"),
     state: g("state"),
     source: g("source") || "CSV import",
@@ -338,7 +407,7 @@ export function mapCsvRow(row: Record<string, string>): { lead: LeadInput } | { 
 /** Column order of the downloadable template: LEAD-SHEET-TEMPLATE order, then the extras. */
 const TEMPLATE_ORDER: (keyof typeof COLS)[] = [
   "leadId", "createdAt", "source", "segment", "instituteName", "city", "state", "contactName",
-  "phone", "whatsapp", "whatsappOk", "email", "website", "observation", "stage", "lastContactedAt",
+  "phone", "whatsapp", "whatsappOk", "email", "website", "websiteState", "observation", "stage", "lastContactedAt",
   "nextActionAt", "pitchUrl", "demoUrl", "doNotContact", "language", "notes",
 ];
 
@@ -357,17 +426,24 @@ const TEMPLATE_EXAMPLE: Partial<Record<keyof typeof COLS, string>> = {
   whatsappOk: "YES",
   email: "office@example.org",
   website: "https://example.org",
+  websiteState: "NO_ENQUIRY_FORM",
   observation: "Example: the enquiry form on their site does not send",
   stage: "NEW",
   doNotContact: "NO",
   language: "en",
-  notes: "Example row. Replace it with your own leads, one per line.",
+  notes:
+    "Example row. Replace it with your own leads, one per line. segment: SCHOOL_CBSE and other SCHOOL_ values, COACHING_ values, " +
+    "or for a dental clinic DENTAL_SINGLE, DENTAL_MULTI, DENTAL_COSMETIC, DENTAL_IMPLANT, DENTAL_ORTHO, DENTAL_KIDS or DENTAL_CHAIN. " +
+    "A plain sheet can use a type column instead: school, coaching or dental. " +
+    "website_state: NONE, SOCIAL_ONLY or DIRECTORY_ONLY to offer a new website; BROKEN, NOT_MOBILE, NO_ENQUIRY_FORM or DATED to offer to fix theirs.",
 };
 
 /**
  * The CSV the Import tab offers as "Download import template": every column
  * the importer understands and ONE fictional example row. CSV has no comment
- * syntax, so the guidance lives in the file name and the Import tab's hint.
+ * syntax, so the guidance lives in the file name, the Import tab's hint and
+ * the example row's notes, which list every segment the importer reads as a
+ * kind, dental included (e.g. DENTAL_SINGLE for "Example Dental Clinic").
  */
 export function leadImportTemplateCsv(): string {
   const q = (v: string) => (/[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v);
@@ -441,7 +517,11 @@ function prepareEvent(e: EventInput, now = new Date()): OutreachEvent {
 
 function mergeSettings(s?: Partial<OutreachSettings> | null): OutreachSettings {
   const m = { ...DEFAULT_OUTREACH_SETTINGS, ...(s || {}) };
-  if (!m.signature) m.signature = DEFAULT_SIGNATURE;
+  if (!m.signature || m.signature.trim() === PREVIOUS_DEFAULT_SIGNATURE) m.signature = DEFAULT_SIGNATURE;
+  /* Every row saved before 30 Sep 2026 carries the old default end of quiet
+     hours, 09:00, which nobody chose: it reads as the new default, 10:00.
+     Any other time Mehdi sets is kept. */
+  if (/^0?9:00$/.test((m.quietEnd || "").trim())) m.quietEnd = DEFAULT_OUTREACH_SETTINGS.quietEnd;
   /* Blank, 0, or anything that is not a positive number: no limit. The retired
      whatsappDailyCap (a forced 10 on every old row) is never read. */
   const lim = Number(m.whatsappDailyLimit);

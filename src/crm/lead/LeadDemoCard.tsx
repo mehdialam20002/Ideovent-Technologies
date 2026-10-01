@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, Copy, ExternalLink, Send } from "lucide-react";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { demoPreviewPath, demoStatus } from "@/lib/demo/record";
+import { mainSiteUrl } from "@/lib/host";
 import { demoLinkFor } from "@/lib/outreach/engine";
 import { useCms } from "@/lib/cms/context";
 import { markDemoSent } from "@/admin/outreach/demoActions";
@@ -103,7 +104,8 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
         <button type="button" className={crm.btn} onClick={() => void copy()}>
           {copied ? <Check className="h-4 w-4 text-success" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />} {copied ? "Copied" : "Copy link"}
         </button>
-        <a className={crm.btn} href={demoPreviewPath(demo.slug)} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
+        {/* The preview is on the main site: relative today, absolute from the CRM's own subdomain. */}
+        <a className={crm.btn} href={mainSiteUrl(demoPreviewPath(demo.slug))} target="_blank" rel="noopener noreferrer" data-testid="lead-demo-open"><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
       </div>
       {err && <p role="alert" className="text-[12px] text-destructive">{err}</p>}
     </section>

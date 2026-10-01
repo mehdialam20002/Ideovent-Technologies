@@ -29,13 +29,17 @@ export function DemoCarriedPanel({ site, onChange }: { site: DemoSite; onChange:
   const carried = site.sample ? SAMPLE_BLOCKS.filter((b) => isCarried(site, b)) : [];
   const emptyContact = CONTACT_CHECKS.filter((c) => c.empty(site));
   const real = Boolean(site.sample?.real);
+  /* A dental clinic's demo (30 Sep 2026): a clinic, not an institute, and its
+     sample lines sit under the reviews, the trust figures, the before-after
+     cases and the doctors (src/lib/demo/site/sample.ts, SAMPLE_COPY). */
+  const dental = site.kind === "dental";
 
   return (
     <div className="mb-5 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm" data-testid="carried-panel">
       <p className="font-medium">Carried from template {label}: review before you mark it sent</p>
       <p className="mt-1 text-muted-foreground">
-        Everything below arrived from the template under this institute’s name. Change what differs
-        for them; anything you leave stays as example content.
+        Everything below arrived from the template under this {dental ? "clinic’s" : "institute’s"} name.
+        Change what differs for them; anything you leave stays as example content.
       </p>
 
       {carried.length > 0 ? (
@@ -70,8 +74,9 @@ export function DemoCarriedPanel({ site, onChange }: { site: DemoSite; onChange:
             ))}
           </ul>
           <p className="mt-1 text-xs text-muted-foreground">
-            The pages leave these rows out until you fill them; the enquiry and admissions
-            sections still work without them.
+            {dental
+              ? "The pages leave these rows out until you fill them. An appointment request still runs without them, and ends on a demo notice instead of opening WhatsApp."
+              : "The pages leave these rows out until you fill them; the enquiry and admissions sections still work without them."}
           </p>
         </>
       )}
@@ -89,10 +94,20 @@ export function DemoCarriedPanel({ site, onChange }: { site: DemoSite; onChange:
           }
         />
         <span>
-          <span className="font-medium">Results and reviews on this demo are the institute’s real ones</span>
+          <span className="font-medium">
+            {dental
+              ? "The reviews, figures, cases and doctors on this demo are the clinic’s real ones"
+              : "Results and reviews on this demo are the institute’s real ones"}
+          </span>
           <span className="mt-0.5 block text-xs text-muted-foreground">
             Until you tick this or edit those sections, the pages print a small line under them:
-            “Sample figures for this demonstration” and “Sample reviews for this demonstration”.
+            {dental
+              ? " “Sample reviews for this demonstration”, “Sample figures for this demonstration”, “Sample doctor profiles for this demonstration”, and under the before-after cases, that they are illustrations and not real patients. Tick it only when all four are the clinic’s own."
+              : " “Sample figures for this demonstration” and “Sample reviews for this demonstration”."}
+            {/* The story's line is not the switch's (src/lib/demo/site/sample.ts, STORY). */}
+            {site.sample?.prints?.story
+              ? " The line under the history on the About page stays until you edit the story or the founding year."
+              : ""}
           </span>
         </span>
       </label>

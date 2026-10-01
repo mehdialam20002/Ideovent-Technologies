@@ -4,7 +4,10 @@
  */
 
 import type { DemoCurrency, DemoSite, DentalContent, DentalDoctor, DentalSession, DentalTreatment } from "@/lib/cms/types";
+import type { DemoLang } from "@/lib/demo/language";
+import { bi, tr, type Bilingual } from "@/lib/demo/site/bilingual";
 import { doctorSlug, treatmentSlug } from "@/lib/demo/site/context";
+import { showSampleLine } from "@/lib/demo/site/sample";
 
 const digits = (s?: string) => (s || "").replace(/\D/g, "");
 
@@ -131,6 +134,49 @@ export function treatmentGroups(site: DemoSite): { category: string; items: Dent
 export function leadDoctor(site: DemoSite): DentalDoctor | undefined {
   const ds = (dentalOf(site).doctors || []).filter((d) => d.name);
   return ds.find((d) => d.lead) || ds[0];
+}
+
+/* ── The hero's doctor line (1 Oct 2026) ─────────────────────────────────── */
+
+/** The kids hero's credit: the lead doctor's name, then degree and speciality. */
+export function leadDoctorCredit(site: DemoSite, lang: DemoLang): { name: string; rest: string[] } | null {
+  const doc = leadDoctor(site);
+  if (!doc) return null;
+  return { name: bi(doc, "name", lang), rest: [bi(doc, "qualification", lang), bi(doc, "specialisation", lang)].filter(Boolean) };
+}
+
+/** The calm hero's credential: the hero's own line, else the lead doctor's name, degree and registration. */
+export function heroCredential(site: DemoSite, lang: DemoLang): string {
+  const own = bi(dentalOf(site).hero, "credential", lang);
+  if (own) return own;
+  const doc = leadDoctor(site);
+  return doc ? [bi(doc, "name", lang), bi(doc, "qualification", lang), bi(doc, "regNo", lang)].filter(Boolean).join(", ") : "";
+}
+
+/** The mark, in the words the templates' registration numbers already use. */
+export const SAMPLE_MARK: Bilingual = { en: "(sample)", hi: "(नमूना)" };
+
+const MARKED = /\((?:sample|नमूना)\)/i;
+/** A doctor's name without its title, so "Dr. Simran Bedi" is found in "Simran Bedi, BDS" too. */
+const bareName = (s?: string) => (s || "").trim().replace(/^(?:dr\.\s*|dr\s+|डॉ\.\s*|डॉ\s+)/i, "").trim();
+
+/**
+ * THE HERO'S DOCTOR LINE, MARKED WHILE IT IS SAMPLE. The kids hero credits
+ * the lead doctor ("Dr. Simran Bedi, BDS, MDS ...") and the calm hero prints
+ * a credential naming one. On a template duplicate that doctor is the
+ * template's fiction under the clinic's name, and the hero had no mark of its
+ * own: the doctors' sample line is further down the page. So while that line
+ * shows (the doctors block is still the template's and not marked real: see
+ * showSampleLine), a hero line naming one of the block's doctors ends in
+ * "(sample)" / "(नमूना)", as the registration numbers do. Nothing is added to
+ * a line that already says so (d4's "Reg. no. A-00000 (sample)") or to one
+ * rewritten to name somebody else. Returns the mark, or "".
+ */
+export function heroDoctorMark(site: DemoSite, line: string, lang: DemoLang): string {
+  const text = line.trim();
+  if (!text || MARKED.test(text) || !showSampleLine(site, "doctors")) return "";
+  const names = (dentalOf(site).doctors || []).flatMap((d) => [d.name, d.hi?.name]).map(bareName);
+  return names.some((n) => n.length > 2 && text.includes(n)) ? tr(SAMPLE_MARK, lang) : "";
 }
 
 /** The booking preset a page passes to the booking sheet. */

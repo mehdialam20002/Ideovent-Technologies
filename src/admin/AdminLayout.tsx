@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Download, FileDown, Upload, RotateCcw, LogOut, ExternalLink, Menu, X, Circle } from "lucide-react";
 import { contentImportTemplateJson, CONTENT_TEMPLATE_FILE } from "@/lib/cms/importTemplate";
@@ -10,8 +10,18 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { collectionSchemas, singletonSchemas } from "./schemas";
 import { cn } from "@/lib/utils";
 import { useOutreachDueCount } from "./outreach/badge";
+import { crmMovedOut, crmOriginUrl } from "@/lib/host";
+import { ADMIN_DEVICE_KEY } from "@/lib/demo/opens";
 
 type NavItem = { label: string; to: string; icon: string; end?: boolean; badge?: "outreachDue"; newTab?: boolean };
+
+/*
+  Where the CRM item opens: /crm on this site, as before, until the CRM has
+  its own subdomain (VITE_CRM_URL set, see lib/host.ts); then that address,
+  e.g. https://crm.ideovent.in/. Another origin is a plain link, not a router one.
+*/
+const CRM_LINK = crmMovedOut() ? crmOriginUrl("/crm") : "/crm";
+const isAbsolute = (to: string) => /^https?:\/\//i.test(to);
 
 const NAV: { title: string; items: NavItem[] }[] = [
   { title: "Overview", items: [{ label: "Dashboard", to: "/admin", icon: "LayoutDashboard", end: true }] },
@@ -43,10 +53,11 @@ const NAV: { title: string; items: NavItem[] }[] = [
          only real demos. Preview and duplicate only: see AdminTemplates.tsx. */
       { label: "Templates", to: "/admin/templates", icon: "LayoutGrid" },
       /* The CRM: leads, pipeline, follow-ups, demos and the compose panel
-         that opens Gmail or WhatsApp typed and ready. Its own full-screen app
-         at /crm, opened in a NEW TAB so the admin stays where it was. The
-         badge is today's due follow-ups. */
-      { label: "CRM", to: "/crm", icon: "Users", badge: "outreachDue", newTab: true },
+         that opens the mail app or WhatsApp typed and ready. Its own full-screen app
+         at /crm (at its own subdomain once VITE_CRM_URL is set: CRM_LINK above),
+         opened in a NEW TAB so the admin stays where it was. The badge is
+         today's due follow-ups. */
+      { label: "CRM", to: CRM_LINK, icon: "Users", badge: "outreachDue", newTab: true },
       /* Finds the leads in the first place: Google Maps search plus a website
          check, one click into Outreach. */
       { label: "Lead finder", to: "/admin/lead-finder", icon: "MapPin" },
@@ -60,6 +71,10 @@ const NAV: { title: string; items: NavItem[] }[] = [
       { label: "Applications", to: "/admin/applications", icon: "GraduationCap" },
     ],
   },
+  /* What Razorpay reports to the webhook: monthly plans, the yearly Starter,
+     Payment Links. Also where the webhook is connected to the database
+     (migration 0010); no secret is ever typed there. */
+  { title: "Payments", items: [{ label: "Subscriptions & payments", to: "/admin/payments", icon: "CreditCard" }] },
   {
     title: "Settings",
     items: [
@@ -83,6 +98,15 @@ const NAV: { title: string; items: NavItem[] }[] = [
   },
 ];
 
+/** A sidebar item that opens in a new tab: a router link on this site, a plain link to another origin. */
+function NewTabLink({ to, onClick, className, children }: { to: string; onClick: () => void; className: string; children: ReactNode }) {
+  return isAbsolute(to) ? (
+    <a href={to} target="_blank" rel="noopener" onClick={onClick} className={className}>{children}</a>
+  ) : (
+    <Link to={to} target="_blank" rel="noopener" onClick={onClick} className={className}>{children}</Link>
+  );
+}
+
 export default function AdminLayout() {
   // The public site defers the blog and legal bodies out of the entry chunk and
   // only the pages that render them ask for them. The admin edits and EXPORTS
@@ -103,6 +127,19 @@ export default function AdminLayout() {
   useEffect(() => {
     if (mode === "supabase") void actions.refresh();
   }, [mode, actions]);
+
+  /* "This browser is Mehdi's": his own demo opens never e-mail him an alert
+     (lib/demo/opens.ts). The CRM shell sets it on the origin it runs on, which
+     is this one today. Once the CRM has its own subdomain it marks THAT origin,
+     while demos still open on this one, so from then on the admin marks it. */
+  useEffect(() => {
+    if (!crmMovedOut()) return;
+    try {
+      localStorage.setItem(ADMIN_DEVICE_KEY, "1");
+    } catch {
+      /* storage blocked: the alert's other admin checks still apply */
+    }
+  }, []);
   const navigate = useNavigate();
   /* Export, Import, Template and Reset act on the site's CMS content, not on
      leads (leads are never in that JSON). On Outreach they were four of seven
@@ -165,10 +202,8 @@ export default function AdminLayout() {
                 return (
                   <li key={item.to}>
                     {item.newTab ? (
-                      <Link
+                      <NewTabLink
                         to={item.to}
-                        target="_blank"
-                        rel="noopener"
                         onClick={() => setOpen(false)}
                         className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
@@ -182,7 +217,7 @@ export default function AdminLayout() {
                         ) : (
                           <ExternalLink className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden="true" />
                         )}
-                      </Link>
+                      </NewTabLink>
                     ) : (
                     <NavLink
                       to={item.to}

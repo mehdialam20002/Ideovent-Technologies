@@ -27,6 +27,10 @@ const ROUTES = [
   // if it is ever deleted, point this at another live pitch slug rather than
   // dropping the route.
   '/example-public-school',
+  // The India design for a dental clinic (30 September 2026): no website, no
+  // observations and a package, so it takes the "could not find a website"
+  // hero and the patient-search section that no other seed record reaches.
+  '/example-dental-clinic',
   // The international design. Two records, because they exercise different
   // branches of the same page: the first has a recommended package, observed
   // problems and a named owner, and the second has none of those, so it is the

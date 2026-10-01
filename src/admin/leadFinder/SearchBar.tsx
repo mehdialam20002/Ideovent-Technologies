@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2, Search } from "lucide-react";
-import { TYPE_PRESETS, type TypePreset } from "@/lib/leadFinder/leads";
+import { TYPE_PRESETS, type PresetGroup, type TypePreset } from "@/lib/leadFinder/leads";
 import { cn } from "@/lib/utils";
 import { btn, input } from "./styles";
 
@@ -13,9 +13,17 @@ export interface SearchInput {
   preset?: TypePreset;
 }
 
+const GROUPS: PresetGroup[] = ["Schools", "Coaching", "Dental"];
+
+const chip = (on: boolean) => cn(
+  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+  on ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50",
+);
+
 /**
- * City plus a type. The chips are the kinds Mehdi sells to most; "Other"
- * opens a free text box for anything else (a gym, a clinic, a shop).
+ * City plus a type. The chips are the kinds Mehdi sells to most, in three
+ * rows (schools, coaching, dental); "Other" opens a free text box for
+ * anything else (a gym, a physiotherapist, a shop).
  */
 export function SearchBar({ busy, onSearch }: { busy: boolean; onSearch: (q: SearchInput) => void }) {
   const [city, setCity] = useState("");
@@ -29,7 +37,7 @@ export function SearchBar({ busy, onSearch }: { busy: boolean; onSearch: (q: Sea
   return (
     <form
       role="search"
-      aria-label="Find businesses on Google Maps"
+      aria-label="Find businesses"
       className="rounded-2xl border border-border bg-card/60 p-4"
       onSubmit={(e) => {
         e.preventDefault();
@@ -40,21 +48,23 @@ export function SearchBar({ busy, onSearch }: { busy: boolean; onSearch: (q: Sea
     >
       <fieldset>
         <legend className="mb-2 text-sm font-medium">Type</legend>
-        <div className="flex flex-wrap gap-2">
-          {[...TYPE_PRESETS, { id: "other", label: "Other" }].map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              aria-pressed={presetId === p.id}
-              onClick={() => setPresetId(p.id)}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                presetId === p.id ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50",
-              )}
-            >
-              {p.label}
-            </button>
+        <div className="space-y-2">
+          {GROUPS.map((g) => (
+            <div key={g} className="flex flex-wrap items-center gap-2">
+              <span className="w-16 shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{g}</span>
+              {TYPE_PRESETS.filter((p) => p.group === g).map((p) => (
+                <button key={p.id} type="button" aria-pressed={presetId === p.id} onClick={() => setPresetId(p.id)} className={chip(presetId === p.id)}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
           ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-16 shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Any</span>
+            <button type="button" aria-pressed={presetId === "other"} onClick={() => setPresetId("other")} className={chip(presetId === "other")}>
+              Other
+            </button>
+          </div>
         </div>
       </fieldset>
 
@@ -62,7 +72,7 @@ export function SearchBar({ busy, onSearch }: { busy: boolean; onSearch: (q: Sea
         {presetId === "other" ? (
           <div className="min-w-0">
             <label htmlFor="lf-type" className="mb-1 block text-xs font-medium text-muted-foreground">What kind of business</label>
-            <input id="lf-type" className={input} placeholder="e.g. dental clinic, gym, music academy" value={free}
+            <input id="lf-type" className={input} placeholder="e.g. gym, physiotherapy clinic, music academy" value={free}
               onChange={(e) => setFree(e.target.value)} aria-invalid={tried && missing === "type"} />
           </div>
         ) : (

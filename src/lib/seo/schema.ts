@@ -1,4 +1,5 @@
 import type { ContactInfo, SiteSettings, SocialLink } from "@/lib/cms/types";
+import { MAILBOX_LIVE } from "@/lib/mailbox";
 
 /**
  * JSON-LD builders.
@@ -61,6 +62,24 @@ export function absolutizeUrls<T>(node: T, host: string): T {
  * (The previous comment named him as the third partner; he was never in the
  * `founder` value.) A headcount must never be inferable.
  */
+/**
+ * What the firm is, for machines. Deliberately not settings.defaultSeo.description:
+ * that is the home page's search snippet and carries prices, which do not belong
+ * in a description of the business itself.
+ */
+export const ORG_DESCRIPTION =
+  "Web and software studio in Saket, New Delhi: websites, web apps, custom software, mobile apps and local SEO for businesses in India and abroad.";
+
+/**
+ * contact@ideovent.in has no mailbox yet (FACTS.md, CORRECTION 30 Sep 2026, item
+ * 6: no MX record on 1 Oct 2026, "never tell a reader that either works today").
+ * Structured data is a statement to Google and to every assistant that reads it,
+ * so the address stays out of it until a message sent from outside has been
+ * received. ONE flag for the whole site since 1 Oct 2026: src/lib/mailbox.ts,
+ * which the footer and the contact blocks read too. Flip it there.
+ */
+export { MAILBOX_LIVE };
+
 export function organizationNode(
   settings: SiteSettings,
   contact: ContactInfo,
@@ -76,6 +95,7 @@ export function organizationNode(
   };
   // Postal code is an unconfirmed blank in FACTS.md, omit rather than guess.
   if (contact.address.postalCode) address.postalCode = contact.address.postalCode;
+  const email = MAILBOX_LIVE && contact.emailDisplay ? { email: contact.emailDisplay } : {};
 
   return {
     // Multi-typed on purpose: Organization is the publisher identity every
@@ -93,8 +113,8 @@ export function organizationNode(
       height: 512,
     },
     image: absolute(host, settings.defaultSeo.ogImage),
-    description: settings.defaultSeo.description,
-    email: contact.emailDisplay,
+    description: ORG_DESCRIPTION,
+    ...email,
     telephone: contact.phoneHref.replace(/^tel:/, ""),
     foundingDate: "2024",
     employee: [
@@ -103,7 +123,9 @@ export function organizationNode(
       { "@type": "Person", name: "Saif Ali", jobTitle: "Senior App Developer" },
     ],
     address,
-    geo: { "@type": "GeoCoordinates", latitude: 28.5245, longitude: 77.2066 },
+    /* No `geo`. A latitude and longitude claim a precise point, and FACTS.md
+       confirms only "Saket, New Delhi": no street, no PIN, no map pin. The
+       hours below are the ones the site prints (contact.businessHours). */
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
@@ -114,10 +136,11 @@ export function organizationNode(
     ],
     knowsAbout: [
       "Website development",
-      "Custom SaaS development",
+      "Custom software and SaaS development",
       "Mobile app development",
       "UI/UX design",
       "Backend and API development",
+      "Local SEO and Google Business Profile management",
       "Website maintenance and support",
     ],
     areaServed: [
@@ -129,7 +152,7 @@ export function organizationNode(
       {
         "@type": "ContactPoint",
         contactType: "sales",
-        email: contact.emailDisplay,
+        ...email,
         telephone: contact.phoneHref.replace(/^tel:/, ""),
         areaServed: "IN",
         availableLanguage: ["en", "hi"],
@@ -147,7 +170,7 @@ export function webSiteNode(settings: SiteSettings): Json {
     "@id": `${host}/${SITE_ID}`,
     url: `${host}/`,
     name: settings.siteName,
-    description: settings.defaultSeo.description,
+    description: ORG_DESCRIPTION,
     inLanguage: "en-IN",
     publisher: { "@id": `${host}/${ORG_ID}` },
   };
@@ -168,5 +191,176 @@ export function breadcrumbNode(host: string, crumbs: Crumb[]): Json {
       name: c.name,
       item: `${base}${c.path}`,
     })),
+  };
+}
+
+/* ───────────── Page nodes shared by the pages and scripts/prerender-heads.mjs ─────────────
+ * Site-relative URLs are fine here: <Seo> and the prerender both run the graph
+ * through absolutizeUrls(). <Seo> also links each node to the Organization
+ * (`provider` on a Service, `publisher` on the rest) unless the node sets it.
+ */
+
+const AREA_SERVED: Json[] = [
+  { "@type": "City", name: "New Delhi" },
+  { "@type": "AdministrativeArea", name: "Delhi NCR" },
+  { "@type": "Country", name: "India" },
+];
+
+/** FACTS.md, secondary market. The USD offers are for these four. */
+const ABROAD_COUNTRIES: Json[] = ["United States", "United Kingdom", "United Arab Emirates", "Australia"].map(
+  (name) => ({ "@type": "Country", name }),
+);
+
+interface ServiceNodeInput {
+  title: string;
+  slug: string;
+  shortDescription?: string;
+  longDescription?: string;
+  intro?: string;
+  deliverables?: string[];
+}
+
+/**
+ * One Service per /services/<slug> page, with a stable @id the list page reuses.
+ * The deliverables go in as an OfferCatalog of named services with no price, which
+ * is what they are: what the scope lists, not something sold separately.
+ */
+export function serviceNode(s: ServiceNodeInput, offers?: Json[]): Json {
+  return {
+    "@type": "Service",
+    "@id": `/services/${s.slug}#service`,
+    name: s.title,
+    serviceType: s.title,
+    description: s.intro || s.longDescription || s.shortDescription || s.title,
+    url: `/services/${s.slug}`,
+    areaServed: AREA_SERVED,
+    ...(s.deliverables?.length
+      ? {
+          hasOfferCatalog: {
+            "@type": "OfferCatalog",
+            name: `${s.title}: what is included`,
+            itemListElement: s.deliverables.map((d) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: d } })),
+          },
+        }
+      : {}),
+    ...(offers?.length ? { offers } : {}),
+  };
+}
+
+/** A monthly "from" price, as schema.org spells it. */
+function monthlyFrom(min: number, currency: "INR" | "USD", region: Json | Json[]): Json {
+  return {
+    "@type": "Offer",
+    priceCurrency: currency,
+    eligibleRegion: region,
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      minPrice: min,
+      priceCurrency: currency,
+      unitCode: "MON",
+      referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+    },
+  };
+}
+
+/**
+ * The SEO add-on's two "from" prices (Mehdi, 1 Oct 2026), read from
+ * src/lib/pricing.ts like every other price. Only these are marked up: the
+ * one-time bands stay unmarked for the reason in Pricing.tsx (an Offer strips
+ * the "from, for a scope that does not exist yet" qualification away).
+ */
+export function seoOffers(indiaFrom: number, abroadFromUsd: number): Json[] {
+  return [
+    monthlyFrom(indiaFrom, "INR", { "@type": "Country", name: "India" }),
+    monthlyFrom(abroadFromUsd, "USD", ABROAD_COUNTRIES),
+  ];
+}
+
+/** FAQPage for questions that are VISIBLE on the page. Never for hidden text. */
+export function faqPageNode(faqs: { question: string; answer: string }[]): Json | undefined {
+  if (!faqs.length) return undefined;
+  return {
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+}
+
+/** A list page's Service entries, reusing each service page's @id. Short: no catalog. */
+export function serviceListNodes(services: ServiceNodeInput[]): Json[] {
+  return services.map((s) => serviceNode({ ...s, deliverables: undefined, intro: undefined, longDescription: undefined }));
+}
+
+/** The price offers a service page marks up, by slug. Only the SEO add-on today. */
+export function serviceOffers(slug: string, seo: { indiaFrom: number; abroadFromUsd: number }): Json[] | undefined {
+  return slug === "seo" ? seoOffers(seo.indiaFrom, seo.abroadFromUsd) : undefined;
+}
+
+interface ProjectNodeInput {
+  title: string;
+  summary?: string;
+  coverImage?: string;
+  liveUrl?: string;
+  technologies?: string[];
+  category?: string;
+  clientName?: string;
+}
+
+/**
+ * A case study. Employer work (WTF Go) was built by a partner while employed at
+ * Witness The Fitness Pvt. Ltd., so Ideovent is NOT named as its creator: the
+ * employer is the publisher, or, with no usable employer name, nothing is said
+ * at all (an empty name is a broken record, and a fallback to Ideovent would be
+ * the false claim this branch exists to avoid). Moved here unchanged from
+ * CaseStudy.tsx so the prerendered head says exactly what the page says.
+ */
+export function caseStudyNode(p: ProjectNodeInput): Json {
+  const employerWork = (p.category || "").toLowerCase() === "employer work";
+  const employer = employerWork ? (p.clientName ?? "").split(/,\s/)[0].trim() || (p.clientName ?? "").trim() : "";
+  return {
+    "@type": "CreativeWork",
+    name: p.title,
+    description: p.summary,
+    ...(p.coverImage ? { image: p.coverImage } : {}),
+    inLanguage: "en-IN",
+    ...(p.liveUrl ? { url: p.liveUrl } : {}),
+    ...(p.technologies?.length ? { keywords: p.technologies.join(", ") } : {}),
+    ...(employerWork
+      ? employer
+        ? { publisher: { "@type": "Organization", name: employer }, creditText: p.clientName }
+        : {}
+      : { creator: { "@type": "Organization", name: "Ideovent Technologies" } }),
+  };
+}
+
+interface PostNodeInput {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  coverImage?: string;
+  publishDate?: string;
+  author?: string;
+  tags?: string[];
+}
+
+/**
+ * A blog post. BlogPosting, the narrower type Google documents for articles.
+ * The byline is the studio: no post is attributed to a named person in FACTS.md.
+ * `datePublished` only when the record carries a real date.
+ */
+export function blogPostingNode(p: PostNodeInput): Json {
+  return {
+    "@type": "BlogPosting",
+    headline: p.title.slice(0, 110),
+    description: p.excerpt,
+    ...(p.coverImage ? { image: p.coverImage } : {}),
+    ...(p.publishDate ? { datePublished: p.publishDate } : {}),
+    inLanguage: "en-IN",
+    author: { "@type": "Organization", name: p.author || "Ideovent Technologies" },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `/blog/${p.slug}` },
+    ...(p.tags?.length ? { keywords: p.tags.join(", ") } : {}),
   };
 }

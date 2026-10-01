@@ -10,55 +10,90 @@
  *   on its OWN website.
  * Google's phone is shown live and reaches a lead only when Mehdi clicks
  * "Save this number" (buildSavedPhone), which is his decision.
+ *
+ * OPENSTREETMAP results (28 Sep 2026) are ODbL data, which may be kept with
+ * the attribution: a lead from OSM also keeps the phone OSM lists (after any
+ * found on their own website) and a note crediting OpenStreetMap.
+ *
+ * DENTAL (28 Sep 2026): the dental presets, a Google/OSM category that says
+ * dentist, or dental words in the typed type or the name make a "dental" lead,
+ * and its demo is picked by dentalTemplateFor (d1 to d7), the one helper the
+ * CRM and the poster import use too.
  */
 import { chooseTemplate, type PosterExtract } from "@/lib/ai/posterSchema";
+import { dentalTemplateFor, looksDental } from "@/lib/demo/templates/dentalPick";
 import type { TemplateId } from "@/lib/demo/templates/ids";
 import { kindFrom, normalizePhone, normalizeEmail } from "@/lib/outreach/store";
 import {
   LEAD_FINDER_SOURCE,
   type LeadInput, type LeadKind, type LeadPitch, type OutreachLead,
 } from "@/lib/outreach/types";
-import type { AuditVerdict, FinderPlace, SiteAudit } from "./client";
+import { OSM_ATTRIBUTION, isOsm, type AuditVerdict, type FinderPlace, type SiteAudit } from "./client";
+
+export type PresetGroup = "Schools" | "Coaching" | "Dental";
 
 export interface TypePreset {
+  /** Also tells OpenStreetMap which tags to search (SPECS in api/_lib/osm.js has the same ids). */
   id: string;
   label: string;
   /** What is sent to Google as the type: "<query> in <city>". */
   query: string;
   kind: LeadKind;
+  group: PresetGroup;
 }
 
 export const TYPE_PRESETS: TypePreset[] = [
-  { id: "cbse", label: "CBSE school", query: "CBSE school", kind: "school" },
-  { id: "play", label: "Play school", query: "play school", kind: "school" },
-  { id: "school", label: "School", query: "school", kind: "school" },
-  { id: "coaching", label: "Coaching", query: "coaching institute", kind: "coaching" },
-  { id: "jee", label: "JEE/NEET coaching", query: "JEE NEET coaching", kind: "coaching" },
-  { id: "ssc", label: "SSC/banking coaching", query: "SSC banking coaching", kind: "coaching" },
-  { id: "tuition", label: "Tuition centre", query: "tuition centre", kind: "coaching" },
+  { id: "cbse", label: "CBSE school", query: "CBSE school", kind: "school", group: "Schools" },
+  { id: "play", label: "Play school", query: "play school", kind: "school", group: "Schools" },
+  { id: "school", label: "School", query: "school", kind: "school", group: "Schools" },
+  { id: "coaching", label: "Coaching", query: "coaching institute", kind: "coaching", group: "Coaching" },
+  { id: "jee", label: "JEE/NEET coaching", query: "JEE NEET coaching", kind: "coaching", group: "Coaching" },
+  { id: "ssc", label: "SSC/banking coaching", query: "SSC banking coaching", kind: "coaching", group: "Coaching" },
+  { id: "tuition", label: "Tuition centre", query: "tuition centre", kind: "coaching", group: "Coaching" },
+  { id: "dental", label: "Dental clinic", query: "dental clinic", kind: "dental", group: "Dental" },
+  { id: "ortho", label: "Orthodontist or aligners", query: "orthodontist", kind: "dental", group: "Dental" },
+  { id: "implant", label: "Dental implant centre", query: "dental implant centre", kind: "dental", group: "Dental" },
+  { id: "kids", label: "Children's dentist", query: "pediatric dentist", kind: "dental", group: "Dental" },
+  { id: "cosmetic", label: "Cosmetic dentist", query: "cosmetic dentist", kind: "dental", group: "Dental" },
 ];
 
-/** The kind of a result: the preset's, else guessed from the typed text and the name. */
-export function kindForPlace(name: string, typeText: string, preset?: TypePreset): LeadKind {
+/**
+ * Google's primary type or OSM's tag says it is a dental practice ("dentist",
+ * "dental_clinic", "clinic (paediatric_dentistry)"). From a word start
+ * (underscores count as a break), so a "student_housing" is not a dentist.
+ */
+export const dentalCategory = (category?: string | null) =>
+  /(^|[^a-z])(dent(al|ist)|orthodont|endodont|periodont|prosthodont|pedodont|paedodont)/i.test(category || "");
+
+/**
+ * The kind of a result. The place's own category wins when it says dentist
+ * (a dentist in a coaching search is still a dentist); then the preset's
+ * kind; then dental words in the typed type or the name; then the CRM's
+ * school/coaching rules.
+ */
+export function kindForPlace(name: string, typeText: string, preset?: TypePreset, category?: string | null): LeadKind {
+  if (dentalCategory(category)) return "dental";
   if (preset) return preset.kind;
-  const guess = kindFrom(undefined, `${typeText} ${name}`);
-  return guess;
+  if (looksDental(typeText, name)) return "dental";
+  return kindFrom(undefined, `${typeText} ${name}`);
 }
 
 /**
- * The demo template, by the SAME rules as the poster reader (chooseTemplate in
- * posterSchema.ts), fed with what the finder knows: the name and the type
- * searched. "JEE/NEET coaching" lands on c1, "SSC/banking" on c5, "play
- * school" on s3, a plain school on s1. Null for a business that is neither a
- * school nor a coaching centre: there is no template for it.
+ * The demo template. Dental: dentalTemplateFor(name, category, type searched),
+ * so "Orthodontist or aligners" lands on d5 and a "Kids Dental Care" on d6.
+ * School and coaching: the SAME rules as the poster reader (chooseTemplate in
+ * posterSchema.ts): "JEE/NEET coaching" lands on c1, "SSC/banking" on c5,
+ * "play school" on s3, a plain school on s1. Null for any other business:
+ * there is no template for it.
  */
-export function templateForPlace(name: string, typeText: string, kind: LeadKind): TemplateId | null {
-  if (kind === "other") return null;
+export function templateForPlace(name: string, typeText: string, kind: LeadKind, category?: string | null): TemplateId | null {
+  if (kind === "dental") return dentalTemplateFor(name, category, typeText);
+  if (kind !== "school" && kind !== "coaching") return null;
   const x: PosterExtract = { kind, instituteName: name, notes: typeText };
   return chooseTemplate(x);
 }
 
-/** none/broken: they need a site. poor: theirs needs fixing. ok: no website pitch. */
+/** none/broken: they need a site. poor: theirs needs fixing. ok, or a page that could not be checked: no website pitch. */
 export function pitchFor(verdict: AuditVerdict | undefined): LeadPitch | undefined {
   if (verdict === "none" || verdict === "broken") return "new_website";
   if (verdict === "poor") return "fix_website";
@@ -78,14 +113,41 @@ const CODE_TO_OBSERVATION: [RegExp, string][] = [
   [/^no_contact$/, "no_fees_admission"],
 ];
 
-/** The observation for a lead: an OBSERVATIONS id where one fits, else the audit's sentence. */
-export function observationFor(audit: SiteAudit | undefined): string | undefined {
-  if (!audit || audit.verdict === "ok") return undefined;
+/*
+  A dental clinic is not asked about fees and admissions. For a dental lead
+  no_contact and the dental checks (siteAudit.js dentalFindings) become the
+  Outreach engine's own dental observations (ids), so a Hinglish message says
+  them in Hinglish and the first WhatsApp stays under 450 characters
+  (30 Sep 2026).
+*/
+const DENTAL_OBSERVATIONS: [string, string][] = [
+  ["no_contact", "no_contact_details"],
+  ["no_booking", "no_online_booking"],
+  ["no_whatsapp", "no_whatsapp_button"],
+  ["no_treatments", "no_treatment_pages"],
+];
+
+/**
+ * The observation for a lead: an OBSERVATIONS id where one fits, else the audit's sentence.
+ * None for a site that is fine, or one that could not be checked: nothing was found to say.
+ */
+export function observationFor(audit: SiteAudit | undefined, kind?: LeadKind): string | undefined {
+  if (!audit || audit.verdict === "ok" || audit.verdict === "unchecked") return undefined;
   if (audit.verdict === "none") return "no_website";
   for (const [re, id] of CODE_TO_OBSERVATION) {
+    if (kind === "dental" && id === "no_fees_admission") continue;
     if (audit.evidence.some((e) => re.test(e.code))) return id;
   }
-  const first = audit.evidence[0]?.text;
+  // no_contact only means the page lacks contact WORDS: a number or e-mail the audit found on the page itself
+  // disproves "does not show a phone number", so that sentence is never said to such a clinic (30 Sep 2026).
+  const reachable = kind === "dental" && Boolean(audit.phones?.length || audit.emails?.length);
+  if (kind === "dental" && audit.verdict === "poor") {
+    for (const [code, id] of DENTAL_OBSERVATIONS) {
+      if (code === "no_contact" && reachable) continue;
+      if (audit.evidence.some((e) => e.code === code)) return id;
+    }
+  }
+  const first = audit.evidence.find((e) => !(reachable && e.code === "no_contact"))?.text;
   if (audit.verdict === "broken") return first ? `Your website did not open properly when I tried it: ${lowerFirst(first)}.` : "Your website did not open when I tried it.";
   return first ? `${first}.` : undefined;
 }
@@ -93,32 +155,42 @@ export function observationFor(audit: SiteAudit | undefined): string | undefined
 const lowerFirst = (s: string) => s.replace(/\.$/, "").replace(/^[A-Z](?![A-Z])/, (c) => c.toLowerCase());
 
 /**
- * The website to keep: only the address the audit actually reached on the
+ * The website to keep: the address the audit actually reached on the
  * institute's own server (finalUrl). Google's websiteUri is Places content and
- * is not copied; with no audit, or a site that never answered, nothing is kept.
+ * is not copied. OpenStreetMap's website tag is ODbL data and may be kept when
+ * no audit reached the site. Otherwise nothing is kept.
  */
-function websiteFor(_place: FinderPlace, audit?: SiteAudit): string | undefined {
-  if (!audit || audit.verdict === "none") return undefined;
-  return audit.finalUrl || undefined;
+function websiteFor(place: FinderPlace, audit?: SiteAudit): string | undefined {
+  if (audit?.verdict === "none") return undefined;
+  if (audit?.finalUrl) return audit.finalUrl;
+  return isOsm(place) && place.website ? place.website : undefined;
 }
 
 /**
- * The lead the finder writes. Nothing from Google but the place ID and the
- * name; the city is the one Mehdi searched. Phones and emails come ONLY from
- * the institute's own website (the audit).
+ * The lead the finder writes. From Google: nothing but the place ID and the
+ * name; the city is the one Mehdi searched. Phones and emails come from the
+ * institute's own website (the audit). From OpenStreetMap: the same, plus the
+ * phone OSM lists when their website shows none, and a note that credits
+ * OpenStreetMap (ODbL) with the link to the map entry.
  */
 export function leadFromPlace(
   place: FinderPlace,
   opts: { city: string; kind: LeadKind; audit?: SiteAudit; typeLabel?: string },
 ): LeadInput {
   const { audit } = opts;
-  const phones = (audit?.phones || []).map((p) => normalizePhone(p)).filter((p): p is string => !!p);
+  const own = (audit?.phones || []).map((p) => normalizePhone(p)).filter((p): p is string => !!p);
+  const osmPhone = isOsm(place) ? normalizePhone(place.phoneIntl || place.phone) : undefined;
+  const phones = osmPhone && !own.includes(osmPhone) ? [...own, osmPhone] : own;
   const emails = (audit?.emails || []).map((e) => normalizeEmail(e)).filter((e): e is string => !!e);
   const extra = [
-    phones.length > 1 ? `Other numbers on their website: ${phones.slice(1).join(", ")}` : "",
+    phones.length > 1 ? `Other numbers: ${phones.slice(1).join(", ")}` : "",
     emails.length > 1 ? `Other emails on their website: ${emails.slice(1).join(", ")}` : "",
     audit && audit.verdict !== "ok" && audit.evidence.length
       ? `Website check (${audit.verdict}): ${audit.evidence.map((e) => e.text).join("; ")}`
+      : "",
+    isOsm(place)
+      ? `From OpenStreetMap (${OSM_ATTRIBUTION}, ODbL): ${place.mapsUrl || place.placeId}`
+        + `${osmPhone ? `. Phone listed there: ${osmPhone}` : ""}${place.address ? `. Address listed there: ${place.address}` : ""}`
       : "",
   ].filter(Boolean);
   const lead: LeadInput = {
@@ -129,7 +201,7 @@ export function leadFromPlace(
     source: LEAD_FINDER_SOURCE,
     status: "new",
     website: websiteFor(place, audit),
-    observation: observationFor(audit),
+    observation: observationFor(audit, opts.kind),
     pitch: pitchFor(audit?.verdict),
     phone: phones[0],
     email: emails[0],
@@ -176,7 +248,7 @@ export function savedPhonePatch(lead: OutreachLead, place: FinderPlace): Partial
   if (!phone) return null;
   if (!lead.phone) return { phone };
   if (normalizePhone(lead.phone) === phone || normalizePhone(lead.whatsapp) === phone) return null;
-  const line = `Phone saved from Google Maps: ${phone}`;
+  const line = `Phone saved from ${isOsm(place) ? "OpenStreetMap" : "Google Maps"}: ${phone}`;
   return { notes: lead.notes ? `${lead.notes}\n${line}` : line };
 }
 
@@ -189,6 +261,45 @@ export interface FinderFilters {
 }
 
 export const NO_FILTERS: FinderFilters = { noWebsite: false, poorOrBroken: false, rating4: false, reviews20: false };
+
+/** OpenStreetMap has no ratings or reviews, so those two filters are off (and hidden) on an OSM list. */
+export const withoutRatingFilters = (f: FinderFilters): FinderFilters => ({ ...f, rating4: false, reviews20: false });
+
+/** Which website checks to run: "dental" adds online booking, WhatsApp and treatment pages. */
+export type AuditKind = "dental" | null;
+
+/** The website checks to run for a search: the dental ones for a dental preset or dental words. */
+export function auditKindFor(typeText: string, preset?: TypePreset): AuditKind {
+  return preset?.kind === "dental" || (!preset && looksDental(typeText)) ? "dental" : null;
+}
+
+/** The checks for one place: the search's, or the dental ones for a dentist found by any search. */
+export function auditKindForPlace(place: Pick<FinderPlace, "name" | "primaryType">, typeText: string, preset?: TypePreset): AuditKind {
+  if (auditKindFor(typeText, preset) === "dental") return "dental";
+  return kindForPlace(place.name, typeText, preset, place.primaryType) === "dental" ? "dental" : null;
+}
+
+/** Places in batches of at most `size` that share one audit kind, in their first-seen order. */
+export function auditBatches<T>(list: T[], kindOf: (x: T) => AuditKind, size: number): { kind: AuditKind; items: T[] }[] {
+  const groups = new Map<AuditKind, T[]>();
+  for (const x of list) {
+    const k = kindOf(x);
+    groups.set(k, [...(groups.get(k) || []), x]);
+  }
+  const out: { kind: AuditKind; items: T[] }[] = [];
+  for (const [kind, items] of groups) {
+    for (let i = 0; i < items.length; i += Math.max(1, size)) out.push({ kind, items: items.slice(i, i + Math.max(1, size)) });
+  }
+  return out;
+}
+
+/**
+ * The words the demo template is picked from, besides the name and category:
+ * the type searched, unless OpenStreetMap had none of that speciality and
+ * showed every dental clinic (or coaching centre) instead. Then the searched
+ * type says nothing about these places, and only their own words count.
+ */
+export const searchedTypeForTemplate = (typeText: string, broadened: string | null | undefined) => (broadened ? "" : typeText);
 
 export function passes(place: FinderPlace, audit: SiteAudit | undefined, f: FinderFilters): boolean {
   if (f.noWebsite && (audit ? audit.verdict !== "none" : !!place.website)) return false;

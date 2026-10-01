@@ -97,15 +97,17 @@ export default function AdminTemplatePreview() {
           </span>
         </span>
         <span className="ml-auto flex flex-wrap gap-2">
-        {/* A poster fills school and coaching templates only. */}
-        {meta.kind !== "dental" && <button
+        {/* Every kind: since 28 Sep 2026 a poster, pamphlet or visiting card
+            fills a dental template too (src/admin/PosterImportDialog.tsx
+            reads a clinic when the template chosen is a dental one). */}
+        <button
           type="button"
           onClick={() => poster.open(meta.id)}
           className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium hover:border-primary/50"
         >
           <ScanText className="h-3.5 w-3.5" aria-hidden="true" />
           Create from poster
-        </button>}
+        </button>
         <button
           type="button"
           onClick={() => request(meta.id)}

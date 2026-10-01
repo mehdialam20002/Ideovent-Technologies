@@ -2,30 +2,36 @@ import { useEffect, useState } from "react";
 import { Check, Save } from "lucide-react";
 import type { OutreachSettings } from "@/lib/outreach/types";
 import { DEFAULT_SIGNATURE } from "@/lib/outreach/store";
-import { useCms } from "@/lib/cms/context";
 import { useOutreach } from "./useOutreach";
 import { Field, btnPrimary, cardCls, inputCls, textareaCls } from "./ui";
 
 /**
- * SETTINGS: which Google account Gmail opens in, the signature, an optional
- * daily WhatsApp limit (blank, the default, is no limit) and quiet hours,
- * demo-open alerts, and whether new demos are added to the CRM. Saved in the
- * outreach store, not the CMS.
+ * SETTINGS: the e-mail signature, an optional daily WhatsApp limit (blank,
+ * the default, is no limit) and quiet hours, and whether new demos are added
+ * to the CRM. Saved in the outreach store, not the CMS.
+ *
+ * The "Gmail account for Open in Gmail" field is gone (28 Sep 2026: e-mail
+ * opens in the mail app only). An old saved value (senderGmail) is carried
+ * through a save untouched and read by nothing, so old settings still load.
+ * One help line says where the mail app comes from: the computer's default
+ * e-mail app, which can be Gmail or Zoho Mail in Chrome if Chrome is set to
+ * handle e-mail links.
+ *
+ * DEMO-OPEN E-MAILS ARE GONE (1 Oct 2026, Mehdi: "mai demo opened wala mail
+ * nhi chahta"). src/lib/demo/opens.ts no longer sends one, so the "Alert me
+ * when a lead opens their demo" switch and the alert e-mail box are out of
+ * this form, and so is the write to the CMS settings.demoOpenAlerts flag.
+ * Old saved values (alertOnDemoOpen, alertEmail) ride through a save
+ * untouched and nothing acts on them. One line in "Demos and the CRM" says
+ * where opens still show.
  */
 export function SettingsTab() {
   const { settings, saveSettings } = useOutreach();
-  const { data, actions } = useCms();
-  /* The alert itself is sent by the PUBLIC demo page (src/lib/demo/opens.ts),
-     which runs as anon and can only read the public CMS settings, so the
-     switch that really matters is settings.demoOpenAlerts. Both are written. */
-  const cmsAlerts = data.settings?.demoOpenAlerts !== false;
-  const withCms = (s: OutreachSettings): OutreachSettings => ({ ...s, alertOnDemoOpen: cmsAlerts });
-  const [form, setForm] = useState<OutreachSettings>(withCms(settings));
+  const [form, setForm] = useState<OutreachSettings>(settings);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => setForm(withCms(settings)), [settings, cmsAlerts]);
+  useEffect(() => setForm(settings), [settings]);
   const set = <K extends keyof OutreachSettings>(k: K, v: OutreachSettings[K]) => {
     setSaved(false);
     setForm((f) => ({ ...f, [k]: v }));
@@ -36,15 +42,11 @@ export function SettingsTab() {
   useEffect(() => setLimitText(settings.whatsappDailyLimit ? String(settings.whatsappDailyLimit) : ""), [settings.whatsappDailyLimit]);
   const limitNum = limitText.trim() === "" ? 0 : Number(limitText.trim());
   const capOk = Number.isInteger(limitNum) && limitNum >= 0 && limitNum <= 10000;
-  const gmailOk = !form.senderGmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.senderGmail.trim()) || /^\d$/.test(form.senderGmail.trim());
 
   const save = async () => {
     setErr(null);
     try {
-      await saveSettings({ ...form, whatsappDailyLimit: limitNum > 0 ? limitNum : 0, senderGmail: (form.senderGmail || "").trim(), alertEmail: (form.alertEmail || "").trim() });
-      if (data.settings && (data.settings.demoOpenAlerts !== false) !== form.alertOnDemoOpen) {
-        await actions.saveSingleton("settings", { ...data.settings, demoOpenAlerts: form.alertOnDemoOpen });
-      }
+      await saveSettings({ ...form, whatsappDailyLimit: limitNum > 0 ? limitNum : 0 });
       setSaved(true);
     } catch (e) {
       setErr("Not saved: " + ((e as Error).message || "unknown error"));
@@ -56,19 +58,15 @@ export function SettingsTab() {
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
-        if (capOk && gmailOk) void save();
+        if (capOk) void save();
       }}
     >
       <section className={cardCls + " space-y-4"}>
         <h2 className="font-display text-lg font-semibold">Sender</h2>
-        <Field
-          id="set-gmail"
-          label="Gmail account for Open in Gmail"
-          hint="The Google account the compose window opens in, e.g. mehdi@ideovent.in. Leave empty to use whichever account the browser opens first. The account must be signed in on this browser."
-        >
-          <input id="set-gmail" type="email" inputMode="email" autoComplete="email" className={inputCls} value={form.senderGmail || ""} onChange={(e) => set("senderGmail", e.target.value)} placeholder="you@gmail.com" />
-        </Field>
-        {!gmailOk && <p className="text-xs text-destructive">That does not look like an email address.</p>}
+        <p className="text-xs text-muted-foreground" data-testid="mail-app-help">
+          Open in mail app uses this computer's default e-mail app. To use Gmail or Zoho Mail in the browser, set it as
+          Chrome's default for e-mail links.
+        </p>
         <Field id="set-sig" label="Email signature" hint="Added under every email: your real name, company, city and phone.">
           <textarea id="set-sig" rows={5} className={textareaCls} value={form.signature} onChange={(e) => set("signature", e.target.value)} />
         </Field>
@@ -94,24 +92,11 @@ export function SettingsTab() {
         <p className="text-xs text-muted-foreground">Sending inside quiet hours shows a warning. It does not block.</p>
       </section>
 
-      <section className={cardCls + " space-y-4"}>
-        <h2 className="font-display text-lg font-semibold">Demo-open alerts</h2>
-        <label className="flex min-h-11 items-center gap-3 text-sm">
-          <input type="checkbox" className="h-5 w-5" checked={form.alertOnDemoOpen} onChange={(e) => set("alertOnDemoOpen", e.target.checked)} />
-          Alert me when a lead opens their demo
-        </label>
-        <p className="text-xs text-muted-foreground">
-          When a sent demo is opened, an email titled "Demo opened: institute name" goes to the enquiry inbox the contact form
-          uses (EmailJS), at most once per demo per browser per day, and never for your own opens. Opens also show under
-          Today as Hot, whether or not this is on.
-        </p>
-        <Field id="set-alert" label="Your alert email (for reference)" hint="Kept with your settings. Delivery goes to the EmailJS enquiry inbox; change that inbox in EmailJS if it should be a different address.">
-          <input id="set-alert" type="email" inputMode="email" className={inputCls} value={form.alertEmail || ""} onChange={(e) => set("alertEmail", e.target.value)} placeholder="you@gmail.com" disabled={!form.alertOnDemoOpen} />
-        </Field>
-      </section>
-
       <section className={cardCls + " space-y-3"}>
         <h2 className="font-display text-lg font-semibold">Demos and the CRM</h2>
+        <p className="text-sm" data-testid="demo-open-note">
+          No e-mail is sent when a demo is opened. Opens still show in the CRM, under Hot on Today and on the lead's demo card.
+        </p>
         <label className="flex min-h-11 items-center gap-3 text-sm">
           <input type="checkbox" className="h-5 w-5" data-testid="set-auto-demos" checked={form.autoAddDemos !== false} onChange={(e) => set("autoAddDemos", e.target.checked)} />
           Add every new demo to the CRM
@@ -125,7 +110,7 @@ export function SettingsTab() {
 
       {err && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">{err}</p>}
       <div className="flex items-center gap-3">
-        <button type="submit" className={btnPrimary} disabled={!capOk || !gmailOk}>
+        <button type="submit" className={btnPrimary} disabled={!capOk}>
           <Save className="h-4 w-4" aria-hidden="true" /> Save settings
         </button>
         {saved && (

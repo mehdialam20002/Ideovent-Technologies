@@ -4,6 +4,10 @@ import { Lock, Loader2 } from "lucide-react";
 import { useAdminAuth } from "@/admin/auth";
 import { Aurora } from "@/components/ui/aurora";
 import { Seo } from "@/components/seo/Seo";
+import { isCrmHost } from "@/lib/host";
+
+/* This page is /admin/login on the main site and /login on the CRM's own subdomain. */
+const ON_CRM_HOST = isCrmHost();
 
 const fieldCls =
   "w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-colors " +
@@ -14,9 +18,17 @@ const fieldCls =
   state.from). Matters for the CRM: it opens in a new tab, and in local mode
   the session is per tab, so the new tab signs in and must land on /crm, not
   on the admin dashboard. Only our own two apps are accepted.
+
+  On the CRM's own subdomain every signed-in page is a CRM screen, so any
+  path of this origin is accepted except the sign-in itself, and the default
+  is "/", the CRM dashboard.
 */
 function returnPath(state: unknown): string {
   const from = (state as { from?: unknown } | null)?.from;
+  if (ON_CRM_HOST) {
+    if (typeof from !== "string" || !from.startsWith("/") || from.startsWith("//")) return "/";
+    return /^\/login(?:[/?#]|$)/.test(from) ? "/" : from;
+  }
   if (typeof from !== "string" || from.startsWith("/admin/login")) return "/admin";
   return /^\/(admin|crm)(\/|$)/.test(from) ? from : "/admin";
 }
@@ -53,14 +65,14 @@ export default function AdminLogin() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
-      <Seo title="Admin login" noindex />
+      <Seo title={ON_CRM_HOST ? "CRM sign-in" : "Admin login"} noindex />
       <Aurora />
       <form onSubmit={submit} className="relative w-full max-w-sm rounded-3xl border border-border bg-card/70 p-8 backdrop-blur-xl">
         <div className="mb-6 flex flex-col items-center text-center">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
             <Lock className="h-5 w-5" aria-hidden="true" />
           </span>
-          <h1 className="mt-4 font-display text-2xl font-semibold">Admin access</h1>
+          <h1 className="mt-4 font-display text-2xl font-semibold">{ON_CRM_HOST ? "CRM sign-in" : "Admin access"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{mode === "supabase" ? "Sign in with your email and password.": "Enter your admin passcode."}</p>
         </div>
 

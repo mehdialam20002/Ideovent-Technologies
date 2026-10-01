@@ -13,6 +13,15 @@
  * write, not just in its own case: an API key never appears in any of them.
  * The negative control at the end proves that check can fail, so a pass means
  * something.
+ *
+ * A DENTAL CLINIC (28 Sep 2026): a fictional clinic's card read with kind
+ * "dental" and with "auto", through Gemini, OpenAI and Claude. Only clinic
+ * fields come back (doctors with degrees and printed registration,
+ * treatments, timings, printed fees, contact); school fields and unknown keys
+ * are dropped; offers are read for the admin's eyes; the clinic prompt and
+ * the schema with the dental fields reach each provider; the admin's kind is
+ * never overruled, and a model that writes "school" over a clinic's facts is
+ * read as a clinic when the admin left the kind to it.
  */
 process.env.VITE_SUPABASE_URL = "https://sb.test";
 process.env.VITE_SUPABASE_ANON_KEY = "anon-public-key";
@@ -386,6 +395,85 @@ check("200 from openai after gemini's limit", [r.status, r.json.provider], ([s, 
 check("errors are written by provider, as 0006 expects", patchUrls(), (u) => u.length === 2 && u.every((x) => /provider=eq\./.test(x)));
 check("runs are logged without key_id (the column does not exist yet)", state.runs.map((x) => "key_id" in x),
   (a) => a.length === 2 && a.every((v) => !v));
+
+// ── A dental clinic (28 Sep 2026) ──────────────────────────────────────────
+// A visiting card, fictional. The model also fills school fields and an
+// unknown key, and repeats a treatment: normalise() must keep only clinic facts.
+const CLINIC = { kind: "dental", instituteName: "Example Dental Clinic", city: "Patna", locality: "Boring Road",
+  doctors: [{ name: "Dr. Asha Verma", degrees: "BDS, MDS (Orthodontics)", registration: "Reg. No. A-99999",
+    specialisation: "Orthodontist", days: "Mon to Sat", invented: "must be dropped" }, { degrees: "" }],
+  treatments: ["Root canal", "Braces", "Root canal"], timings: "Mon to Sat 10 am to 8 pm",
+  fees: [{ treatment: "Consultation", fee: "₹200" }], offers: ["Free check-up camp every Sunday"],
+  board: "CBSE", courses: [{ name: "a school field on a clinic" }], faculty: [{ name: "Dr. Asha Verma" }],
+  contact: { phones: ["98765 43210"] }, suggestedTemplate: "d5-ortho-aligners" };
+const promptOf = (c) => JSON.parse(c.body).contents[0].parts[1].text;
+const geminiCall = () => state.calls.find((c) => c.url.includes("generativelanguage"));
+
+log("A dental clinic's card, kind: dental");
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini(CLINIC) } });
+r = await call({ body: { image: IMG, kind: "dental" } });
+check("200, read as a dental clinic", [r.status, r.json.extracted?.kind], ([s, k]) => s === 200 && k === "dental");
+check("the doctor comes back with degrees, registration, specialisation and days; the empty doctor and the unknown key go",
+  r.json.extracted.doctors, (d) => d.length === 1 && d[0].degrees === "BDS, MDS (Orthodontics)" && d[0].registration === "Reg. No. A-99999"
+    && d[0].specialisation === "Orthodontist" && d[0].days === "Mon to Sat" && !("invented" in d[0]));
+check("treatments deduplicated, timings and the printed fee kept", r.json.extracted,
+  (e) => e.treatments.join() === "Root canal,Braces" && e.timings === "Mon to Sat 10 am to 8 pm" && e.fees[0].fee === "₹200");
+check("school fields never ride along on a clinic", r.json.extracted, (e) => !e.board && !e.courses && !e.faculty && !e.results && !e.admissions);
+check("offers are read, so the admin sees them (the page never prints them)", r.json.extracted.offers, (o) => o[0] === "Free check-up camp every Sunday");
+check("the model's dental template is the suggestion", r.json.suggestedTemplate, (t) => t === "d5-ortho-aligners");
+check("the prompt is the clinic prompt, with the Dental Council rule on offers", promptOf(geminiCall()),
+  (p) => /dental clinic/.test(p) && /Dental Council/.test(p) && !/s1-urban-cbse/.test(p));
+check("the schema sent has the dental fields", JSON.parse(geminiCall().body).generationConfig.responseJsonSchema.properties,
+  (p) => p.doctors && p.treatments && p.timings && p.fees && p.kind.enum.includes("dental"));
+
+log("kind: auto, the model says dental; and a reply with doctors but no kind");
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini(CLINIC) } });
+r = await call({ body: { image: IMG, kind: "auto" } });
+check("auto: the model's 'dental' is taken", [r.status, r.json.extracted?.kind], ([s, k]) => s === 200 && k === "dental");
+check("the auto prompt offers all three kinds and both template lists", promptOf(geminiCall()),
+  (p) => /school, coaching or dental/.test(p) && /d1-family-dentist/.test(p) && /s1-urban-cbse/.test(p));
+const { kind: _k, ...noKind } = CLINIC;
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini(noKind) } });
+r = await call({ body: { image: IMG } });
+check("no kind but doctors and treatments -> dental", r.json.extracted?.kind, (k) => k === "dental");
+/* The model's slip: "school" written over a clinic's facts, with no school facts at all. */
+const { board: _b, courses: _c, faculty: _f, ...clinicOnly } = CLINIC;
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini({ ...clinicOnly, kind: "school" }) } });
+r = await call({ body: { image: IMG, kind: "auto" } });
+check("auto: 'school' over doctors and treatments alone is read as dental, the facts kept",
+  [r.json.extracted?.kind, r.json.extracted?.doctors?.length, r.json.extracted?.treatments?.length], ([k, d, t]) => k === "dental" && d === 1 && t === 2);
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini({ ...POSTER, treatments: ["a stray list"] }) } });
+r = await call({ body: { image: IMG, kind: "auto" } });
+check("auto: a coaching reply with its own exams stays coaching, and the stray list is dropped",
+  r.json.extracted, (e) => e.kind === "coaching" && !e.treatments && e.exams?.length === 2);
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini({ ...clinicOnly, kind: "school" }) } });
+r = await call({ body: { image: IMG, kind: "school" } });
+check("the admin's 'school' is never overruled, even over a clinic's facts", r.json.extracted, (e) => e.kind === "school" && !e.doctors);
+
+log("The admin's pick still wins for a clinic");
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini({ ...CLINIC, kind: "school" }) } });
+r = await call({ body: { image: IMG, kind: "dental", templateHint: "d6-kids-dental" } });
+check("kind: dental overrides the model's 'school'", r.json.extracted?.kind, (k) => k === "dental");
+check("a dental templateHint is accepted and returned", r.json.suggestedTemplate, (t) => t === "d6-kids-dental");
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini({ ...CLINIC, suggestedTemplate: undefined }) } });
+r = await call({ body: { image: IMG, kind: "dental" } });
+check("no model pick: the family practice", r.json.suggestedTemplate, (t) => t === "d1-family-dentist");
+reset({ keys: [row("gemini")], providers: { gemini: ok.gemini(POSTER) } });
+r = await call({ body: { image: IMG, kind: "school" } });
+check("a school request keeps the old prompt, with no dental rules", promptOf(geminiCall()), (p) => !/dental/i.test(p));
+check("kind: hospital -> 400", (await call({ body: { image: IMG, kind: "hospital" } })).status, (s) => s === 400);
+
+log("A clinic through OpenAI and through Claude");
+reset({ keys: [row("gemini", { priority: 1 }), row("openai", { priority: 2 })], providers: { gemini: geminiQuota, openai: ok.responses(CLINIC) } });
+r = await call({ body: { image: IMG, kind: "dental" } });
+check("Gemini out of quota, OpenAI reads the clinic", [r.status, r.json.provider, r.json.extracted?.doctors?.length], ([s, p, n]) => s === 200 && p === "openai" && n === 1);
+check("OpenAI got the schema with the dental fields", JSON.parse(state.calls.find((c) => c.url === "https://api.openai.com/v1/responses").body),
+  (b) => b.text.format.schema.properties.doctors && b.text.format.schema.properties.fees);
+reset({ keys: [row("anthropic")], providers: { anthropic: ok.anthropic(CLINIC) } });
+r = await call({ body: { image: IMG, kind: "dental" } });
+check("Claude reads the clinic", [r.status, r.json.extracted?.kind, r.json.extracted?.treatments?.length], ([s, k, n]) => s === 200 && k === "dental" && n === 2);
+check("Claude got the schema with the dental fields", JSON.parse(state.calls.find((c) => c.url.startsWith("https://api.anthropic.com")).body),
+  (b) => b.output_config.format.schema.properties.doctors && b.output_config.format.schema.properties.timings);
 
 // ── The property that matters most ─────────────────────────────────────────
 log("Keys never leave");

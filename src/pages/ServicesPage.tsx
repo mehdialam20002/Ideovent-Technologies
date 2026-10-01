@@ -13,6 +13,9 @@ import ProcessSection from "@/components/sections/ProcessSection";
 import FaqSection from "@/components/sections/FaqSection";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { liveEmail, whatsappInstead } from "@/lib/mailbox";
+import { PAGE_SEO } from "@/lib/seo/pages";
+import { serviceListNodes } from "@/lib/seo/schema";
 
 /*
   WHAT YOU ACTUALLY GET.
@@ -59,21 +62,18 @@ const WHY_POINTS = [
 export default function ServicesPage() {
   const services = useCollection("services");
   const contact = useSingleton("contact");
+  // Email only once contact@ideovent.in has a mailbox; WhatsApp until then.
+  const email = liveEmail(contact);
+  const whatsapp = whatsappInstead(contact.whatsappNumber, "Hi Ideovent, I would like to talk about a project.");
 
   return (
     <Layout>
+      {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/services"]).
+          One Service entry per service, each with the @id its own page uses. */}
       <Seo
-        title="Services"
-        description="Websites, web applications, custom SaaS, mobile apps, UI/UX design and ongoing maintenance, built by Ideovent Technologies in Saket, New Delhi for clients across Delhi NCR and India."
         path="/services"
-        keywords={[
-          "web development services New Delhi",
-          "custom software development Delhi NCR",
-          "website design and build Saket",
-          "React and Node development India",
-          "website maintenance and support India",
-        ]}
         breadcrumbs={[{ name: "Services", path: "/services" }]}
+        schema={serviceListNodes(services)}
       />
 
       {/* 1. Hero */}
@@ -96,33 +96,31 @@ export default function ServicesPage() {
           the site lands.
         */}
         <div className="container-page relative">
-          <Reveal>
-            <Eyebrow>Services</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            {/* Deliberately not "Six things we build": `services` is a CMS
-                collection, and a count written into an h1 is wrong the first
-                time somebody adds or hides one in /admin. The reader can count
-                the rows, and that count is always right. */}
-            <h1 className="mt-6 max-w-4xl text-hero font-display font-semibold">
-              What we{" "}
-              <span className="accent-italic text-gradient">actually</span> build
-            </h1>
-          </Reveal>
+          {/* THE H1 SAYS WHAT IS SOLD, IN SEARCH WORDS (1 Oct 2026). It sits
+              where the eyebrow pill was; the display line under it keeps the
+              page's voice and is a paragraph, so the page has one h1. No
+              entrance motion on either: a fade-in here was the page's largest
+              paint arriving late on a phone (SEO audit, 1 Oct 2026). */}
+          <h1 className="max-w-3xl font-display text-base font-semibold text-primary text-balance md:text-lg">
+            {PAGE_SEO["/services"].h1}
+          </h1>
+          {/* Deliberately not "Six things we build": `services` is a CMS
+              collection, and a count written into a headline is wrong the first
+              time somebody adds or hides one in /admin. */}
+          <p className="mt-5 max-w-4xl text-hero font-display font-semibold">
+            What we{" "}
+            <span className="accent-italic text-gradient">actually</span> build
+          </p>
 
           <div className="mt-8 grid gap-x-14 gap-y-5 lg:grid-cols-2">
-            <Reveal delay={0.1}>
-              <p className="text-lg text-foreground/85 text-pretty">
-                Each one lists what is in it before you ask.
-              </p>
-            </Reveal>
-            <Reveal delay={0.15}>
-              <p className="text-base text-muted-foreground text-pretty">
-                The list under every heading below is the deliverables list out of the written
-                scope, not a summary of one. If something you need is not on a list, it is not
-                quietly included, and we would rather you find that out here than three weeks in.
-              </p>
-            </Reveal>
+            <p className="text-lg text-foreground/85 text-pretty">
+              Each one lists what is in it before you ask.
+            </p>
+            <p className="text-base text-muted-foreground text-pretty">
+              The list under every heading below is the deliverables list out of the written
+              scope, not a summary of one. If something you need is not on a list, it is not
+              quietly included, and we would rather you find that out here than three weeks in.
+            </p>
           </div>
 
           <Reveal delay={0.2}>
@@ -385,11 +383,11 @@ export default function ServicesPage() {
               <div className="flex flex-col gap-4 md:items-end md:pb-2">
                 <div className="flex flex-wrap items-center gap-3 md:justify-end">
                   <CtaButton cta={{ label: "Start a project", href: "/contact" }} />
-                  {contact.emailHref && (
-                    <CtaButton
-                      cta={{ label: "Email us", href: contact.emailHref, variant: "outline" }}
-                    />
-)}
+                  {email ? (
+                    <CtaButton cta={{ label: "Email us", href: email.href, variant: "outline" }} />
+                  ) : whatsapp ? (
+                    <CtaButton cta={{ label: "WhatsApp us", href: whatsapp, variant: "outline" }} />
+                  ) : null}
                 </div>
 
                 <Link

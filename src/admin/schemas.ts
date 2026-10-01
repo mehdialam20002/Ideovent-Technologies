@@ -1,8 +1,9 @@
 import type { FieldConfig } from "./fields";
 import { withDemoPageFields } from "./DemoSitesPagesSchema";
-import type { CollectionKey, SingletonKey } from "@/lib/cms/types";
+import { DEMO_SITE_DENTAL_FIELD } from "./DemoSitesDentalSchema";
+import type { CollectionKey, PitchInstituteType, SingletonKey } from "@/lib/cms/types";
 import { nextId } from "@/lib/cms/store";
-import { PITCH_PACKAGES } from "@/lib/pitch/record";
+import { PITCH_PACKAGES, pitchPackage } from "@/lib/pitch/record";
 
 export interface CollectionSchema {
   label: string;
@@ -37,14 +38,25 @@ const mediaFields: FieldConfig[] = [
  * reading them is worse than a longer list. `pitchPackage()` returns null when
  * a record's package belongs to the other market, so the page never quotes
  * rupees to a prospect in Manchester.
+ *
+ * A DENTAL CLINIC'S RECORD (30 Sep 2026) is offered the same packages in the
+ * words its page prints: pitchPackage() gives a clinic "Clinic website" and
+ * "Portal or web app" where a school reads "School website" and "Coaching or
+ * school portal" (DENTAL_WORDS in src/lib/pitch/record.ts). Same ids, same
+ * prices. The pitch editor swaps this list in when "What they are" is Dental
+ * clinic (pitchPackageOptionsFor).
  */
-const PITCH_PACKAGE_OPTIONS = [
-  { label: "(none yet, the page prints no price)", value: "" },
-  ...PITCH_PACKAGES.map((p) => ({
-    label: `${p.market === "india" ? "India" : "International"}: ${p.label}, ${p.range}`,
-    value: p.id,
-  })),
-];
+export function pitchPackageOptionsFor(instituteType?: PitchInstituteType): { label: string; value: string }[] {
+  return [
+    { label: "(none yet, the page prints no price)", value: "" },
+    ...PITCH_PACKAGES.map((p) => ({
+      label: `${p.market === "india" ? "India" : "International"}: ${(pitchPackage({ recommendedPackage: p.id, market: p.market, instituteType }) || p).label}, ${p.range}`,
+      value: p.id,
+    })),
+  ];
+}
+
+const PITCH_PACKAGE_OPTIONS = pitchPackageOptionsFor();
 
 export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>> = {
   services: {
@@ -59,7 +71,20 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
       { name: "longDescription", label: "Long description", type: "textarea", full: true },
       { name: "deliverables", label: "Deliverables", type: "stringlist", full: true },
       { name: "showOnHome", label: "Show on home", type: "boolean" },
-      { name: "showInFooter", label: "Show in footer", type: "boolean" },
+      { name: "showInFooter", label: "Show in footer", type: "boolean", help: "Lists the service in the footer's Services column, on every page." },
+      // Search fields (1 Oct 2026). Empty = the title and descriptions above are used.
+      { name: "seoTitle", label: "Search title", type: "text", full: true, help: "The whole <title>, 60 characters or fewer, service and place first: \"Local SEO Services in Delhi for Small Businesses | Ideovent\". A monthly price never without its setup fee and term." },
+      { name: "metaDescription", label: "Search description", type: "textarea", full: true, help: "155 characters or fewer. What is sold and where. No ranking or results promise." },
+      { name: "h1", label: "Page heading (h1)", type: "text", full: true, help: "The page's one h1, in the words people search with. Empty = the title." },
+      { name: "intro", label: "Paragraph under the heading", type: "textarea", full: true, help: "Empty = the long description." },
+      { name: "deliverablesNote", label: "Line under What you get", type: "text", full: true, help: "Empty = \"Two revision rounds per design stage, and 30 days of support after launch.\" For a monthly service, say its own terms." },
+      { name: "sections", label: "Sections", type: "array", full: true, help: "Each is an h2 with a paragraph and/or a list, below the price block.", itemFields: [
+        { name: "heading", label: "Heading", type: "text", full: true },
+        { name: "body", label: "Paragraph", type: "textarea", full: true },
+        { name: "items", label: "List", type: "stringlist", full: true },
+      ] },
+      { name: "faqCategory", label: "FAQ category shown on the page", type: "text", placeholder: "seo", help: "The FAQs of this category (FAQs collection) appear on this page and are marked up here." },
+      { name: "hideProcess", label: "Hide the four project stages", type: "boolean", help: "Tick for a monthly service (SEO, care plans): 50/30/20 and code on final payment are project terms." },
     ],
   },
   projects: {
@@ -140,7 +165,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
     fields: [
       { name: "question", label: "Question", type: "text", full: true },
       { name: "answer", label: "Answer", type: "textarea", full: true },
-      { name: "category", label: "Category", type: "select", options: ["services", "eduflow", "internship", "general"].map((v) => ({ label: v, value: v })) },
+      { name: "category", label: "Category", type: "select", options: ["services", "seo", "eduflow", "internship", "general"].map((v) => ({ label: v, value: v })) },
     ],
   },
   stats: {
@@ -229,7 +254,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
     }),
     fields: [
       { name: "instituteName", label: "Institute name", type: "text", full: true, help: "Spell it exactly as they spell it, including “The” and any suffix. This is the heading of their page and it is the first thing they will check." },
-      { name: "instituteType", label: "What they are", type: "select", options: [{ label: "School", value: "school" }, { label: "Coaching institute", value: "coaching" }], help: "A school sells admissions and trust. A coaching institute sells results and batches. The page argues differently for each." },
+      { name: "instituteType", label: "What they are", type: "select", options: [{ label: "School", value: "school" }, { label: "Coaching institute", value: "coaching" }, { label: "Dental clinic", value: "dental" }], help: "A school sells admissions and trust. A coaching institute sells results and batches. A dental clinic sells trust and an appointment. The page argues differently for each." },
       { name: "market", label: "Market", type: "select", options: [{ label: "India", value: "india" }, { label: "International", value: "international" }], help: "Chooses which of the two page designs renders, and which price table applies." },
 
       /* ── International records only ────────────────────────────────────
@@ -379,6 +404,16 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
         { label: "Multi-page coaching: Register (Classic, masthead and register line, lightest)", value: "register" },
         { label: "Multi-page coaching: Folio (Classic, title page, faculty high)", value: "folio" },
         { label: "Multi-page coaching: Courtyard (Warm, question headline, pills)", value: "courtyard" },
+        /* Dental (28 Sep 2026): the seven looks of templates d1 to d7
+           (src/lib/demo/site/ids.ts, SITE_DENTAL_THEME_IDS). A dental record
+           has no single page, so every dental look is multi-page. */
+        { label: "Dental: Haven (Clinical, split hero, one dentist, small town)", value: "haven" },
+        { label: "Dental: Meridian (Clinical, split hero, problem picker)", value: "meridian" },
+        { label: "Dental: Ivory (Luxury, cream and gold serif, smile studio)", value: "ivory" },
+        { label: "Dental: Anchor (Calm, deep teal full bleed, implants)", value: "anchor" },
+        { label: "Dental: Mint (Clinical, reason card beside the photo, aligners)", value: "mint" },
+        { label: "Dental: Sprout (Kids, arched photo, coral and sky)", value: "sprout" },
+        { label: "Dental: Harbour (Calm, branch picker in the hero, chains)", value: "harbour" },
         { label: "Coaching: Board (crimson on ink, heavy, ledger rows)", value: "ledger" },
         { label: "Coaching: Signal (indigo and cyan, hairline type, tiles)", value: "signal" },
         { label: "Coaching: Studio (teal and amber, book weight, single column)", value: "studio" },
@@ -389,7 +424,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
         { label: "School: Bright and busy", value: "bright" },
         { label: "School: Quiet campus", value: "quiet-campus" },
         { label: "School: Riverside", value: "riverside" },
-      ], help: "Five looks per template, and they are five designs, not five colours. Pick the one that matches the Kind above; the other template's looks are listed so a record can be flipped between kinds without losing its choice. Send two institutes in the same city two different looks." },
+      ], help: "Several looks per kind, and they are different designs, not different colours. Pick one that matches the Kind above (a dental clinic takes a Dental look); the other kinds' looks are listed so a record can be flipped between kinds without losing its choice, and a look of the wrong kind falls back to that kind's default. Send two institutes or clinics in the same city two different looks." },
       { name: "currency", label: "Currency for fees", type: "select", options: [
         { label: "Indian rupee, ₹", value: "INR" },
         { label: "US dollar, $", value: "USD" },
@@ -476,6 +511,9 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
         { name: "body", label: "Answer", type: "textarea", full: true },
       ] },
 
+      /* ── The dental half (28 Sep 2026): ./DemoSitesDentalSchema.ts ───── */
+      DEMO_SITE_DENTAL_FIELD,
+
       /* ── Results ────────────────────────────────────────────────────── */
       { name: "resultsHeading", label: "Results heading", type: "text", placeholder: "Our 2025 results" },
       { name: "resultsNote", label: "Results note", type: "text", full: true, help: "How the list is verified, or where it came from." },
@@ -536,7 +574,12 @@ export const singletonSchemas: Record<SingletonKey, SingletonSchema> = {
         { name: "heading", label: "Heading", type: "text", full: true, help: "A question the visitor can answer with one tap. No exclamation marks, no em dashes." },
         { name: "subheading", label: "Line under the heading", type: "textarea", full: true, help: "Say what happens next and who replies. Nothing you cannot keep." },
       ] },
-      { name: "demoOpenAlerts", label: "E-mail me when a sent demo is opened", type: "boolean", full: true, help: "On by default. When somebody opens a sent demo at /site/<slug>, an e-mail titled \"Demo opened: <institute>\" reaches the enquiry inbox. At most once per demo per browser per day, never for drafts, never while you are signed in to the admin in that browser. The Outreach settings tab changes this same switch." },
+      /* "E-mail me when a sent demo is opened" is gone (1 Oct 2026, Mehdi: "mai
+         demo opened wala mail nhi chahta"). src/lib/demo/opens.ts sends no
+         e-mail on an open any more, so a switch here would control nothing.
+         A stored `demoOpenAlerts` value stays in the row, harmless: this editor
+         saves the whole row, and nothing acts on the flag. Opens are still
+         recorded and still show in the CRM (Today, Hot; the lead's demo card). */
     ],
   },
   contact: {
@@ -560,23 +603,38 @@ export const singletonSchemas: Record<SingletonKey, SingletonSchema> = {
   home: {
     label: "Home Hero", icon: "Home",
     fields: [
-      { name: "badge", label: "Badge", type: "text", full: true },
-      { name: "headingLines", label: "Heading lines", type: "array", full: true, itemFields: [
-        { name: "text", label: "Text", type: "text" }, { name: "highlighted", label: "Accent (italic gradient)", type: "boolean" },
-      ] },
-      { name: "subheading", label: "Subheading", type: "textarea", full: true },
-      { name: "audience", label: "Who it is for", type: "textarea", full: true, help: "The 'for whom' line under the headline. Keep it concrete: the markets named in FACTS.md, nothing wider. This is one of the three questions the home page has to answer above the fold on a phone." },
-      { name: "otherBuyers", label: "Line for non-schools", type: "group", full: true, help: "One quiet line under the subheading for businesses and firms abroad, with a link to /services.", fields: [
-        { name: "text", label: "Text", type: "textarea", full: true },
-        { name: "link", label: "Link", type: "group", full: true, fields: [
+      /* The hero since 1 Oct 2026 reads ONLY this group (Hero.tsx). The old
+         fields (badge, heading lines with the italic gradient accent,
+         subheading, audience, buttons, social proof, stat) are out of this
+         form because nothing prints them any more; they stay in the stored
+         row, harmless. Save this page once after the deploy. */
+      { name: "hero", label: "Hero (the first screen)", type: "group", full: true, help: "Plain words only: no badge, no italic or gradient line, no em dashes. Every fact must be in _assets/FACTS.md.", fields: [
+        { name: "lines", label: "Headline, one line each", type: "stringlist", full: true, help: "Two short lines. On a computer each is one line; on a phone they run together. Keep the whole headline near 80 characters so a phone shows it in four lines or fewer." },
+        { name: "sub", label: "One sentence under the headline", type: "textarea", full: true },
+        { name: "primary", label: "Main button", type: "group", full: true, fields: [
+          { name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" },
+        ] },
+        { name: "whatsapp", label: "WhatsApp button", type: "group", full: true, help: "The link is https://wa.me/ then the number in digits with 91 in front, and an optional ?text= message.", fields: [
+          { name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" },
+        ] },
+        { name: "plansLink", label: "Small link to the monthly plans", type: "group", full: true, help: "No price in the first screen (Mehdi, 26 Sep 2026): a plain label such as \"See the monthly website plans\". If a figure is ever wanted here, write {starter} and the page fills it in from src/lib/pricing.ts as \"₹899/month + ₹2,999 one-time setup, 12-month plan\"; never type a monthly figure yourself (drip pricing). Clear the label to hide the line.", fields: [
+          { name: "label", label: "Label", type: "text", full: true }, { name: "href", label: "Link", type: "text" },
+        ] },
+        { name: "plansNote", label: "Words after that link (optional)", type: "text", full: true, help: "Leave empty unless the link above carries a price." },
+        { name: "trust", label: "Facts, in one line", type: "stringlist", full: true, help: "Short and checkable, from FACTS.md only. Never a count of clients, projects or people, never a rating, never 'guaranteed' or 'No. 1'. Only the domain is the client's on every plan; the code is theirs on one-time projects." },
+        { name: "frames", label: "Screenshots", type: "array", full: true, help: "Our own templates only: never a prospect's demo, never a photo of a person, never a sample rating in view. Width and height are the image file's pixel size.", itemFields: [
+          { name: "src", label: "Image", type: "image", full: true },
+          { name: "label", label: "Label under it", type: "text" },
+          { name: "alt", label: "Alt text", type: "text" },
+          { name: "width", label: "Width (px)", type: "number" },
+          { name: "height", label: "Height (px)", type: "number" },
+        ] },
+        { name: "framesCaption", label: "Caption under the screenshots", type: "textarea", full: true, help: "Must say they are samples, and that the names in them are made up." },
+        { name: "framesLink", label: "Link after the caption", type: "group", full: true, fields: [
           { name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" },
         ] },
       ] },
-      { name: "ctas", label: "Buttons", type: "array", full: true, itemFields: [
-        { name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" },
-        { name: "variant", label: "Variant", type: "select", options: ["primary", "outline", "secondary", "ghost"].map((v) => ({ label: v, value: v })) },
-      ] },
-      { name: "priceTeaser", label: "Price block (home page, 'What it costs' section)", type: "group", full: true, help: "The 'roughly what it costs' answer. Not in the hero: it sits lower on the home page, after the work and the process. EVERY RANGE HERE MUST MATCH /pricing AND THE INDIA TABLE IN FACTS.md. Lowest first.", fields: [
+      { name: "priceTeaser", label: "Price block (home page, 'What it costs' section)", type: "group", full: true, help: "NOT SHOWN ON THE SITE SINCE 1 OCT 2026. The home page price block, /pricing, the service pages and the enquiry form all read their prices from src/lib/pricing.ts, so a price is changed there, in code, and every page moves together. Editing these fields changes nothing visible.", fields: [
         { name: "heading", label: "Heading", type: "text" },
         { name: "rows", label: "Rows", type: "array", full: true, itemFields: [
           { name: "label", label: "What", type: "text" }, { name: "range", label: "Range", type: "text" },
@@ -589,13 +647,6 @@ export const singletonSchemas: Record<SingletonKey, SingletonSchema> = {
         { name: "link2", label: "Second link (free check)", type: "group", full: true, fields: [
           { name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" },
         ] },
-      ] },
-      { name: "socialProof", label: "Social proof", type: "group", full: true, fields: [
-        { name: "line1", label: "Line 1", type: "text" }, { name: "line2", label: "Line 2", type: "text" },
-        { name: "avatars", label: "Avatars", type: "array", full: true, itemFields: mediaFields },
-      ] },
-      { name: "stat", label: "Stat", type: "group", fields: [
-        { name: "value", label: "Value", type: "text" }, { name: "label", label: "Label", type: "text" },
       ] },
     ],
   },

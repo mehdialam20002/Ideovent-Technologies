@@ -60,8 +60,12 @@ export interface DemoPhotoSlotDef {
 }
 
 export const DEMO_PHOTO_SLOTS: DemoPhotoSlotDef[] = [
-  { slot: "about", label: "About", labelHi: "परिचय", where: "About page and the home About block", kinds: ["school", "coaching"], categories: ["campus", "classroom", "coaching-classroom", "hero-urban-school", "hero-rural-school", "residential", "international"] },
-  { slot: "campus", label: "Campus and facilities", labelHi: "परिसर और सुविधाएँ", where: "Facilities page and the home facilities block", kinds: ["school", "coaching"], categories: ["campus", "residential", "classroom", "library", "lab"] },
+  /* "about" and "campus" are read by the dental site too (28 Sep 2026): its
+     About page (src/pages/site/dental/AboutPage.tsx), and the clinic photo in
+     the home Visit block (dental/home/visit.tsx). No other slot is: a dental
+     page takes its photos from the dental block (doctors, treatments). */
+  { slot: "about", label: "About", labelHi: "परिचय", where: "About page and the home About block", kinds: ["school", "coaching", "dental"], categories: ["campus", "classroom", "coaching-classroom", "hero-urban-school", "hero-rural-school", "residential", "international", "dental-interior", "dental-hero", "dental-patient"] },
+  { slot: "campus", label: "Campus and facilities, or the clinic", labelHi: "परिसर और सुविधाएँ, या क्लिनिक", where: "Facilities page and the home facilities block; on a dental site, the clinic photo in the home Visit block", kinds: ["school", "coaching", "dental"], categories: ["campus", "residential", "classroom", "library", "lab", "dental-interior", "dental-sterile"] },
   { slot: "academics", label: "Academics", labelHi: "पढ़ाई", where: "Academics page and the home academics block", kinds: ["school"], categories: ["classroom", "playschool", "lab", "library", "activities"] },
   { slot: "courses", label: "Courses", labelHi: "कोर्स", where: "Courses page and the home batches block", kinds: ["coaching"], categories: ["coaching-classroom", "classroom", "study-group", "exam-hall"] },
   { slot: "admissions", label: "Admissions (visit us)", labelHi: "दाख़िला", where: "Admissions page, beside the visit step", kinds: ["school", "coaching"], categories: ["campus", "classroom", "playschool", "coaching-classroom", "residential"] },

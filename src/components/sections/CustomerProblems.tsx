@@ -16,8 +16,8 @@ import { Reveal } from "@/components/motion/Reveal";
  * the site or system DOES, never what it will do to anyone's sales.
  *
  * MARKUP. The proof band's box (`rounded-3xl border border-border bg-card/50`)
- * and its three-column `dl`, six items so two rows of three. No serif accent:
- * weight contrast only, as in the proof band.
+ * and its three-column `dl`, six items so two rows of three. No serif accent
+ * and, since 1 Oct 2026, no weight contrast: one heading in one weight.
  */
 const ITEMS = [
   {
@@ -61,9 +61,8 @@ export default function CustomerProblems() {
         <Reveal>
           <div className="rounded-3xl border border-border bg-card/50 p-6 sm:p-10">
             <Eyebrow>What gets in the way</Eyebrow>
-            <h2 className="mt-5 max-w-2xl font-display text-xl font-light leading-snug sm:text-2xl">
-              Your customer checks you on a phone first.{" "}
-              <span className="font-extrabold">Here is what stops them, and what slows you down.</span>
+            <h2 className="mt-3 max-w-2xl font-display text-xl font-semibold leading-snug sm:text-2xl">
+              Your customer checks you on a phone first. Here is what stops them, and what slows you down.
             </h2>
             <p className="mt-3 max-w-xl text-sm text-muted-foreground text-pretty">
               Small things. Your customer notices every one, often before they call you. Your team feels the rest every day.
@@ -72,7 +71,7 @@ export default function CustomerProblems() {
             <dl className="mt-7 grid gap-x-8 gap-y-7 sm:grid-cols-3">
               {ITEMS.map((it) => (
                 <div key={it.dt}>
-                  <dt className="font-display text-sm font-semibold uppercase tracking-wider text-primary">
+                  <dt className="font-display text-base font-semibold text-foreground">
                     {it.dt}
                   </dt>
                   <dd className="mt-2 text-sm text-muted-foreground text-pretty">{it.dd}</dd>
@@ -89,7 +88,7 @@ export default function CustomerProblems() {
               </p>
               <Link
                 to="/#contact"
-                className="group inline-flex min-h-11 items-center gap-1.5 self-start rounded-full border border-border px-4 text-sm
+                className="group inline-flex min-h-11 items-center gap-1.5 self-start rounded-lg border border-border px-4 text-sm
                            font-medium transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70 sm:self-auto"
               >
                 Check my website

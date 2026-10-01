@@ -16,12 +16,29 @@
  *      duplicate for an institute that is already a lead links instead;
  *   8. WhatsApp: no cap with the limit blank (even with the retired cap of 10
  *      in an old settings row), capped once a limit is set;
- *   9. Clean saved observations clears only the leads left ticked.
+ *   9. Clean saved observations clears only the leads left ticked;
+ *  10. dental clinics (28 Sep 2026): the Kind filter, the breakdown, the
+ *      pipeline card, a new dental lead with a d1..d7 demo and a dental
+ *      e-mail, and Create lead from a dental demo;
+ *  11. the CRM on its own subdomain (30 Sep 2026), with crm.localhost standing
+ *      in for crm.ideovent.in: screens at the root, no /crm in any link, and
+ *      every link to the admin or a demo absolute to the main site. On the
+ *      main site's /crm the same links stay relative (checked in 10);
+ *  12. every stage in plain words (30 Sep 2026, the approved wording): seeded
+ *      leads at New, Contacted, Replied, Call and Proposal each open on their
+ *      own stage, Today names the stage, the after-call [blanks] keep Send off
+ *      until filled, and the Call script card speaks as a patient, a parent or
+ *      a student sees it. The first e-mail carries no link (checked in 5).
+ *
+ * E-mail opens in the mail app only (Open in Gmail was removed 28 Sep 2026):
+ * the e-mail button is a mailto: link, and no Gmail link or wording may show,
+ * even with an old "Gmail account" still in the saved settings.
  *
  * The seed is 40 fictional leads (`ol_e2e_NN`), their demos, opens and
  * events, written to a fresh browser profile's localStorage. Nothing leaves
- * the machine: Gmail / WhatsApp URLs, Supabase, EmailJS and /api/poster are
- * answered here.
+ * the machine: WhatsApp URLs, Supabase, EmailJS, /api/poster and (section 11)
+ * the main site's address are answered here, and a mailto: click is recorded
+ * and never handed to a mail app.
  *
  * PROVING THE TEST CAN FAIL
  *
@@ -76,14 +93,15 @@ const slots = [];
 
 for (let i = 0; i < 40; i++) {
   const word = WORDS[i];
-  const kind = i % 2 ? "coaching" : "school";
+  // Every tenth lead from the sixth on is a dental clinic (Foxglove, Pinecrest, Birchwood, Larkspur).
+  const kind = i % 10 === 5 ? "dental" : i % 2 ? "coaching" : "school";
   const status = STATUSES[i % 9];
   const created = now.getTime() - i * DAY - 60_000;
   const lead = {
     id: `ol_e2e_${pad(i)}`,
     createdAt: iso(created),
     updatedAt: iso(created),
-    instituteName: `${word} ${kind === "school" ? "Public School" : "Classes"} E2E`,
+    instituteName: `${word} ${kind === "school" ? "Public School" : kind === "dental" ? "Dental Clinic" : "Classes"} E2E`,
     kind,
     phone: `+9198100${40000 + i}`,
     email: `office${i}@${word.toLowerCase()}-e2e.example`,
@@ -116,7 +134,7 @@ for (let i = 0; i < 40; i++) {
       market: "india",
       city: lead.city,
       status: "sent",
-      templateId: kind === "school" ? "s2-rural-state-board" : "c2-rural-tuition",
+      templateId: kind === "school" ? "s2-rural-state-board" : kind === "dental" ? "d1-family-dentist" : "c2-rural-tuition",
       createdAt: iso(created),
       updatedAt: iso(created),
     };
@@ -173,8 +191,9 @@ const DUP_DEMO = {
 demos.push(POSTER_DEMO, DUP_DEMO);
 slots.push({ id: POSTER_DEMO.id, poster: { provider: "openai", model: "gpt-4.1-mini", readAt: iso(now.getTime() - 3600e3) }, internalNotes: "Read from a poster" });
 
-/* An OLD settings row: it carries the retired forced cap of 10, which must not apply any more. */
-const SETTINGS = { signature: "Mehdi Alam\nIdeovent Technologies", quietStart: "20:00", quietEnd: "09:00", alertOnDemoOpen: false, whatsappDailyCap: 10 };
+/* An OLD settings row: it carries the retired forced cap of 10, which must not apply any more, and
+   the retired "Gmail account for Open in Gmail" (senderGmail), which must show nowhere and do nothing. */
+const SETTINGS = { signature: "Mehdi Alam\nIdeovent Technologies", quietStart: "20:00", quietEnd: "09:00", alertOnDemoOpen: false, whatsappDailyCap: 10, senderGmail: "old-setting@gmail.example" };
 
 /* ── What the dashboard must show, computed here from the seed ─────────── */
 const byStatus = Object.fromEntries(STATUSES.map((s) => [s, leads.filter((l) => l.status === s).length]));
@@ -281,6 +300,16 @@ if (NEGATIVE) {
 }
 /* No hot reload mid-run: other work saving files must not reload the page under the test. */
 await context.addInitScript(() => {
+  /* A mailto: click is recorded and stopped in the capture phase; React's click handler still runs. */
+  window.__mailto = [];
+  window.addEventListener("click", (e) => {
+    const a = e.target instanceof Element ? e.target.closest('a[href^="mailto:"]') : null;
+    if (!a) return;
+    window.__mailto.push(a.getAttribute("href"));
+    e.preventDefault();
+  }, true);
+  window.__copied = [];
+  if (window.Clipboard) Clipboard.prototype.writeText = function (t) { window.__copied.push(String(t)); return Promise.resolve(); };
   const Real = window.WebSocket;
   window.WebSocket = function (url, protocols) {
     if (/localhost|127\.0\.0\.1/.test(String(url))) return { addEventListener() {}, removeEventListener() {}, send() {}, close() {}, readyState: 0 };
@@ -308,6 +337,9 @@ context.on("page", async (p) => {
 const readOutreach = (p = page) => p.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}"), OUTREACH_KEY);
 const readCms = (p = page) => p.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}"), CMS_KEY);
 const settle = (p = page, ms = 500) => p.waitForTimeout(ms);
+/* How long a screen may take to show after a navigation. Generous on purpose: a dev server that is
+   transforming modules for other work can take well over 10 s. A screen that never shows still fails. */
+const PAGE_WAIT = 30_000;
 
 await page.goto(BASE + "/admin/login", { waitUntil: "domcontentloaded" });
 await page.evaluate(
@@ -398,7 +430,7 @@ const viewCounts = () =>
     Object.fromEntries([...document.querySelectorAll('[role="tablist"][aria-label="Saved views"] [role="tab"]')].map((b) => [b.childNodes[0].textContent.trim(), Number(b.querySelector("span")?.textContent)])),
   );
 await crm.goto(BASE + "/crm/leads", { waitUntil: "domcontentloaded" });
-await crm.locator(rowsSel).first().waitFor({ timeout: 15000 });
+await crm.locator(rowsSel).first().waitFor({ timeout: PAGE_WAIT });
 await settle(crm);
 const vc = await viewCounts();
 const EXPECT_VIEWS = {
@@ -458,6 +490,25 @@ const csvAll = readFileSync(await dlAll.path(), "utf8").replace(/^﻿/, "");
 const csvLines = csvAll.split(/\r\n/).filter(Boolean);
 check(csvLines[0].startsWith("Institute,") && csvLines.length === EXPECT.total + 1, `Export writes a CSV of the view (${EXPECT.total} rows plus the header)`, `${csvLines.length} lines, head ${csvLines[0].slice(0, 40)}`);
 check(leads.every((l) => csvAll.includes(l.instituteName)), "the export carries every lead's name");
+/* The Demo column is the whole link a prospect opens, the main site's /site/<slug> (30 Sep 2026), not a bare path. */
+const csvCells = (line) => {
+  const out = [];
+  let cur = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (q) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ",") { out.push(cur); cur = ""; } else cur += ch;
+  }
+  out.push(cur);
+  return out;
+};
+const demoCol = csvCells(csvLines[0]).indexOf("Demo");
+const withDemo = leads.find((l) => l.demoSlug);
+const demoCell = demoCol < 0 || !withDemo ? "" : csvCells(csvLines.find((x) => x.startsWith(`${withDemo.instituteName},`)) || "")[demoCol] || "";
+check(/^https:\/\/[^/]+\/site\//.test(demoCell) && demoCell.endsWith(`/site/${withDemo?.demoSlug}`) && !demoCell.includes("localhost"),
+  `the export's Demo column is the whole demo link on the main site, not a /site/ path (${demoCell})`, demoCell);
 
 /* Bulk: three Ranchi leads to Proposal. */
 const BULK = [leads[2], leads[6], leads[10]];
@@ -483,7 +534,7 @@ await crm.locator('select[aria-label="City"]').selectOption("");
 
 /* The dashboard follows the change. */
 await crm.goto(BASE + "/crm", { waitUntil: "domcontentloaded" });
-await crm.getByTestId("by-status").waitFor({ timeout: 10000 });
+await crm.getByTestId("by-status").waitFor({ timeout: PAGE_WAIT });
 await settle(crm);
 const bars2 = await statusBars();
 check(bars2.Proposal === byStatus.proposal + 3 && bars2.Won === byStatus.won - 1, "the dashboard's status bars follow the bulk change", JSON.stringify(bars2));
@@ -492,7 +543,7 @@ check(bars2.Proposal === byStatus.proposal + 3 && bars2.Won === byStatus.won - 1
 const DRAG = leads[18];
 await crm.goto(BASE + "/crm/pipeline", { waitUntil: "domcontentloaded" });
 const card = crm.locator(`[data-card="${DRAG.id}"]`);
-await card.waitFor({ timeout: 10000 });
+await card.waitFor({ timeout: PAGE_WAIT });
 check((await crm.locator('section[aria-label="New"]').locator(`[data-card="${DRAG.id}"]`).count()) === 1, `${DRAG.instituteName} starts in the New column`);
 await card.dragTo(crm.locator('section[aria-label="Contacted"]'));
 await settle(crm, 800);
@@ -508,9 +559,22 @@ async function emailLink(lead) {
   await compose.getByRole("tab", { name: /^email/i }).click();
   await compose.locator("#obs-pick").selectOption("no_website");
   await settle(crm, 300);
-  const g = compose.getByTestId("open-gmail");
+  const g = compose.getByTestId("open-mailto");
   if ((await g.evaluate((el) => el.tagName)) !== "A") return { blocked: await blockersOf(compose) };
   return { href: (await g.getAttribute("href")) || "" };
+}
+/* A mailto: link as its parts. */
+const mailParts = (href) => {
+  const u = new URL(href);
+  return { to: decodeURIComponent(u.pathname), subject: u.searchParams.get("subject") || "", body: u.searchParams.get("body") || "" };
+};
+/* No Gmail link, button or "Open in Gmail" wording anywhere in the CRM's main area. Settings may NAME
+   Gmail in its one help line (Gmail in Chrome as the mail app), so only the retired wording counts. */
+async function noGmail(where, p = crm) {
+  const links = await p.locator('a[href*="mail.google.com"]').count();
+  const words = /open in gmail|gmail account|gmail compose/i.test(await p.locator("main").innerText().catch(() => ""));
+  const btn = await p.getByTestId("open-gmail").count();
+  check(!links && !words && !btn, `${where}: no Gmail link, button or wording`, `gmail links ${links}, wording ${words}, open-gmail ${btn}`);
 }
 async function whatsappLink() {
   const compose = crm.getByTestId("compose");
@@ -523,26 +587,31 @@ async function whatsappLink() {
 }
 const othersIn = (text, lead) => leads.filter((l) => l.id !== lead.id && text.includes(l.instituteName)).map((l) => l.instituteName);
 function checkEmail(lead, r, tag) {
-  if (!r.href) return fail(`${tag}: Open in Gmail is blocked for ${lead.instituteName}: ${r.blocked}`);
-  const u = new URL(r.href);
-  const body = `${u.searchParams.get("su") || ""}\n${u.searchParams.get("body") || ""}`;
-  check(u.searchParams.get("to") === lead.email, `${tag}: the Gmail link is addressed to ${lead.email}`, u.searchParams.get("to"));
+  if (!r.href) return fail(`${tag}: Open in mail app is blocked for ${lead.instituteName}: ${r.blocked}`);
+  check(r.href.startsWith("mailto:"), `${tag}: the e-mail button is a mailto: link`, r.href.slice(0, 60));
+  const u = mailParts(r.href);
+  const body = `${u.subject}\n${u.body}`;
+  check(u.to === lead.email, `${tag}: the mailto: link is addressed to ${lead.email}`, u.to);
+  check(u.subject.length > 3, `${tag}: the mailto: link carries a subject`, u.subject);
   check(!othersIn(body, lead).length, `${tag}: the email names no other lead`, othersIn(body, lead).join(", "));
   check(!/EDITMARK/.test(body) || body.includes(`EDITMARK-${lead.id}`), `${tag}: no text edited on another lead leaks into this email`);
+  check(!/https?:\/\/|\/site\//.test(body), `${tag}: the first e-mail carries no link (it goes after they say yes)`, body.slice(0, 160));
   return body;
 }
 
 const A = leads[0];
 const B = leads[9];
 await crm.goto(BASE + `/crm/leads/${A.id}`, { waitUntil: "domcontentloaded" });
-await crm.getByTestId("compose").waitFor({ timeout: 15000 });
+await crm.getByTestId("compose").waitFor({ timeout: PAGE_WAIT });
 check((await crm.getByTestId("lead-name").innerText()) === A.instituteName, `/crm/leads/${A.id} opens ${A.instituteName}`);
 const eA = await emailLink(A);
 checkEmail(A, eA, "lead A");
 await crm.locator("#msg-body").fill(((await crm.locator("#msg-body").inputValue()) || "") + `\nEDITMARK-${A.id}`);
 await settle(crm, 300);
 const eA2 = await emailLink(A);
-check(eA2.href && new URL(eA2.href).searchParams.get("body").includes(`EDITMARK-${A.id}`), "lead A: an edit to the text goes into lead A's Gmail link");
+check(eA2.href && mailParts(eA2.href).body.includes(`EDITMARK-${A.id}`), "lead A: an edit to the text goes into lead A's mailto: link");
+await noGmail("lead A's page (old Gmail account still saved)");
+check(!/old-setting@gmail\.example/.test(await crm.getByTestId("send-to").innerText()) && !/free mailbox/i.test(await crm.getByTestId("compose").innerText()), "the old saved Gmail account adds no from line and no free-mailbox warning");
 const wA = await whatsappLink();
 if (wA.href) check(wA.href.startsWith(`https://wa.me/${A.phone.slice(1)}?text=`), `lead A: Open in WhatsApp is a wa.me link to ${A.phone}`, wA.href.slice(0, 60));
 else fail(`lead A: Open in WhatsApp is blocked: ${wA.blocked}`);
@@ -575,7 +644,11 @@ const demoRows = () =>
     trs.map((tr) => ({ name: tr.children[0].querySelector("span")?.textContent.trim(), source: tr.children[2].querySelector("span")?.textContent.trim(), lead: tr.children[4].textContent.trim() })),
   );
 await crm.goto(BASE + "/crm/demos", { waitUntil: "domcontentloaded" });
-await crm.getByTestId("demo-table").waitFor({ timeout: 10000 });
+/* If the table never shows, say what the page shows instead (and the errors so far) rather than crash. */
+await crm.getByTestId("demo-table").waitFor({ timeout: 15000 }).catch(async () => {
+  const shown = (await crm.locator("body").innerText().catch(() => "")).replace(/\s+/g, " ").slice(0, 300);
+  fail(`the Demos table did not appear at ${crm.url()}: page shows "${shown}"; errors so far: ${errors.slice(0, 3).join(" | ") || "none"}`);
+});
 await settle(crm);
 let dr = await demoRows();
 const posterRow = dr.find((r) => r.name === POSTER_DEMO.instituteName);
@@ -610,7 +683,7 @@ check(posterLead && crm.url().endsWith(`/crm/leads/${posterLead.id}`), "and open
 const LINK_TO = leads[34];
 await crm.goto(BASE + "/crm/demos", { waitUntil: "domcontentloaded" });
 const crmLoadedAt = Date.now();
-await crm.getByTestId("demo-table").waitFor({ timeout: 10000 });
+await crm.getByTestId("demo-table").waitFor({ timeout: PAGE_WAIT });
 await crm.getByRole("button", { name: `More actions for ${DUP_DEMO.instituteName}` }).click();
 await crm.getByRole("menuitem", { name: /Link to lead/ }).click();
 await crm.getByTestId("demo-link-lead").waitFor({ timeout: 5000 });
@@ -641,7 +714,7 @@ const leadsBefore = (await readOutreach(page)).leads.length;
 async function duplicateFromTemplates(name, city) {
   await page.goto(BASE + "/admin/templates", { waitUntil: "domcontentloaded" });
   const dup = page.getByRole("button", { name: /^Duplicate the .* template into a new draft demo$/ }).first();
-  await dup.waitFor({ timeout: 15000 });
+  await dup.waitFor({ timeout: PAGE_WAIT });
   await dup.click();
   await page.locator("#dup-name").fill(name);
   await page.locator("#dup-city").fill(city);
@@ -708,12 +781,12 @@ check((cmsNow.demoSites || []).find((d) => d.id === POSTER_DEMO.id)?.status === 
 /* Back in the CRM tab, reloaded. */
 await crm.bringToFront();
 await crm.goto(BASE + "/crm/leads?view=all", { waitUntil: "domcontentloaded" });
-await crm.locator(rowsSel).first().waitFor({ timeout: 10000 });
+await crm.locator(rowsSel).first().waitFor({ timeout: PAGE_WAIT });
 await settle(crm);
 const allNames = await names();
 check(allNames.includes(NEW_NAME) && allNames.includes(POSTER_EXTRACT.instituteName), "the CRM leads table lists both auto-created leads");
 await crm.goto(BASE + "/crm/demos?view=all", { waitUntil: "domcontentloaded" });
-await crm.getByTestId("demo-table").waitFor({ timeout: 10000 });
+await crm.getByTestId("demo-table").waitFor({ timeout: PAGE_WAIT });
 await settle(crm);
 dr = await demoRows();
 const nd = dr.find((r) => r.name === NEW_NAME);
@@ -724,7 +797,7 @@ check(pd?.lead.includes(POSTER_EXTRACT.instituteName) && pd?.source === "Poster"
 /* ── 8. WhatsApp: no cap when the limit is blank, capped when one is set ── */
 async function waState() {
   await crm.goto(BASE + `/crm/leads/${A.id}`, { waitUntil: "domcontentloaded" });
-  await crm.getByTestId("compose").waitFor({ timeout: 10000 });
+  await crm.getByTestId("compose").waitFor({ timeout: PAGE_WAIT });
   await settle(crm, 400);
   const r = await whatsappLink();
   const blockers = r.href ? "" : r.blocked;
@@ -733,7 +806,7 @@ async function waState() {
 }
 async function setLimit(v) {
   await crm.goto(BASE + "/crm/settings", { waitUntil: "domcontentloaded" });
-  await crm.locator("#set-cap").waitFor({ timeout: 10000 });
+  await crm.locator("#set-cap").waitFor({ timeout: PAGE_WAIT });
   await crm.locator("#set-cap").fill(v);
   await crm.getByRole("button", { name: /save settings/i }).click();
   await settle(crm, 600);
@@ -763,7 +836,7 @@ check(!/Daily WhatsApp limit/.test(wa.blockers) && Boolean(wa.href), "with the l
 /* ── 9. Clean saved observations clears only the chosen leads ─────────── */
 await crm.goto(BASE + "/crm/settings", { waitUntil: "domcontentloaded" });
 const clean = crm.getByTestId("clean-observations");
-await clean.waitFor({ timeout: 10000 });
+await clean.waitFor({ timeout: PAGE_WAIT });
 await settle(crm);
 const listed = await clean.locator("li").allInnerTexts();
 const dirtyIds = ["ol_e2e_01", "ol_e2e_02", "ol_e2e_04"];
@@ -786,6 +859,296 @@ const same = (id) => {
 };
 check(same("ol_e2e_01") && same("ol_e2e_02"), "clearing touches nothing else on those leads");
 check(after.leads.length === before.leads.length && after.events.length === before.events.length, "no lead or event was added or removed");
+
+/* ── 10. Dental clinics (28 Sep 2026) ──────────────────────────────────── */
+await crm.goto(BASE + "/crm/settings", { waitUntil: "domcontentloaded" });
+await crm.locator("#set-sig").waitFor({ timeout: PAGE_WAIT });
+check((await crm.locator("#set-gmail").count()) === 0, "Settings has no Gmail account field, though the saved settings still carry one");
+await noGmail("Settings");
+check(/default e-mail app/i.test(await crm.getByTestId("mail-app-help").innerText().catch(() => "")), "Settings has the one help line about the default mail app");
+
+const DENTAL_SEED = leads.filter((l) => l.kind === "dental");
+const dentalNames = DENTAL_SEED.map((l) => l.instituteName).sort();
+await crm.goto(BASE + "/crm/leads?view=all", { waitUntil: "domcontentloaded" });
+await crm.locator(rowsSel).first().waitFor({ timeout: PAGE_WAIT });
+await settle(crm);
+const kindOptions = await crm.locator('select[aria-label="Kind"] option').allInnerTexts();
+check(kindOptions.includes("Dental clinic"), "the leads table's Kind filter lists Dental clinic", JSON.stringify(kindOptions));
+await crm.locator('select[aria-label="Kind"]').selectOption("dental");
+await settle(crm, 400);
+check(dentalNames.length === 4 && /kind=dental/.test(crm.url()) && JSON.stringify((await names()).sort()) === JSON.stringify(dentalNames),
+  `Kind = Dental clinic lists exactly the ${dentalNames.length} dental leads`, JSON.stringify(await names()));
+const leadHeaders = await crm.$$eval('table[aria-label="Leads"] thead th', (ths) => ths.map((th) => (th.textContent || "").trim()));
+const kindCol = leadHeaders.indexOf("Kind");
+const kindCells = kindCol < 0 ? [] : await crm.$$eval(rowsSel, (trs, i) => trs.map((tr) => (tr.children[i]?.textContent || "").trim()), kindCol);
+check(kindCells.length === DENTAL_SEED.length && kindCells.every((t) => t === "Dental clinic"), "the table's Kind column reads Dental clinic for them", JSON.stringify({ kindCol, kindCells }));
+await crm.setViewportSize({ width: 390, height: 844 });
+await settle(crm, 400);
+const dentalCards = await crm.locator('ul[aria-label="Leads"] > li').allInnerTexts();
+check(dentalCards.length === DENTAL_SEED.length && dentalCards.every((t) => /Dental clinic/.test(t)), "on a phone the lead cards say Dental clinic", JSON.stringify(dentalCards.map((t) => t.replace(/\s+/g, " ").slice(0, 60))));
+await crm.setViewportSize({ width: 1440, height: 1000 });
+await settle(crm, 300);
+
+await crm.goto(BASE + "/crm", { waitUntil: "domcontentloaded" });
+await crm.getByTestId("breakdown").waitFor({ timeout: PAGE_WAIT });
+await crm.getByTestId("breakdown").getByRole("tab", { name: "Kind" }).click();
+await settle(crm, 300);
+const bdRow = crm.getByTestId("breakdown").locator("tbody tr", { hasText: "Dental clinic" }).first();
+const bdCells = await bdRow.locator("td").allInnerTexts().catch(() => []);
+check(bdCells[0] === "Dental clinic" && bdCells[1] === String(DENTAL_SEED.length), `the dashboard breakdown by kind has Dental clinic with ${DENTAL_SEED.length} leads`, JSON.stringify(bdCells));
+await bdRow.click().catch(() => {});
+await crm.locator(rowsSel).first().waitFor({ timeout: 10000 }).catch(() => {});
+await settle(crm, 400);
+check(/kind=dental/.test(crm.url()) && (await rowCount()) === DENTAL_SEED.length, "clicking that row lists the dental leads", `${crm.url()} ${await rowCount()} rows`);
+
+const pipeDental = leads[5];
+await crm.goto(BASE + "/crm/pipeline", { waitUntil: "domcontentloaded" });
+await crm.locator(`[data-card="${pipeDental.id}"]`).waitFor({ timeout: 10000 }).catch(() => {});
+check(/Dental clinic/.test(await crm.locator(`[data-card="${pipeDental.id}"]`).innerText().catch(() => "")), `${pipeDental.instituteName}'s pipeline card says Dental clinic`);
+
+/* A seeded dental lead with a dental demo (lead 5, Proposal, demo made from d1): facts, the
+   existing list, the template list. Leads 15, 25 and 35 are Won, Lost and Do not contact, no demo. */
+const seededDental = leads[5];
+check(Boolean(seededDental.demoId) && seededDental.kind === "dental", `the seed's ${seededDental.instituteName} is a dental lead with a demo`, JSON.stringify({ kind: seededDental.kind, demo: seededDental.demoId }));
+await crm.goto(BASE + `/crm/leads/${seededDental.id}`, { waitUntil: "domcontentloaded" });
+await crm.getByTestId("compose").waitFor({ timeout: PAGE_WAIT });
+await settle(crm);
+check(/Kind\s*Dental clinic/.test(await crm.getByTestId("lead-facts").innerText().catch(() => "")), `${seededDental.instituteName}'s facts say Kind: Dental clinic`);
+const sc = crm.getByTestId("compose");
+const changeBtn = sc.getByRole("button", { name: "Change", exact: true });
+if (await changeBtn.count()) await changeBtn.first().click();
+else fail(`no Change button in the Demo step of ${seededDental.instituteName}: ` + (await sc.innerText().catch(() => "")).replace(/\s+/g, " ").slice(0, 120));
+await sc.getByRole("tab", { name: /use existing/i }).click({ timeout: 5000 }).catch(() => {});
+const firstExisting = await sc.getByTestId("demo-existing-list").locator("li").first().innerText().catch(() => "");
+check(/Dental clinic/.test(firstExisting), "Use existing lists the dental demos first for a dental lead", firstExisting.replace(/\s+/g, " "));
+await sc.getByRole("tab", { name: /create demo/i }).click();
+const seededOpts = await sc.locator("#tpl-pick option").evaluateAll((os) => os.map((o) => o.value).filter(Boolean));
+check(seededOpts.length === 7 && seededOpts.every((v) => /^d[1-7]-/.test(v)), "a dental lead is offered the seven dental templates, d1 to d7", JSON.stringify(seededOpts));
+check((await sc.locator("#tpl-pick").inputValue()) === "d1-family-dentist", "a plain dental clinic starts on d1", await sc.locator("#tpl-pick").inputValue());
+/* Links out of the CRM, on the main site's /crm today: relative, exactly as before. */
+const relLinks = {
+  open: await sc.getByTestId("demo-open").getAttribute("href").catch(() => null),
+  edit: await sc.getByTestId("demo-edit").getAttribute("href").catch(() => null),
+  card: await crm.getByTestId("lead-demo-open").getAttribute("href").catch(() => null),
+};
+check(relLinks.open === `/admin/preview/site/${seededDental.demoSlug}` && relLinks.card === relLinks.open && relLinks.edit === `/admin/c/demoSites?edit=${seededDental.demoId}`,
+  "on the main site the lead page's links to the admin stay relative (/admin/preview, /admin/c/demoSites)", JSON.stringify(relLinks));
+
+/* A NEW dental lead, a d4 demo made on its page, and a dental e-mail through the mail app. */
+const NEW_DENTAL = { name: "Example Implant Dental Centre E2E", city: "Dhanbad", phone: "98765 43281", email: "care@example-implant-e2e.example" };
+await crm.goto(BASE + "/crm/leads/new", { waitUntil: "domcontentloaded" });
+await crm.locator("#lf-name").waitFor({ timeout: PAGE_WAIT });
+await crm.getByTestId("lf-kind").locator("label", { hasText: "Dental clinic" }).click();
+await crm.locator("#lf-name").fill(NEW_DENTAL.name);
+await crm.getByLabel("City", { exact: true }).fill(NEW_DENTAL.city);
+await crm.getByLabel("Phone", { exact: true }).fill(NEW_DENTAL.phone);
+await crm.getByLabel("Email", { exact: true }).fill(NEW_DENTAL.email);
+await crm.getByRole("button", { name: /save and compose/i }).click();
+await crm.getByTestId("lead-name").waitFor({ timeout: PAGE_WAIT });
+store = await readOutreach(crm);
+const nd2 = store.leads.find((l) => l.instituteName === NEW_DENTAL.name);
+check(nd2?.kind === "dental", "a dental lead made in the new-lead form is saved with kind dental", JSON.stringify(nd2?.kind));
+const nc = crm.getByTestId("compose");
+await nc.getByRole("tab", { name: /create demo/i }).click();
+check((await nc.locator("#tpl-pick").inputValue()) === "d4-implant-centre", "an implant centre starts on d4", await nc.locator("#tpl-pick").inputValue());
+await nc.getByRole("button", { name: /create demo for/i }).click();
+await crm.locator("#dup-name").waitFor({ timeout: 5000 });
+await crm.getByRole("button", { name: /make the draft/i }).click();
+await crm.getByTestId("linked-demo").waitFor({ timeout: 15000 }).catch(() => {});
+store = await readOutreach(crm);
+const nd2Demo = ((await readCms(crm)).demoSites || []).find((d) => d.id === store.leads.find((l) => l.id === nd2?.id)?.demoId);
+check(nd2Demo?.kind === "dental" && nd2Demo?.templateId === "d4-implant-centre" && nd2Demo?.instituteName === NEW_DENTAL.name, "Create demo on the dental lead makes and links a dental demo from d4", JSON.stringify({ kind: nd2Demo?.kind, templateId: nd2Demo?.templateId }));
+await crm.getByRole("button", { name: /mark sent to/i }).click().catch(() => {});
+await settle(crm, 500);
+const nm = await emailLink(nd2 || {});
+check(Boolean(nm.href), "Open in mail app is open for the new dental lead", nm.blocked);
+if (nm.href) {
+  const parts = mailParts(nm.href);
+  check(parts.to === NEW_DENTAL.email && parts.subject === (await nc.locator("#msg-subject").inputValue()), "its mailto: carries the clinic's address and the subject on screen", JSON.stringify({ to: parts.to, subject: parts.subject }));
+  const tplId = (await nc.getByTestId("template-list").first().locator('[aria-checked="true"]').getAttribute("data-template-id").catch(() => "")) || "";
+  check(/dental/.test(tplId), "the e-mail is a dental template", tplId || "none selected");
+  await nc.getByTestId("copy-email").click();
+  await settle(crm, 200);
+  check((await crm.evaluate(() => window.__copied.at(-1) || "")) === `Subject: ${parts.subject}\n\n${parts.body}`, "Copy e-mail text copies the subject and the body");
+  await nc.getByTestId("open-mailto").click();
+  await settle(crm, 800);
+  check((await crm.evaluate(() => window.__mailto.at(-1) || "")) === nm.href, "clicking Open in mail app follows the mailto: link (recorded)");
+  store = await readOutreach(crm);
+  check(store.events.some((e) => e.leadId === nd2?.id && e.type === "sent" && e.channel === "email" && /^Email opened in email app/.test(e.detail || "")), "the send is logged on the dental lead as Email opened in email app");
+}
+await noGmail("the new dental lead's page");
+check(!opened.some((u) => /mail\.google\.com/.test(u)), "nothing ever opened Gmail");
+
+/* Create lead from a dental demo with no lead: the dialog starts on Dental clinic. */
+const DENTAL_DEMO = {
+  id: "ds_e2e_dental_nolead", slug: "e2e-smile-dental-nolead", instituteName: "Example Smile Dental Clinic E2E", internalName: "e2e dental", kind: "dental",
+  market: "india", city: "Ranchi", status: "draft", templateId: "d3-smile-studio", createdAt: iso(Date.now()), updatedAt: iso(Date.now()),
+};
+await crm.evaluate(([k, d]) => {
+  const c = JSON.parse(localStorage.getItem(k) || "{}");
+  c.demoSites = [...(c.demoSites || []), d];
+  localStorage.setItem(k, JSON.stringify(c));
+}, [CMS_KEY, DENTAL_DEMO]);
+await crm.goto(BASE + "/crm/demos", { waitUntil: "domcontentloaded" });
+await crm.getByTestId("demo-table").waitFor({ timeout: PAGE_WAIT });
+await settle(crm);
+const ddRow = crm.locator('[data-testid="demo-table"] tbody tr', { hasText: DENTAL_DEMO.instituteName });
+check(/Dental clinic/.test(await ddRow.innerText().catch(() => "")), "the Demos table labels a dental demo Dental clinic");
+await ddRow.getByTestId("demo-create-lead-btn").click();
+await crm.getByTestId("demo-create-lead").waitFor({ timeout: 5000 });
+check((await crm.locator("#dl-kind").inputValue()) === "dental", "Create lead from a dental demo starts on kind Dental clinic", await crm.locator("#dl-kind").inputValue());
+await crm.locator("#dl-phone").fill("98765 43282");
+await crm.getByTestId("demo-create-lead").getByRole("button", { name: "Create lead" }).click();
+await crm.waitForURL(/\/crm\/leads\/ol_/, { timeout: 8000 }).catch(() => {});
+store = await readOutreach(crm);
+check(store.leads.find((l) => l.demoId === DENTAL_DEMO.id)?.kind === "dental", "and the lead it saves is a dental lead", JSON.stringify(store.leads.find((l) => l.demoId === DENTAL_DEMO.id)?.kind));
+await settle(crm);
+
+/* ── 11. The CRM on its own subdomain (crm.localhost stands in for crm.ideovent.in) ──
+   Chrome sends *.localhost to 127.0.0.1, so this is the same dev server seen as the CRM host.
+   There the CRM is the whole app (its screens at the root), links between its screens carry no
+   /crm, and every link to the admin or a demo leaves for the main site as an absolute address
+   in a plain <a href>. The main site's address is answered here: nothing reaches the live site. */
+const CRM_HOST = BASE.replace(/\/\/(localhost|127\.0\.0\.1)(?=[:/]|$)/, "//crm.localhost");
+await context.route(/^https:\/\/(ideovent\.vercel\.app|(www\.)?ideovent\.in)\//, (route) => {
+  opened.push(route.request().url());
+  return route.fulfill({ status: 200, contentType: "text/html", body: "<p>main site, intercepted by e2e-crm</p>" });
+});
+const sub = await context.newPage();
+watch(sub, "crm-host");
+await sub.goto(CRM_HOST + "/login", { waitUntil: "domcontentloaded" });
+await sub.evaluate(([sk, ok, ck, outreach, cms]) => {
+  sessionStorage.setItem(sk, "1");
+  localStorage.setItem(ok, JSON.stringify(outreach));
+  localStorage.setItem(ck, JSON.stringify(cms));
+}, [SESSION_KEY, OUTREACH_KEY, CMS_KEY, await readOutreach(crm), await readCms(crm)]);
+const noCrmPrefix = async (where) => {
+  const bad = await sub.$$eval('a[href^="/crm"]', (as) => as.map((a) => a.getAttribute("href")));
+  check(!bad.length, `CRM host, ${where}: no link carries the /crm prefix`, JSON.stringify(bad.slice(0, 5)));
+};
+await sub.goto(CRM_HOST + `/leads/${seededDental.id}`, { waitUntil: "domcontentloaded" });
+await sub.getByTestId("compose").waitFor({ timeout: 15000 }).catch(() => {});
+await settle(sub);
+check(new URL(sub.url()).host === new URL(CRM_HOST).host && (await sub.getByTestId("lead-name").innerText().catch(() => "")) === seededDental.instituteName,
+  `CRM host: the lead page is at /leads/${seededDental.id}, no /crm prefix`, sub.url());
+const subCompose = sub.getByTestId("compose");
+await subCompose.getByRole("button", { name: "Change", exact: true }).first().click().catch(() => {});
+const abs = {
+  open: await subCompose.getByTestId("demo-open").getAttribute("href").catch(() => null),
+  edit: await subCompose.getByTestId("demo-edit").getAttribute("href").catch(() => null),
+  card: await sub.getByTestId("lead-demo-open").getAttribute("href").catch(() => null),
+};
+const mainOrigin = /^https?:\/\//.test(abs.open || "") ? new URL(abs.open).origin : "";
+check(Boolean(mainOrigin) && mainOrigin !== new URL(CRM_HOST).origin && abs.open === `${mainOrigin}/admin/preview/site/${seededDental.demoSlug}`
+  && abs.card === abs.open && abs.edit === `${mainOrigin}/admin/c/demoSites?edit=${seededDental.demoId}`,
+  `CRM host: the lead page's links to the admin are absolute, to the main site (${mainOrigin || "none"})`, JSON.stringify(abs));
+const [editTab] = await Promise.all([context.waitForEvent("page", { timeout: 8000 }).catch(() => null), subCompose.getByTestId("demo-edit").click().catch(() => {})]);
+/* A new tab starts at "" and commits its address a moment later: wait for it to leave the blank page. */
+if (editTab) await editTab.waitForURL((u) => /^https?:/.test(u.href), { timeout: 8000 }).catch(() => {});
+check(Boolean(editTab) && editTab.url() === abs.edit, "CRM host: Edit demo opens the main site's admin in a new tab (a real page load, not the router)", editTab ? JSON.stringify(editTab.url()) : "no new tab");
+await editTab?.close().catch(() => {});
+await noCrmPrefix("lead page");
+await noGmail("CRM host lead page", sub);
+
+await sub.goto(CRM_HOST + "/demos?view=all", { waitUntil: "domcontentloaded" });
+await sub.getByTestId("demo-table").waitFor({ timeout: 10000 }).catch(() => {});
+await settle(sub);
+check((await sub.locator(`[data-testid="demo-table"] a[href="/leads/${seededDental.id}"]`).count()) === 1, "CRM host: the Demos table links a demo to its lead at /leads/<id>");
+await sub.getByRole("button", { name: `More actions for ${seededDental.instituteName}` }).click().catch(() => {});
+const menuHrefs = {
+  open: await sub.getByRole("menuitem", { name: /Open demo/ }).getAttribute("href").catch(() => null),
+  edit: await sub.getByRole("menuitem", { name: /Edit in admin/ }).getAttribute("href").catch(() => null),
+};
+check(menuHrefs.open === `${mainOrigin}/admin/preview/site/${seededDental.demoSlug}` && menuHrefs.edit === `${mainOrigin}/admin/c/demoSites?edit=${seededDental.demoId}`,
+  "CRM host: the Demos menu's Open demo and Edit in admin go to the main site", JSON.stringify(menuHrefs));
+await sub.keyboard.press("Escape").catch(() => {});
+await noCrmPrefix("Demos");
+
+await sub.goto(CRM_HOST + "/leads?view=all&kind=dental", { waitUntil: "domcontentloaded" });
+await sub.locator(rowsSel).first().waitFor({ timeout: 10000 }).catch(() => {});
+await settle(sub);
+check((await sub.locator(rowsSel).count()) >= DENTAL_SEED.length, `CRM host: /leads?kind=dental lists the dental leads`, String(await sub.locator(rowsSel).count()));
+await noCrmPrefix("Leads");
+await sub.goto(CRM_HOST + `/crm/leads/${seededDental.id}`, { waitUntil: "domcontentloaded" });
+await sub.waitForURL((u) => !u.pathname.startsWith("/crm"), { timeout: 8000 }).catch(() => {});
+check(new URL(sub.url()).pathname === `/leads/${seededDental.id}`, "CRM host: an old /crm/leads/<id> address lands on /leads/<id>", sub.url());
+await sub.close();
+
+/* ── 12. Every stage in plain words, blanks, the call script (30 Sep 2026) ──
+   Seeded leads the earlier sections left alone: 0 New school, 1 Contacted coaching (one
+   WhatsApp sent), 11 Replied coaching, 4 Call school, 5 Proposal dental (with a demo). */
+const STAGE_OF = [[leads[0], "first"], [leads[1], "follow_up"], [leads[11], "after_yes"], [leads[4], "after_call"], [leads[5], "proposal"]];
+const openLeadPage = async (lead) => {
+  await crm.goto(BASE + `/crm/leads/${lead.id}`, { waitUntil: "domcontentloaded" });
+  await crm.getByTestId("compose").waitFor({ timeout: PAGE_WAIT });
+  await settle(crm, 400);
+  return crm.getByTestId("compose");
+};
+for (const [lead, want] of STAGE_OF) {
+  const c = await openLeadPage(lead);
+  const names = (await c.locator("[data-stage]").allInnerTexts()).map((t) => t.replace(/\s*now\s*$/i, "").trim());
+  const on = await c.locator('[data-stage][aria-pressed="true"]').getAttribute("data-stage");
+  const now = await c.locator('[data-stage][data-now="true"]').getAttribute("data-stage");
+  check(names.join("|") === "First message|After they say yes|Follow-up|After the call|Proposal|Closing" && on === want && now === want,
+    `${lead.instituteName} (${lead.status}) opens on its own stage, ${want}, with all six named`, JSON.stringify({ names, on, now }));
+}
+{
+  /* Today names the stage: a Call lead due today reads "After the call". */
+  await crm.goto(BASE + "/crm/today", { waitUntil: "domcontentloaded" });
+  await crm.getByTestId("crm-today").waitFor({ timeout: PAGE_WAIT });
+  await settle(crm);
+  const row = await crm.locator(`[data-lead-id="${leads[4].id}"]`).innerText().catch(() => "");
+  check(/After the call: send the summary/.test(row), "Today's row for a Call lead says After the call: send the summary", row.replace(/\s+/g, " "));
+}
+{
+  /* [Blanks] in the after-call summary: highlighted, Send off, filled from the boxes. */
+  const c = await openLeadPage(leads[4]);
+  let found = "";
+  for (const tab of [/^whatsapp/i, /^email/i]) {
+    await c.getByRole("tab", { name: tab }).click();
+    await settle(crm, 250);
+    const more = c.locator("details").filter({ has: crm.locator("summary", { hasText: "More templates" }) });
+    if ((await more.count()) && !(await more.first().evaluate((d) => d.open))) await more.first().locator("summary").click();
+    const ids = await c.locator("[data-template-id]").evaluateAll((els) => [...new Set(els.map((e) => e.getAttribute("data-template-id")))]);
+    for (const id of ids) {
+      await c.locator(`[data-template-id="${id}"]`).first().click();
+      await settle(crm, 150);
+      if (await c.getByTestId("fill-blanks").count()) { found = id; break; }
+    }
+    if (found) break;
+  }
+  if (!found) fail("no After the call message has a [blank] to fill (the approved summary carries [package and price] and [date])");
+  else {
+    const blanks = await c.locator("[data-blank]").evaluateAll((els) => els.map((e) => e.getAttribute("data-blank")));
+    const blocked = async () => (await blockersOf(c)).replace(/\s+/g, " ");
+    check((await c.locator('[data-testid="message-marks"] mark[data-mark="blank"]').count()) >= blanks.length && /Fill in \[/.test(await blocked()),
+      `${found}: its blanks (${blanks.map((b) => `[${b}]`).join(" ")}) are highlighted and keep Send off`, await blocked());
+    for (const [i, b] of blanks.entries()) await c.locator(`[data-blank="${b}"]`).fill(`E2E-VALUE-${i}`);
+    await settle(crm, 250);
+    const text = await c.locator("#msg-body").inputValue();
+    check(!/Fill in \[/.test(await blocked()) && blanks.every((_, i) => text.includes(`E2E-VALUE-${i}`)) && !/\[[^\]\n]+\]/.test(text),
+      "filling every box puts the values in the text and the blank no longer blocks Send", await blocked());
+  }
+}
+{
+  /* The call script, worded for the lead's kind; a lead with a demo is told a sample was made. */
+  for (const [lead, viewer] of [[leads[5], "patient"], [leads[4], "parent"], [leads[1], "student"]]) {
+    await openLeadPage(lead);
+    const who = await crm.getByTestId("call-script-for").innerText().catch(() => "");
+    check(new RegExp(viewer).test(who), `${lead.instituteName}: the Call script is worded as a ${viewer} sees it`, who);
+  }
+  await openLeadPage(leads[5]);
+  const cs = crm.getByTestId("call-script");
+  if (!(await cs.evaluate((d) => d.open))) await cs.locator("summary").click();
+  await cs.getByRole("button", { name: "English" }).click();
+  const text = await cs.innerText();
+  const steps = await cs.locator("[data-step]").evaluateAll((els) => els.map((e) => e.getAttribute("data-step")));
+  check(steps.join(",") === "problem,cost,fix,trust,price,next,summary" && /I made a sample website for your clinic/.test(text),
+    "the dental lead's script walks the seven steps, and with its demo made it may say a sample was made", steps.join(","));
+  check(!/[–—]/.test(text), "the call script has no en or em dash");
+  await openLeadPage(leads[11]);
+  check(await crm.getByTestId("call-script").evaluate((d) => d.open), "for a lead that said yes, the Call script card is open: the call is next");
+}
 
 /* ── Result ────────────────────────────────────────────────────────────── */
 const dashes = await crm.evaluate(() => /[–—]/.test(document.body.innerText));

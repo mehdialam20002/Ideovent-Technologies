@@ -3,7 +3,8 @@ import { AlertTriangle } from "lucide-react";
 import type { LeadInput, OutreachLead } from "@/lib/outreach/types";
 import { normalizePhone } from "@/lib/outreach/store";
 import { useOutreach } from "./useOutreach";
-import { Field, inputCls } from "./ui";
+import { looksDental } from "@/lib/demo/templates/dentalPick";
+import { Field, KIND_LABEL, LEAD_KINDS, inputCls } from "./ui";
 
 /** Free mail domains: an address here says nothing about the institute's website. */
 const FREE_MAIL = /^(gmail|googlemail|yahoo|ymail|rediffmail|hotmail|outlook|live|icloud|aol|protonmail|zoho|proton)\./i;
@@ -66,29 +67,40 @@ export function LeadFields({
   const suggestSite = !value.website ? websiteFromEmail(value.email) : null;
   const nameMissing = tried && !value.instituteName?.trim();
   const contactMissing = tried && !value.phone?.trim() && !value.email?.trim() && !value.whatsapp?.trim();
+  const dental = value.kind === "dental";
+  // "Example Dental Clinic" typed while the kind is still School: offer the right kind, never switch it silently.
+  const suggestDental = !dental && looksDental(value.instituteName);
 
   return (
     <div className="space-y-4">
-      <Field id="lf-name" label="Institute name">
-        <input id="lf-name" className={inputCls} value={value.instituteName} onChange={(e) => set("instituteName", e.target.value)} placeholder="As they spell it" aria-invalid={nameMissing || undefined} />
+      <Field id="lf-name" label={dental ? "Clinic name" : "Institute name"}>
+        <input id="lf-name" className={inputCls} value={value.instituteName} onChange={(e) => set("instituteName", e.target.value)} placeholder={dental ? "Clinic name, as they spell it" : "As they spell it"} aria-invalid={nameMissing || undefined} />
       </Field>
-      {nameMissing && <p className="-mt-2 text-xs text-destructive">Type the institute's name.</p>}
+      {nameMissing && <p className="-mt-2 text-xs text-destructive">Type the {dental ? "clinic's" : "institute's"} name.</p>}
 
       <fieldset>
         <legend className="text-sm font-medium">Kind</legend>
-        <div className="mt-1.5 grid grid-cols-3 gap-2">
-          {(["school", "coaching", "other"] as const).map((k) => (
-            <label key={k} className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border text-sm ${value.kind === k ? "border-primary bg-primary/10 font-medium text-primary" : "border-border"}`}>
-              <input type="radio" name="lf-kind" className="sr-only" checked={value.kind === k} onChange={() => set("kind", k)} />
-              {k === "school" ? "School" : k === "coaching" ? "Coaching" : "Other"}
+        <div className="mt-1.5 grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="lf-kind">
+          {LEAD_KINDS.map((k) => (
+            <label key={k} className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-2 text-center text-sm ${value.kind === k ? "border-primary bg-primary/10 font-medium text-primary" : "border-border"}`}>
+              <input type="radio" name="lf-kind" value={k} className="sr-only" checked={value.kind === k} onChange={() => set("kind", k)} />
+              {KIND_LABEL[k]}
             </label>
           ))}
         </div>
+        {suggestDental && (
+          <p className="mt-1.5 text-xs text-muted-foreground" data-testid="lf-kind-hint">
+            The name sounds like a dental clinic.{" "}
+            <button type="button" className="text-primary underline underline-offset-2" onClick={() => set("kind", "dental")}>
+              Set kind to Dental clinic
+            </button>
+          </p>
+        )}
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="lf-contact" label="Contact name (optional)">
-          <input id="lf-contact" className={inputCls} value={value.contactName || ""} onChange={(e) => set("contactName", e.target.value)} placeholder="Principal or director" />
+          <input id="lf-contact" className={inputCls} value={value.contactName || ""} onChange={(e) => set("contactName", e.target.value)} placeholder={dental ? "Doctor or clinic manager" : "Principal or director"} />
         </Field>
         <Field id="lf-city" label="City">
           <input id="lf-city" className={inputCls} value={value.city || ""} onChange={(e) => set("city", e.target.value)} />
@@ -97,7 +109,7 @@ export function LeadFields({
           <input id="lf-phone" type="tel" inputMode="tel" className={inputCls} value={value.phone || ""} onChange={(e) => set("phone", e.target.value)} placeholder="98100 12345" />
         </Field>
         <Field id="lf-email" label="Email">
-          <input id="lf-email" type="email" inputMode="email" className={inputCls} value={value.email || ""} onChange={(e) => set("email", e.target.value)} placeholder="office@school.in" />
+          <input id="lf-email" type="email" inputMode="email" className={inputCls} value={value.email || ""} onChange={(e) => set("email", e.target.value)} placeholder={dental ? "clinic@example.com" : "office@example.com"} />
         </Field>
       </div>
 

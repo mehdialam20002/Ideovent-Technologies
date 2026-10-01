@@ -1,32 +1,39 @@
 import type { DemoSiteOpen } from "@/lib/cms/types";
-import { OBSERVATIONS, checkSend, type SendCheck } from "@/lib/outreach/engine";
+import { OBSERVATIONS, checkSend, demoLinkFor, type SendCheck } from "@/lib/outreach/engine";
 import { templatesFor, type MessageTemplate, type TemplateChannel, type TemplateStage } from "@/lib/outreach/templates";
-import type { OutreachEvent, OutreachLead, OutreachSettings } from "@/lib/outreach/types";
+import type { EventInput, OutreachEvent, OutreachLead, OutreachSettings } from "@/lib/outreach/types";
 import { dueFollowUps, hotLeads, isHotOpen, isOpenLead, opensSinceContact } from "./derive";
+import { isRetired, ladderFor, stageFor } from "./stages";
 import { dueLabel } from "./ui";
 
 /**
  * Pure choices behind the compose screen: which stage a lead is at, which
  * templates fit, what the lead's next step is, and the checks that keep one
  * lead's words out of another lead's message. No React here, so every screen
- * (and a reader of this file) gets the same answer.
+ * (and a reader of this file) gets the same answer. The stage names Mehdi
+ * reads (First message, After they say yes, Follow-up, After the call,
+ * Proposal, Closing) live in stages.ts.
  */
 
-/** The stage this lead is most likely at, on this channel. */
+/**
+ * The stage this lead is most likely at, from a count of sends on the e-mail
+ * ladder. The compose screen uses stages.ts suggestFor, which reads the
+ * channel's own sends and ladder; this stays for callers that only have a count.
+ */
 export function suggestStage(lead: OutreachLead, sends: number): TemplateStage {
   switch (lead.status) {
     case "replied":
     case "demo_opened":
-      return "after_reply";
+      return stageFor("after_yes");
     case "call":
-      return "after_call";
+      return stageFor("after_call");
     case "proposal":
-      return "proposal";
-    default:
-      if (sends <= 0) return "first";
-      if (sends === 1) return "follow_up_1";
-      if (sends === 2) return "follow_up_2";
-      return "follow_up_3";
+      return stageFor("proposal");
+    default: {
+      if (sends <= 0) return stageFor("first");
+      const ladder = ladderFor("email", lead.kind);
+      return ladder[Math.min(sends, ladder.length) - 1] ?? stageFor("follow_up");
+    }
   }
 }
 
@@ -42,18 +49,26 @@ export interface RankInput {
 /**
  * Every template of this stage and channel that fits the lead's kind, best
  * first. "Best" means, in order: it can be sent right now (no blocker), it is
- * in the lead's language, and its pitch matches (a lead with a website gets
- * "fix your website", one without gets "we built you a site").
+ * in the lead's language, and its pitch matches: the lead's own pitch when it
+ * has one (the CSV import's website_state, the Lead Finder's verdict: a clinic
+ * whose only "website" is a Practo or Facebook page is new_website), else a
+ * lead with a website gets "fix your website", one without "we built you a site".
  */
 export function rankTemplates({ lead, channel, stage, settings, waToday, observation }: RankInput): MessageTemplate[] {
   const lang = lead.language || "en";
-  const pitch = lead.website ? "fix_website" : "new_website";
+  const pitch = lead.pitch || (lead.website ? "fix_website" : "new_website");
   const probe = { ...lead, observation };
+  // Last tie-break: a lead with a demo gets the message that says the sample is made, one without it
+  // the twin that offers to make one (templates.ts `sample`). The other weights are doubled so this
+  // never outranks them.
+  const sampleFit = demoLinkFor(lead.demoSlug) ? "made" : "offer";
   const score = (t: MessageTemplate) =>
-    (checkSend(probe, t, channel, settings, waToday).ok ? 8 : 0) +
-    langScore(t.language, lang) +
-    (t.pitch === pitch ? 2 : t.pitch === "any" ? 1 : 0);
+    (checkSend(probe, t, channel, settings, waToday).ok ? 16 : 0) +
+    2 * langScore(t.language, lang) +
+    (t.pitch === pitch ? 4 : t.pitch === "any" ? 2 : 0) +
+    (t.sample === sampleFit ? 1 : 0);
   return templatesFor({ channel, stage, kind: lead.kind })
+    .filter((t) => !isRetired(t))
     .map((t, i) => ({ t, s: score(t), i }))
     .sort((a, b) => b.s - a.s || a.i - b.i)
     .map((x) => x.t);
@@ -83,7 +98,7 @@ export function looksLikeNote(text: string | undefined): boolean {
   if (OBSERVATIONS.some((o) => o.id === t || o.en === t || o.hinglish === t)) return false;
   // A sentence meant for them speaks to them ("your site", "aapki site"). A
   // note ABOUT them describes the page in the third person ("The footer reads
-  // 'Copyright Verma Coaching Academy 2022'.") and would go out as "One thing
+  // 'Copyright Example Coaching Academy 2022'.") and would go out as "One thing
   // stood out: The footer reads...", so it counts as a note too. Only the
   // quoting shape (the X reads / says / shows) and a copyright line are
   // caught: "The admissions page does not open on a phone" is still a sentence.
@@ -100,8 +115,8 @@ export function startingObservation(lead: OutreachLead): string {
 
 /**
  * Other leads whose institute name appears in this text. One lead's name in
- * another lead's message is exactly the 28 Sep 2026 bug (Verma Coaching
- * Academy in every mail), so the send is blocked while it is there. Short or
+ * another lead's message is exactly the 28 Sep 2026 bug (one imported
+ * lead's name in every mail), so the send is blocked while it is there. Short or
  * generic names (under 8 letters) and names this lead's own name contains are
  * ignored, so "Academy" never trips it.
  */
@@ -120,7 +135,11 @@ export function canSend(r: RankInput, t: MessageTemplate): SendCheck {
   return checkSend({ ...r.lead, observation: r.observation }, t, r.channel, r.settings, r.waToday);
 }
 
-/** What to do next for this lead, in a few plain words. `urgent` colours it. */
+/**
+ * What to do next for this lead, in a few plain words that name the stage
+ * (First message, After they say yes, Follow-up, After the call, Proposal).
+ * `urgent` colours it.
+ */
 export function nextStep(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, now = new Date()): { text: string; urgent: boolean } {
   if (!isOpenLead(lead)) return { text: lead.status === "won" ? "Client" : "Nothing to do", urgent: false };
   if (lead.lastContactedAt && isHotOpen(opensSinceContact(lead, opens)[0]?.at, now)) return { text: "Demo opened: call or message today", urgent: true };
@@ -131,16 +150,41 @@ export function nextStep(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, 
     case "new":
       return { text: "Send the first message", urgent: false };
     case "replied":
+      return { text: "After they say yes: send the sample link", urgent: true };
     case "demo_opened":
-      return { text: "Send the demo link", urgent: true };
+      return { text: "They opened the sample: call them", urgent: true };
     case "call":
-      return { text: "Send the after-call message", urgent: isDue };
+      return { text: isDue ? `After the call: send the summary (${due})` : "After the call: send the summary", urgent: isDue };
     case "proposal":
-      return { text: isDue ? `Chase the proposal (${due})` : "Proposal sent", urgent: isDue };
+      return { text: isDue ? `Proposal: chase it (${due})` : "Proposal sent", urgent: isDue };
     default:
       if (isDue) return { text: `Follow-up due ${due}`, urgent: true };
       return { text: due ? `Follow-up ${due}` : "Waiting for a reply", urgent: false };
   }
+}
+
+/**
+ * What "They replied" writes (the compose menu and Today use the same words):
+ * a reply event and status Replied, due now, so the lead moves to After they
+ * say yes. The playbook: answer within the hour.
+ */
+export function repliedChanges(lead: OutreachLead, now = new Date()): { event: EventInput; lead: OutreachLead } {
+  return {
+    event: { leadId: lead.id, type: "replied", detail: "They replied. Next: After they say yes, send the sample link and two call times." },
+    lead: { ...lead, status: "replied", nextActionAt: now.toISOString() },
+  };
+}
+
+/**
+ * What "Call done" writes (the compose menu and the call script card): a call
+ * event, status Call, and the next action due today, because the approved
+ * flow sends the after-call summary the same day.
+ */
+export function callDoneChanges(lead: OutreachLead, now = new Date()): { event: EventInput; lead: OutreachLead } {
+  return {
+    event: { leadId: lead.id, type: "call", channel: "call", detail: "Call done. Next: After the call, send the summary today." },
+    lead: { ...lead, status: "call", lastContactedAt: now.toISOString(), nextActionAt: now.toISOString() },
+  };
 }
 
 /**

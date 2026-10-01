@@ -78,3 +78,14 @@ export function unbreakable(value: string): string {
 export function unbreakableOr(value: string | undefined | null, fallback = ""): string {
   return value ? unbreakable(value) : fallback;
 }
+
+/**
+ * A figure joined to a word by a hyphen stays on one line: "12-month plan" must
+ * not break as "12-" / "month plan" beside a price (measured on /pricing at
+ * 1280px, 1 Oct 2026). Word joiners, as above. Display only: never apply it to
+ * text that is sent anywhere (a WhatsApp message, an e-mail), where the
+ * invisible characters would travel with it.
+ */
+export function keepNumberCompounds(value: string): string {
+  return value.replace(/(\d)-(?=[A-Za-z])/g, `$1${WJ}-${WJ}`);
+}

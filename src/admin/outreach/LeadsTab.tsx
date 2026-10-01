@@ -65,7 +65,7 @@ export function LeadsTab({ onOpen }: { onOpen: (id: string) => void }) {
           <span className="ml-auto text-xs font-normal">{shown.length} of {leads.length} {leads.length === 1 ? "lead" : "leads"}</span>
         </summary>
         <div className="grid gap-2 pb-2 pt-1 sm:grid-cols-2 lg:grid-cols-4">
-          <select aria-label="Status" className={selectCls} value={status} onChange={(e) => setStatus(e.target.value as any)}>
+          <select aria-label="Status" className={selectCls} value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
             <option value="open">Open leads</option>
             <option value="">All statuses</option>
             {LEAD_STATUSES.map((s) => (
@@ -76,6 +76,7 @@ export function LeadsTab({ onOpen }: { onOpen: (id: string) => void }) {
             <option value="">Every kind</option>
             <option value="school">Schools</option>
             <option value="coaching">Coaching</option>
+            <option value="dental">Dental clinics</option>
             <option value="other">Other businesses</option>
           </select>
           <select aria-label="City" className={selectCls} value={city} onChange={(e) => setCity(e.target.value)}>

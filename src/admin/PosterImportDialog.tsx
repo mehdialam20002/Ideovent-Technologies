@@ -1,18 +1,33 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { AlertTriangle, Camera, FileImage, Loader2, ScanText, Sparkles, Upload, X } from "lucide-react";
-import { chooseTemplate, emptyExtract, normalizeExtract, type PosterAttempt, type PosterExtract, type PosterKind } from "@/lib/ai/posterSchema";
+import { chooseTemplate, normalizeExtract, type PosterAttempt, type PosterExtract } from "@/lib/ai/posterSchema";
 import {
   PosterError, attemptLine, prepareImage, providerLabel, providerOrder, readPoster, type PreparedImage,
 } from "@/lib/ai/posterClient";
+import {
+  dentalPosterTemplate, normalizeDentalExtract, posterLooksDental, toKind,
+  type AnyPosterExtract, type AnyPosterKind, type PosterDraft,
+} from "@/lib/ai/dentalPosterSchema";
 import { templateMeta, type TemplateId } from "@/lib/demo/templates";
 import { ReviewForm } from "./poster/ReviewForm";
-
-/** A poster fills school and coaching templates only; a dental id has no poster kind. */
-function posterKindOf(id: string | undefined): PosterKind | undefined {
-  const k = templateMeta(id)?.kind;
-  return k === "school" || k === "coaching" ? k : undefined;
-}
 import { TemplatePicker, primaryButton, secondaryButton, templateLabel, inputClass, type TemplateChoice } from "./poster/ui";
+
+/** The poster kind a template stands for: school, coaching or (28 Sep 2026) a dental clinic. */
+function posterKindOf(id: string | undefined): AnyPosterKind | undefined {
+  return templateMeta(id)?.kind;
+}
+
+const KIND_WORD: Record<AnyPosterKind, string> = { school: "school", coaching: "coaching institute", dental: "dental clinic" };
+
+/**
+ * "Let AI choose", resolved. A clinic: dentalTemplateFor(clinic name,
+ * treatments), the one rule the CRM and the Lead Finder use too, so the
+ * reader's own suggestion is not consulted. A school or coaching poster: the
+ * rules in chooseTemplate, with the reader's suggestion as the tie-break.
+ */
+function autoTemplate(x: PosterDraft, suggested?: TemplateId): TemplateId {
+  return x.kind === "dental" ? dentalPosterTemplate(x) : chooseTemplate(x as PosterExtract, suggested);
+}
 
 /**
  * CREATE A DEMO FROM A POSTER, in three steps.
@@ -32,6 +47,14 @@ import { TemplatePicker, primaryButton, secondaryButton, templateLabel, inputCla
  * the institute's name to its own director, so nothing reaches a draft that
  * Mehdi has not seen. On every failure the same manual path is offered, so
  * a missing key or an exhausted free limit never stops the work.
+ *
+ * A DENTAL CLINIC (28 Sep 2026) takes the same three steps with its poster,
+ * banner or visiting card. A dental template picked in step 1 tells the
+ * reader it is a clinic; left to the AI, the reader decides. The review is
+ * the clinic form (./poster/DentalReviewForm.tsx), which shows live what the
+ * Dental Council code keeps off the demo; the template list has the seven
+ * dental templates, and "Let AI choose" is dentalTemplateFor(clinic name,
+ * treatments). Typing it in by hand works the same way for a clinic.
  *
  * The saving itself is the caller's (src/admin/poster/usePosterImport.ts),
  * so this file is only the conversation.
@@ -55,7 +78,7 @@ export function PosterImportDialog({
   error: string | null;
   onCancel: () => void;
   /** `opts.addToCrm`: the review screen's "Also add to CRM" box. */
-  onCreate: (templateId: TemplateId, extract: PosterExtract, meta: PosterReadMeta, opts: { addToCrm: boolean }) => void;
+  onCreate: (templateId: TemplateId, extract: AnyPosterExtract, meta: PosterReadMeta, opts: { addToCrm: boolean }) => void;
   onManual: (templateId: TemplateId, known: { name?: string; city?: string; hiName?: string }) => void;
   /** Where "Also add to CRM" starts (the CRM setting "Add every new demo to the CRM"). */
   addToCrmDefault?: boolean;
@@ -70,7 +93,7 @@ export function PosterImportDialog({
   const [nameOverride, setNameOverride] = useState("");
   const [order, setOrder] = useState<string[]>([]);
   const [readError, setReadError] = useState<{ message: string; attempts: PosterAttempt[] } | null>(null);
-  const [extract, setExtract] = useState<PosterExtract | null>(null);
+  const [extract, setExtract] = useState<PosterDraft | null>(null);
   const [meta, setMeta] = useState<PosterReadMeta | null>(null);
   const [suggested, setSuggested] = useState<TemplateId | undefined>();
   const [manualChoice, setManualChoice] = useState<TemplateId>(initialTemplate || "s1-urban-cbse");
@@ -94,7 +117,7 @@ export function PosterImportDialog({
 
   const resolved: TemplateId | null = useMemo(() => {
     if (choice !== "auto") return choice;
-    return extract ? chooseTemplate(extract, suggested) : null;
+    return extract ? autoTemplate(extract, suggested) : null;
   }, [choice, extract, suggested]);
 
   const close = () => {
@@ -133,9 +156,13 @@ export function PosterImportDialog({
     const kind = choice === "auto" ? "auto" : posterKindOf(choice) || "auto";
     try {
       const r = await readPoster(image, { kind, templateHint: choice, signal: ctrl.signal });
-      const x = { ...r.extracted };
-      /* The template picked by hand fixes the kind; the name typed in step 1 wins. */
-      if (choice !== "auto") x.kind = posterKindOf(choice) || x.kind;
+      let x = { ...r.extracted } as PosterDraft;
+      /* The template picked by hand fixes the kind. Left to the AI, a poster
+         read as a school or coaching centre whose own name says dental is a
+         clinic (the same looksDental test the CRM uses). The name typed in
+         step 1 wins. */
+      if (choice !== "auto") x = toKind(x, posterKindOf(choice) || x.kind);
+      else if (x.kind !== "dental" && posterLooksDental(x)) x = toKind(x, "dental");
       if (nameOverride.trim()) x.instituteName = nameOverride.trim();
       setExtract(x);
       setSuggested(r.suggestedTemplate);
@@ -153,7 +180,7 @@ export function PosterImportDialog({
   /** Start the review with nothing read: Mehdi types the poster in himself. */
   function typeItIn() {
     const kind = posterKindOf(manualChoice) || "coaching";
-    setExtract({ ...emptyExtract(kind), instituteName: nameOverride.trim() || undefined });
+    setExtract({ kind, instituteName: nameOverride.trim() || undefined });
     setChoice(manualChoice);
     setMeta({ provider: "manual", model: "", attempts: readError?.attempts || [] });
     setStep("review");
@@ -162,7 +189,8 @@ export function PosterImportDialog({
   function create() {
     if (!extract || !resolved || !meta) return;
     setTried(true);
-    const clean = normalizeExtract(extract, extract.kind);
+    /* fromPoster converts to the template's family when the two differ. */
+    const clean: AnyPosterExtract = extract.kind === "dental" ? normalizeDentalExtract(extract) : normalizeExtract(extract, extract.kind);
     if (!clean.instituteName && !clean.instituteNameHi) return;
     onCreate(resolved, clean, meta, { addToCrm });
   }
@@ -219,9 +247,10 @@ export function PosterImportDialog({
         {step === "upload" && (
           <div className="grid gap-5 p-4 sm:p-6">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              A photo of their poster, pamphlet or hoarding. The AI reads the name, courses, fees, teachers,
-              results and contact details, you check every field, and the demo is made from a template with
-              those facts filled in. Anything not on the poster keeps the template’s own content.
+              A photo of their poster, pamphlet, hoarding or a clinic’s visiting card. The AI reads the name,
+              courses or treatments, fees, teachers or doctors, results, timings and contact details, you check
+              every field, and the demo is made from a template with those facts filled in. Anything not on the
+              poster keeps the template’s own content, labelled as sample where it should be.
             </p>
 
             <div
@@ -262,7 +291,8 @@ export function PosterImportDialog({
               <TemplatePicker id="poster-template" value={choice} onChange={setChoice} />
               <div>
                 <label htmlFor="poster-name" className="block text-sm font-medium">
-                  Institute name <span className="font-normal text-muted-foreground">(optional)</span>
+                  {posterKindOf(choice === "auto" ? undefined : choice) === "dental" ? "Clinic name" : "Institute or clinic name"}{" "}
+                  <span className="font-normal text-muted-foreground">(optional)</span>
                 </label>
                 <input id="poster-name" className={inputClass} placeholder="Leave empty to use the poster’s" value={nameOverride} onChange={(e) => setNameOverride(e.target.value)} />
               </div>
@@ -322,12 +352,13 @@ export function PosterImportDialog({
                 id="poster-review-template"
                 value={choice}
                 onChange={setChoice}
-                autoLabel={templateLabel(chooseTemplate(extract, suggested))}
+                autoLabel={templateLabel(autoTemplate(extract, suggested))}
                 label="Template for this demo"
               />
               {choice !== "auto" && templateMeta(choice)?.kind !== extract.kind && (
                 <p className="text-xs text-muted-foreground">
-                  The poster reads as a {extract.kind}; this template is a {templateMeta(choice)?.kind}. That works, and the template decides the pages.
+                  The poster reads as a {KIND_WORD[extract.kind]}; this template is a {KIND_WORD[templateMeta(choice)?.kind || extract.kind]}.
+                  That works: the template decides the pages, and the shared details (name, city, contact) carry over.
                 </p>
               )}
             </div>
@@ -342,7 +373,7 @@ export function PosterImportDialog({
 
             <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:col-span-2">
               {nameMissing && (
-                <p role="alert" className="w-full text-sm text-destructive">Type the institute’s name. It is the one field a demo cannot be made without.</p>
+                <p role="alert" className="w-full text-sm text-destructive">Type the {extract.kind === "dental" ? "clinic" : "institute"}’s name. It is the one field a demo cannot be made without.</p>
               )}
               {error && (
                 <p role="alert" className="flex w-full gap-2 text-sm text-destructive">

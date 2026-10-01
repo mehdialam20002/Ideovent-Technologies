@@ -1,6 +1,7 @@
 /**
  * SCHOOL ABOUT. Sections, each only with data:
- *   story      the school's own account (`about`)
+ *   story      the school's own account (`about`), with SampleNote "story"
+ *              under it while it is the template's (30 Sep 2026)
  *   purpose    vision and mission
  *   head       the head's message in full, with the typed name and title
  *              (never a signature image: a forgery risk)
@@ -18,6 +19,7 @@ import { Str } from "@/lib/demo/ui/school/shared";
 import { firstSlot, SlotPhoto, WithPhoto } from "@/lib/demo/ui/school/photos";
 import { PageHead } from "../kit/Hero";
 import { Reveal } from "../kit/motion";
+import { SampleNote } from "../kit/SampleNote";
 import { Card, CardGrid, FactTable, Section } from "../kit/Section";
 import { Action, Bi } from "../kit/Text";
 
@@ -70,7 +72,11 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
       {hasBi(site, "about") && (
         <Section n={++n} title={tr(COPY.story, lang)}>
           <div className="grid gap-8 lg:grid-cols-[3fr_2fr] lg:items-start">
-            <Bi of={site} k="about" as="p" className="max-w-prose whitespace-pre-line text-lg leading-relaxed" />
+            <div>
+              <Bi of={site} k="about" as="p" className="max-w-prose whitespace-pre-line text-lg leading-relaxed" />
+              {/* The template's history and founding year, until the school's own replace them. */}
+              <SampleNote block="story" className="mt-6" />
+            </div>
             <SlotPhoto src={storyPhoto} ratio="4 / 5" sizes="(min-width: 1024px) 440px, 100vw" />
           </div>
         </Section>

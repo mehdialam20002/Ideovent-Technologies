@@ -15,8 +15,8 @@
  * landed (`site.sample.prints`). A block whose fingerprint still matches is
  * untouched; the first edit changes it and the line goes. The admin switch
  * "Results and reviews on this demo are the institute's real ones" sets
- * `site.sample.real` and removes both lines at once. The admin checklist reads
- * the same prints for all six blocks.
+ * `site.sample.real` and removes both lines at once (never the story's line:
+ * see STORY below). The admin checklist reads the same prints for every block.
  *
  * Pure, tiny, and imported by the lazy site chunk and the admin alike.
  */
@@ -26,7 +26,7 @@ import type { Bilingual } from "./bilingual";
 
 export type SampleBlock = keyof DemoSampleMarks["prints"];
 
-export const SAMPLE_BLOCKS: SampleBlock[] = ["faculty", "results", "fees", "reviews", "timings", "photos", "stats", "cases", "doctors"];
+export const SAMPLE_BLOCKS: SampleBlock[] = ["faculty", "results", "fees", "reviews", "timings", "photos", "stats", "cases", "doctors", "story"];
 
 /**
  * DENTAL (28 Sep 2026). Three blocks were added: `stats` (the hero trust row,
@@ -34,6 +34,19 @@ export const SAMPLE_BLOCKS: SampleBlock[] = ["faculty", "results", "fees", "revi
  * the older blocks (fees, timings, photos) are appended ONLY on a record that
  * has a dental block, so the print of every school and coaching demo already
  * made is byte for byte what it was and none of them reads as edited.
+ *
+ * STORY (30 Sep 2026), every kind. The About page prints the template's
+ * history under the new name: "Since 2012" beside "Sheesham opened in 2012
+ * as a single-chair practice ...", renamed. A reader takes a founding year
+ * and a history as the place's own record, so the block is `about`,
+ * `established`, `establishedYear` and their Hindi twins, and the About page
+ * prints a line under the story while it is the template's. A demo made
+ * before this block existed has no story print: it shows no line, and its
+ * checklist and its other prints are exactly what they were. The admin
+ * switch does NOT remove this line: its label names results, reviews,
+ * figures, cases and doctors, and fromPoster sets it from a poster's
+ * results, so a history nobody has touched would lose its label with it.
+ * Only an edit of the story removes the line.
  */
 
 /** What each block is made of. The same list feeds the print and the check. */
@@ -47,6 +60,15 @@ function blockData(site: Partial<DemoSite>, block: SampleBlock): unknown {
       return d?.cases;
     case "doctors":
       return (d?.doctors || []).map(({ photo: _p, photoConsent: _c, ...rest }) => rest);
+    case "story":
+      /* An object rather than a list, so a field the form saves as "" reads
+         exactly like the field left out. */
+      return {
+        about: site.about,
+        established: site.established,
+        establishedYear: site.establishedYear,
+        hi: { about: site.hi?.about, established: site.hi?.established, establishedYear: site.hi?.establishedYear },
+      };
     case "faculty":
       return (site.faculty || []).map(({ photo: _p, photoConsent: _c, ...rest }) => rest);
     case "results":
@@ -139,11 +161,15 @@ export function isCarried(site: Partial<DemoSite>, block: SampleBlock): boolean 
 }
 
 /** The blocks that print a line on the page. */
-export type SampleLineBlock = "results" | "reviews" | "stats" | "cases" | "doctors";
+export type SampleLineBlock = "results" | "reviews" | "stats" | "cases" | "doctors" | "story";
+
+/** The lines the admin switch "... are the institute's real ones" removes. Not the story's: see STORY above. */
+const REAL_SWITCH_BLOCKS: readonly SampleLineBlock[] = ["results", "reviews", "stats", "cases", "doctors"];
 
 /** True when the page should print the sample line under this block. */
 export function showSampleLine(site: Partial<DemoSite>, block: SampleLineBlock): boolean {
-  return !site.sample?.real && isCarried(site, block);
+  if (site.sample?.real && REAL_SWITCH_BLOCKS.includes(block)) return false;
+  return isCarried(site, block);
 }
 
 /** The line itself, in both languages. No em dashes. */
@@ -156,9 +182,13 @@ export const SAMPLE_COPY: Record<SampleLineBlock, Bilingual> = {
     hi: "ये केवल चित्र हैं, असली मरीज़ नहीं। क्लिनिक के अपने केस लिखित सहमति के साथ यहाँ दिखेंगे।",
   },
   doctors: { en: "Sample doctor profiles for this demonstration", hi: "इस डेमो के लिए नमूने की डॉक्टर प्रोफ़ाइल" },
+  story: {
+    en: "The history on this page is example content for this demonstration",
+    hi: "इस पेज पर दिया गया इतिहास इस डेमो के लिए नमूना है",
+  },
 };
 
-/** The admin's names for the six blocks, for the checklist. */
+/** The admin's names for every block, for the checklist. */
 export const SAMPLE_BLOCK_LABEL: Record<SampleBlock, string> = {
   faculty: "Faculty",
   results: "Results and figures",
@@ -169,4 +199,5 @@ export const SAMPLE_BLOCK_LABEL: Record<SampleBlock, string> = {
   stats: "Trust figures",
   cases: "Before and after cases",
   doctors: "Doctors",
+  story: "Founding story and year",
 };

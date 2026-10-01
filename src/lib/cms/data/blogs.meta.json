@@ -2,54 +2,63 @@
   {
     "id": 1,
     "title": "How SEO Can Boost Your Business Growth",
+    "slug": "how-seo-can-boost-your-business-growth",
     "image": "/blog-covers/how-seo-can-boost-your-business-growth.webp",
-    "description": "Discover how SEO helps businesses rank higher, attract more customers, and grow online. This blog shows how Ideovent Technologies helps small businesses succeed using SEO-friendly websites, local marketing strategies, and high-converting digital tools."
+    "description": "What SEO does for a small business, what nobody can promise, and how local SEO works in Delhi: your Google profile, your pages and real reviews."
   },
   {
     "id": 2,
     "title": "Why Every Business Must Have a Website in 2025",
+    "slug": "why-every-business-must-have-a-website-in-2025",
     "image": "/blog-covers/why-every-business-must-have-a-website-in-2025.webp",
     "description": "A modern business without a website is like a shop without a signboard. In 2025, where customers search everything online first. Your website is your most powerful business asset.\n\nFrom building trust and boosting visibility to generating leads and working 24/7, discover why a professionally-built website by Ideovent Technologies can transform your small business into a growth engine.\n\nStill thinking about it? This blog makes the case crystal clear."
   },
   {
     "id": 3,
     "title": "Why a High-Performance Website Is Essential for Small Business Growth (And How Ideovent Builds Them Right)",
+    "slug": "why-a-high-performance-website-is-essential-for-small-business-growth-and-how-id",
     "image": "/blog-covers/why-a-high-performance-website-is-essential-for-small-busine.webp",
-    "description": "Think a basic website is enough? Think again. In today’s digital world, a slow or poorly built site can kill your growth. This blog explains why having a high-performance, mobile-optimized, SEO-ready website is essential for small businesses. And how Ideovent Technologies builds websites that actually deliver results.\n\nFrom conversion-focused design to blazing speed and local SEO, see how Ideovent helps businesses across India grow with confidence.\n\nWhether you’re just starting out or looking to upgrade, this is your blueprint to a smarter online presence."
+    "description": "Think a basic website is enough? Think again. In today’s digital world, a slow or poorly built site can kill your growth. This blog explains why having a high-performance, mobile-optimized, SEO-ready website is essential for small businesses. And how Ideovent Technologies builds them.\n\nFrom conversion-focused design to blazing speed and local SEO, see how Ideovent helps businesses across India grow with confidence.\n\nWhether you’re just starting out or looking to upgrade, this is your blueprint to a smarter online presence."
   },
   {
     "id": 4,
     "title": "10 Common Website Mistakes Small Businesses Make (And How Ideovent Fixes Them)",
+    "slug": "10-common-website-mistakes-small-businesses-make-and-how-ideovent-fixes-them",
     "image": "/blog-covers/10-common-website-mistakes-small-businesses-make-and-how-ide.webp",
     "description": "Is your website holding your business back? Many small businesses unknowingly make critical website mistakes, from slow loading times and poor mobile experience to missing SEO and outdated designs. These issues not only frustrate visitors but also damage your online visibility and trust.\n\nIn this blog, discover the 10 most common website mistakes and how Ideovent Technologies helps small businesses fix them. Learn how the right design, speed optimization, SEO setup, and responsive layout can turn your site into a high-performance growth engine.\n\nA must-read for startups, retailers, coaching institutes, and local businesses looking to grow online with a smarter website."
   },
   {
     "id": 5,
     "title": "What to Look For in a Tech Partner (And How We Work)",
+    "slug": "what-to-look-for-in-a-tech-partner-and-how-we-work",
     "image": "/blog-covers/what-to-look-for-in-a-tech-partner-and-how-we-work.webp",
     "description": "Choosing who builds your website or app is a harder decision than choosing what to build. Here are the things worth checking before you sign. And, since you are reading this on our site, how Ideovent Technologies handles each one."
   },
   {
     "id": 6,
     "title": "One Team for Design, Build and SEO. Why It Beats Juggling Vendors",
+    "slug": "one-team-for-design-build-and-seo-why-it-beats-juggling-vendors",
     "image": "/blog-covers/one-team-for-design-build-and-seo-why-it-beats-juggling-vend.webp",
     "description": "Splitting a website across a designer, a developer and an SEO freelancer is cheaper on paper and more expensive in practice. Here is where the joins fail. And how Ideovent Technologies structures the work instead."
   },
   {
     "id": 7,
     "title": "How Ideovent Technologies Empowers Small Businesses in New Delhi",
+    "slug": "how-ideovent-technologies-empowers-small-businesses-in-new-delhi",
     "image": "/blog-covers/how-ideovent-technologies-empowers-small-businesses-in-new-d.webp",
-    "description": "See how Ideovent Technologies helps New Delhi’s small businesses grow online, with affordable websites, apps, and local SEO that deliver results."
+    "description": "See how Ideovent Technologies helps small businesses in New Delhi get online, with websites, apps and local SEO, priced in writing before any work starts."
   },
   {
     "id": 8,
     "title": "What Working With Ideovent Technologies Is Like",
+    "slug": "what-working-with-ideovent-technologies-is-like",
     "image": "/blog-covers/what-working-with-ideovent-technologies-is-like.webp",
     "description": "One team for design, build, SEO and support; a discovery-led process; and a relationship that carries on after launch. Here is how a project with Ideovent Technologies actually runs."
   },
   {
     "id": 9,
     "title": "Why Digital Transformation is the Key to Business Growth in 2025. An Ideovent Perspective",
+    "slug": "why-digital-transformation-is-the-key-to-business-growth-in-2025-an-ideovent-per",
     "image": "/blog-covers/why-digital-transformation-is-the-key-to-business-growth-in.webp",
     "description": "Discover how digital transformation is shaping industries in 2025 and why businesses partnering with Ideovent Technologies stay ahead of the curve."
   }

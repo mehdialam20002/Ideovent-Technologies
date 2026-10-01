@@ -63,7 +63,16 @@ export default defineConfig(({ mode }) => {
           const p = id.split("node_modules/").pop() || "";
           if (/^(react|react-dom|scheduler|react-router|react-router-dom|@remix-run)[/@]/.test(p)) return "react-vendor";
           if (/^(framer-motion|motion-dom|motion-utils)[/@]/.test(p)) return "motion";
-          if (/^(@radix-ui|@floating-ui|aria-hidden|react-remove-scroll)/.test(p)) return "radix";
+          /*
+            NO "radix" CHUNK ANY MORE (1 Oct 2026, SEO audit P1-2). Every @radix-ui
+            package, floating-ui and react-remove-scroll went into ONE 96 KB chunk
+            that every public page preloaded, because the error boundary's
+            <Button> pulls in @radix-ui/react-slot. Public pages use Slot and
+            nothing else now (the FAQ accordions are native <details>), so 84% of
+            that chunk was admin and CRM dialogs, menus and popovers. Without the
+            rule Rollup puts Slot with the entry and the rest in the admin and
+            CRM chunks that actually use it.
+          */
           if (/^(@supabase|iceberg-js)/.test(p)) return "supabase";
         },
       },

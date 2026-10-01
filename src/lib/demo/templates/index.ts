@@ -20,7 +20,7 @@
  * offers are read (`loadTemplate`) and copy (`fromTemplate`, next door).
  *
  * ── WHY THE LOADERS ARE DYNAMIC IMPORTS, AND WHO MAY IMPORT THIS FILE ─────
- * Ten rich records are tens of kilobytes. src/lib/cms/seed.ts is imported by
+ * Seventeen rich records are tens of kilobytes. src/lib/cms/seed.ts is imported by
  * main.tsx, so anything there is in the entry chunk every homepage visitor
  * downloads; that is where the old example records lived and it is exactly
  * where these must not go. Each content file is reached only through the
@@ -64,7 +64,7 @@ export {
   type DesignFamily,
 } from "./families";
 
-/* ── The ten ─────────────────────────────────────────────────────────────── */
+/* ── The seventeen ───────────────────────────────────────────────────────── */
 
 /*
   RE-POINTED 26 SEPTEMBER 2026 TO THE MULTI-PAGE THEMES. Each template now
@@ -379,7 +379,7 @@ export function templatePreviewPath(id: TemplateId): string {
 
 /* Every id has exactly one registry entry. Checked at module load in dev, and
    by scripts/test-from-template.mjs in CI, so a copy-pasted entry with a
-   repeated id cannot quietly hide one of the ten. */
+   repeated id cannot quietly hide one of the seventeen. */
 if (import.meta.env?.DEV) {
   const seen = new Set<string>();
   for (const t of TEMPLATES) {

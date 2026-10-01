@@ -8,7 +8,6 @@ import {
   Loader2,
   MessageCircle,
   ShieldAlert,
-  Sparkles,
 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Seo } from "@/components/seo/Seo";
@@ -23,6 +22,7 @@ import SpecimenCertificate from "@/components/certificate/SpecimenCertificate";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import { getIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { liveEmail } from "@/lib/mailbox";
 import { Honeypot } from "@/components/lead/fields";
 // This page is a lazy route, so the delivery half of the lead pipeline can be
 // imported directly; EmailJS itself still loads only when Send is pressed.
@@ -107,6 +107,7 @@ export default function Internship() {
   const { lead, accent } = accentTitle(internship.title);
   const whatsappNumber = (contact.whatsappNumber || "").replace(/\D/g, "");
   const whatsappLink = whatsappNumber ? `https://wa.me/${whatsappNumber}`: "";
+  const email = liveEmail(contact);
 
   /* The failure path's WhatsApp link, with the application already written in,
      so an applicant whose form did not send does not type it all again. Only
@@ -201,16 +202,9 @@ export default function Internship() {
 
   return (
     <Layout>
+      {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/internship"]). */}
       <Seo
-        title="Ideovent LaunchPad. Web Development Internship"
-        description="A 12-week web development internship in New Delhi, mentored directly by the partners of Ideovent Technologies, with a published 100-mark rubric and a certificate anyone can verify. No job is promised and we do not do placements."
         path="/internship"
-        keywords={[
-          "web development internship New Delhi",
-          "React internship India",
-          "12 week web development training Delhi NCR",
-          "internship with verifiable certificate New Delhi",
-        ]}
         breadcrumbs={[{ name: "Internship", path: "/internship" }]}
         /* Course, because that is what this is: a structured 12-week training
          * programme with a published curriculum and a published rubric.
@@ -285,7 +279,7 @@ export default function Internship() {
                   <button
                     type="button"
                     onClick={scrollToForm}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground shadow-[0_0_40px_-12px_hsl(var(--primary)/0.7)] transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100"
+                    className="inline-flex h-12 items-center gap-2 rounded-lg bg-primary px-6 font-medium text-primary-foreground transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100"
                   >
                     Apply. It costs nothing
                     <ArrowRight className="h-4 w-4" />
@@ -293,7 +287,7 @@ export default function Internship() {
                   {issued.length > 0 && (
                     <Link
                       to={`/verify/${issued[issued.length - 1].certificateId}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                      className="inline-flex h-12 items-center gap-2 rounded-lg border border-border px-6 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
                     >
                       <BadgeCheck className="h-4 w-4" />
                       Try the verification first
@@ -301,8 +295,7 @@ export default function Internship() {
 )}
                   {/* Renders only while a batch is genuinely open. */}
                   {internship.batchLabel && (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-sm font-medium text-foreground">
-                      <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="inline-flex items-center text-sm font-medium text-foreground">
                       {internship.batchLabel}
                     </span>
 )}
@@ -331,8 +324,9 @@ export default function Internship() {
             */}
             <Reveal delay={0.15}>
               <div className="relative mx-auto max-w-md lg:ml-auto">
-                <div className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-primary/10 blur-2xl" aria-hidden />
-                <div className="rotate-2 rounded-3xl border border-border bg-card/60 p-3 shadow-2xl">
+                {/* Flat since 1 Oct 2026: no blurred glow behind it, no tilt,
+                    no heavy shadow (the generated-page kit, hero brief). */}
+                <div className="rounded-2xl border border-border bg-card p-3">
                   <SpecimenCertificate />
                 </div>
                 {/* whitespace-nowrap: at 375px this caption wrapped onto two
@@ -340,7 +334,7 @@ export default function Internship() {
                     the certificate and sit on the QR code: the one part of
                     the image the caption is pointing at. One line fits in
                     343px with room to spare. */}
-                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
                   QR-verifiable certificate
                 </span>
               </div>
@@ -800,7 +794,7 @@ export default function Internship() {
                       href={whatsappLink}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="mt-6 inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                      className="mt-6 inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
                     >
                       <MessageCircle className="h-4 w-4" />
                       Ask a question on WhatsApp
@@ -840,7 +834,7 @@ export default function Internship() {
                           href={whatsappLink}
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                          className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
                         >
                           <MessageCircle className="h-4 w-4" />
                           Ask a question
@@ -1015,7 +1009,7 @@ export default function Internship() {
                     <button
                       type="submit"
                       disabled={status === "submitting"}
-                      className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 font-medium text-primary-foreground transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100 disabled:opacity-70"
+                      className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 font-medium text-primary-foreground transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100 disabled:opacity-70"
                     >
                       {status === "submitting" ? (
                         <>
@@ -1031,11 +1025,27 @@ export default function Internship() {
 
                     <p className="text-center text-xs text-muted-foreground text-pretty">
                       No payment is taken here. We store your name, email, phone, college and stream
-                      to process this application and nothing else, email{" "}
-                      <a href={contact.emailHref} className="link-underline text-primary">
-                        {contact.emailDisplay}
-                      </a>{" "}
-                      and we will delete it.
+                      to process this application and nothing else.{" "}
+                      {email ? (
+                        <>
+                          Email{" "}
+                          <a href={email.href} className="link-underline text-primary">{email.display}</a>{" "}
+                          and we will delete it.
+                        </>
+                      ) : (
+                        <>
+                          Message us on WhatsApp
+                          {whatsappLink && (
+                            <>
+                              {" "}at{" "}
+                              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="link-underline whitespace-nowrap text-primary">
+                                {contact.phoneDisplay}
+                              </a>
+                            </>
+                          )}{" "}
+                          and we will delete it.
+                        </>
+                      )}
                     </p>
                   </form>
 )}

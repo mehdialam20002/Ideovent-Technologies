@@ -14,6 +14,7 @@ import { useCollection } from "@/lib/cms/context";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/lib/cms/types";
+import { PAGE_SEO } from "@/lib/seo/pages";
 
 /**
  * /work
@@ -242,7 +243,7 @@ function LeadProjectRow({ project: p }: { project: Project }) {
             href={p.liveUrl}
             target="_blank"
             rel="noreferrer noopener"
-            className="group mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/50
+            className="group mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-background/50
                        px-4 font-mono text-xs text-foreground transition-colors duration-200
                        hover:border-primary/60 hover:bg-muted active:bg-muted/70"
           >
@@ -272,7 +273,7 @@ function LeadProjectRow({ project: p }: { project: Project }) {
 
         <Link
           to={`/work/${p.slug}`}
-          className="group mt-7 inline-flex min-h-11 items-center gap-1.5 rounded-full bg-primary px-5 text-sm
+          className="group mt-7 inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-5 text-sm
                      font-medium text-primary-foreground transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100"
         >
           Read the case study
@@ -413,23 +414,12 @@ export default function Work() {
 
   return (
     <Layout>
-      <Seo
-        title="Work"
-        description="Client projects you can open and use: a gym marketplace, a local delivery marketplace, a wedding studio site, a clothing storefront, a coaching institute site and two internal business tools. Built in Saket, New Delhi."
-        path="/work"
-        /* The work pages get their own generated card. A share of /work
-           otherwise previewed with the same sentence as the homepage, and
-           picking one project's screenshot to stand for all of them would
-           misrepresent the page. Built by scripts/build_brand_assets.py. */
-        image="/og/ideovent-og-work.png"
-        keywords={[
-          "web development portfolio New Delhi",
-          "React project case studies India",
-          "e-commerce website examples Delhi",
-          "web application case study India",
-        ]}
-        breadcrumbs={[{ name: "Work", path: "/work" }]}
-      />
+      {/* Title, description and card: src/lib/seo/pages.ts (PAGE_SEO["/work"]).
+          The work pages get their own generated card: a share of /work
+          otherwise previewed with the homepage's sentence, and one project's
+          screenshot standing for all of them would misrepresent the page.
+          Built by scripts/build_brand_assets.py. */}
+      <Seo path="/work" image="/og/ideovent-og-work.png" breadcrumbs={[{ name: "Work", path: "/work" }]} />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden pt-36 pb-12 md:pt-44 md:pb-16">
@@ -450,35 +440,33 @@ export default function Work() {
           narrow one. Nothing was added or invented, the same words are used.
         */}
         <div className="container-page relative">
-          <Reveal>
-            <Eyebrow>Our work</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <h1 className="mt-6 max-w-5xl text-hero font-display font-semibold">
-              Open <span className="accent-italic text-gradient">something</span>
-            </h1>
-          </Reveal>
+          {/* The h1 in search words where the eyebrow pill was; the display line
+              is a paragraph, so the page has one h1. No entrance motion above
+              the fold: this hero's fade-in was the page's largest paint arriving
+              late on a phone (SEO audit, 1 Oct 2026). */}
+          <h1 className="max-w-3xl font-display text-base font-semibold text-primary text-balance md:text-lg">
+            {PAGE_SEO["/work"].h1}
+          </h1>
+          <p className="mt-5 max-w-5xl text-hero font-display font-semibold">
+            Open <span className="accent-italic text-gradient">something</span>
+          </p>
 
           <div className="mt-8 grid gap-x-14 gap-y-5 lg:grid-cols-2">
-            <Reveal delay={0.1}>
-              <p className="text-lg text-foreground/85 text-pretty">
-                That is a better test than a logo grid.
-              </p>
-            </Reveal>
-            <Reveal delay={0.15}>
-              <p className="text-base text-muted-foreground text-pretty">
-                Almost everything below is live at an address you can put in your browser right now.
-                Where a project is an internal tool that sits behind a login, we say so and describe
-                it in words instead of showing you a screenshot of somebody else’s staff.
-              </p>
-            </Reveal>
+            <p className="text-lg text-foreground/85 text-pretty">
+              That is a better test than a logo grid.
+            </p>
+            <p className="text-base text-muted-foreground text-pretty">
+              Almost everything below is live at an address you can put in your browser right now.
+              Where a project is an internal tool that sits behind a login, we say so and describe
+              it in words instead of showing you a screenshot of somebody else’s staff.
+            </p>
           </div>
 
           <Reveal delay={0.2}>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <a
                 href="#client-projects"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-[0_0_40px_-12px_hsl(var(--primary)/0.7)] transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100"
+                className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100"
               >
                 See the client work
                 <ArrowRight className="h-4 w-4" />

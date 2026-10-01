@@ -28,6 +28,9 @@ import { unbreakable } from "@/lib/typography";
  * WHO OPENS THIS. A school principal or a coaching director, on a mid-range
  * Android phone, from a WhatsApp message, usually on patchy data, usually
  * between two other things. It has about four seconds to be worth reading.
+ * Since 28 Sep 2026 it can also be a dentist who runs a clinic
+ * (`instituteType: "dental"`): the benefits, the "why now" list, the proof
+ * lines and the package's words then speak of patients, not parents.
  *
  * ── WHAT THE 25 SEP 2026 REDESIGN CHANGED, AND WHY ────────────────────────
  * _assets/DESIGN-DIRECTION.md, "The pitch pages specifically": the design job
@@ -205,6 +208,42 @@ const BENEFITS: Record<PitchInstituteType | "unknown", Benefit[]> = {
     NOTICES,
     SPEED,
   ],
+  /* A DENTAL CLINIC (28 Sep 2026). The reader is a patient, often one in
+     pain, and the argument is trust and an appointment. Every line is about
+     what the site does, never a claim about the clinic's care: no "best", no
+     "painless", no promised time, as in DENTAL-COMPLIANCE.md. */
+  dental: [
+    {
+      title: "Appointment requests that reach a phone",
+      body:
+        "Every request lands on WhatsApp and in email the second it is sent, with the name, the problem and the number already in the message. A patient with tooth pain often books with whoever answers first.",
+    },
+    {
+      title: "Treatments and starting prices on a page",
+      body:
+        "Root canal, implants, braces, cleaning: what each one is, how many visits it takes, and a starting price where you choose to publish one. A patient who cannot find any figure assumes the worst one.",
+    },
+    {
+      title: "Your dentists, introduced properly",
+      body:
+        "Each doctor’s degrees, specialisation and experience, written the way you give them to us. No “best dentist in town” lines: patients do not believe them, and they are not needed.",
+    },
+    {
+      title: "Hours, directions and an emergency line",
+      body:
+        "When you are open, how to reach you, and what to do about tooth pain after hours, on one screen. Patients often look these up on the way to you.",
+    },
+    {
+      title: "Updates you post yourself",
+      body:
+        "A new doctor, a holiday closure, a change in timings. You type it and it is live. No developer, no waiting for us, and no bill for a two-line change.",
+    },
+    {
+      title: "Opens on a weak connection",
+      body:
+        "Built and checked on a mid-range Android phone on 4G in a bad spot, because that is where a patient actually is when they look you up.",
+    },
+  ],
 };
 
 /**
@@ -236,13 +275,54 @@ const ADMISSION_SEASON: Benefit[] = [
 ];
 
 /**
+ * The same fallback for a dental clinic (28 Sep 2026). A clinic has no
+ * admission season; what it has is a patient searching, often in pain. It
+ * describes how people look for a dentist, not the clinic, so it cannot
+ * accuse anybody of anything either. No figures: none of these is measured.
+ */
+const PATIENT_SEARCH: Benefit[] = [
+  {
+    title: "Many patients search when something already hurts",
+    body:
+      "Tooth pain does not wait for a recommendation. They search for a dentist nearby, open two or three results, and phone the one that answers their question first.",
+  },
+  {
+    title: "Almost everybody arrives on a phone, and not a new one",
+    body:
+      "The question is not whether the site looks good on the computer at your front desk. It is whether it opens on a three-year-old Android on 4G outside your clinic.",
+  },
+  {
+    title: "Price is the question nobody wants to phone about",
+    body:
+      "A patient who sees no starting figure for a root canal or an implant often assumes the worst and keeps looking. A starting price and a line about the consultation keep them reading.",
+  },
+  {
+    title: "A request that waits a day is usually lost",
+    body:
+      "Not because the patient changed their mind, but because another clinic answered first. Where the request lands matters as much as whether it was captured at all.",
+  },
+];
+
+/**
  * The people. Roles exactly as `_assets/FACTS.md` fixes them, after the
  * corrections of 24 Sep 2026 and 27 Sep 2026 (Animesh Raturi hidden) and of
  * 28 Sep 2026: no Founder / Co-Founder title on anybody, Mehdi Alam is
  * Software Developer, Abhishek Tiwari is Product Manager, Saif Ali (new) is
  * Senior App Developer. Abhilasha Kumari is a Developer. Neither is a partner. No photographs, and no headcount anywhere.
  */
-const TEAM = [
+interface TeamMember {
+  name: string;
+  role: string;
+  /** The line under the title. Absent: the card renders without one. */
+  line?: string;
+  /** The same line for a dental clinic's page, where it differs. */
+  lineDental?: string;
+}
+
+/** The line a card prints: the dental one on a dental clinic's page, where one is written. */
+const teamLine = (m: TeamMember, dental: boolean) => (dental && m.lineDental ? m.lineDental : m.line);
+
+const TEAM: TeamMember[] = [
   {
     name: "Mehdi Alam",
     role: "Software Developer",
@@ -272,6 +352,8 @@ const TEAM = [
     name: "Abhilasha Kumari",
     role: "Developer",
     line: "Builds the front end: the pages your parents and students actually touch.",
+    /* The same work, for a dental clinic's page (28 Sep 2026). */
+    lineDental: "Builds the front end: the pages your patients actually touch.",
   },
 ];
 
@@ -604,7 +686,7 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
   const scope = page.proposedScope ?? [];
   const team = (page.teamNames ?? []).filter(Boolean);
   const benefits = BENEFITS[page.instituteType ?? "unknown"];
-  const proof = proofEntries(defaultProofOrder(page.instituteType));
+  const proof = proofEntries(defaultProofOrder(page.instituteType), page.instituteType);
   const preparedOn = pitchDate(page.preparedOn, "india");
   const validUntil = pitchDate(page.validUntil, "india");
   const expired = isPitchExpired(page);
@@ -628,11 +710,23 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
   const featuredSlug = proof.find((e) => e.image && e.linkState === "live")?.slug;
 
   /* What to call them in running text. When `instituteType` is empty we do not
-     guess, we say "institute", which is true of both. The article has to move
-     with it: "a coaching institute", "a school", "an institute". */
+     guess, we say "institute", which is true of a school and a coaching centre
+     alike (a record with no type predates dental clinics). The article has to
+     move with it: "a coaching institute", "a school", "a dental clinic", "an
+     institute". */
   const noun =
-    page.instituteType === "coaching" ? "coaching institute" : page.instituteType === "school" ? "school" : "institute";
+    page.instituteType === "coaching"
+      ? "coaching institute"
+      : page.instituteType === "school"
+        ? "school"
+        : page.instituteType === "dental"
+          ? "dental clinic"
+          : "institute";
   const aNoun = `${page.instituteType ? "a" : "an"} ${noun}`;
+  /* Who reads their site. A dental clinic's reader is a patient; everyone
+     else's, including an institute of unknown type, is a parent. */
+  const dental = page.instituteType === "dental";
+  const reader = dental ? "a patient" : "a parent";
 
   return (
     /* pb-24 on mobile clears the sticky call to action, which is fixed and
@@ -666,9 +760,9 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
           <div className="container-page flex gap-2.5 py-2.5">
             <AlertTriangle className={cn("mt-0.5 h-4 w-4 shrink-0", GOLD_TEXT)} aria-hidden />
             <p className="text-xs leading-relaxed text-foreground sm:text-sm">
-              <strong className="font-semibold">Example page.</strong> The institute, the city, the director and
-              the observations below are placeholders that ship with the site so the layout can be checked. Do
-              not send this to anybody.
+              <strong className="font-semibold">Example page.</strong> The {dental ? "clinic" : "institute"}, the
+              city, the {dental ? "doctor" : "director"} and the observations below are placeholders that ship with
+              the site so the layout can be checked. Do not send this to anybody.
             </p>
           </div>
         </div>
@@ -964,8 +1058,8 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
                 }
                 sub={
                   page.currentWebsite
-                    ? `We opened ${page.currentWebsite} the way a parent would: on a phone, on mobile data. None of this is a criticism of whoever built it.`
-                    : `We looked at ${page.instituteName} the way a parent would: on a phone, on mobile data. None of this is a criticism of whoever built it.`
+                    ? `We opened ${page.currentWebsite} the way ${reader} would: on a phone, on mobile data. None of this is a criticism of whoever built it.`
+                    : `We looked at ${page.instituteName} the way ${reader} would: on a phone, on mobile data. None of this is a criticism of whoever built it.`
                 }
               />
               <ul className="mt-8 grid gap-x-10 sm:mt-10 sm:grid-cols-2">
@@ -1004,7 +1098,9 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
           When we have no observations at all, this section carries the
           admission-season context first, because the page has not yet told
           the reader why any of this is urgent. It describes the SEASON and
-          not the institute, so it cannot accuse anybody of anything.
+          not the institute, so it cannot accuse anybody of anything. A
+          dental clinic gets PATIENT_SEARCH instead: how patients look for a
+          dentist, which is just as impersonal.
 
           SPACING: the widest of the argument sections. This is the one that
           has to breathe, because it is the longest read on the page.
@@ -1021,7 +1117,7 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
                   Built around what {aNoun} <Loud>actually sells</Loud>
                 </h2>
                 <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
-                  Not a list of features. A list of the things a parent does on your site between finding you
+                  Not a list of features. A list of the things {reader} does on your site between finding you
                   and phoning you.
                 </p>
               </div>
@@ -1038,14 +1134,24 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
                 <SectionHead
                   label="Why now"
                   title={
-                    <>
-                      What an admission season actually <Loud>asks of a website</Loud>
-                    </>
+                    dental ? (
+                      <>
+                        What a patient’s search actually <Loud>asks of a website</Loud>
+                      </>
+                    ) : (
+                      <>
+                        What an admission season actually <Loud>asks of a website</Loud>
+                      </>
+                    )
                   }
-                  sub="We have not measured your site, so this is about the season rather than about you. Correct us on the call."
+                  sub={
+                    dental
+                      ? "We have not measured your site, so this is about how patients look for a dentist rather than about you. Correct us on the call."
+                      : "We have not measured your site, so this is about the season rather than about you. Correct us on the call."
+                  }
                 />
                 <ul className="mt-8 grid gap-x-10 border-b border-border sm:mt-10 sm:grid-cols-2">
-                  {ADMISSION_SEASON.map((item, i) => (
+                  {(dental ? PATIENT_SEARCH : ADMISSION_SEASON).map((item, i) => (
                     <PointRow key={item.title} item={item} index={i} />
                   ))}
                 </ul>
@@ -1242,7 +1348,9 @@ export default function PitchIndia({ page }: { page: PitchPage }) {
                   <div className="min-w-0">
                     <h3 className="font-display text-base font-semibold tracking-tight">{m.name}</h3>
                     <p className="text-sm font-medium text-[hsl(var(--primary))]">{m.role}</p>
-                    {m.line && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{m.line}</p>}
+                    {teamLine(m, dental) && (
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{teamLine(m, dental)}</p>
+                    )}
                   </div>
                 </li>
               ))}

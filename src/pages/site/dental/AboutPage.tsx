@@ -5,7 +5,8 @@
  * Contract: E:/myagency/_assets/DENTAL-ARCHITECTURE.md.
  *
  * Story (about, split at blank lines) beside the established year and the
- * mission, the trust figures (sample-labelled), why patients trust us (facts),
+ * mission, with SampleNote "story" under it while it is the template's (30
+ * Sep 2026), the trust figures (sample-labelled), why patients trust us (facts),
  * the sterilisation protocol, comfort, technology, the team and photos.
  */
 
@@ -66,6 +67,8 @@ export default function AboutPage({ site, ctx }: SitePageProps) {
                   {i === 0 ? <Accent text={p} /> : p}
                 </p>
               ))}
+              {/* The template's history and year, until the clinic's own replace them. */}
+              <SampleNote block="story" className="mt-6" />
             </div>
           </div>
         </HSection>

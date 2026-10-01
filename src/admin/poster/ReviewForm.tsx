@@ -1,9 +1,8 @@
-import type { ReactNode } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import type {
-  PosterContact, PosterCourse, PosterExtract, PosterFaculty, PosterResult,
-} from "@/lib/ai/posterSchema";
-import { Field, Section } from "./ui";
+import type { PosterCourse, PosterFaculty, PosterResult } from "@/lib/ai/posterSchema";
+import { toKind, type PosterDraft } from "@/lib/ai/dentalPosterSchema";
+import { ContactSection, Field, KindPicker, Rows, Section } from "./ui";
+import { commas, lines, uncommas, unlines } from "./listText";
+import { DentalReviewForm } from "./DentalReviewForm";
 
 /**
  * EVERY FIELD THE POSTER READER RETURNED, EDITABLE, before anything is made.
@@ -12,90 +11,27 @@ import { Field, Section } from "./ui";
  * is exactly what `fromPoster` will overlay, and an empty box means the
  * template's own content stays in that place.
  *
- * LISTS ARE EDITED AS TEXT that round-trips exactly (split on a newline or a
- * comma, joined back with the same character), so typing "Physics, " does
- * not jump the caret. Blank lines and spaces are tidied once, on Create, by
- * normalizeExtract.
+ * A DENTAL CLINIC (28 Sep 2026) gets its own form (./DentalReviewForm.tsx):
+ * doctors, treatments, timings and fees instead of courses and results.
+ * The Kind switch moves between the two and keeps what was typed.
+ *
+ * Lists are edited as text that round-trips exactly (see ./listText.ts). Blank
+ * lines and spaces are tidied once, on Create, by the normaliser.
  */
 
-type Patch = (p: Partial<PosterExtract>) => void;
-
-const lines = (l: string[] | undefined) => (l || []).join("\n");
-const unlines = (s: string) => (s ? s.split("\n") : []);
-const commas = (l: string[] | undefined) => (l || []).join(",");
-const uncommas = (s: string) => (s ? s.split(",") : []);
-
-const smallButton =
-  "inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-/** A list of rows (courses, teachers, results) with Add and Remove. */
-function Rows<T extends object>({
-  noun, items, onChange, render, blank,
-}: {
-  noun: string;
-  items: T[] | undefined;
-  onChange: (next: T[]) => void;
-  render: (item: T, set: (p: Partial<T>) => void, i: number) => ReactNode;
-  blank: T;
-}) {
-  const list = items || [];
-  return (
-    <div className="grid gap-3">
-      {!list.length && (
-        <p className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-          None on the poster, so the template’s own {noun}s stay. Add one to replace them.
-        </p>
-      )}
-      {list.map((item, i) => (
-        <div key={i} className="grid gap-3 rounded-xl border border-border/70 bg-muted/10 p-3">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-muted-foreground">
-              {noun[0].toUpperCase() + noun.slice(1)} {i + 1}
-            </span>
-            <button
-              type="button"
-              className={smallButton}
-              aria-label={`Remove ${noun} ${i + 1}`}
-              onClick={() => onChange(list.filter((_, j) => j !== i))}
-            >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Remove
-            </button>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {render(item, (p) => onChange(list.map((x, j) => (j === i ? { ...x, ...p } : x))), i)}
-          </div>
-        </div>
-      ))}
-      <button type="button" className={`${smallButton} justify-self-start`} onClick={() => onChange([...list, { ...blank }])}>
-        <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Add a {noun}
-      </button>
-    </div>
-  );
-}
+type Patch = (p: Partial<PosterDraft>) => void;
 
 /** The whole form. `x` is the extract as edited so far. */
-export function ReviewForm({ x, onChange }: { x: PosterExtract; onChange: (next: PosterExtract) => void }) {
+export function ReviewForm({ x, onChange }: { x: PosterDraft; onChange: (next: PosterDraft) => void }) {
+  if (x.kind === "dental") return <DentalReviewForm x={x} onChange={onChange} />;
   const set: Patch = (p) => onChange({ ...x, ...p });
-  const contact = x.contact || {};
-  const setContact = (p: Partial<PosterContact>) => set({ contact: { ...contact, ...p } });
   const adm = x.admissions || {};
-  const phones = contact.phones || [];
 
   return (
     <div className="grid gap-4">
       <Section title="The institute">
         <div className="grid gap-3 sm:grid-cols-2">
-          <fieldset className="sm:col-span-2">
-            <legend className="text-xs font-medium text-muted-foreground">Kind</legend>
-            <div className="mt-1 flex gap-4 text-sm">
-              {(["school", "coaching"] as const).map((k) => (
-                <label key={k} className="inline-flex items-center gap-2">
-                  <input type="radio" name="poster-kind" value={k} checked={x.kind === k} onChange={() => set({ kind: k })} />
-                  {k === "school" ? "School" : "Coaching"}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <KindPicker value={x.kind} onChange={(k) => onChange(toKind(x, k))} />
           <Field id="px-name" label="Institute name (required)" value={x.instituteName} onChange={(v) => set({ instituteName: v })} placeholder="Not read: type it as the poster spells it" />
           <Field id="px-name-hi" label="Hindi name" lang="hi" value={x.instituteNameHi} onChange={(v) => set({ instituteNameHi: v })} />
           <Field id="px-tagline" label="Tagline" className="sm:col-span-2" value={x.tagline} onChange={(v) => set({ tagline: v })} />
@@ -112,35 +48,7 @@ export function ReviewForm({ x, onChange }: { x: PosterExtract; onChange: (next:
         </div>
       </Section>
 
-      <Section title="Contact, from the poster">
-        <div className="grid gap-3">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground" id="px-phones-label">Phone numbers</p>
-            <div className="mt-1 grid gap-2" role="group" aria-labelledby="px-phones-label">
-              {!phones.length && (
-                <p className="rounded-xl border border-dashed border-border bg-muted/30 p-2 text-xs text-muted-foreground">Not on the poster.</p>
-              )}
-              {phones.map((p, i) => (
-                <div key={i} className="flex items-end gap-2">
-                  <Field id={`px-phone-${i}`} label={i === 0 ? "Phone (shown on the site)" : `Phone ${i + 1} (kept in private notes)`} className="flex-1" type="tel" value={p} onChange={(v) => setContact({ phones: phones.map((q, j) => (j === i ? v : q)) })} />
-                  <button type="button" className="mb-0.5 rounded-full border border-border p-2 hover:bg-muted" aria-label={`Remove phone ${i + 1}`} onClick={() => setContact({ phones: phones.filter((_, j) => j !== i) })}>
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-              <button type="button" className={`${smallButton} justify-self-start`} onClick={() => setContact({ phones: [...phones, ""] })}>
-                <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Add a phone
-              </button>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field id="px-whatsapp" label="WhatsApp" type="tel" value={contact.whatsapp} onChange={(v) => setContact({ whatsapp: v })} />
-            <Field id="px-email" label="Email" type="email" value={contact.email} onChange={(v) => setContact({ email: v })} />
-            <Field id="px-website" label="Website" value={contact.website} onChange={(v) => setContact({ website: v })} />
-            <Field id="px-address" label="Address" multiline value={contact.address} onChange={(v) => setContact({ address: v })} />
-          </div>
-        </div>
-      </Section>
+      <ContactSection contact={x.contact} onChange={(contact) => set({ contact })} />
 
       <Section title="Admissions">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -164,7 +72,7 @@ export function ReviewForm({ x, onChange }: { x: PosterExtract; onChange: (next:
   );
 }
 
-function CoursesFacultyResults({ x, set }: { x: PosterExtract; set: Patch }) {
+function CoursesFacultyResults({ x, set }: { x: PosterDraft; set: Patch }) {
   return (
     <>
       <Section title="Courses or batches">

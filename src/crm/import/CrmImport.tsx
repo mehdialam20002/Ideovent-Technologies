@@ -21,7 +21,7 @@ export default function CrmImport() {
       <aside className="lg:pt-14">
         <div className={cn(crm.panel, crm.panelPad, "space-y-2 text-[13px]")}>
           <p className={crm.label}>No list yet?</p>
-          <p className="text-muted-foreground">Find schools and coaching institutes on the map, then add them as leads in one click.</p>
+          <p className="text-muted-foreground">Find schools, coaching institutes and dental clinics on the map, then add them as leads in one click.</p>
           <Link to={CRM.finder} className={cn(crm.btn, "mt-1")}>
             <MapPin className="h-4 w-4" aria-hidden="true" /> Open Lead finder
           </Link>

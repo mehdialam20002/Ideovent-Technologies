@@ -31,6 +31,12 @@ const variantMap: Record<NonNullable<Cta["variant"]>, ButtonProps["variant"]> = 
  *
  * The `magnetic` prop went with it. Three call sites were already passing
  * `magnetic={false}` to opt out.
+ *
+ * NO PILL, NO GLOW (1 Oct 2026). The shape was `rounded-full` and the primary
+ * button carried a 40px glow in --primary. A pair of glowing pill buttons is on
+ * the hero brief's list of generated-page tells (section 1, item 5), so every
+ * CtaButton now has the plain shape the new home hero and the navbar use:
+ * rounded-lg, flat, no shadow.
  */
 export function CtaButton({ cta, size = "lg", className }: { cta: Cta; size?: ButtonProps["size"]; className?: string }) {
   const variant = variantMap[cta.variant || "primary"];
@@ -41,7 +47,7 @@ export function CtaButton({ cta, size = "lg", className }: { cta: Cta; size?: Bu
       asChild
       size={size}
       variant={variant}
-      className={cn("rounded-full font-medium", variant === "default" && "shadow-[0_0_40px_-12px_hsl(var(--primary)/0.7)]", className)}
+      className={cn("rounded-lg font-medium shadow-none", className)}
     >
       {external ? (
         <a href={cta.href} target={cta.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer noopener">

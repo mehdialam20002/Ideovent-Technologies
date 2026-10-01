@@ -24,19 +24,24 @@
       Conversely: never put data-rh on the icon or manifest <link>s below.
       Helmet deletes every link[data-rh] it does not itself emit.
     -->
-    <title>Websites, apps and software for growing businesses | Ideovent, New Delhi</title>
+    <!--
+      NO CANONICAL AND NO og:url IN THIS FILE (1 Oct 2026, SEO audit P0-3).
+      This file is served for every address that has no prerendered HTML of its
+      own (pitch pages, demos, the admin, a mistyped URL), so a canonical here
+      told Google that each of those was the homepage, and JavaScript then
+      changed it, which Google's JavaScript SEO guide says not to do. Every
+      public page now gets its own head at build time (scripts/prerender-heads.mjs
+      writes dist/<route>/index.html from src/lib/seo/pages.ts), and <Seo> sets
+      the canonical at runtime for the rest. The title and description below
+      are the homepage's, rewritten from the same source at build.
+    -->
+    <title>Web Design &amp; Software Company in New Delhi | Ideovent</title>
     <meta
       data-rh="true"
       name="description"
-      content="Websites your customers can find on Google, that open fast on a phone and send every enquiry to you. Apps and software too. Free website check, fixed price in writing."
+      content="Websites, web apps and software for businesses, built in Saket, New Delhi. Buy outright from ₹8,000, or ₹899/month + ₹2,999 setup on a 12-month plan."
     />
-    <meta
-      data-rh="true"
-      name="keywords"
-      content="web development company Saket, website development New Delhi, custom SaaS development Delhi NCR, React development New Delhi, web application development India, UI UX design New Delhi, small business website development India, web development internship Delhi"
-    />
-    <meta data-rh="true" name="robots" content="index, follow" />
-    <link data-rh="true" rel="canonical" href="%VITE_PUBLIC_URL%/" />
+    <meta data-rh="true" name="robots" content="index, follow, max-image-preview:large" />
 
     <!--
       Icons / PWA. Every file here is drawn from the REAL logo in
@@ -64,14 +69,13 @@
     <meta
       data-rh="true"
       property="og:title"
-      content="Websites, apps and software for growing businesses | Ideovent, New Delhi"
+      content="Web Design &amp; Software Company in New Delhi | Ideovent"
     />
     <meta
       data-rh="true"
       property="og:description"
-      content="Websites your customers can find on Google, that open fast on a phone and send every enquiry to you. Apps and software too. Free website check, fixed price in writing."
+      content="Websites, web apps and software for businesses, built in Saket, New Delhi. Buy outright from ₹8,000, or ₹899/month + ₹2,999 setup on a 12-month plan."
     />
-    <meta data-rh="true" property="og:url" content="%VITE_PUBLIC_URL%/" />
     <meta data-rh="true" property="og:image" content="%VITE_PUBLIC_URL%/og/ideovent-og.png" />
     <meta data-rh="true" property="og:image:width" content="1200" />
     <meta data-rh="true" property="og:image:height" content="630" />
@@ -82,12 +86,12 @@
     <meta
       data-rh="true"
       name="twitter:title"
-      content="Websites, apps and software for growing businesses | Ideovent, New Delhi"
+      content="Web Design &amp; Software Company in New Delhi | Ideovent"
     />
     <meta
       data-rh="true"
       name="twitter:description"
-      content="Websites your customers can find on Google, that open fast on a phone and send every enquiry to you. Apps and software too. Free website check, fixed price in writing."
+      content="Websites, web apps and software for businesses, built in Saket, New Delhi. Buy outright from ₹8,000, or ₹899/month + ₹2,999 setup on a 12-month plan."
     />
     <meta data-rh="true" name="twitter:image" content="%VITE_PUBLIC_URL%/og/ideovent-og.png" />
 
@@ -114,8 +118,7 @@
               "height": 512
             },
             "image": "%VITE_PUBLIC_URL%/og/ideovent-og.png",
-            "description": "Web and software studio in Saket, New Delhi building websites, web apps, custom SaaS and mobile apps for growing businesses.",
-            "email": "contact@ideovent.in",
+            "description": "Web and software studio in Saket, New Delhi: websites, web apps, custom software, mobile apps and local SEO for businesses in India and abroad.",
             "telephone": "+917761921786",
             "foundingDate": "2024",
             "employee": [
@@ -130,7 +133,6 @@
               "addressRegion": "Delhi",
               "addressCountry": "IN"
             },
-            "geo": { "@type": "GeoCoordinates", "latitude": 28.5245, "longitude": 77.2066 },
             "openingHoursSpecification": [
               {
                 "@type": "OpeningHoursSpecification",

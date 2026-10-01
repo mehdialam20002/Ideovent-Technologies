@@ -102,11 +102,11 @@ export default defineTemplateContent("dental", {
     },
     {
       slug: "why-retainers-matter", title: "Why retainers matter after braces", date: "20 Aug 2026", category: "Aftercare", treatment: "retainers-and-aftercare",
-      author: "Dr. Megha Jain", reviewedBy: "Medically reviewed by Dr. Pooja Agarwal, MDS (Orthodontics and Dentofacial Orthopaedics)",
+      author: "Dr. Tanvi Mehrotra", reviewedBy: "Medically reviewed by Dr. Pooja Agarwal, MDS (Orthodontics and Dentofacial Orthopaedics)",
       excerpt: "Teeth tend to drift back after braces come off. The retainer is what keeps the result, and for most people it is for years.",
       body: "When braces or aligners finish, the fibres around each tooth still remember the old position. Without a retainer, teeth tend to drift back, often within months.\n\nThere are two kinds. A fixed retainer is a thin wire bonded behind the front teeth; you cannot forget it, but it needs careful cleaning around it. A removable retainer is a clear tray or a wire plate, usually worn every night.\n\nMost orthodontists now advise wearing a retainer at night for the long term. Teeth keep moving slightly throughout life, whether or not you had braces.\n\nBring your retainer to every review. If it cracks, feels tight or stops fitting, call the clinic soon; a retainer made quickly costs far less than a second course of braces.",
       hi: {
-        title: "ब्रेसेज़ के बाद रिटेनर क्यों ज़रूरी है", date: "20 अगस्त 2026", category: "देखभाल", author: "डॉ. मेघा जैन", reviewedBy: "डॉ. पूजा अग्रवाल, MDS (ऑर्थोडॉन्टिक्स और डेंटोफ़ेशियल ऑर्थोपेडिक्स) द्वारा चिकित्सकीय समीक्षा",
+        title: "ब्रेसेज़ के बाद रिटेनर क्यों ज़रूरी है", date: "20 अगस्त 2026", category: "देखभाल", author: "डॉ. तन्वी मेहरोत्रा", reviewedBy: "डॉ. पूजा अग्रवाल, MDS (ऑर्थोडॉन्टिक्स और डेंटोफ़ेशियल ऑर्थोपेडिक्स) द्वारा चिकित्सकीय समीक्षा",
         excerpt: "ब्रेसेज़ हटने के बाद दाँत वापस खिसकने लगते हैं। रिटेनर ही नतीजा बनाए रखता है, और ज़्यादातर लोगों के लिए सालों तक।",
         body: "ब्रेसेज़ या अलाइनर पूरे होने पर भी हर दाँत के आसपास के रेशे पुरानी जगह को याद रखते हैं। रिटेनर के बिना दाँत वापस खिसकने लगते हैं, अक्सर कुछ महीनों में।\n\nये दो तरह के होते हैं। फ़िक्स्ड रिटेनर आगे के दाँतों के पीछे चिपका एक पतला तार है; इसे भूल नहीं सकते, पर इसके आसपास सावधानी से सफ़ाई करनी होती है। निकालने वाला रिटेनर एक पारदर्शी ट्रे या तार वाली प्लेट है, जो आमतौर पर हर रात पहनी जाती है।\n\nज़्यादातर ऑर्थोडॉन्टिस्ट अब लंबे समय तक रात में रिटेनर पहनने की सलाह देते हैं। ब्रेसेज़ लगे हों या नहीं, दाँत पूरी ज़िंदगी थोड़ा खिसकते रहते हैं।\n\nहर जाँच पर रिटेनर साथ लाएँ। अगर वह टूटे, टाइट लगे या ठीक से न बैठे, तो जल्दी क्लिनिक को कॉल करें; जल्दी बना रिटेनर दोबारा ब्रेसेज़ से बहुत कम ख़र्च का होता है।",
       },
@@ -168,10 +168,10 @@ export default defineTemplateContent("dental", {
         hi: { name: "डॉ. राहुल खंडेलवाल", qualification: "BDS, MDS (ऑर्थोडॉन्टिक्स और डेंटोफ़ेशियल ऑर्थोपेडिक्स)", specialisation: "ऑर्थोडॉन्टिस्ट", focus: "सेल्फ़-लिगेटिंग और लिंग्वल ब्रेसेज़, वयस्क ऑर्थोडॉन्टिक्स, जबड़े की ग्रोथ के उपकरण", experience: "8 साल का अनुभव", languages: ["हिंदी", "अंग्रेज़ी", "मारवाड़ी"], regNo: "रजि. नं. A-00000 (नमूना)", days: "मंगल, गुरु, शनि और रवि" },
       },
       {
-        slug: "megha-jain", name: "Dr. Megha Jain", photo: "/demo/img/people/dentist-w06-240.webp", gender: "female",
+        slug: "tanvi-mehrotra", name: "Dr. Tanvi Mehrotra", photo: "/demo/img/people/dentist-w06-240.webp", gender: "female",
         qualification: "BDS", specialisation: "General dentist", focus: "Cleaning and fillings before braces, brace repairs, retainer checks",
         experience: "5 years in practice", languages: ["Hindi", "English"], regNo: "Reg. no. A-00000 (sample)", days: "Mon to Sat",
-        hi: { name: "डॉ. मेघा जैन", qualification: "BDS", specialisation: "जनरल डेंटिस्ट", focus: "ब्रेसेज़ से पहले सफ़ाई और फ़िलिंग, ब्रेसेज़ की मरम्मत, रिटेनर जाँच", experience: "5 साल का अनुभव", languages: ["हिंदी", "अंग्रेज़ी"], regNo: "रजि. नं. A-00000 (नमूना)", days: "सोम से शनि" },
+        hi: { name: "डॉ. तन्वी मेहरोत्रा", qualification: "BDS", specialisation: "जनरल डेंटिस्ट", focus: "ब्रेसेज़ से पहले सफ़ाई और फ़िलिंग, ब्रेसेज़ की मरम्मत, रिटेनर जाँच", experience: "5 साल का अनुभव", languages: ["हिंदी", "अंग्रेज़ी"], regNo: "रजि. नं. A-00000 (नमूना)", days: "सोम से शनि" },
       },
     ],
     journey: [

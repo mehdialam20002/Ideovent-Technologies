@@ -5,6 +5,7 @@ import {
   usageToday, testKeys, needsMigration, providerInfo, isPosterProvider, GOOGLE_MAPS_ID,
   type ProviderId, type KeyProviderId, type ProviderKeyRow, type Usage, type UsageCount, type TestResult,
 } from "@/lib/ai/keys";
+import { FREE_USAGE } from "@/lib/leadFinder/freeUsage";
 import { cn } from "@/lib/utils";
 
 /*
@@ -99,6 +100,9 @@ function LocalNotice() {
         <p className="mt-1 text-muted-foreground">
           This admin is in Local mode, so there is nowhere safe to store a key. Open the admin on the live site,
           sign in, and add the keys there. The poster reader also runs only on the live site.
+        </p>
+        <p data-testid="maps-free-usage" className="mt-2 text-muted-foreground">
+          Lead Finder (Google Maps key): {FREE_USAGE.google} {FREE_USAGE.cap} {FREE_USAGE.capCaveat} {FREE_USAGE.card} {FREE_USAGE.osm}
         </p>
       </div>
     </div>
@@ -318,9 +322,18 @@ function AiKeysLive() {
           <h2 id="maps-key-title" className="flex items-center gap-2 font-display text-lg font-semibold">
             <MapPin className="h-5 w-5 text-primary" aria-hidden="true" /> Lead Finder
           </h2>
-          <p className="mb-3 mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Not an AI key and never used for posters. The Lead Finder searches Google Maps with it. Keys are tried top to bottom.
           </p>
+          <div data-testid="maps-free-usage" className="mb-3 mt-2 rounded-xl border border-success/40 bg-success/10 p-3 text-sm">
+            <p className="font-medium">Free, if you cap it</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted-foreground">
+              <li>{FREE_USAGE.google}</li>
+              <li>{FREE_USAGE.cap} {FREE_USAGE.capCaveat}</li>
+              <li>{FREE_USAGE.card}</li>
+              <li>{FREE_USAGE.osm} It lists fewer businesses and fewer phone numbers than Google Maps.</li>
+            </ul>
+          </div>
           <ol>
             <ProviderCard {...cardProps(GOOGLE_MAPS_ID)} position={0} count={1} standalone onMove={() => undefined} />
           </ol>
@@ -369,8 +382,9 @@ function ProviderCard(props: CardProps) {
           <div className="flex flex-wrap items-center gap-2">
             {!standalone && <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold" aria-label={`Tried ${ordinal(position + 1)}`}>{position + 1}</span>}
             <h2 className="font-medium">{info.label}</h2>
-            <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase", info.free ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>
-              {info.free ? "Free tier" : "Paid"}
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] uppercase", info.free || standalone ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>
+              {/* Google Maps: free up to 7,000 a month each on India pricing; the quotas keep it there. */}
+              {info.free ? "Free tier" : standalone ? "Free with quotas" : "Paid"}
             </span>
             <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
               {keys.length === 0 ? "No key" : `${keys.length} key${keys.length === 1 ? "" : "s"}`}

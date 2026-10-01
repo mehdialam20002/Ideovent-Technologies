@@ -1,5 +1,7 @@
 /**
- * Keep the noindex header on the bare pitch slug in step with the route table.
+ * Keep the noindex header on the bare pitch slug in step with the route table,
+ * and keep the crm.ideovent.in rules (noindex everywhere, its own robots.txt)
+ * in vercel.json; see CRM_HOST below.
  *
  *   node scripts/sync-noindex-header.mjs          rewrite vercel.json
  *   node scripts/sync-noindex-header.mjs --check  fail if it is stale
@@ -52,13 +54,18 @@ const RULE_PREFIX = "/:pitchSlug(";
  * containing a dot, which is also why robots.txt and sitemap.xml keep their
  * ordinary headers.
  */
-const STATIC_PATHS = ["assets", "api", "blog-covers", "certificates", "icons", "og", "work"];
+const STATIC_PATHS = ["assets", "api", "blog-covers", "certificates", "demo", "home", "icons", "og", "work"];
 
 function firstSegment(path) {
   const seg = String(path).replace(/^\/+/, "").split("/")[0] || "";
   if (!seg || seg.startsWith(":") || seg.includes("*") || seg.includes("(")) return null;
+  // A segment with a dot (robots.txt) can never match the [^/.]+ below anyway.
+  if (seg.includes(".")) return null;
   return seg.toLowerCase();
 }
+
+/** True for a rule limited to one host with "has": [{ "type": "host" }]. */
+const hostScoped = (r) => Array.isArray(r.has) && r.has.some((h) => h && h.type === "host");
 
 function reservedSegments(cfg) {
   const app = readFileSync(APP, "utf8");
@@ -75,8 +82,10 @@ function reservedSegments(cfg) {
   // by Vercel before the bundle runs, so it is a real address and must not be
   // swept into the pitch rule.
   for (const r of cfg.redirects || []) {
+    // A redirect for one other host (the CRM's robots.txt) reserves nothing here.
+    if (hostScoped(r)) continue;
     for (const p of [r.source, r.destination]) {
-      const seg = p && firstSegment(p);
+      const seg = p && !/^[a-z][a-z0-9+.-]*:\/\//i.test(p) && firstSegment(p);
       if (seg) out.add(seg);
     }
   }
@@ -127,6 +136,39 @@ const shareRewrite = {
   destination: "/api/share?kind=pitch&slug=:slug",
 };
 
+/**
+ * THE CRM'S OWN SUBDOMAIN (30 Sep 2026).
+ *
+ * crm.ideovent.in is served by this same project and build; App.tsx renders
+ * only the CRM there (a sign-in wall). Nothing on that host is for a search
+ * engine, so on that host, and only there:
+ *
+ *   - every path carries X-Robots-Tag: noindex, nofollow;
+ *   - /robots.txt answers with public/robots-crm.txt (User-agent: * / Disallow: /).
+ *
+ * The robots rule is a REDIRECT, not a rewrite, on purpose. Vercel checks the
+ * filesystem before it applies rewrites (that is why the SPA fallback below
+ * does not swallow /assets), so a rewrite whose source is a real file,
+ * public/robots.txt, never fires and the CRM host would get the main site's
+ * robots file. Redirects run before the filesystem, and crawlers follow a
+ * redirected robots.txt (Google follows up to five hops). The SPA fallback has
+ * no host condition, so the CRM host gets index.html like the main site.
+ *
+ * These are written and checked here, like the bare-slug rules, so a hand edit
+ * of vercel.json that drops them fails `npm run build` (the --check step).
+ */
+const CRM_HOST = "crm.ideovent.in";
+const ON_CRM_HOST = [{ type: "host", value: CRM_HOST }];
+const crmNoindex = {
+  source: "/(.*)",
+  has: ON_CRM_HOST,
+  headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+};
+const crmRobots = { source: "/robots.txt", has: ON_CRM_HOST, destination: "/robots-crm.txt", permanent: false };
+const forCrmHost = (r) => Array.isArray(r.has) && r.has.some((h) => h && h.type === "host" && h.value === CRM_HOST);
+
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
 const headers = cfg.headers || [];
 const at = headers.findIndex((h) => typeof h.source === "string" && h.source.startsWith(RULE_PREFIX));
 const current = at >= 0 ? headers[at] : null;
@@ -135,16 +177,32 @@ const rewrites = cfg.rewrites || [];
 const rwAt = rewrites.findIndex((r) => typeof r.source === "string" && r.source.startsWith("/:slug("));
 const currentRw = rwAt >= 0 ? rewrites[rwAt] : null;
 
-const inSync =
-  current &&
-  JSON.stringify(current) === JSON.stringify(rule) &&
-  currentRw &&
-  JSON.stringify(currentRw) === JSON.stringify(shareRewrite);
+const redirects = cfg.redirects || [];
+const crmHeaderAt = headers.findIndex((h) => h.source === crmNoindex.source && forCrmHost(h));
+const crmRobotsAt = redirects.findIndex((r) => r.source === crmRobots.source && forCrmHost(r));
+
+const slugInSync = Boolean(current && same(current, rule) && currentRw && same(currentRw, shareRewrite));
+const crmInSync =
+  crmHeaderAt >= 0 && same(headers[crmHeaderAt], crmNoindex) && crmRobotsAt >= 0 && same(redirects[crmRobotsAt], crmRobots);
+const inSync = slugInSync && crmInSync;
 
 if (process.argv.includes("--check")) {
   if (inSync) {
     console.log("ok    bare-slug noindex header and share rewrite match the route table");
+    console.log(`ok    ${CRM_HOST}: noindex on every path, /robots.txt goes to /robots-crm.txt`);
     process.exit(0);
+  }
+  if (slugInSync) console.log("ok    bare-slug noindex header and share rewrite match the route table");
+  if (!crmInSync) {
+    console.error(`FAIL  vercel.json's ${CRM_HOST} rules are missing or changed.`);
+    console.error("      The CRM's subdomain must send X-Robots-Tag: noindex, nofollow");
+    console.error("      on every path and answer /robots.txt with robots-crm.txt.");
+    console.error("      header:   " + (crmHeaderAt >= 0 ? JSON.stringify(headers[crmHeaderAt]) : "(none)"));
+    console.error("      redirect: " + (crmRobotsAt >= 0 ? JSON.stringify(redirects[crmRobotsAt]) : "(none)"));
+    console.error("");
+    console.error("      Fix with:  npm run sync:noindex");
+    if (slugInSync) process.exit(1);
+    console.error("");
   }
   console.error("FAIL  vercel.json's bare-slug rules are stale.");
   console.error("      A route was added or removed, so the pattern no longer");
@@ -163,18 +221,35 @@ if (inSync) {
   process.exit(0);
 }
 
-if (at >= 0) headers[at] = rule;
-else headers.push(rule);
-cfg.headers = headers;
+if (!slugInSync) {
+  if (at >= 0) headers[at] = rule;
+  else headers.push(rule);
 
-// The share rewrite must sit BEFORE the SPA catch-all, or /(.*) swallows it.
-if (rwAt >= 0) rewrites[rwAt] = shareRewrite;
-else {
-  const catchAll = rewrites.findIndex((r) => r.source === "/(.*)");
-  rewrites.splice(catchAll < 0 ? rewrites.length : catchAll, 0, shareRewrite);
+  // The share rewrite must sit BEFORE the SPA catch-all (the rewrite to
+  // /index.html, "/((?!assets/).*)"), or the catch-all swallows it.
+  if (rwAt >= 0) rewrites[rwAt] = shareRewrite;
+  else {
+    const catchAll = rewrites.findIndex((r) => r.destination === "/index.html");
+    rewrites.splice(catchAll < 0 ? rewrites.length : catchAll, 0, shareRewrite);
+  }
 }
+
+if (!crmInSync) {
+  if (crmHeaderAt >= 0) headers[crmHeaderAt] = crmNoindex;
+  else headers.push(crmNoindex);
+  if (crmRobotsAt >= 0) redirects[crmRobotsAt] = crmRobots;
+  else redirects.push(crmRobots);
+}
+
+cfg.headers = headers;
 cfg.rewrites = rewrites;
+cfg.redirects = redirects;
 
 writeFileSync(VERCEL, JSON.stringify(cfg, null, 2) + "\n", "utf8");
-console.log((at >= 0 ? "updated" : "added  ") + " bare-slug noindex rule and share rewrite");
-console.log("        " + source);
+if (!slugInSync) {
+  console.log((at >= 0 ? "updated" : "added  ") + " bare-slug noindex rule and share rewrite");
+  console.log("        " + source);
+}
+if (!crmInSync) {
+  console.log((crmHeaderAt >= 0 || crmRobotsAt >= 0 ? "updated" : "added  ") + ` ${CRM_HOST} rules: noindex header, robots.txt redirect`);
+}

@@ -60,11 +60,13 @@ export interface SiteSettings {
     subheading?: string;
   };
   /**
-   * E-mail Mehdi when somebody opens a SENT demo on /site/<slug>. Default on
-   * (undefined means on). Public on purpose: the demo page runs as `anon` and
-   * cannot read outreach_settings, and an on/off flag reveals nothing. The
-   * Outreach settings tab writes this and `alertOnDemoOpen` together. See
-   * src/lib/demo/opens.ts.
+   * RETIRED 1 Oct 2026: no e-mail is sent when a demo is opened
+   * (src/lib/demo/opens.ts recordDemoOpen ignores the alert context, and
+   * DemoSiteRoute still passes this value along to it). Nothing writes the flag
+   * any more: the CRM Settings tab and the admin settings editor dropped their
+   * switches. A stored value stays in the row and does nothing; the field is
+   * kept so old rows still type-check. It was the public on/off for the
+   * demo-open e-mail (undefined meant on).
    */
   demoOpenAlerts?: boolean;
 }
@@ -154,7 +156,63 @@ export interface PriceRow {
   href?: string;
 }
 
+/**
+ * One screenshot in the home hero's strip. OUR OWN TEMPLATES ONLY: a sample
+ * site with made-up names, captured by us. Never a prospect's /site/<slug>
+ * demo, never a stock photograph of a person, never a sample rating in frame.
+ */
+export interface HomeHeroFrame {
+  /** Under public/home/, e.g. "/home/sample-c2-hindi-tuition.webp". */
+  src: string;
+  /** The file's real pixel size, so the frame reserves its box before it loads. */
+  width: number;
+  height: number;
+  alt: string;
+  /** Printed under the frame, in plain words: "Orthodontic clinic". */
+  label: string;
+}
+
+/**
+ * The home hero since 1 Oct 2026 (Mehdi: the old one "looks AI-generated").
+ *
+ * A NEW KEY ON PURPOSE. The live Supabase `home` row stores every older field
+ * (its badge still says "est. 2023" and its subheading "three partners"), and a
+ * stored key always wins over the seed. That row has no `hero`, so this block
+ * shows exactly as seeded until somebody saves Home in /admin. Hero.tsx reads
+ * this and nothing else, and falls back to the seed field by field.
+ */
+export interface HomeHeroContent {
+  /** The h1, one entry per line: two short lines on a computer, run together on a phone. */
+  lines: string[];
+  /** ONE supporting sentence under the h1. */
+  sub: string;
+  /** The main button. */
+  primary: Cta;
+  /** WhatsApp button: its label and the full wa.me link. */
+  whatsapp: Cta;
+  /**
+   * Small text link to the monthly plans on /pricing, with NO figure (Mehdi,
+   * 26 Sep 2026: no price in the first screen). If a "{starter}" token is ever
+   * typed in, Hero.tsx prints the monthly figure with its setup fee and
+   * 12-month term in the same line (no drip pricing). Empty label hides it.
+   */
+  plansLink?: Cta;
+  /** Optional words after that link. Empty unless the link carries a price. */
+  plansNote?: string;
+  /** One line of short, true facts (FACTS.md only). Empty list hides it. */
+  trust: string[];
+  /** Screenshots of our own templates. Empty list hides the strip. */
+  frames: HomeHeroFrame[];
+  /** Caption under the frames. Must say they are samples. */
+  framesCaption: string;
+  /** Link after the caption, to real client work. Optional. */
+  framesLink?: Cta;
+}
+
 export interface HomeHero {
+  /** 1 Oct 2026 hero. Everything from `badge` to `stat` below is the pre-October
+   *  hero, no longer rendered (only `priceTeaser` still is, by PriceSummary). */
+  hero?: HomeHeroContent;
   badge: string;
   headingLines: { text: string; highlighted?: boolean }[];
   subheading: string;
@@ -404,6 +462,15 @@ export type LegalKind = keyof LegalContent;
 
 /* ───────────────── Collections ───────────────── */
 
+/** One block of a service page: an h2 with a paragraph, a list, or both. */
+export interface ServiceSection {
+  heading: string;
+  body?: string;
+  items?: string[];
+  /** Internal links under the block, with words that say where they go. */
+  links?: { label: string; href: string }[];
+}
+
 export interface Service extends BaseDoc {
   title: string;
   slug: string;
@@ -414,6 +481,29 @@ export interface Service extends BaseDoc {
   deliverables: string[];
   showOnHome: boolean;
   showInFooter: boolean;
+  /* Search fields (1 Oct 2026, keyword plan). All optional: a service without
+     them falls back to title / shortDescription / longDescription exactly as
+     before. See src/lib/seo/pages.ts, serviceSeo(). */
+  /** The complete <title>, brand included, 60 characters or fewer. */
+  seoTitle?: string;
+  /** Meta description, 155 characters or fewer. */
+  metaDescription?: string;
+  /** The page's one <h1>, in the words people search with. `title` when empty. */
+  h1?: string;
+  /** The paragraph under the h1. `longDescription` when empty. */
+  intro?: string;
+  /** The line under the "What you get" list. Unset: the revision-rounds line. "": none. */
+  deliverablesNote?: string;
+  /** Extra sections below the hero, in order. */
+  sections?: ServiceSection[];
+  /** Show the `faqs` of this category on the page (and mark them up there). */
+  faqCategory?: string;
+  /**
+   * Hide the four project stages (ProcessSection: two revision rounds, 50/30/20,
+   * code on final payment) on a monthly service such as SEO or a care plan,
+   * where those project terms do not apply. Unset: shown, as before.
+   */
+  hideProcess?: boolean;
 }
 
 export interface Testimonial extends BaseDoc {
@@ -650,9 +740,12 @@ export type PitchStatus = "draft" | "live" | "archived";
 /**
  * What the institute is. A coaching institute sells results and batches, a
  * school sells admissions and trust, so the designs give different things top
- * billing.
+ * billing. "dental" (28 Sep 2026) is an Indian dental clinic on the India
+ * design: it sells trust and an appointment, and the page speaks of patients
+ * rather than parents. A dental practice ABROAD is `vertical: "dental"` on
+ * the international design instead.
  */
-export type PitchInstituteType = "school" | "coaching";
+export type PitchInstituteType = "school" | "coaching" | "dental";
 
 /**
  * The trade an international prospect is in, from the secondary-market list in
@@ -1991,7 +2084,10 @@ export interface DemoSampleMarks {
   prints: Partial<Record<
     | "faculty" | "results" | "fees" | "reviews" | "timings" | "photos"
     /* Dental (28 Sep 2026): the trust row, before-after cases, the doctors. */
-    | "stats" | "cases" | "doctors",
+    | "stats" | "cases" | "doctors"
+    /* Every kind (30 Sep 2026): the founding story and year the About page
+       prints (`about`, `established`, `establishedYear` and their Hindi). */
+    | "story",
     string
   >>;
   /** Ticked in the admin: the results and reviews are the institute's own. */

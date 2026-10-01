@@ -53,6 +53,8 @@ const STATIC_PATHS = [
   "api", // Vercel's serverless convention, reserved even though none exist yet
   "blog-covers",
   "certificates",
+  "demo", // demo photos and the manifest (public/demo/)
+  "home", // the home hero's screenshots (public/home/), since 1 Oct 2026
   "icons",
   "og",
   "work", // also a real route; listed here because it is a folder too
@@ -86,14 +88,19 @@ function routeSegments(): string[] {
 function redirectSegments(): string[] {
   try {
     const cfg = JSON.parse(vercelJson) as {
-      redirects?: { source?: string; destination?: string }[];
+      redirects?: { source?: string; destination?: string; has?: { type?: string }[] }[];
       rewrites?: { source?: string }[];
     };
     const out: string[] = [];
     for (const r of cfg.redirects || []) {
+      // A rule for one other host (the CRM's robots.txt, the old
+      // ideovent.vercel.app address sent to www) reserves nothing on the host
+      // a pitch page lives on. Same rule as scripts/sync-noindex-header.mjs.
+      if (Array.isArray(r.has) && r.has.some((h) => h && h.type === "host")) continue;
       for (const p of [r.source, r.destination]) {
-        // "/(.*)" and friends are catch-alls, not reserved names.
-        if (!p || p.includes("(")) continue;
+        // "/(.*)" and friends are catch-alls, not reserved names, and a full
+        // URL ("https://…") is another site, not a segment of this one.
+        if (!p || p.includes("(") || /^[a-z][a-z0-9+.-]*:\/\//i.test(p)) continue;
         const seg = firstSegment(p);
         if (seg) out.push(seg);
       }
@@ -139,7 +146,7 @@ export function pitchSlugIssue(
   opts: { pages?: PitchPage[]; currentId?: string } = {},
 ): string | null {
   const s = (slug || "").trim();
-  if (!s) return "A link needs a slug. It is the part after the slash that you send to the institute.";
+  if (!s) return "A link needs a slug. It is the part after the slash that you send to the institute or clinic.";
   if (!isWellFormedPitchSlug(s)) {
     return `"${s}" is not a usable link. Use lower-case letters, numbers and single hyphens only, with no spaces, dots or slashes.`;
   }

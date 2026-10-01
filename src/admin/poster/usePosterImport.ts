@@ -5,7 +5,7 @@ import { useCms } from "@/lib/cms/context";
 import { loadTemplate, templateMeta, type TemplateId } from "@/lib/demo/templates";
 import { fromTemplate, type DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
 import { fromPoster, provenanceNote } from "@/lib/demo/templates/fromPoster";
-import type { PosterExtract } from "@/lib/ai/posterSchema";
+import type { AnyPosterExtract } from "@/lib/ai/dentalPosterSchema";
 import { providerLabel } from "@/lib/ai/posterClient";
 import { DuplicateTemplateDialog } from "@/admin/DuplicateTemplateDialog";
 import { PosterImportDialog, type PosterReadMeta } from "@/admin/PosterImportDialog";
@@ -29,7 +29,9 @@ import { outreachStore } from "@/lib/outreach/store";
  * lead the institute already is (src/lib/outreach/demoLead.ts): the poster
  * review screen has its own "Also add to CRM" box, the manual path follows
  * the CRM setting "Add every new demo to the CRM". A failure there never
- * loses the demo.
+ * loses the demo. A dental clinic's demo (28 Sep 2026) is read into a
+ * DentalPosterExtract, built on a dental template, and becomes a DENTAL lead
+ * through the same helper, which takes the kind from the demo.
  *
  * The caller renders `dialog`.
  */
@@ -84,7 +86,7 @@ export function usePosterImport() {
   );
 
   const create = useCallback(
-    async (id: TemplateId, extract: PosterExtract, meta: PosterReadMeta, opts?: { addToCrm: boolean }) => {
+    async (id: TemplateId, extract: AnyPosterExtract, meta: PosterReadMeta, opts?: { addToCrm: boolean }) => {
       setBusy(true);
       setError(null);
       try {
@@ -150,6 +152,8 @@ export function usePosterImport() {
   } else if (manual) {
     dialog = createElement(DuplicateTemplateDialog, {
       templateLabel: templateMeta(manual.id)?.label || manual.id,
+      /* A dental template asks for the clinic's name, as the Templates tab's Duplicate does. */
+      kind: templateMeta(manual.id)?.kind,
       busy,
       error,
       initial: manual.known,

@@ -18,7 +18,7 @@ import { useSite } from "@/lib/demo/site/context";
 import { SAMPLE_COPY, showSampleLine, type SampleLineBlock } from "@/lib/demo/site/sample";
 
 export function SampleNote({ block, className = "", onDark = false }: {
-  /** Dental adds "stats" (trust row), "cases" (before-after) and "doctors". */
+  /** Dental adds "stats" (trust row), "cases" (before-after) and "doctors"; every About page has "story". */
   block: SampleLineBlock;
   className?: string;
   /** True on a dark band, so the line keeps its contrast. */

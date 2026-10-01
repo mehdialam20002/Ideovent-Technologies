@@ -5,12 +5,24 @@
  *
  * Mehdi types a type and a city ("coaching", "Patna"). This function asks
  * Google Maps (Places API, New) for the businesses, and the admin page then
- * asks it to audit each one's website: none, broken, poor or ok, with the
- * evidence. One click in the page turns a place into an Outreach lead.
+ * asks it to audit each one's website: none, broken, poor or ok (or
+ * unchecked, for a page drawn by scripts), with the evidence. One click in
+ * the page turns a place into a CRM lead.
  *
- *   { action: "search",  query?, type?, city?, pageToken? } -> { places[], nextPageToken }
- *   { action: "details", placeId }                          -> { place }
- *   { action: "audit",   url } or { urls: [..10] }          -> { audit } or { audits[] }
+ *   { action: "search",  query?, type?, city?, preset?, pageToken? } -> { source, places[], nextPageToken, attribution }
+ *   { action: "details", placeId }                                   -> { place }   (Google results only)
+ *   { action: "audit",   url } or { urls: [..10] }, kind?            -> { audit } or { audits[] }
+ *
+ * THE FREE SOURCE (28 Sep 2026)
+ *
+ * With a working Google key, Google answers (source "google"). With no key
+ * saved, or when every key fails (out of quota, billing off, a bad key), the
+ * search goes to OpenStreetMap instead (source "osm", api/_lib/osm.js): free,
+ * no key, fewer businesses and fewer phones, and the answer says so and
+ * carries "© OpenStreetMap contributors". `fallback` says why Google was not
+ * used. An OSM "Load more" token starts with "osm." and never touches Google.
+ * `kind: "dental"` on an audit adds the dental checks (booking, WhatsApp,
+ * treatment pages).
  *
  * WHO MAY CALL IT
  *
@@ -37,6 +49,9 @@
  *
  * Keys never appear in a response or a log line.
  */
+import {
+  OSM_ATTRIBUTION, OSM_COPYRIGHT_URL, OSM_LICENCE, OSM_NOTE, OSM_TOKEN_RE, OsmError, osmSearch,
+} from "./_lib/osm.js";
 import { PlacesError, PLACE_ID_RE, placeDetails, textSearch } from "./_lib/places.js";
 import { redact } from "./_lib/providers.js";
 import { auditSite } from "./_lib/siteAudit.js";
@@ -45,8 +60,12 @@ import { getUser, isAdmin, readKeys, supabaseEnv } from "./_lib/supabaseRest.js"
 export const PROVIDER = "google_maps";
 const PER_ATTEMPT_MS = 10_000;
 const BUDGET_MS = 25_000;
+/* A search leaves OpenStreetMap time to answer when Google fails (vercel.json: 30 s). */
+const SEARCH_GOOGLE_BUDGET_MS = 12_000;
+const SEARCH_TOTAL_MS = 27_500;
 const MIN_ATTEMPT_MS = 3_000;
 const MAX_AUDITS = 10;
+const AUDIT_KINDS = ["school", "coaching", "dental", "other"];
 
 /** YYYY-MM-DD in India, as in api/poster.js. */
 const istDay = (ms) => new Date(ms + 330 * 60_000).toISOString().slice(0, 10);
@@ -87,20 +106,28 @@ export function parseRequest(body) {
     if (pageToken !== null && (typeof pageToken !== "string" || pageToken.length > 4000 || /\s/.test(pageToken))) {
       return { status: 400, error: "pageToken is not valid" };
     }
-    return { action, textQuery, pageToken };
+    const preset = clean(body.preset, 40);
+    if (preset && !/^[a-z0-9_-]+$/.test(preset)) return { status: 400, error: "preset is not valid" };
+    // OpenStreetMap needs the type and the city apart: "NEET coaching in Gaya" -> "NEET coaching", "Gaya".
+    const split = /^(.*?)\s+in\s+(.+)$/i.exec(query);
+    const osm = { type: type || (split ? split[1] : query), city: city || (split ? split[2] : ""), preset: preset || null };
+    const osmPage = pageToken && OSM_TOKEN_RE.exec(pageToken);
+    return { action, textQuery, pageToken: osmPage ? null : pageToken, osm, osmOffset: osmPage ? Number(osmPage[1]) : null };
   }
   if (action === "details") {
     if (typeof body.placeId !== "string" || !PLACE_ID_RE.test(body.placeId)) return { status: 400, error: "placeId is not valid" };
     return { action, placeId: body.placeId };
   }
   if (action === "audit") {
+    if (body.kind != null && !AUDIT_KINDS.includes(body.kind)) return { status: 400, error: `kind must be one of ${AUDIT_KINDS.join(", ")}` };
+    const kind = body.kind || null;
     if (Array.isArray(body.urls)) {
       if (!body.urls.length || body.urls.length > MAX_AUDITS) return { status: 400, error: `Send 1 to ${MAX_AUDITS} urls` };
       if (!body.urls.every((u) => u == null || (typeof u === "string" && u.length <= 500))) return { status: 400, error: "Each url must be text" };
-      return { action, urls: body.urls.map((u) => u ?? "") };
+      return { action, urls: body.urls.map((u) => u ?? ""), kind };
     }
     if (body.url != null && (typeof body.url !== "string" || body.url.length > 500)) return { status: 400, error: "url must be text" };
-    return { action, url: body.url ?? "" };
+    return { action, url: body.url ?? "", kind };
   }
   return { status: 400, error: "action must be search, details or audit" };
 }
@@ -130,7 +157,7 @@ async function markKey(env, token, row, status, detail) {
  * Returns { value, attempts }, or { error, detail, attempts } when the request
  * itself was wrong, or { attempts } alone when every key failed.
  */
-async function withKeys(env, token, rows, started, fn) {
+async function withKeys(env, token, rows, started, fn, budgetMs = BUDGET_MS) {
   const attempts = [];
   const today = istDay(Date.now());
   const tag = (row) => (row.label ? { label: row.label } : {});
@@ -139,7 +166,7 @@ async function withKeys(env, token, rows, started, fn) {
       attempts.push({ ...tag(row), status: "skipped", error: "Out of quota today. Tried again tomorrow." });
       continue;
     }
-    const left = BUDGET_MS - (Date.now() - started);
+    const left = budgetMs - (Date.now() - started);
     if (left < MIN_ATTEMPT_MS) {
       attempts.push({ ...tag(row), status: "skipped", error: "Out of time" });
       continue;
@@ -202,27 +229,38 @@ export default async function handler(req, res) {
 
   // The audit reads the business's own site and needs no Google key.
   if (job.action === "audit") {
-    if (job.urls) return send(res, 200, { ok: true, audits: await Promise.all(job.urls.map((u) => auditSite(u))) });
-    return send(res, 200, { ok: true, audit: await auditSite(job.url) });
+    const opts = job.kind ? { kind: job.kind } : {};
+    if (job.urls) return send(res, 200, { ok: true, audits: await Promise.all(job.urls.map((u) => auditSite(u, opts))) });
+    return send(res, 200, { ok: true, audit: await auditSite(job.url, opts) });
   }
+
+  const search = job.action === "search";
+  // "Load more" on an OpenStreetMap list stays on OpenStreetMap.
+  if (search && job.osmOffset !== null) return sendOsm(res, job, started, null);
 
   let keys;
   try {
     keys = await readKeys(env, token);
   } catch (e) {
+    if (search) return sendOsm(res, job, started, { code: "keys_unreadable", reason: "The saved Google Maps keys could not be read." });
     return send(res, 502, { ok: false, code: "keys_unreadable", error: e.message });
   }
   const rows = keys.rows.filter((r) => r.provider === PROVIDER && r.api_key);
   if (!rows.length) {
+    if (search) {
+      return sendOsm(res, job, started, keys.missing
+        ? { code: "no_keys", reason: "The keys table is not set up yet (run 0006, then 0009, in Supabase), so no Google Maps key could be used." }
+        : { code: "no_keys", reason: "No Google Maps key is saved." });
+    }
     return send(res, 422, { ok: false, code: "no_keys", error: keys.missing
       ? "The keys table does not exist yet. Run supabase/migrations/0006_ai_keys.sql, then 0009_google_maps_key.sql, in the Supabase SQL editor."
       : "No Google Maps key is saved and switched on. Add one in /admin under AI keys (Google Maps). If saving it fails, run supabase/migrations/0009_google_maps_key.sql first." });
   }
 
-  const fn = job.action === "search"
+  const fn = search
     ? (apiKey, timeoutMs) => textSearch({ apiKey, textQuery: job.textQuery, pageToken: job.pageToken, timeoutMs })
     : (apiKey, timeoutMs) => placeDetails({ apiKey, placeId: job.placeId, timeoutMs });
-  const out = await withKeys(env, token, rows, started, fn);
+  const out = await withKeys(env, token, rows, started, fn, search ? SEARCH_GOOGLE_BUDGET_MS : BUDGET_MS);
 
   if (out.error) {
     const notFound = job.action === "details" && out.error.status === 404;
@@ -230,14 +268,45 @@ export default async function handler(req, res) {
       error: notFound ? "Google has no place with this id any more" : out.detail, attempts: out.attempts });
   }
   if (!out.value) {
+    // A Google "Load more" cannot continue on OpenStreetMap: a new search can.
+    if (search && !job.pageToken) return sendOsm(res, job, started, { ...whyNotGoogle(out.attempts), attempts: out.attempts });
     return send(res, 502, { ok: false, code: "all_failed", attempts: out.attempts,
       error: "No Google Maps key worked. See each key's error in /admin under AI keys." });
   }
   // Google's terms: show "Google Maps" beside Places data shown without a map.
   const attribution = "Google Maps";
-  if (job.action === "search") {
-    return send(res, 200, { ok: true, textQuery: job.textQuery, places: out.value.places,
+  if (search) {
+    return send(res, 200, { ok: true, source: "google", textQuery: job.textQuery, places: out.value.places.map((p) => ({ ...p, source: "google" })),
       nextPageToken: out.value.nextPageToken, attribution, attempts: out.attempts });
   }
-  return send(res, 200, { ok: true, place: out.value, attribution, attempts: out.attempts });
+  return send(res, 200, { ok: true, place: { ...out.value, source: "google" }, attribution, attempts: out.attempts });
 }
+
+/** Why Google was not used, in one sentence the page shows above the OSM list. */
+export function whyNotGoogle(attempts) {
+  const errors = attempts.map((a) => a.error || "").join(" ");
+  const quota = (a) => a.status === "limit" || (a.status === "skipped" && /quota/i.test(a.error || ""));
+  if (attempts.length && attempts.every(quota)) return { code: "quota", reason: "Every Google Maps key is out of quota for today." };
+  if (/billing/i.test(errors)) return { code: "billing", reason: "Google Maps billing is not switched on for the key's project." };
+  if (attempts.some(quota)) return { code: "quota", reason: "Google Maps keys are out of quota or failing (see AI keys)." };
+  if (attempts.length && attempts.every((a) => /Out of time/.test(a.error || ""))) return { code: "timeout", reason: "Google Maps did not answer in time." };
+  return { code: "all_failed", reason: "No Google Maps key worked (see each key's error in AI keys)." };
+}
+
+/** Search OpenStreetMap and send the answer, with its attribution and its honest limits. */
+async function sendOsm(res, job, started, fallback) {
+  const extra = fallback ? { fallback } : {};
+  try {
+    const r = await osmSearch({ ...job.osm, offset: job.osmOffset || 0, deadline: started + SEARCH_TOTAL_MS });
+    return send(res, 200, { ok: true, source: "osm", textQuery: job.textQuery, places: r.places, nextPageToken: r.nextPageToken,
+      total: r.total, attribution: OSM_ATTRIBUTION, attributionUrl: OSM_COPYRIGHT_URL, licence: OSM_LICENCE, note: OSM_NOTE,
+      ...(r.broadened ? { broadened: r.broadened } : {}), ...(r.caveat ? { caveat: r.caveat } : {}), ...extra });
+  } catch (e) {
+    if (!(e instanceof OsmError)) console.error("leads-search: osm failed");
+    const code = e instanceof OsmError ? e.code : "osm_busy";
+    const status = code === "osm_city" ? 422 : code === "osm_type" ? 400 : code === "osm_time" ? 504 : 502;
+    return send(res, status, { ok: false, code, source: "osm",
+      error: e instanceof OsmError ? e.message : "OpenStreetMap search failed. Try again in a minute.", ...extra });
+  }
+}
+

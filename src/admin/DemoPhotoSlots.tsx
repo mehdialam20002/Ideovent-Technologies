@@ -11,6 +11,12 @@
  * (public/demo/img, src/lib/demo/images). A duplicate arrives with the
  * template's stock photos; the notice at the top says so until the hero is
  * replaced, because a real institute's demo should open on its own building.
+ *
+ * A DENTAL record (30 Sep 2026) uses the hero and two section slots (about,
+ * and campus for the clinic photo); its doctors' portraits and treatment
+ * photos live in the Dental block of the form, with a consent tick for a real
+ * dentist's photograph. So this panel points there instead of asking for
+ * teachers, and its stock notice counts those photos too (stockPhotoUse).
  */
 
 import { useId, useMemo, useState } from "react";
@@ -221,14 +227,26 @@ export function DemoPhotoSlots({ site, onChange }: { site: DemoSite; onChange: (
   const shown = showAll ? slots : slots.filter((d) => sectionPhotos[d.slot]);
   const galleryCount = (site.photos || []).filter((p) => p.src).length;
   const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  /* A clinic's portraits are its doctors', kept with each doctor in the Dental block. */
+  const dental = site.kind === "dental";
+  const stockParts = [
+    plural(use.sections.length, "section photo"),
+    plural(use.faculty, "portrait"),
+    ...(dental ? [plural(use.dental, "treatment or clinic photo")] : []),
+    plural(use.gallery, "gallery photo"),
+  ];
+  const stockList = `${stockParts.slice(0, -1).join(", ")} and ${stockParts[stockParts.length - 1]}`;
 
   return (
     <section aria-labelledby="demo-photos-h" className="space-y-4 rounded-2xl border border-border p-4">
       <div>
         <h3 id="demo-photos-h" className="text-sm font-semibold">Photos</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          The hero, one photo per section, and the teachers' portraits. Paste an image URL, upload a
-          file, or pick from the stock library. The page builds the responsive sizes itself.
+          {dental
+            ? "The hero and a photo for the About page and the clinic. The doctors' portraits and the treatment photos are set in the Dental block below. "
+            : "The hero, one photo per section, and the teachers' portraits. "}
+          Paste an image URL, upload a file, or pick from the stock library. The page builds the
+          responsive sizes itself.
         </p>
       </div>
 
@@ -237,10 +255,9 @@ export function DemoPhotoSlots({ site, onChange }: { site: DemoSite; onChange: (
           <p className="font-medium">{STOCK_PHOTO_CHECKLIST.en}</p>
           <p className="mt-1 text-muted-foreground">
             {use.hero ? "The hero, " : ""}
-            {plural(use.sections.length, "section photo")}, {plural(use.faculty, "portrait")} and{" "}
-            {plural(use.gallery, "gallery photo")} are licensed stock, not this institute. Replace the
-            hero with their own building before you send it, and never caption a stock photo as their
-            campus.
+            {stockList} are licensed stock, not this {dental ? "clinic" : "institute"}. Replace the hero
+            with their own {dental ? "clinic" : "building"} before you send it, and never caption a stock
+            photo as their {dental ? "clinic or their dentist" : "campus"}.
           </p>
         </div>
       )}
@@ -279,10 +296,12 @@ export function DemoPhotoSlots({ site, onChange }: { site: DemoSite; onChange: (
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">Faculty portraits</p>
+        <p className="text-sm font-medium">{dental && faculty.length === 0 ? "Doctors' portraits" : "Faculty portraits"}</p>
         {faculty.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Add teachers in the Faculty list below; each one gets a portrait slot here.
+            {dental
+              ? `Set with each doctor under "Dental clinic pages", Doctors, Photograph (${plural((site.dental?.doctors || []).length, "doctor")} listed now). A stock portrait needs no consent. A real dentist's photograph shows only with its consent box ticked there.`
+              : "Add teachers in the Faculty list below; each one gets a portrait slot here."}
           </p>
         ) : (
           <>

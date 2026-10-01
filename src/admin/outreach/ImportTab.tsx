@@ -94,7 +94,8 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
         <h2 className="font-display text-lg font-semibold">Import leads</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Upload a CSV or paste it below. The first line must be the column names. Works with the sales kit's
-          LEAD-SHEET-TEMPLATE.csv, or a simple sheet with <code>name, phone, email, city, type</code>. Every row needs a
+          LEAD-SHEET-TEMPLATE.csv, or a simple sheet with <code>name, phone, email, city, type</code> (type is school,
+          coaching, dental or other; a DENTAL_ segment or a clinic name that says dental also makes a dental lead). Every row needs a
           name and a phone or email. Not sure of the columns? Download the import template: it has every column the
           importer reads and one example row (Example Public School) to replace with your own leads.
         </p>
@@ -185,7 +186,7 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
               </label>
             </fieldset>
           </div>
-          <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
+          <ul className="mt-3 divide-y divide-border rounded-xl border border-border" data-testid="import-preview">
             {preview.map((p) => (
               <li key={p.row} className="flex flex-wrap items-start gap-x-3 gap-y-1 p-3 text-sm">
                 <span className="w-12 shrink-0 text-xs text-muted-foreground">Row {p.row}</span>

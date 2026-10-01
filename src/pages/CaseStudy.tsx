@@ -16,6 +16,8 @@ import { sanitizeRich } from "@/lib/sanitize";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/lib/cms/types";
+import { projectSeo } from "@/lib/seo/pages";
+import { caseStudyNode } from "@/lib/seo/schema";
 
 export default function CaseStudy() {
   const { slug } = useParams();
@@ -116,9 +118,14 @@ export default function CaseStudy() {
 
   return (
     <Layout>
+      {/* Title ("GYM MAP: Gym Discovery & Joining Platform | Ideovent"; employer
+          work keeps its employer in the title), a description cut at a sentence
+          within 155, and the node below: projectSeo() and caseStudyNode(), the
+          helpers the build uses for this page's prerendered head. */}
       <Seo
-        title={project.title}
-        description={project.summary}
+        title={projectSeo(project).title}
+        fullTitle
+        description={projectSeo(project).description}
         path={`/work/${project.slug}`}
         /* Four projects have no screenshot on file (HighQ Classes, and the two
            tools that sit behind a login). They fall back to the generated work
@@ -130,33 +137,9 @@ export default function CaseStudy() {
           { name: "Work", path: "/work" },
           { name: project.title, path: `/work/${project.slug}` },
         ]}
-        schema={{
-          "@type": "CreativeWork",
-          name: project.title,
-          description: project.summary,
-...(project.coverImage ? { image: project.coverImage }: {}),
-          inLanguage: "en-IN",
-...(project.liveUrl ? { url: project.liveUrl }: {}),
-...(project.technologies?.length ? { keywords: project.technologies.join(", ") }: {}),
-          /* Employer work (WTF Go) was built by our founder while employed at
-             Witness The Fitness Pvt. Ltd. The attribution has to survive into
-             the machine-readable layer too, so Ideovent is NOT named as the
-             creator or publisher of it.
-
-             When employer work carries no usable employer name, this emits
-             NEITHER a publisher nor a creator. An empty `name: ""` is a broken
-             record, and falling through to "creator: Ideovent Technologies"
-             would be the exact false claim the branch exists to avoid. So the
-             correct machine-readable answer is to say nothing at all. */
-...(isEmployerWork
-            ? employerName
-              ? {
-                  publisher: { "@type": "Organization", name: employerName },
-                  creditText: project.clientName,
-                }
-: {}
-: { creator: { "@type": "Organization", name: "Ideovent Technologies" } }),
-        }}
+        /* The CreativeWork node, with the employer-work attribution rules
+           (FACTS.md, ATTRIBUTION RULE): src/lib/seo/schema.ts, caseStudyNode(). */
+        schema={caseStudyNode(project)}
       />
 
       {/* Hero */}
@@ -611,7 +594,7 @@ export default function CaseStudy() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">See it live</p>
                   <p className="mt-2 font-display text-xl font-semibold md:text-2xl">Explore {project.title} in the wild</p>
                 </div>
-                <span className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                <span className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   Visit site <ExternalLink className="h-4 w-4" />
                 </span>
               </a>
@@ -688,7 +671,7 @@ export default function CaseStudy() {
               <div className="flex items-center justify-center gap-3">
                 <Link
                   to="/work"
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" /> Back to all work
                 </Link>

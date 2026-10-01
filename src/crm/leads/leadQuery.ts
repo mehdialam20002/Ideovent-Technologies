@@ -1,6 +1,7 @@
 import type { DemoSite, DemoSiteOpen } from "@/lib/cms/types";
 import { LEAD_STATUSES, type LeadStatus, type OutreachChannel, type OutreachEvent, type OutreachLead } from "@/lib/outreach/types";
 import { endOfToday, isHotOpen, isOpenLead, opensSinceContact } from "@/admin/outreach/derive";
+import { demoLinkFor } from "@/lib/outreach/engine";
 import { groupEvents, hasReplied, startOfDay, wasContacted } from "../metrics";
 
 /**
@@ -294,7 +295,8 @@ const CSV_COLS: [string, (r: LeadRow) => string | number | undefined][] = [
   ["Source", (r) => r.lead.source],
   ["Assigned to", (r) => r.lead.assignedTo],
   ["Tags", (r) => (r.lead.tags || []).join("; ")],
-  ["Demo", (r) => (r.demo?.slug || r.lead.demoSlug ? `/site/${r.demo?.slug || r.lead.demoSlug}` : "")],
+  /* The whole address a prospect opens (engine demoLinkFor: SITE_ORIGIN, the main site), not a path (30 Sep 2026). */
+  ["Demo", (r) => demoLinkFor(r.demo?.slug || r.lead.demoSlug)],
   ["Demo opens", (r) => r.opens],
   ["Last contact", (r) => r.lastContactAt],
   ["Last channel", (r) => r.lastChannel],

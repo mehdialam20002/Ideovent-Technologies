@@ -376,14 +376,17 @@ export default function Navbar() {
         <nav
           aria-label="Primary"
           className={cn(
-            "flex items-center justify-between gap-4 rounded-full px-4 pl-5 transition-all duration-300",
+            // A plain bar once it has a background (1 Oct 2026): rounded-2xl, no
+            // drop shadow. A floating glass pill with a shadow was the same
+            // template kit the hero dropped (hero brief, section 1).
+            "flex items-center justify-between gap-4 rounded-2xl px-4 pl-5 transition-all duration-300",
             // The HEIGHT follows the scroll only. An open panel gives the bar its
             // solid chrome so the two read as one object, but it must not resize
             // it: at the top of the page that moved the trigger out from under the
             // pointer that had just opened it, and the panel flickered shut again.
             scrolled ? "h-16" : "h-20",
             scrolled || openKey
-              ? "border border-border/70 bg-background/70 backdrop-blur-xl shadow-lg shadow-black/5"
+              ? "border border-border/80 bg-background/95 backdrop-blur"
               : "border border-transparent"
           )}
         >
@@ -543,7 +546,10 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <ThemeToggle className="hidden sm:inline-flex" />
             <div className="hidden lg:block">
-              <CtaButton cta={nav.header.cta} size="default" />
+              {/* Same plain shape as the home hero's buttons (1 Oct 2026, hero
+                  brief item 5): no pill, no 40px glow. CtaButton's defaults
+                  are overridden here only, through tailwind-merge. */}
+              <CtaButton cta={nav.header.cta} size="default" className="rounded-lg shadow-none" />
             </div>
             <button
               ref={toggleRef}
@@ -774,7 +780,7 @@ export default function Navbar() {
               })}
 
               <div className="mt-4 flex items-center gap-3 border-t border-border/70 px-1 pt-4">
-                <CtaButton cta={nav.header.cta} size="lg" className="flex-1" />
+                <CtaButton cta={nav.header.cta} size="lg" className="flex-1 rounded-lg shadow-none" />
                 {/* h-11 rather than the default h-9: inside the sheet this is a tap
                     target on a phone, and 36px is under the 44px minimum. */}
                 <ThemeToggle className="h-11 w-11" />

@@ -12,7 +12,7 @@ import { PITCH_SLUG_MAX, pitchPackage, pitchSlugify, pitchPageUrl } from "@/lib/
    the note at the top of ./record. */
 import { pitchSlugIssue, uniquePitchSlug } from "@/lib/pitch/reservedRoutes";
 import { AdminField } from "./fields";
-import type { CollectionSchema } from "./schemas";
+import { pitchPackageOptionsFor, type CollectionSchema } from "./schemas";
 import { cn } from "@/lib/utils";
 
 /**
@@ -88,7 +88,7 @@ export function PitchPagesEditor({ schema }: { schema: CollectionSchema }) {
     ? pitchSlugIssue(editing.slug, { pages, currentId: editing.id })
     : null;
   const nameError = editing && !(editing.instituteName || "").trim()
-    ? "An institute name is required. It is the heading of their page."
+    ? `${editing.instituteType === "dental" ? "A clinic" : "An institute"} name is required. It is the heading of their page.`
     : null;
 
   const pkg = useMemo(() => (editing ? pitchPackage(editing) : null), [editing]);
@@ -212,7 +212,7 @@ export function PitchPagesEditor({ schema }: { schema: CollectionSchema }) {
       <div className="mb-6 rounded-2xl border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
         <p className="font-medium text-foreground">How these work</p>
         <p className="mt-1">
-          One page per institute, at <code className="rounded bg-muted px-1">/their-name</code>. Only a
+          One page per institute or clinic, at <code className="rounded bg-muted px-1">/their-name</code>. Only a
           page set to <strong className="text-foreground">Live</strong> opens: a draft or an archived
           one shows the ordinary 404, so nothing half-written can be read by someone who guesses the
           name. Every pitch page sets{" "}
@@ -392,9 +392,9 @@ export function PitchPagesEditor({ schema }: { schema: CollectionSchema }) {
               <div className="mb-5 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
                 <p className="font-medium">This is the example record. Delete it.</p>
                 <p className="mt-1 text-muted-foreground">
-                  Example Public School does not exist, and its "measurements" say so on the page. It
-                  ships with the site so the route can be opened and the two designs have something to
-                  render. Once a real pitch page is live, delete this one.
+                  {editing.instituteName || "This institute"} does not exist, and its "measurements" say so
+                  on the page. It ships with the site so the route can be opened and the two designs have
+                  something to render. Once a real pitch page is live, delete this one.
                 </p>
               </div>
             )}
@@ -490,12 +490,17 @@ export function PitchPagesEditor({ schema }: { schema: CollectionSchema }) {
                 </select>
               </div>
 
-              {/* The rest of the form, straight from the schema. */}
+              {/* The rest of the form, straight from the schema. A clinic's
+                  package list reads in the words its page prints. */}
               {schema.fields.slice(1).map((f) => (
                 <div key={f.name} className={cn(f.full && "sm:col-span-2")}>
                   <AdminField
-                    field={f}
-                    value={(editing as any)[f.name]}
+                    field={
+                      f.name === "recommendedPackage" && editing.instituteType === "dental"
+                        ? { ...f, options: pitchPackageOptionsFor("dental") }
+                        : f
+                    }
+                    value={(editing as unknown as Record<string, unknown>)[f.name]}
                     onChange={(v) => setEditing({ ...editing, [f.name]: v } as PitchPage)}
                   />
                   {f.name === "recommendedPackage" && (

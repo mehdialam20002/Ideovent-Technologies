@@ -9,8 +9,19 @@
  * setting "Add every new demo to the CRM" turns it off, and the poster
  * screen's own box overrides the setting both ways.
  *
- * NEGATIVE CONTROL: DEMO_LEAD_NEGATIVE=1 makes the matcher never match, so
- * the duplicate checks must FAIL. It exits 0 only when they do.
+ * A dental demo (28 Sep 2026) makes a dental lead; linked to an unsorted
+ * ("other") lead it makes that lead dental, and a kind someone chose is kept.
+ *
+ * From the demo to the message (30 Sep 2026): the lead a demo makes is offered
+ * the approved first message of its kind, and it names only what that demo
+ * has: a d4 demo the implant process and cost information (d4 prices no
+ * implant, so never a cost range), a d6 demo the first visit in the approved
+ * kids words, a fresh duplicate (no number) one-tap booking and never a call or
+ * WhatsApp button, a school demo its own admission session.
+ *
+ * NEGATIVE CONTROL: DEMO_LEAD_NEGATIVE=1 makes the matcher never match and a
+ * dental demo map to "other" again, so the duplicate, dental and
+ * demo-to-message checks must FAIL. It exits 0 only when they do.
  */
 import { build } from "esbuild";
 import { existsSync, rmSync, writeFileSync, readFileSync } from "node:fs";
@@ -36,14 +47,23 @@ const alias = {
         const src = readFileSync(a.path, "utf8");
         const sig = "): { lead: OutreachLead; by: \"demo\" | \"name\" | \"contact\" } | null {";
         if (!src.includes(sig)) throw new Error("negative control: matcher signature not found");
-        return { contents: src.replace(sig, sig + "\n  return null;"), loader: "ts" };
+        // ...and a dental demo goes back to making an "other" lead.
+        const dental = ' || kind === "dental"';
+        if (!src.includes(dental)) throw new Error("negative control: dental kind mapping not found");
+        return { contents: src.replace(sig, sig + "\n  return null;").replace(dental, ""), loader: "ts" };
       });
     }
   },
 };
 const out = join(tmpdir(), `ideovent-test-demo-lead-${process.pid}.mjs`);
 const bundled = await build({
-  stdin: { contents: `export * from "@/lib/outreach/demoLead"; export * from "@/lib/outreach/store";`, resolveDir: ROOT, loader: "ts" },
+  stdin: {
+    contents: `export * from "@/lib/outreach/demoLead"; export * from "@/lib/outreach/store";
+export { render, checkSend, demoFacts } from "@/lib/outreach/engine";
+export { templatesFor, suggestedStage } from "@/lib/outreach/templates";`,
+    resolveDir: ROOT,
+    loader: "ts",
+  },
   bundle: true, format: "esm", platform: "node", write: false, logLevel: "silent", plugins: [alias],
   define: { "import.meta.env": JSON.stringify({ BASE_URL: "/", DEV: false }) },
 });
@@ -92,11 +112,69 @@ check((await M.addDemoToCrm(demo(), "poster", { store, force: true })) !== null,
 store = new M.LocalOutreachStore(mem());
 check((await M.addDemoToCrm(demo(), "poster", { store, force: false })) === null && (await store.listLeads()).length === 0, "poster box unticked: no lead even with the setting on");
 
-// 6. Other kinds map to "other".
-check(M.leadKindForDemo("dental") === "other" && M.leadKindForDemo("coaching") === "coaching", "demo kinds map to lead kinds");
+// 6. Demo kinds to lead kinds: dental is its own kind (28 Sep 2026), anything unknown is "other".
+check(M.leadKindForDemo("dental") === "dental" && M.leadKindForDemo("coaching") === "coaching" && M.leadKindForDemo("school") === "school", "demo kinds map to lead kinds, dental included");
+check(M.leadKindForDemo("gym") === "other" && M.leadKindForDemo(undefined) === "other", "an unknown demo kind is other");
+
+// 7. A dental demo makes a dental lead.
+const dentalDemo = (over = {}) => demo({ slug: "example-dental-clinic", kind: "dental", instituteName: "Example Dental Clinic", city: "Saket", templateId: "d1-family-dentist", ...over });
+store = new M.LocalOutreachStore(mem());
+const r7 = await M.addDemoToCrm(dentalDemo({ contact: { phone: "+91 98765 43210" } }), "template", { store });
+check(r7 && r7.created && r7.lead.kind === "dental" && r7.lead.demoSlug === "example-dental-clinic" && r7.lead.phone === "+919876543210", "a dental demo adds a dental lead with its demo and phone");
+const r7b = await M.addDemoToCrm(dentalDemo({ slug: "example-dental-clinic-2" }), "poster", { store });
+check(r7b && !r7b.created && (await store.listLeads()).length === 1 && r7b.lead.kind === "dental", "a second demo for the same clinic links, no second lead");
+
+// 8. Linking a dental demo: an unsorted lead ("other") becomes dental; a kind someone chose is kept.
+store = new M.LocalOutreachStore(mem());
+const unsorted = await store.upsertLead({ instituteName: "Example Dental Clinic", city: "Saket", phone: "98765 43211" });
+check(unsorted.kind === "other", "a lead saved without a kind is 'other'");
+const r8 = await M.addDemoToCrm(dentalDemo(), "poster", { store });
+check(r8 && !r8.created && r8.lead.id === unsorted.id && (await store.getLead(unsorted.id)).kind === "dental", "a dental demo linked to an unsorted lead makes it a dental lead");
+check((await store.listEvents(unsorted.id)).some((e) => /kind set to dental/.test(e.detail || "")), "the history says the kind was set");
+const chosen = await store.upsertLead({ instituteName: "Example Care Centre", city: "Noida", kind: "school", email: "office@care.example" });
+const r8b = await M.addDemoToCrm(dentalDemo({ slug: "example-care", instituteName: "Example Care Centre", city: "Noida" }), "poster", { store });
+check(r8b && !r8b.created && (await store.getLead(chosen.id)).kind === "school", "a kind someone chose is never overwritten by a demo's kind");
+const relinked = await M.addDemoToCrm(dentalDemo(), "template", { store });
+check(relinked && !relinked.created && relinked.lead.kind === "dental", "linking the same dental demo again keeps the lead dental");
+
+// 9. From the demo to the message (30 Sep 2026): the lead a demo makes is offered the approved
+//    first message of its kind, and that message names only what the demo has.
+{
+  const NOW = new Date("2026-09-29T09:00:00.000Z"); // Tuesday 14:30 India time
+  const settings = { signature: "", quietStart: "20:00", quietEnd: "10:00", alertOnDemoOpen: false };
+  const firstFor = async (d, language = "hinglish", pitch = "new_website") => {
+    const st = new M.LocalOutreachStore(mem());
+    const { lead } = await M.addDemoToCrm(d, "template", { store: st });
+    const t = M.templatesFor({ kind: lead.kind, channel: "whatsapp", stage: "first", pitch, language })[0];
+    return { lead, t, r: t && M.render(t, { ...lead, contactName: "Dr. Kapoor", phone: "+91 98765 43210" }, { now: NOW, demo: M.demoFacts(d) }) };
+  };
+  const implant = await firstFor(dentalDemo({ slug: "example-implant-centre", instituteName: "Example Implant Centre", templateId: "d4-implant-centre" }));
+  check(implant.t?.kind === "dental" && implant.r.body.includes("Google par aapka implant centre dekha. Log implant se pehle process aur kharche ki jaankari online dhoondhte hain, par clinic ki website nahi mili.") &&
+    implant.r.body.includes("jisme implant ka process, kharche ki jaankari aur appointment booking hai") && !/range/.test(implant.r.body),
+    `a d4 demo's lead is offered the approved implant message, and no cost range the demo does not show (${implant.r?.body})`);
+  const kids = await firstFor(dentalDemo({ slug: "example-kids", instituteName: "Example Smiles", templateId: "d6-kids-dental" }));
+  check(kids.r?.body.includes("Google par aapka kids dental clinic dekha. Parents bachche ki pehli visit se pehle online dekhte hain ki kya hoga, par clinic ki website nahi mili. Humne ek sample page banaya hai jisme pehli visit ki jaankari, timings aur booking hai."),
+    `a d6 demo's lead gets the approved kids words (${kids.r?.body})`);
+  check(M.suggestedStage(implant.lead.status, "whatsapp", 0) === "first" && !implant.r.warnings.length, "a new demo's lead starts at the first message, and the 'Google par' line raises nothing for a demo-created lead");
+  check(M.checkSend({ ...implant.lead, phone: "+91 98765 43210" }, implant.t, "whatsapp", settings, 0, NOW).ok, "the lead has its demo, so 'we made a sample' may be said");
+
+  const fixLead = (d) => ({ instituteName: d.instituteName, kind: "dental", website: "https://example.org", observation: "no_timings", demoSlug: d.slug, contactName: "Dr. Gupta" });
+  const fresh = dentalDemo({ slug: "example-fresh", templateId: "d1-family-dentist" });
+  const withNumber = dentalDemo({ slug: "example-numbered", templateId: "d1-family-dentist", contact: { phone: "+91 98765 43210", whatsapp: "919876543210" } });
+  const fixT = M.templatesFor({ kind: "dental", channel: "whatsapp", stage: "first", pitch: "fix_website", language: "hinglish" })[0];
+  const saysFresh = M.render(fixT, fixLead(fresh), { now: NOW, demo: M.demoFacts(fresh) }).body;
+  const saysNumbered = M.render(fixT, fixLead(withNumber), { now: NOW, demo: M.demoFacts(withNumber) }).body;
+  check(saysFresh.includes("ek tap mein booking") && !/ek tap mein (call|WhatsApp)/.test(saysFresh), "a fresh template duplicate (no number) is never said to have call or WhatsApp buttons");
+  check(saysNumbered.includes("ek tap mein call ya WhatsApp"), "with the clinic's number on the demo, the approved 'ek tap mein call ya WhatsApp'");
+
+  const schoolFix = M.templatesFor({ kind: "school", channel: "whatsapp", stage: "first", pitch: "fix_website", language: "en" })[0];
+  const schoolLead = { instituteName: "Sunrise Public School", kind: "school", website: "https://example.org", observation: "not_mobile", demoSlug: "sunrise-public-school", contactName: "Principal Ma'am" };
+  check(M.render(schoolFix, schoolLead, { now: NOW, demo: M.demoFacts(demo({ sessionLabel: "2027" })) }).body.includes("the 2027 admissions"), "the school message names the session the demo shows");
+  check(M.render(schoolFix, schoolLead, { now: NOW }).body.includes("the 2027-28 admissions"), "without the demo at hand, the session is computed from the date");
+}
 
 if (NEGATIVE) {
-  const expected = [/links instead of adding/, /same WhatsApp number links/];
+  const expected = [/links instead of adding/, /same WhatsApp number links/, /a dental demo adds a dental lead/, /dental included/, /approved implant message/];
   const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
   console.log(`\nNEGATIVE CONTROL: ${failures.length} failures seen.`);
   if (missed.length) { console.log("NEGATIVE CONTROL FAILED: undetected " + missed.join(", ")); process.exit(1); }

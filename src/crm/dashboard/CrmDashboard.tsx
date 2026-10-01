@@ -67,7 +67,7 @@ export default function CrmDashboard() {
           <UnlinkedCallout m={m} />
           <EmptyState
             title="No leads yet"
-            body="Find schools, coaching centres and other businesses on Google Maps with the Lead finder, paste a list under Import, or add one by hand. The numbers here fill in as you send."
+            body="Find schools, coaching centres, dental clinics and other businesses on Google Maps with the Lead finder, paste a list under Import, or add one by hand. The numbers here fill in as you send."
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 <Link to={CRM.finder} className={crm.btnPrimary}><MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Lead finder</Link>

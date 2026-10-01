@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
-import { useContent } from "@/lib/cms/context";
+import { useCollection, useContent } from "@/lib/cms/context";
 import { getIcon } from "@/lib/icons";
 import { CtaButton } from "@/components/ui/cta-button";
 import { unbreakable } from "@/lib/typography";
+import { liveEmail } from "@/lib/mailbox";
 
 /**
  * Site footer.
@@ -21,6 +22,14 @@ import { unbreakable } from "@/lib/typography";
  */
 export default function Footer() {
   const { navigation, contact, settings, socials } = useContent();
+  // No address until contact@ideovent.in has a mailbox (src/lib/mailbox.ts).
+  const email = liveEmail(contact);
+  /* The services column. `showInFooter` sat on every service record, and in the
+     admin, with nothing reading it: service pages were linked from /services and
+     from a navbar panel that renders its links only while it is open, so a
+     crawler found them from one page. Built from the collection, so a service
+     added in /admin appears here on its own (1 Oct 2026). */
+  const footerServices = useCollection("services").filter((s) => s.showInFooter);
   const year = new Date().getFullYear();
 
   /*
@@ -54,20 +63,19 @@ export default function Footer() {
                   states, <main> carries only an h1, so an h3 here produced an
                   h1 -> h3 jump on every one of those routes. */}
               {/*
-                WEIGHT CONTRAST, NOT THE SERIF ACCENT. The footer is on every
-                route, so a `.accent-italic` here would be charged against every
-                page's budget of two and no page could then afford one of its
-                own. _assets/DESIGN-DIRECTION.md §1 and §3: the serif runs twice
-                a page at most, and a 300-to-800 jump inside a headline is the
-                other way to make a heading look set rather than defaulted.
+                ONE WEIGHT, NO ACCENT (1 Oct 2026). This was a Sora 300 line
+                with its last words in 800, over a navy-and-gold glow. Both are
+                gone site-wide (src/index.css, `.font-thin-display` and
+                `.bg-spotlight`) after Mehdi called the page "AI generated": a
+                heading is one sentence in one weight, on a flat panel.
 
                 The copy changed with it. "Let's build something worth talking
                 about" is the studio-adjective register the brief rules out; the
                 line below is the one /work and /pricing already close with, and
                 it asks for the one thing a prospect can actually supply.
               */}
-              <h2 className="text-display font-display font-light">
-                Is your website <span className="font-extrabold">doing its job</span>?
+              <h2 className="text-display font-display font-semibold">
+                Is your website doing its job?
               </h2>
               {/* 26 Sep 2026 (HOMEPAGE-COPY-DECK.md section 13): the footer on
                   every page offers the free website check, the small first step,
@@ -159,14 +167,16 @@ export default function Footer() {
                   <Phone className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" /> {unbreakable(contact.phoneDisplay)}
                 </a>
               </li>
-              <li>
-                <a
-                  href={contact.emailHref}
-                  className="inline-flex items-center gap-2 rounded-md py-0.5 transition-colors hover:text-foreground active:text-foreground/70"
-                >
-                  <Mail className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" /> {contact.emailDisplay}
-                </a>
-              </li>
+              {email && (
+                <li>
+                  <a
+                    href={email.href}
+                    className="inline-flex items-center gap-2 rounded-md py-0.5 transition-colors hover:text-foreground active:text-foreground/70"
+                  >
+                    <Mail className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" /> {email.display}
+                  </a>
+                </li>
+              )}
               <li className="flex items-start gap-2">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                 <span>{addressLine}</span>
@@ -193,6 +203,29 @@ export default function Footer() {
               })}
             </div>
           </div>
+
+          {footerServices.length > 0 && (
+            <div className="lg:col-span-2">
+              <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-foreground">Services</h3>
+              <ul className="mt-4 space-y-1">
+                {[...footerServices.map((s) => ({ label: s.title, href: `/services/${s.slug}` })), { label: "All services", href: "/services" }].map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      to={l.href}
+                      className="group inline-flex items-center gap-1 rounded-md py-1.5 text-sm text-muted-foreground
+                                 transition-colors duration-200 hover:text-foreground active:text-foreground/70"
+                    >
+                      {l.label}
+                      <ArrowUpRight
+                        className="h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {navigation.footer.columns.map((col) => (
             /* A plain <div>, not a <nav>: the audit measured exactly one nav

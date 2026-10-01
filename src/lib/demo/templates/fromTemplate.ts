@@ -22,9 +22,12 @@
  *   3. RESULTS AND REVIEWS CARRY A "SAMPLE" LINE on the page (results, toppers,
  *      pass percentages, selections, trust figures, testimonials, rating)
  *      until Mehdi edits that block or ticks "Results and reviews on this demo
- *      are the institute's real ones". See src/lib/demo/site/sample.ts;
+ *      are the institute's real ones". So does the history on the About page
+ *      (the founding story and year, 30 Sep 2026), until he edits it; the
+ *      switch does not cover it. See src/lib/demo/site/sample.ts;
  *   4. THE EDITOR'S CHECKLIST lists every block still identical to the
- *      template (faculty, results, fees, reviews, timings, photos) and every
+ *      template (faculty, results, fees, reviews, timings, photos, the dental
+ *      trust figures, cases and doctors, the founding story) and every
  *      empty contact field, under "Carried from template <name>: review
  *      before you mark it sent".
  *
@@ -49,7 +52,8 @@
  *                                     "still the template's" from "edited"
  *
  *   instituteName          IDENTITY   the name typed in the dialog
- *   shortName              IDENTITY   empty: the nav uses the full name
+ *   shortName              IDENTITY   empty, and its Hindi twin removed: the
+ *                                     nav and every title use the full name
  *   city                   IDENTITY   the city typed, else the template's
  *   state                  IDENTITY   the template's; emptied when a
  *                                     different city is typed, because the
@@ -92,9 +96,12 @@
  * inside a `hi` block, the Hindi name if one was typed, else the new English
  * name. Nothing stores initials or a monogram: the pages derive them from
  * the name. With a city typed, the template's city (and "City, State")
- * becomes it, in both languages. After this no string in the copy contains
- * the template's fictional name; scripts/test-from-template.mjs checks it
- * for every template, dental included.
+ * becomes it, in both languages, and so does the neighbourhood a dental
+ * template names beside its city (TEMPLATE_AREAS: "in Gomti Nagar, Lucknow"
+ * reads "in Indore", "Years in Baner" reads "Years in Indore"). After this no
+ * string in the copy contains the template's fictional name or, with a city
+ * typed, its neighbourhood; scripts/test-from-template.mjs checks both for
+ * every template, dental included.
  *
  * `DUPLICATE_POLICY` is typed as a Record over every key of DemoSite, so a
  * field added to DemoSite later is a compile error here until it is
@@ -208,6 +215,30 @@ export const TEMPLATE_NAMES: Record<TemplateId, TemplateNameForms> = {
   "d7-dental-chain": { en: ["Mahua Dental Clinics", "Mahua Dental", "Mahua"], hi: ["महुआ डेंटल क्लिनिक्स", "महुआ डेंटल", "महुआ"], cityHi: ["नई दिल्ली"] },
 };
 
+/**
+ * THE NEIGHBOURHOOD a single-clinic dental template names beside its city,
+ * in the forms its copy writes (30 Sep 2026). It is as much the template's
+ * as its city is: a d4 demo made for a clinic in Indore read "Dental implant
+ * centre, Baner, Indore" (Baner is in Pune). So when the Duplicate dialog is
+ * given a city, "Baner, " before the city goes and every other "Baner"
+ * becomes that city ("Years in Baner" reads "Years in Indore"), in both
+ * languages. Nothing is guessed about the clinic's own area: a city is the
+ * most the dialog knows, and Mehdi types the area in the editor if he wants.
+ *
+ * d7 (a chain) is left out on purpose: it names five branches, not one area,
+ * and a chain's branches are its own. School and coaching templates are not
+ * listed yet: their areas also sit in bus routes and stops ("Vijay Nagar
+ * square"), where the city's name in their place would read wrongly.
+ */
+export const TEMPLATE_AREAS: Partial<Record<TemplateId, { en: string[]; hi: string[] }>> = {
+  "d1-family-dentist": { en: ["Gomti Nagar"], hi: ["गोमती नगर"] },
+  "d2-multispeciality": { en: ["Kondapur"], hi: ["कोंडापुर"] },
+  "d3-smile-studio": { en: ["Bandra West"], hi: ["बांद्रा वेस्ट"] },
+  "d4-implant-centre": { en: ["Baner"], hi: ["बाणेर"] },
+  "d5-ortho-aligners": { en: ["Malviya Nagar"], hi: ["मालवीय नगर"] },
+  "d6-kids-dental": { en: ["Sector 35"], hi: ["सेक्टर 35"] },
+};
+
 /** What the Duplicate dialog asks. Only the name is required. */
 export interface DuplicateIdentity {
   name: string;
@@ -250,13 +281,29 @@ export function makeRenamer(template: LoadedTemplate, who: DuplicateIdentity) {
   const pairRe = moving && oldCity && oldState ? formsRe([`${oldCity}, ${oldState}`]) : null;
   const cityRe = moving && oldCity ? formsRe([oldCity, ...forms.cityHi]) : null;
 
+  /* The neighbourhood, only when a city was typed (moving or not: a clinic
+     in the template's own city is not in its area either). "Baner, " right
+     before the city goes, so the city rule above then handles the city;
+     any other "Baner" becomes the city, the template's own spelling of it
+     when the city stays (the Devanagari one inside a Hindi block). */
+  const areas = city ? TEMPLATE_AREAS[template.meta.id] : undefined;
+  const areaForms = areas ? [...areas.en, ...areas.hi] : [];
+  const cityForms = [oldCity, ...forms.cityHi].filter(Boolean);
+  const areaList = formsRe(areaForms)?.source;
+  const cityList = formsRe(cityForms)?.source;
+  const areaPrefixRe = areaList && cityList ? new RegExp(`${areaList}, (?=${cityList})`, "gu") : null;
+  const areaRe = formsRe(areaForms);
+  const cityHere = (inHindi: boolean) => (moving ? city : (inHindi && forms.cityHi[0]) || oldCity);
+
   return (s: string, inHindi: boolean): string => {
     const newName = () => (inHindi ? hiName : name);
     let out = s;
     /* The city first, so a new name that happens to hold the old city's
        word ("Kota Classes" moving to Patna) is never rewritten. */
+    if (areaPrefixRe) out = out.replace(areaPrefixRe, "");
     if (pairRe) out = out.replace(pairRe, () => city);
     if (cityRe) out = out.replace(cityRe, () => city);
+    if (areaRe) out = out.replace(areaRe, () => cityHere(inHindi));
     if (enRe) out = out.replace(enRe, newName);
     if (hiRe) out = out.replace(hiRe, newName);
     return out;
@@ -360,7 +407,7 @@ export function fromTemplate(
   who: DuplicateIdentity,
 ): DemoSite {
   const name = (who?.name || "").trim();
-  if (!name) throw new Error("An institute name is required.");
+  if (!name) throw new Error(template.meta.kind === "dental" ? "A clinic name is required." : "An institute name is required.");
   const { meta, content } = template;
   const now = ctx.now || new Date();
   const sites = ctx.sites || [];
@@ -394,8 +441,17 @@ export function fromTemplate(
   const moving = Boolean(city) && city.toLowerCase() !== (content.city || "").trim().toLowerCase();
   copy.instituteName = name;
   copy.shortName = "";
+  /* Its Hindi twin goes with it (1 Oct 2026). The pages read the short name
+     through bi(), which falls back to the Hindi one when the English is
+     empty, so a kept hi.shortName (renamed to the Hindi name) put the
+     Devanagari name in the English Contact page's title. Empty in both
+     languages: every page uses the full name, in its own language. */
+  if (copy.hi) delete copy.hi.shortName;
   copy.city = city || content.city;
   copy.state = moving ? "" : content.state;
+  /* Its Hindi twin goes with it: typing a state later must not bring back
+     the template's ("उत्तर प्रदेश" beside Indore). */
+  if (moving && copy.hi) delete copy.hi.state;
   /* The Hindi name, when typed, is the Hindi page's masthead. Stored in the
      existing hi block; empty leaves the Hindi page on the English name. */
   const hiName = (who.hiName || "").trim();

@@ -161,12 +161,10 @@ export default function WorkShowcase() {
           <div className="flex flex-col gap-5 border-t-2 border-secondary/70 pt-8 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
               <Eyebrow>What we have built</Eyebrow>
-              {/* The serif italic accent, one of exactly two on this page. See
-                  _assets/DESIGN-DIRECTION.md §1: one or two words, never a whole
-                  line. The rest of the headline is Sora 300, so the accent is
-                  the only thing in it with weight or colour. */}
-              <h2 className="mt-5 text-display font-display font-light">
-                Go and look at the <span className="accent-italic text-gradient">actual thing</span>.
+              {/* Plain since 1 Oct 2026: no serif accent, no gradient, one
+                  weight (see `.accent-italic` in src/index.css). */}
+              <h2 className="mt-3 text-display font-display font-semibold">
+                Go and look at the actual thing.
               </h2>
             </div>
             {/* HOMEPAGE-COPY-DECK-V2.md A5. The HighQ line names the one
@@ -213,7 +211,7 @@ export default function WorkShowcase() {
                     href={lead.liveUrl}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="group mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/50
+                    className="group mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-background/50
                                px-4 font-mono text-xs text-foreground transition-colors duration-200
                                hover:border-primary/60 hover:bg-muted active:bg-muted/70"
                   >
@@ -248,7 +246,7 @@ export default function WorkShowcase() {
 
                 <Link
                   to={`/work/${lead.slug}`}
-                  className="group mt-7 inline-flex min-h-11 items-center gap-1.5 rounded-full bg-primary px-5 text-sm
+                  className="group mt-7 inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-5 text-sm
                              font-medium text-primary-foreground transition-[color,background-color,transform] duration-200 hover:bg-primary/90 active:bg-primary/80 active:scale-[0.99] motion-reduce:active:scale-100"
                 >
                   What we decided, and what we cannot claim
@@ -314,7 +312,7 @@ export default function WorkShowcase() {
         <Reveal className="mt-10">
           <Link
             to="/work"
-            className="group inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-5 text-sm
+            className="group inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-5 text-sm
                        font-medium transition-colors duration-200 hover:border-primary/60 hover:bg-muted active:bg-muted/70"
           >
             Every project, including the ones with nothing to show

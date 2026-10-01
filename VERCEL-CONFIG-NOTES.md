@@ -65,3 +65,36 @@ survivable.
 
 cleanUrls exists to strip `.html` from static multi-page sites. This is a single
 page app: there is one HTML file and no extension for a visitor to ever see.
+
+## Per-route HTML files and the redirects added on 1 Oct 2026 (SEO build)
+
+**Prerendered heads.** `npm run build` now ends with `node scripts/prerender-heads.mjs`,
+which writes `dist/<route>/index.html` for every URL in the sitemap: the built
+`index.html` with that page's title, description, canonical, Open Graph, Twitter and
+JSON-LD tags (all `data-rh="true"`, adopted by react-helmet-async on load) and a
+`<noscript>` copy of its h1 and text. Vercel serves a real file before it applies the
+SPA rewrite, so `/services/seo` gets its own head in the first HTML, which is what
+WhatsApp, LinkedIn, X, Bing and AI crawlers read. `dist/index.html` stays the shell
+for every other address and carries **no canonical and no og:url** (see the comment at
+the top of index.html). Do not turn `cleanUrls` on for this: see above.
+
+Check it on the first preview deployment:
+
+    curl -s https://<preview>/services/seo | grep -o '<title>[^<]*</title>\|rel="canonical" href="[^"]*"'
+
+It must print the SEO page's title and `https://www.ideovent.in/services/seo`. If it
+prints the homepage title and no canonical, Vercel did not map `/services/seo` to
+`services/seo/index.html`; nothing breaks (the page is then exactly what it was before),
+but tell the SEO owner.
+
+**Redirects.**
+- `ideovent.vercel.app/*` → `https://www.ideovent.in/*` (308, host-scoped, first in the
+  list). The duplicate host served the whole site; its canonical already pointed at www.
+  Preview deployments keep their own `*.vercel.app` names and are not affected. Checked
+  before adding: www resolved to Vercel at 8.8.8.8, 1.1.1.1 and the local resolver.
+- `/services/seo-digital-marketing` → `/services/seo` (the SEO service moved).
+- `/blogs/1` … `/blogs/9` → `/blog/<slug>`: the old site's post addresses.
+
+**Image caching.** `/work`, `/blog-covers`, `/og` and `/icons` answer
+`Cache-Control: public, max-age=86400, stale-while-revalidate=604800` instead of
+revalidating on every view. Give a changed image a new file name.

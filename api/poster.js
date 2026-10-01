@@ -1,5 +1,7 @@
 /**
- * POST /api/poster: read a school or coaching poster with AI, for the admin.
+ * POST /api/poster: read a school, coaching or dental clinic poster with AI,
+ * for the admin. A clinic's banner or visiting card reads the same way
+ * (kind "dental", or "auto" and the model decides; 28 Sep 2026).
  *
  * THE FLOW
  *
@@ -37,7 +39,7 @@
  * Keys never appear in a response, a log line or ai_poster_runs.
  */
 import { ADAPTERS, DEFAULT_MODELS, PROVIDERS, redact } from "./_lib/providers.js";
-import { TEMPLATE_IDS, buildPrompt, chooseTemplate, normalise, parseModelJson } from "./_lib/posterExtract.js";
+import { KINDS, TEMPLATE_IDS, buildPrompt, chooseTemplate, normalise, parseModelJson } from "./_lib/posterExtract.js";
 import { getUser, isAdmin, readKeys, recordAttempts, supabaseEnv } from "./_lib/supabaseRest.js";
 
 const MIMES = ["image/jpeg", "image/png", "image/webp"];
@@ -81,7 +83,7 @@ function base64Bytes(b64) {
 function parseRequest(body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return { status: 400, error: "Body must be a JSON object" };
   const kind = body.kind ?? "auto";
-  if (!["school", "coaching", "auto"].includes(kind)) return { status: 400, error: "kind must be school, coaching or auto" };
+  if (![...KINDS, "auto"].includes(kind)) return { status: 400, error: "kind must be school, coaching, dental or auto" };
   const templateHint = body.templateHint ?? "auto";
   if (templateHint !== "auto" && !TEMPLATE_IDS.includes(templateHint)) return { status: 400, error: "Unknown templateHint" };
   if (body.test === true) return { test: true };

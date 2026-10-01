@@ -1,10 +1,11 @@
 import { useMemo, useState, type CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AlertTriangle, Eye, Files, LayoutGrid, Lock, ScanText } from "lucide-react";
 import type { DemoKind } from "@/lib/cms/types";
 import {
   DESIGN_FAMILIES,
   DESIGN_FAMILY_IDS,
+  KIND_FAMILY_IDS,
   TEMPLATES,
   TEMPLATE_SEGMENTS,
   TEMPLATE_SEGMENT_LABEL,
@@ -23,7 +24,12 @@ import { cn } from "@/lib/utils";
 /**
  * THE TEMPLATES TAB, at /admin/templates.
  *
- * Ten ready-made demos, five school and five coaching, fixed in code. This
+ * Seventeen ready-made demos, five school, five coaching and (28 Sep 2026)
+ * seven dental clinics, fixed in code. The Type chips (and `?kind=dental` in
+ * the address, so another screen can link straight to one kind) narrow the
+ * gallery to one kind; the Design chips then offer only that kind's
+ * families, because a dental template is never Classic and a school never
+ * Luxury (KIND_FAMILY_IDS). This
  * screen offers exactly two things per template, PREVIEW and DUPLICATE, and
  * that is not a matter of which buttons were drawn: a template is a module
  * under src/lib/demo/templates, not a document, so there is nothing in the
@@ -54,19 +60,42 @@ const KIND_HEADING: Record<DemoKind, string> = {
 const KINDS: DemoKind[] = ["school", "coaching", "dental"];
 const countOf = (kind: DemoKind) => TEMPLATES.filter((t) => t.kind === kind).length;
 
+/** `?kind=dental` (or school, coaching) opens the gallery on that kind. */
+function kindFromQuery(v: string | null): Filter<DemoKind> {
+  return v && (KINDS as string[]).includes(v) ? (v as DemoKind) : "all";
+}
+
 export default function AdminTemplates() {
+  const [params, setParams] = useSearchParams();
+  const kind = kindFromQuery(params.get("kind"));
   const [segment, setSegment] = useState<Filter<TemplateSegment>>("all");
   const [family, setFamily] = useState<Filter<DesignFamily>>("all");
   const { request, busy, error, dialog } = useDuplicateTemplate();
   /* A poster photo in, a filled draft out: see src/admin/PosterImportDialog.tsx. */
   const poster = usePosterImport();
 
+  /* The design families the chosen kind offers. A family chip for a family the
+     kind has none of would always show 0, so it is not drawn at all. A family
+     left over from another kind (the address changed under it, Back or a link
+     with ?kind=) counts as "all" rather than hiding every card. */
+  const families = kind === "all" ? DESIGN_FAMILY_IDS : KIND_FAMILY_IDS[kind];
+  const familyOn: Filter<DesignFamily> = family !== "all" && families.includes(family) ? family : "all";
+  const ofKind = useMemo(() => TEMPLATES.filter((t) => kind === "all" || t.kind === kind), [kind]);
+
+  const setKind = (next: Filter<DemoKind>) => {
+    const p = new URLSearchParams(params);
+    if (next === "all") p.delete("kind");
+    else p.set("kind", next);
+    setParams(p, { replace: true });
+    if (next !== "all" && family !== "all" && !KIND_FAMILY_IDS[next].includes(family)) setFamily("all");
+  };
+
   const visible = useMemo(
     () =>
-      TEMPLATES.filter(
-        (t) => (segment === "all" || t.segment === segment) && (family === "all" || t.designFamily === family),
+      ofKind.filter(
+        (t) => (segment === "all" || t.segment === segment) && (familyOn === "all" || t.designFamily === familyOn),
       ),
-    [segment, family],
+    [ofKind, segment, familyOn],
   );
 
   return (
@@ -109,40 +138,50 @@ export default function AdminTemplates() {
           <Files className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden="true" />
           <span>
             <strong className="text-foreground">A duplicate arrives already filled.</strong>{" "}
-            Duplicate asks for the institute’s name (and, if you like, its city and Hindi name) and
-            puts it everywhere the example name was, in English and Hindi. Everything else comes
-            across: courses, fees, timings, teachers, results, reviews, notices, FAQs and photos.
-            Only the contact details are left empty, to add from their own website. Results and
-            reviews show a small “Sample” line until you edit them or mark them as real.
+            Duplicate asks for the institute’s or clinic’s name (and, if you like, its city and Hindi
+            name) and puts it everywhere the example name was, in English and Hindi. Everything else
+            comes across: courses, fees, timings, teachers, results, reviews, notices, FAQs and
+            photos, or for a dental clinic its treatments, starting prices, doctors and hours. Only
+            the contact details are left empty, to add from their own website. Results and reviews
+            show a small “Sample” line until you edit them or mark them as real.
           </span>
         </p>
       </div>
 
       {/* ── Filters ───────────────────────────────────────────────────── */}
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6">
+        <ChipGroup<Filter<DemoKind>>
+          label="Type"
+          value={kind}
+          onChange={setKind}
+          options={[
+            { value: "all", label: "All", count: TEMPLATES.length },
+            ...KINDS.map((k) => ({ value: k, label: KIND_HEADING[k], count: countOf(k) })),
+          ]}
+        />
         <ChipGroup<Filter<TemplateSegment>>
           label="Where"
           value={segment}
           onChange={setSegment}
           options={[
-            { value: "all", label: "All", count: TEMPLATES.length },
+            { value: "all", label: "All", count: ofKind.length },
             ...TEMPLATE_SEGMENTS.map((s) => ({
               value: s,
               label: TEMPLATE_SEGMENT_LABEL[s],
-              count: TEMPLATES.filter((t) => t.segment === s).length,
+              count: ofKind.filter((t) => t.segment === s).length,
             })),
           ]}
         />
         <ChipGroup<Filter<DesignFamily>>
           label="Design"
-          value={family}
+          value={familyOn}
           onChange={setFamily}
           options={[
-            { value: "all", label: "All", count: TEMPLATES.length },
-            ...DESIGN_FAMILY_IDS.map((f) => ({
+            { value: "all", label: "All", count: ofKind.length },
+            ...families.map((f) => ({
               value: f,
               label: DESIGN_FAMILIES[f].label,
-              count: TEMPLATES.filter((t) => t.designFamily === f).length,
+              count: ofKind.filter((t) => t.designFamily === f).length,
             })),
           ]}
         />
@@ -158,19 +197,19 @@ export default function AdminTemplates() {
         </div>
       )}
 
-      {KINDS.map((kind) => {
-        const list = visible.filter((t) => t.kind === kind);
+      {KINDS.filter((k) => kind === "all" || k === kind).map((group) => {
+        const list = visible.filter((t) => t.kind === group);
         return (
-          <section key={kind} aria-labelledby={`tpl-${kind}`} className="mb-10">
-            <h2 id={`tpl-${kind}`} className="mb-4 flex items-baseline gap-2 font-display text-lg font-semibold">
-              {KIND_HEADING[kind]}
+          <section key={group} aria-labelledby={`tpl-${group}`} className="mb-10">
+            <h2 id={`tpl-${group}`} className="mb-4 flex items-baseline gap-2 font-display text-lg font-semibold">
+              {KIND_HEADING[group]}
               <span className="text-sm font-normal text-muted-foreground">
-                {list.length} of {countOf(kind)}
+                {list.length} of {countOf(group)}
               </span>
             </h2>
             {list.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No {KIND_HEADING[kind].toLowerCase()} template matches these filters.
+                No {KIND_HEADING[group].toLowerCase()} template matches these filters.
               </p>
             ) : (
               <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

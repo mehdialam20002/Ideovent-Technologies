@@ -546,113 +546,76 @@
   }
 
   /*
-    THE SERIF ACCENT. One or two words per page, never a whole line, never body
-    copy.
+    THE SERIF ACCENT IS RETIRED ON IDEOVENT'S OWN PAGES (1 Oct 2026).
 
-    This is Instrument Serif italic, restored. The Phase 5 consolidation cut it
-    to `font-display font-semibold` while reducing the font count, and
-    _assets/DESIGN-DIRECTION.md names that as the single biggest reason the site
-    started reading as machine-made: "The serif accent inside a sans headline is
-    the single strongest 'a person designed this' signal, and I removed it while
-    cutting the font count."
+    Mehdi, 1 Oct 2026: "AI generated lag rha hai, mujhe bilkul aisa nahi
+    chahiye". The hero brief (scratchpad seo-pricing/hero-brief.md, section 1)
+    and the 2025-26 design press it cites name an italic-serif word inside a
+    sans headline, usually painted with a gradient, as one of the clearest tells
+    of a generated page, and it was on 20 files here. The class is kept so no
+    page has to change, and it now renders exactly like the words around it:
+    same face, same weight, same colour. A heading says its thing once.
 
-    It is a real italic file, not a synthesised oblique. Sora ships no italic, so
-    `font-style: italic` on the display face would render as a slanted geometric
-    sans and look like a rendering fault at 96px, which is exactly why the
-    previous pass refused to do it. Instrument Serif's Google Fonts entry is
-    requested as `ital@1`: the italic face only, one extra woff2 on the critical
-    path (see the measured table in index.html).
-
-    Three corrections the face needs when it is set inline inside Sora:
-
-      font-size   1.04em. Instrument Serif's cap height is shorter than Sora's
-                  at the same em, so at 1em the accent word sits visibly small
-                  inside the headline instead of reading as part of the line.
-      letter-spacing  0. The hero carries -0.035em tracking, which is right for
-                  a geometric sans at 96px and closes a serif italic's joins up
-                  into a smear. Reset, not inherited.
-      padding-right  the italic leans right, and `.text-gradient` paints through
-                  `background-clip: text`, which clips at the inline box. Without
-                  the pad the final letter's overhang is sliced off. The negative
-                  margin puts the advance width back so the following word does
-                  not drift.
-
-    Declared BEFORE `.text-gradient` on purpose: the two are used together, both
-    are single-class selectors in this layer, so source order decides, and
-    `.text-gradient`'s `color: transparent` has to win. Standalone uses get
-    --primary, which is navy #123068 at 12.18:1 in light and gold #C8A951 at
-    7.77:1 in dark.
+    The prospect DEMOS keep the accent. Inside `.demo-scope` and `.demo-coaching`
+    it is the institute's brand voice, not ours, so the Instrument Serif italic
+    is restored there only (src/pages/demo/DemoCoaching.tsx), with the
+    corrections the face needs inside Sora: 1.04em (its cap height is shorter),
+    tracking reset, and a right pad for the italic overhang. The colour rules for
+    those scopes further down this file still apply.
   */
 .accent-italic {
+    font-style: inherit;
+    font-weight: inherit;
+    color: inherit;
+  }
+.demo-scope .accent-italic,
+.demo-coaching .accent-italic {
     @apply font-serif font-normal;
     font-style: italic;
     font-size: 1.04em;
     letter-spacing: 0;
     padding-right: 0.06em;
     margin-right: -0.04em;
-    color: hsl(var(--primary));
   }
 
-  /* Eyebrow pill. The hairline and the leading dot are gold: an eyebrow is
-     small caps inside a rule, which is exactly the job the spec reserves for
-     gold. The TEXT stays muted-foreground (7.44:1 light, 7.82:1 dark); gold
-     small caps on the light ground would be 2.27:1 and is not an option.
+  /* The label over a section heading: plain small text, sentence case.
 
-     Two rules because the two golds are different colours: gold-500 on navy,
-     and --secondary (gold-700) on white, which is the only gold that stays
-     legible there.
+     It was a pill (a gold hairline, a leading dot, a blurred card fill, 12px
+     capitals tracked 0.18em). The "hero eyebrow chip" is one of the two tells
+     the Impeccable detector added for generated marketing pages in May 2026
+     (hero brief, section 2), and it opened 23 sections here, so one scroll
+     below the plain home hero the site looked generated again (verify, 1 Oct
+     2026). Muted text is 7.44:1 in light and 7.82:1 in dark.
 
-     THE OVERRIDE IS A DESCENDANT SELECTOR, NOT A COMPOUND ONE. next-themes is
-     configured `attribute="class"`, so it writes `light` / `dark` onto <html>.
-     `.light.eyebrow` (no space) asks for ONE element carrying both classes,
-     which would be <html> itself carrying `.eyebrow`, and that never happens:
-     measured across eight routes the compound form matched 0 elements while the
-     descendant form matched 53. For however long it was written that way the
-     light theme drew this border in the DARK theme's gold-500 at 45%, the wash
-     the note above says is not an option here. */
+     Other notes in this file point here for one rule that still holds: a theme
+     override is a DESCENDANT selector (`.light .x`), never a compound one
+     (`.light.x`). next-themes writes `light` / `dark` onto <html>, so the
+     compound form would need <html> itself to carry `.x`; measured across eight
+     routes it matched 0 elements where the descendant form matched 53. */
 .eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full bg-card/60 px-3.5 py-1.5
-           text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur;
-    border: 1px solid hsl(var(--brand-gold) / 0.45);
-  }
-.light .eyebrow {
-    border-color: hsl(var(--secondary) / 0.55);
+    @apply inline-flex items-center text-sm font-medium text-muted-foreground;
   }
 
 .glass {
     @apply bg-card/50 backdrop-blur-xl border border-border/60;
   }
 
+  /* No backdrop blur: with the blurred blobs gone there is nothing behind a
+     card to blur, and the filter only cost a compositing layer per card. */
 .card-surface {
-    @apply rounded-3xl border border-border bg-card/70 backdrop-blur-sm;
+    @apply rounded-3xl border border-border bg-card/70;
   }
 
   /*
-    Headline gradient. The old one ran primary → secondary → accent, i.e.
-    lime → violet → coral, and --accent is now a near-neutral hover surface, so
-    it cannot be a gradient stop any more. The three stops are their own tokens
-    (--grad-1/2/3) declared per theme, which is what lets the dark theme run
-    navy-100 → gold-300 → gold-500 and the light theme stay entirely inside the
-    navy ramp, without a second selector. The light gradient deliberately does
-    NOT end on gold: gold as headline text on #F8FAFC is the one thing §A of
-    PHASE5-SPEC rules out. See the note beside the light --grad tokens.
-
-    Re-measured 24 Sep 2026 from the tokens as they stand (an earlier version of
-    this note quoted 4.55:1 / 4.76:1, which were the figures for a light
-    gradient that ended on gold-700 and no longer exists):
-      light  worst stop #2B55B8-6.48:1 on the page, 6.79:1 on a white card
-      dark   worst stop #C8A951-7.71:1 on the navy ground
-    Every consumer is a heading, so the applicable bar is 3:1 large-text; both
-    themes clear 4.5:1 anyway.
+    Headline gradient: RETIRED (1 Oct 2026). Gradient-filled text "for impact"
+    is on every list of generated-page tells the hero brief collected (section
+    2), and Mehdi's verdict on the page that used it was "AI generated lag rha
+    hai". The class stays on 16 files so nothing has to change at once; it now
+    paints the text in the colour around it. The --grad-1/2/3 tokens are kept
+    because the demo scopes still set them.
   */
 .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(
-      100deg,
-      hsl(var(--grad-1)) 0%,
-      hsl(var(--grad-2)) 50%,
-      hsl(var(--grad-3)) 100%
-);
+    color: inherit;
   }
 
 .link-underline {
@@ -706,8 +669,14 @@
 
     .text-display is the section-heading size. It stays below the hero on purpose:
     if every h2 is as large as the h1 then nothing on the page is the h1.
+
+    1 OCT 2026: BACK DOWN TO 4REM. The home hero no longer uses this class (its
+    h1 is 52px at 1440, Hero.tsx), and the hero brief measured 96px at 0.95 as a
+    template tell: ten human studio sites ran 48 to 87px, 64 the mode. The inner
+    pages' display lines now top out at 64px with ordinary leading, so they sit
+    in the same family as the home h1 instead of shouting over it.
   */
-.text-hero { font-size: clamp(2.5rem, 7vw, 6rem); line-height: 0.95; letter-spacing: -0.035em; }
+.text-hero { font-size: clamp(2.25rem, 1.4rem + 3.4vw, 4rem); line-height: 1.04; letter-spacing: -0.028em; }
 .text-display { font-size: clamp(1.875rem, 4.4vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; }
 
   /*
@@ -720,9 +689,15 @@
     Named rather than written as `font-[300]` at the call site so the pair stays
     a pair: if the loaded range ever narrows, these two rules are the only place
     that has to move.
+
+    1 OCT 2026: ONE WEIGHT. A light sentence with its last words in extra-bold
+    is the same "decorated headline" habit as the italic accent, and the verify
+    pass found it straight under the new plain hero. Both names now set 600, the
+    weight every SectionHeading h2 already uses, so a heading reads as one line
+    in one voice. Kept as names so the call sites need no change.
   */
-.font-thin-display { font-weight: 300; }
-.font-loud-display { font-weight: 800; }
+.font-thin-display { font-weight: 600; }
+.font-loud-display { font-weight: 600; }
 
   /*
     Gold hairline over a section heading. Gold is 2.27:1 on white and can never
@@ -746,30 +721,21 @@
     on its side for a wide panel. Named brand tokens rather than the semantic
     ones, so the wash is the same navy-and-gold in both themes and only the
     ground underneath changes.
+
+    1 OCT 2026: NO WASH. A gradient glow behind a call-to-action panel is part
+    of the same generated-page kit as the blurred blobs (hero brief, item 10),
+    and the footer carried it on every route. The panels keep their own flat
+    fill and border; only the background IMAGE is dropped, so a panel's
+    `bg-card` or `bg-background` colour still applies.
   */
 .bg-spotlight {
-    background:
-      radial-gradient(62% 58% at 50% 0%, hsl(var(--brand-gold) / 0.11), transparent 62%),
-      radial-gradient(50% 50% at 88% 16%, hsl(var(--brand-navy-600) / 0.20), transparent 64%),
-      radial-gradient(44% 44% at 8% 84%, hsl(var(--brand-gold) / 0.07), transparent 66%);
-  }
-  /* Same geometry, softer, because these alphas sit on #F8FAFC rather than on
-     navy and a 20% navy bloom on a near-white panel reads as a dirty mark.
-     Descendant, not compound: `light` is on <html>. See the note on .eyebrow. */
-.light .bg-spotlight {
-    background:
-      radial-gradient(62% 58% at 50% 0%, hsl(var(--brand-gold) / 0.10), transparent 62%),
-      radial-gradient(50% 50% at 88% 16%, hsl(var(--brand-navy-600) / 0.10), transparent 64%),
-      radial-gradient(44% 44% at 8% 84%, hsl(var(--brand-gold) / 0.06), transparent 66%);
+    background-image: none;
   }
 
-  /* Dotted / grid textures */
+  /* The 56px grid behind the inner heroes: retired with the blobs (1 Oct 2026,
+     hero brief item 4). Kept as an empty class so no page has to change. */
 .bg-grid {
-    background-image: linear-gradient(hsl(var(--border) / 0.7) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.7) 1px, transparent 1px);
-    background-size: 56px 56px;
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+    background-image: none;
   }
 .bg-dots {
     background-image: radial-gradient(hsl(var(--foreground) / 0.10) 1px, transparent 1px);

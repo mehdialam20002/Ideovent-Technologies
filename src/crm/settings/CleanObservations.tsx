@@ -14,7 +14,7 @@ export interface DirtyObservation {
 
 /**
  * Saved observations that must not reach a message: one naming ANOTHER lead
- * (the 28 Sep 2026 bug wrote "Verma Coaching Academy" into other leads) or
+ * (the 28 Sep 2026 bug wrote one imported lead's name into other leads) or
  * one that reads like a research note ("curl ...: HTTP 200"). Pure.
  */
 export function dirtyObservations(leads: OutreachLead[]): DirtyObservation[] {

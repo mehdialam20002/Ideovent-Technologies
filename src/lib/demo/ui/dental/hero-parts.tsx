@@ -4,6 +4,8 @@
  * hairlines, clinical four numerals, calm credential), the floating cards,
  * the reason card, the branch picker, the kids shapes and the scroll cue.
  * Every sample figure sits above a SampleNote "stats" and never counts up.
+ * A doctor line (kids, calm) that names the template's sample doctor ends in
+ * "(sample)" while the doctors block is still the template's (heroDoctorMark).
  */
 
 import { useState, type CSSProperties, type ReactNode } from "react";
@@ -20,7 +22,7 @@ import { DEFAULT_REASONS } from "./BookingFlow";
 import { BOOKING_COPY, DENTAL_COPY } from "./copy";
 import { HERO_COPY } from "./hero-copy";
 import { DentalGlyph } from "./icons";
-import { dentalContact, dentalOf, leadDoctor, whatsappHref } from "./logic";
+import { dentalContact, dentalOf, heroCredential, heroDoctorMark, leadDoctorCredit, whatsappHref } from "./logic";
 
 export type HeroTone = "lux" | "clinical" | "calm" | "kids";
 
@@ -249,15 +251,13 @@ export function HeroCtas({ tone, center = false }: { tone: HeroTone; center?: bo
 /** Calm: the lead surgeon's degree and registration, and the rating chip. */
 export function CalmCredential() {
   const { site, lang } = useSite();
-  const hero = useHero();
-  const doc = leadDoctor(site);
   const rating = useRatingLine();
-  const cred = bi(hero, "credential", lang)
-    || (doc ? [bi(doc, "name", lang), bi(doc, "qualification", lang), bi(doc, "regNo", lang)].filter(Boolean).join(", ") : "");
+  const cred = heroCredential(site, lang);
+  const mark = heroDoctorMark(site, cred, lang);
   if (!cred && !rating) return null;
   return (
     <div className="dn-rise-cta mt-8 flex flex-col gap-3 border-t border-white/20 pt-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6" style={at(5)}>
-      {cred && <p className="text-sm text-[hsl(var(--ds-hero-soft))]">{cred}</p>}
+      {cred && <p className="text-sm text-[hsl(var(--ds-hero-soft))]">{cred}{mark && ` ${mark}`}</p>}
       {rating && (
         <p className="inline-flex w-fit items-center gap-2 rounded-full border border-white/25 px-3 py-1 text-sm text-[hsl(var(--ds-hero-ink))]">
           <Star className="h-4 w-4 fill-[hsl(var(--ds-hero-accent))] text-[hsl(var(--ds-hero-accent))]" aria-hidden="true" />
@@ -269,17 +269,19 @@ export function CalmCredential() {
   );
 }
 
-/** Kids: the pedodontist's line under the CTAs. */
+/** Kids: the pedodontist's line under the CTAs, "(sample)" while it is the template's. */
 export function KidsLead() {
   const { site, lang } = useSite();
-  const doc = leadDoctor(site);
+  const credit = leadDoctorCredit(site, lang);
+  const mark = credit ? heroDoctorMark(site, [credit.name, ...credit.rest].join(", "), lang) : "";
   const rating = useRatingLine();
   return (
     <div className="dn-rise-cta mt-8" style={at(5)}>
-      {doc && (
+      {credit && (
         <p className="text-sm text-[hsl(var(--ds-ink-soft))]">
-          <strong className="font-semibold text-[hsl(var(--ds-ink))]">{bi(doc, "name", lang)}</strong>
-          {[bi(doc, "qualification", lang), bi(doc, "specialisation", lang)].filter(Boolean).map((x, i) => <span key={i}>, {x}</span>)}
+          <strong className="font-semibold text-[hsl(var(--ds-ink))]">{credit.name}</strong>
+          {credit.rest.map((x, i) => <span key={i}>, {x}</span>)}
+          {mark && <span> {mark}</span>}
         </p>
       )}
       {rating && <p className="mt-2 flex items-center gap-2 text-sm"><Stars value={rating.value} /><strong>{rating.value}</strong><span className="text-[hsl(var(--ds-ink-soft))]">{rating.line}{rating.source ? `, ${rating.source}` : ""}</span></p>}

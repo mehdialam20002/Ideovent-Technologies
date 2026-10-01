@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Copy, ExternalLink, Link2, MoreHorizontal, PencilLine, Send, UserPlus } from "lucide-react";
 import { demoPreviewPath } from "@/lib/demo/record";
+import { mainSiteUrl } from "@/lib/host";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -67,11 +68,13 @@ export function DemoActionsCell({ item, h, compact }: { item: DemoItem; h: RowHa
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52 text-[13px]">
+          {/* Both pages live on the main site: mainSiteUrl keeps them relative today and makes them
+              absolute once the CRM is on its own subdomain. A plain <a> works either way. */}
           <DropdownMenuItem asChild>
-            <a href={demoPreviewPath(demo.slug)} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" /> Open demo</a>
+            <a href={mainSiteUrl(demoPreviewPath(demo.slug))} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" /> Open demo</a>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <a href={`/admin/c/demoSites?edit=${encodeURIComponent(demo.id)}`} target="_blank" rel="noopener noreferrer"><PencilLine className="mr-2 h-4 w-4" aria-hidden="true" /> Edit in admin</a>
+            <a href={mainSiteUrl(`/admin/c/demoSites?edit=${encodeURIComponent(demo.id)}`)} target="_blank" rel="noopener noreferrer"><PencilLine className="mr-2 h-4 w-4" aria-hidden="true" /> Edit in admin</a>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {canSend && (

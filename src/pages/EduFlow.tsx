@@ -21,6 +21,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import FaqSection from "@/components/sections/FaqSection";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import { unbreakable } from "@/lib/typography";
+import { liveEmail } from "@/lib/mailbox";
 
 /**
  * /eduflow. EduFlow, our school & coaching management platform.
@@ -75,20 +76,14 @@ export default function EduFlow() {
 
   const whatsappDigits = (contact.whatsappNumber || "").replace(/\D/g, "");
   const whatsappLink = whatsappDigits ? `https://wa.me/${whatsappDigits}`: "";
+  const email = liveEmail(contact);
   const { lead, accent } = accentAfterDash(eduflow.title);
 
   return (
     <Layout>
+      {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/eduflow"]). */}
       <Seo
-        title="EduFlow. School & Coaching Management Software"
-        description="School and coaching management software from New Delhi, admissions, fees, attendance, report cards and parent updates in one place. In development; early access open."
         path="/eduflow"
-        keywords={[
-          "school management software India",
-          "coaching institute management software New Delhi",
-          "fees and attendance software for schools India",
-          "school ERP Delhi NCR",
-        ]}
         breadcrumbs={[{ name: "EduFlow", path: "/eduflow" }]}
         /* SoftwareApplication, as 08-eduflow/EDUFLOW-LANDING-COPY.md §0 asks
          * for. And deliberately without `aggregateRating`, `review` or
@@ -163,7 +158,7 @@ export default function EduFlow() {
                     <a
                       key={cta.href}
                       href={cta.href}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                      className="inline-flex h-12 items-center gap-2 rounded-lg border border-border px-6 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
                     >
                       {cta.label}
                       <ArrowRight className="h-4 w-4" />
@@ -177,7 +172,7 @@ export default function EduFlow() {
                     href={whatsappLink}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                    className="inline-flex h-12 items-center gap-2 rounded-lg border border-border px-6 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
                   >
                     <MessageCircle className="h-4 w-4" />
                     WhatsApp {unbreakable(contact.phoneDisplay)}
@@ -406,7 +401,7 @@ export default function EduFlow() {
                 */}
                 <Link
                   to="/pricing"
-                  className="group mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm
+                  className="group mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-4 text-sm
                              font-medium text-foreground transition-colors duration-200 hover:border-primary/60 hover:bg-muted
                              active:bg-muted/70"
                 >
@@ -559,9 +554,9 @@ export default function EduFlow() {
                       {unbreakable(contact.phoneDisplay)}
                     </a>
 )}
-                  {contact.emailHref && (
-                    <a href={contact.emailHref} className="inline-flex min-h-6 items-center hover:text-foreground">
-                      {contact.emailDisplay}
+                  {email && (
+                    <a href={email.href} className="inline-flex min-h-6 items-center hover:text-foreground">
+                      {email.display}
                     </a>
 )}
                   <span>

@@ -4,6 +4,7 @@ import { LEAD_STATUSES, LEAD_STATUS_LABELS, type LeadStatus, type OutreachLead }
 import { useOutreach } from "./useOutreach";
 import { LeadFields, draftToLead, type LeadDraft } from "./LeadFields";
 import { ComposePanel } from "./ComposePanel";
+import { CallScriptCard } from "./CallScriptCard";
 import { History } from "./History";
 import { nextStep, todayQueue } from "./compose";
 import { KIND_LABEL, StatusPill, btnDanger, btnGhost, btnPrimary, btnSecondary, cardCls, dueLabel, fmtDateTime, inputCls, prettyPhone, summaryCls, textareaCls } from "./ui";
@@ -20,9 +21,11 @@ function toLocalInput(iso?: string): string {
 
 /**
  * ONE LEAD. Top: who they are and the next step. Middle: the three steps
- * (Demo, Message, Send). Bottom, folded away: status, follow-up date, notes,
- * history. The steps are what Mehdi does twenty times a day; the rest is
- * there when he needs it and out of the way when he does not.
+ * (Demo, Message, Send; the Message step shows every stage in plain words and
+ * starts on the one the lead is at), then the Call script, folded until a call
+ * is next. Bottom, folded away: status, follow-up date, notes, history. The
+ * steps are what Mehdi does twenty times a day; the rest is there when he
+ * needs it and out of the way when he does not.
  *
  * The compose steps are keyed by the lead id (see ComposePanel for why), and
  * "Next lead" walks Today's list without going back to it.
@@ -118,6 +121,9 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
       <div className={cardCls}>
         <ComposePanel key={lead.id} lead={lead} next={next ? { name: next.instituteName, open: () => onOpen(next.id) } : undefined} />
       </div>
+
+      {/* ── The call, folded until it is needed ───────────────────────── */}
+      <CallScriptCard key={`call-${lead.id}`} lead={lead} />
 
       <LeadDetails lead={lead} onDeleted={onBack} />
     </div>

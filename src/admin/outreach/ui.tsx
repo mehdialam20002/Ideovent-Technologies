@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle, Ban } from "lucide-react";
-import type { LeadStatus } from "@/lib/outreach/types";
-import { LEAD_STATUS_LABELS } from "@/lib/outreach/types";
+import type { LeadKind, LeadStatus } from "@/lib/outreach/types";
+import { LEAD_KIND_LABELS, LEAD_KIND_VALUES, LEAD_STATUS_LABELS } from "@/lib/outreach/types";
 import { cn } from "@/lib/utils";
 
 /**
@@ -131,5 +131,11 @@ export function prettyPhone(p?: string): string {
   return m ? `+91 ${m[1]} ${m[2]}` : p;
 }
 
-export const KIND_LABEL: Record<string, string> = { school: "School", coaching: "Coaching", other: "Other" };
+/**
+ * Every lead kind in the order the pickers list them, and its label ("dental",
+ * Dental clinic, added 28 Sep 2026). Both come from src/lib/outreach/types.ts,
+ * so every selector, filter, card and breakdown in the CRM says the same words.
+ */
+export const LEAD_KINDS: readonly LeadKind[] = LEAD_KIND_VALUES;
+export const KIND_LABEL: Record<string, string> = { ...LEAD_KIND_LABELS };
 export const LANGUAGE_LABEL: Record<string, string> = { en: "English", hinglish: "Hinglish", hi: "Hindi" };
