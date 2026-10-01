@@ -7,7 +7,18 @@
  * They are never part of public.content, the CMS snapshot or the CMS Export:
  * a lead's phone and email are personal data about someone who has not asked
  * to be in anything.
+ *
+ * THE TEAM (0011_crm_team.sql, 1 Oct 2026). Who works a lead is a COLUMN
+ * (assigned_to and friends), mirrored on the lead as assigneeId, assignedAt,
+ * assignedById, createdById, qualifiedById and closedAt when the store reads
+ * it. The mirrors are never written into the lead's data: the store strips
+ * them before every write and the database strips them again. The people
+ * themselves, and everything else about the team, are in ./team.ts; the rules
+ * (who may see and change what) are in ./access.ts.
  */
+
+import type { AskTopic, CallOutcome, MemberWordingKey } from "./team";
+import type { TemplateStage } from "./templates";
 
 export type LeadStatus =
   | "new"
@@ -98,23 +109,56 @@ export interface OutreachLead {
   /** ISO timestamp of the next follow-up. */
   nextActionAt?: string;
   lastContactedAt?: string;
+  /**
+   * The OLD free-text "Assigned" label the bulk bar used to write ("Aman").
+   * Since 0011 it is shown as "Old label" only: who works a lead is assigneeId.
+   */
   assignedTo?: string;
   tags?: string[];
   language?: LeadLanguage;
+  /** Why the lead was lost. Required when a member marks a lead Lost (the database refuses it without one). */
+  lostReason?: string;
+
+  /* ── Column mirrors (0011). Filled in on read; never stored in the lead's data. ── */
+  /** crm_members id of the person who works the lead. null = Unassigned: the pool nobody has written to. */
+  assigneeId?: string | null;
+  /** The assignee's display name, when a reader filled it in. Never stored. */
+  assigneeName?: string;
+  /** When and by whom it was assigned: stamped by the database, never by a browser. */
+  assignedAt?: string;
+  assignedById?: string;
+  /** Who added the lead. Never changes. */
+  createdById?: string;
+  /** The member credited with qualifying it (set by a hand-over). */
+  qualifiedById?: string;
+  /** When it closed (Won, Lost, Do not contact); empty while open. A member reads it for 14 days after. */
+  closedAt?: string;
 }
 
-export type OutreachEventType = "sent" | "replied" | "status" | "note" | "demo_opened" | "call";
+/**
+ * "assign" and "handoff" lines are written by the database itself (0011): an
+ * assignment change, and a hand-over to Mehdi. Nobody else may write them.
+ */
+export type OutreachEventType = "sent" | "replied" | "status" | "note" | "demo_opened" | "call" | "assign" | "handoff";
 export type OutreachChannel = "email" | "whatsapp" | "call";
 
 export interface OutreachEvent {
   id: string;
   leadId: string;
-  /** ISO timestamp. */
+  /** ISO timestamp. Since 0011 the server's clock (a browser cannot backdate a touch). */
   at: string;
   type: OutreachEventType;
   channel?: OutreachChannel;
   templateId?: string;
   detail?: string;
+  /** crm_members id of who wrote the line: stamped by the server, never by the browser. */
+  actorId?: string;
+  /** On a "sent" line: the template's stage, so the server counts first messages and refuses money stages. */
+  stage?: TemplateStage;
+  /** On a "call" line (phase 2): how the call went. */
+  outcome?: CallOutcome;
+  /** On an "Ask Mehdi" note: what was asked. */
+  topic?: AskTopic;
 }
 
 export interface OutreachSettings {
@@ -144,6 +188,12 @@ export interface OutreachSettings {
    * lead for it, so every demo can be tracked in the CRM. Missing means on.
    */
   autoAddDemos?: boolean;
+  /**
+   * Which "we" versions of the approved sentences Mehdi has approved for the
+   * team (spec 10.7). The owner writes it; everyone reads it. A key that is
+   * not true keeps the templates and script lines it covers HIDDEN for members.
+   */
+  memberWording?: Partial<Record<MemberWordingKey, boolean>>;
 }
 
 /** What a caller passes to upsertLead: id and timestamps are filled in when missing. */

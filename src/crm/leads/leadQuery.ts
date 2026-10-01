@@ -1,6 +1,7 @@
 import type { DemoSite, DemoSiteOpen } from "@/lib/cms/types";
 import { LEAD_STATUSES, type LeadStatus, type OutreachChannel, type OutreachEvent, type OutreachLead } from "@/lib/outreach/types";
-import { endOfToday, isHotOpen, isOpenLead, opensSinceContact } from "@/admin/outreach/derive";
+import type { CrmRole } from "@/lib/outreach/team";
+import { endOfToday, isHotOpen, isOpenLead, isUntouched, opensSinceContact } from "@/admin/outreach/derive";
 import { demoLinkFor } from "@/lib/outreach/engine";
 import { groupEvents, hasReplied, startOfDay, wasContacted } from "../metrics";
 
@@ -8,10 +9,25 @@ import { groupEvents, hasReplied, startOfDay, wasContacted } from "../metrics";
  * LEADS QUERY. Pure: one row model, the saved views, the filters (read from and
  * written to the URL, so the dashboard can link to any slice and the table and
  * the pipeline share one filter), sorting and CSV. No React in here.
+ *
+ * WHO WORKS A LEAD (the team, 1 Oct 2026): a lead read since 0011 carries
+ * assigneeId (null = Unassigned, the pool). The free-text assignedTo is only
+ * its "Old label" now. A lead read before 0011 (legacy) has no assigneeId at
+ * all, and everything here reads the old label as before.
  */
+
+/** Names a team member ("Unassigned" for no id), as useCrmData().nameOf does. */
+export type NameOf = (id?: string | null) => string;
+
+/** True when the lead was read with the team's columns (0011, or local mode). */
+export const hasTeamColumns = (l: OutreachLead): boolean => l.assigneeId !== undefined;
 
 export interface LeadRow {
   lead: OutreachLead;
+  /** Who works it, by name ("Unassigned" for the pool); undefined before the team (use the old label). */
+  assigneeName?: string;
+  /** Assigned more than 24 hours ago and nothing written by that person since (derive.ts isUntouched). */
+  untouched?: boolean;
   demo?: DemoSite;
   /** Every open of the linked demo. */
   opens: number;
@@ -41,6 +57,8 @@ export function buildRows(
   opens: DemoSiteOpen[],
   demoForLead: (l: OutreachLead) => DemoSite | undefined,
   now: Date,
+  /** Names the assignee on each row (the team); without it rows carry no assigneeName. */
+  nameOf?: NameOf,
 ): LeadRow[] {
   const lastSend = new Map<string, OutreachEvent>();
   for (const e of events) {
@@ -72,8 +90,11 @@ export function buildRows(
     const open = isOpenLead(lead);
     const n = t(lead.nextActionAt);
     const due = !open || !Number.isFinite(n) ? undefined : n < start ? "overdue" : n <= end ? "today" : "later";
+    const evs = evsBy.get(lead.id) || [];
     return {
       lead,
+      assigneeName: nameOf && hasTeamColumns(lead) ? nameOf(lead.assigneeId) : undefined,
+      untouched: isUntouched(lead, evs, now),
       demo,
       opens: os.length,
       freshOpens: fresh,
@@ -92,14 +113,17 @@ export function buildRows(
 /* ── Saved views ─────────────────────────────────────────────────────────── */
 
 export type ViewId =
-  | "open" | "due" | "hot" | "new" | "new7" | "contacted" | "ever" | "replied" | "everReplied" | "demo" | "won" | "lost" | "all";
+  | "open" | "unassigned" | "due" | "hot" | "new" | "new7" | "contacted" | "ever" | "replied" | "everReplied" | "demo" | "won" | "lost" | "all";
 
 /**
  * `extra` views are the dashboard's counts ("New, last 7 days", "Contacted",
  * "Replied"): their tab shows only while one is open, so the tab row stays short.
+ * `team` views exist only with the team (0011) and only for Mehdi and admins:
+ * Unassigned is the pool of open leads nobody works yet.
  */
-export const VIEWS: { id: ViewId; label: string; test: (r: LeadRow) => boolean; extra?: boolean }[] = [
+export const VIEWS: { id: ViewId; label: string; test: (r: LeadRow) => boolean; extra?: boolean; team?: boolean }[] = [
   { id: "open", label: "All open", test: (r) => isOpenLead(r.lead) },
+  { id: "unassigned", label: "Unassigned", test: (r) => isOpenLead(r.lead) && hasTeamColumns(r.lead) && !r.lead.assigneeId, team: true },
   { id: "due", label: "Follow-up due", test: (r) => r.due === "overdue" || r.due === "today" },
   { id: "hot", label: "Hot", test: (r) => r.hot },
   { id: "new", label: "New", test: (r) => r.lead.status === "new" },
@@ -129,13 +153,20 @@ export interface LeadFilters {
   kind: string;
   city: string;
   source: string;
+  /**
+   * Who works it: a team member's id, or NONE for Unassigned. Also accepted,
+   * so older links keep working: a person's name, and an old free-text label
+   * ("Aman"), matched against the lead's old label as before the team.
+   */
   assignee: string;
+  /** The old free-text label ("Old label"), or NONE for leads without one. */
+  old: string;
   demo: "" | "yes" | "no";
   hot: boolean;
   overdue: boolean;
 }
 
-export const EMPTY_FILTERS: LeadFilters = { q: "", status: [], kind: "", city: "", source: "", assignee: "", demo: "", hot: false, overdue: false };
+export const EMPTY_FILTERS: LeadFilters = { q: "", status: [], kind: "", city: "", source: "", assignee: "", old: "", demo: "", hot: false, overdue: false };
 
 /** "Not set" in a filter select means the field is empty. */
 export const NONE = "__none";
@@ -152,6 +183,7 @@ export function readFilters(p: URLSearchParams): LeadFilters {
     city: p.get("city") || "",
     source: p.get("source") || "",
     assignee: p.get("assignee") || "",
+    old: p.get("old") || "",
     demo: demo === "yes" || demo === "no" ? demo : "",
     hot: p.get("hot") === "1",
     overdue: p.get("overdue") === "1",
@@ -168,6 +200,7 @@ export function writeFilters(p: URLSearchParams, f: Partial<LeadFilters>): URLSe
   if (f.city !== undefined) set("city", f.city);
   if (f.source !== undefined) set("source", f.source);
   if (f.assignee !== undefined) set("assignee", f.assignee);
+  if (f.old !== undefined) set("old", f.old);
   if (f.demo !== undefined) set("demo", f.demo);
   if (f.hot !== undefined) set("hot", f.hot ? "1" : "");
   if (f.overdue !== undefined) set("overdue", f.overdue ? "1" : "");
@@ -175,7 +208,7 @@ export function writeFilters(p: URLSearchParams, f: Partial<LeadFilters>): URLSe
 }
 
 export function activeFilterCount(f: LeadFilters): number {
-  return [f.status.length > 0, f.kind, f.city, f.source, f.assignee, f.demo, f.hot, f.overdue].filter(Boolean).length;
+  return [f.status.length > 0, f.kind, f.city, f.source, f.assignee, f.old, f.demo, f.hot, f.overdue].filter(Boolean).length;
 }
 
 const norm = (s?: string) => (s || "").trim().toLowerCase();
@@ -186,13 +219,31 @@ function matchField(value: string | undefined, want: string): boolean {
   return norm(value) === norm(want);
 }
 
+/**
+ * The Assigned filter. With the team's columns: NONE is the Unassigned pool,
+ * an id is that person; a name ("Mehdi Alam", from a link) is that person
+ * too. Any other value is an old free-text label, matched as before the team,
+ * so an old link (?assignee=Aman) still opens the same leads.
+ */
+export function matchesAssignee(r: LeadRow, want: string): boolean {
+  if (!want) return true;
+  const l = r.lead;
+  if (!hasTeamColumns(l)) return matchField(l.assignedTo, want);
+  if (want === NONE) return !l.assigneeId;
+  if (l.assigneeId && l.assigneeId === want) return true;
+  if (l.assigneeId && r.assigneeName && norm(r.assigneeName) === norm(want)) return true;
+  const old = want.replace(/^old:\s*/i, "");
+  return Boolean(norm(old)) && norm(l.assignedTo) === norm(old);
+}
+
 export function matchesFilters(r: LeadRow, f: LeadFilters, opts: { ignoreStatus?: boolean } = {}): boolean {
   const l = r.lead;
   if (!opts.ignoreStatus && f.status.length && !f.status.includes(l.status)) return false;
   if (!matchField(l.kind, f.kind)) return false;
   if (!matchField(l.city, f.city)) return false;
   if (!matchField(l.source, f.source)) return false;
-  if (!matchField(l.assignedTo, f.assignee)) return false;
+  if (!matchesAssignee(r, f.assignee)) return false;
+  if (!matchField(l.assignedTo, f.old || "")) return false;
   if (f.demo === "yes" && !r.demo && !l.demoSlug) return false;
   if (f.demo === "no" && (r.demo || l.demoSlug)) return false;
   if (f.hot && !r.hot) return false;
@@ -225,7 +276,7 @@ export function distinct(leads: OutreachLead[], get: (l: OutreachLead) => string
 /* ── Sorting ─────────────────────────────────────────────────────────────── */
 
 export type SortKey =
-  | "name" | "status" | "city" | "kind" | "source" | "contact" | "demo" | "lastContact" | "channel" | "next" | "assigned" | "created";
+  | "name" | "status" | "city" | "kind" | "source" | "contact" | "demo" | "lastContact" | "channel" | "next" | "assigned" | "oldLabel" | "created";
 
 const STATUS_ORDER = Object.fromEntries(LEAD_STATUSES.map((s, i) => [s, i])) as Record<LeadStatus, number>;
 
@@ -240,7 +291,8 @@ const SORT_VALUE: Record<SortKey, (r: LeadRow) => string | number | undefined> =
   lastContact: (r) => (r.lastContactAt ? t(r.lastContactAt) : undefined),
   channel: (r) => r.lastChannel,
   next: (r) => (r.lead.nextActionAt ? t(r.lead.nextActionAt) : undefined),
-  assigned: (r) => norm(r.lead.assignedTo) || undefined,
+  assigned: (r) => norm(r.assigneeName ?? r.lead.assignedTo) || undefined,
+  oldLabel: (r) => norm(r.lead.assignedTo) || undefined,
   created: (r) => t(r.lead.createdAt),
 };
 
@@ -293,7 +345,9 @@ const CSV_COLS: [string, (r: LeadRow) => string | number | undefined][] = [
   ["Email", (r) => r.lead.email],
   ["Website", (r) => r.lead.website],
   ["Source", (r) => r.lead.source],
-  ["Assigned to", (r) => r.lead.assignedTo],
+  /* The person who works it (the team); before the team, the old free-text label, as before. */
+  ["Assigned to", (r) => r.assigneeName ?? r.lead.assignedTo],
+  ["Old label", (r) => (r.assigneeName !== undefined ? r.lead.assignedTo : undefined)],
   ["Tags", (r) => (r.lead.tags || []).join("; ")],
   /* The whole address a prospect opens (engine demoLinkFor: SITE_ORIGIN, the main site), not a path (30 Sep 2026). */
   ["Demo", (r) => demoLinkFor(r.demo?.slug || r.lead.demoSlug)],
@@ -339,6 +393,21 @@ export function sinceLabel(iso: string | undefined, now: Date): string {
   if (!Number.isFinite(days)) return "";
   if (days <= 0) return "today";
   return `${days}d ago`;
+}
+
+/**
+ * Why this person cannot move a lead from one status to another, in the
+ * database's own words (0011 crm_leads_guard, access.ts guardLeadUpdate), or
+ * null when they can. Only Mehdi moves a lead to or from Proposal and Won and
+ * takes one off Do not contact; a member never moves one to or from Call (a
+ * hand-over does). Lists disable what would only be refused.
+ */
+export function statusBlock(role: CrmRole | null | undefined, from: LeadStatus, to: LeadStatus): string | null {
+  if (!role || role === "owner" || from === to) return null;
+  if (to === "proposal" || to === "won" || from === "proposal" || from === "won") return "Only Mehdi moves a lead to or from Proposal and Won";
+  if (from === "do_not_contact") return "Only Mehdi can take a lead off Do not contact";
+  if (role === "member" && (to === "call" || from === "call")) return "Mehdi handles calls: use Hand to Mehdi";
+  return null;
 }
 
 /** A yyyy-mm-dd input value to an ISO timestamp at 10:00 local time. */

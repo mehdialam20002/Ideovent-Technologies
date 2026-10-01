@@ -6,11 +6,45 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { KIND_LABEL } from "@/admin/outreach/ui";
 import { cn } from "@/lib/utils";
+import { useOptionalCrmMe } from "../useCrmMe";
 import { crm, StatusDot } from "../ui";
 import { activeFilterCount, distinct, EMPTY_FILTERS, NONE, type LeadFilters } from "./leadQuery";
 
 const selectCls =
   "h-9 rounded-lg border border-input bg-background px-2 text-[13px] md:w-[7.75rem] 2xl:w-auto 2xl:max-w-[11rem] 2xl:px-2.5 outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-ring max-md:h-11 max-md:max-w-none max-md:w-full";
+
+/**
+ * Who works a lead, since the team (spec 10.4): the people (by id), then
+ * Unassigned (the pool). The old free-text labels follow in their own group,
+ * so a filter set before the team ("Aman") still picks the same leads; the
+ * "Old label" filter next to it lists only those. Part 2 of the team build
+ * (the e2e moves its old-label check to that filter) can drop the group.
+ */
+function AssignedPick({ value, onChange, people, oldLabels }: {
+  value: string;
+  onChange: (v: string) => void;
+  people: { value: string; label: string }[];
+  oldLabels: { value: string; label: string }[];
+}) {
+  const known = !value || value === NONE || people.some((p) => p.value === value) || oldLabels.some((o) => o.value === value);
+  return (
+    <select aria-label="Assigned" value={value} onChange={(e) => onChange(e.target.value)} className={cn(selectCls, value && "border-primary/60 text-foreground")}>
+      <option value="">Assigned: any</option>
+      {people.map((p) => (
+        <option key={p.value} value={p.value}>{p.label}</option>
+      ))}
+      <option value={NONE}>Unassigned</option>
+      {oldLabels.length > 0 && (
+        <optgroup label="Old label">
+          {oldLabels.map((o) => (
+            <option key={`old:${o.value}`} value={o.value}>{o.value}</option>
+          ))}
+        </optgroup>
+      )}
+      {!known && <option value={value}>{value}</option>}
+    </select>
+  );
+}
 
 function Pick({ label, value, onChange, options }: {
   label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[];
@@ -58,7 +92,22 @@ export function FilterBar({ leads, filters, setFilters, showStatus = true }: {
   const [open, setOpen] = useState(false);
   const cities = useMemo(() => distinct(leads, (l) => l.city).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
   const sources = useMemo(() => distinct(leads, (l) => l.source).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
-  const people = useMemo(() => distinct(leads, (l) => l.assignedTo).map((c) => ({ value: c.value, label: c.value })), [leads]);
+  /* Before the team: the free-text labels, exactly as before. */
+  const labels = useMemo(() => distinct(leads, (l) => l.assignedTo).map((c) => ({ value: c.value, label: c.value })), [leads]);
+  const crmMe = useOptionalCrmMe();
+  const teamOn = Boolean(crmMe && crmMe.me.role && !crmMe.me.legacy);
+  /* A member reads only their own leads: whose a lead is never varies, so no Assigned filter. */
+  const showAssigned = !teamOn || Boolean(crmMe?.isStaff);
+  const team = crmMe?.team;
+  const people = useMemo(
+    () =>
+      (team || [])
+        .slice()
+        .sort((a, b) => Number(b.active) - Number(a.active) || a.displayName.localeCompare(b.displayName))
+        .map((t) => ({ value: t.id, label: t.active ? t.displayName : `${t.displayName} (off)` })),
+    [team],
+  );
+  const oldLabels = useMemo(() => distinct(leads, (l) => l.assignedTo).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
   const kinds = Object.entries(KIND_LABEL).map(([value, label]) => ({ value, label }));
   const n = activeFilterCount({ ...filters, status: showStatus ? filters.status : [] });
 
@@ -106,7 +155,13 @@ export function FilterBar({ leads, filters, setFilters, showStatus = true }: {
         <Pick label="Kind" value={filters.kind} onChange={(kind) => setFilters({ kind })} options={kinds} />
         <Pick label="City" value={filters.city} onChange={(city) => setFilters({ city })} options={cities} />
         <Pick label="Source" value={filters.source} onChange={(source) => setFilters({ source })} options={sources} />
-        <Pick label="Assigned" value={filters.assignee} onChange={(assignee) => setFilters({ assignee })} options={people} />
+        {showAssigned && !teamOn && <Pick label="Assigned" value={filters.assignee} onChange={(assignee) => setFilters({ assignee })} options={labels} />}
+        {showAssigned && teamOn && (
+          <AssignedPick value={filters.assignee} onChange={(assignee) => setFilters({ assignee })} people={people} oldLabels={labels} />
+        )}
+        {showAssigned && teamOn && (oldLabels.length > 0 || filters.old) && (
+          <Pick label="Old label" value={filters.old} onChange={(old) => setFilters({ old })} options={oldLabels} />
+        )}
         <select aria-label="Demo" value={filters.demo} onChange={(e) => setFilters({ demo: e.target.value as LeadFilters["demo"] })}
           className={cn(selectCls, filters.demo && "border-primary/60")}>
           <option value="">Demo: any</option>

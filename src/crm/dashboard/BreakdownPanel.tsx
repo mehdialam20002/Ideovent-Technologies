@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { KIND_LABEL } from "@/admin/outreach/ui";
 import { rate, type BreakdownDim, type BreakdownRow, type CrmMetrics } from "../metrics";
+import { useCrmData } from "../useCrmData";
+import { NONE } from "../leads/leadQuery";
 import { crm, pct } from "../ui";
 import { cn } from "@/lib/utils";
 import { leadsLink } from "./KpiTiles";
@@ -22,16 +24,40 @@ function labelFor(dim: BreakdownDim, r: BreakdownRow): string {
   return r.label;
 }
 
-/** Where leads come from and how each group answers: by city, kind, source and assignee. */
+/**
+ * The leads table's filter for one assignee row (leads/leadQuery.ts): a
+ * person by id; an old free-text label ("Old: Aman") as that label on a lead
+ * nobody works yet; Unassigned as the pool without an old label. Null: the row
+ * opens nothing (Unassigned before the team, which the table cannot pick).
+ */
+function assigneeFilter(r: BreakdownRow, team: boolean): Record<string, string> | null {
+  if (r.personId) return { assignee: r.personId };
+  if (r.oldLabel) return team ? { assignee: NONE, old: r.oldLabel } : { assignee: r.oldLabel };
+  return team ? { assignee: NONE, old: NONE } : null;
+}
+
+/**
+ * Where leads come from and how each group answers: by city, kind, source and
+ * assignee (a person, or an old label as "Old: Aman"). A row opens those leads
+ * in the table, in the dashboard's own scope.
+ */
 export function BreakdownPanel({ m }: { m: CrmMetrics }) {
   const [dim, setDim] = useState<BreakdownDim>("city");
   const [all, setAll] = useState(false);
   const navigate = useNavigate();
+  const { scopes, scopeFor, setScope, me } = useCrmData();
+  const team = Boolean(me.role) && !me.legacy;
   const rows = rowsFor(m, dim);
   const shown = all ? rows : rows.slice(0, 8);
+  const target = (r: BreakdownRow): Record<string, string> | null => {
+    if (dim === "assignee") return assigneeFilter(r, team);
+    return r.key === "__none__" ? null : { [dim]: r.label };
+  };
   const open = (r: BreakdownRow) => {
-    if (r.key === "__none__") return;
-    navigate(leadsLink({ view: "all", [dim]: r.label }));
+    const f = target(r);
+    if (!f) return;
+    if (scopes.length) setScope(scopeFor("dashboard"), "leads");
+    navigate(leadsLink({ view: "all", ...f }));
   };
 
   return (
@@ -73,7 +99,7 @@ export function BreakdownPanel({ m }: { m: CrmMetrics }) {
             </thead>
             <tbody>
               {shown.map((r) => {
-                const none = r.key === "__none__";
+                const none = !target(r);
                 return (
                   <tr
                     key={r.key}
@@ -103,7 +129,9 @@ export function BreakdownPanel({ m }: { m: CrmMetrics }) {
         </div>
       )}
       {dim === "assignee" && rows.length > 0 && rows.every((r) => r.key === "__none__") && (
-        <p className="px-5 pb-4 text-[12px] text-muted-foreground">Nobody is assigned yet. Set Assigned on a lead, or in bulk from the Leads table.</p>
+        <p className="px-5 pb-4 text-[12px] text-muted-foreground">
+          {team ? "Nobody is assigned yet. Select leads in the Leads table and use Assign to, or Share out." : "Nobody is assigned yet. Set Assigned on a lead, or in bulk from the Leads table."}
+        </p>
       )}
     </section>
   );

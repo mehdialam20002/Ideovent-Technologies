@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Circle, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react";
 import { useCms } from "@/lib/cms/context";
-import { ADMIN_DEVICE_KEY } from "@/lib/demo/opens";
+import { markTeamDevice } from "@/lib/demo/opens";
+import { isOpenStatus } from "@/lib/outreach/access";
 import { OutreachProvider } from "@/admin/outreach/useOutreach";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Seo } from "@/components/seo/Seo";
 import { CrmDataProvider, useCrmData } from "./useCrmData";
+import { ActAsMenu, CrmMeProvider, useCrmMe } from "./useCrmMe";
 import { GlobalSearch } from "./GlobalSearch";
-import { CRM, CRM_NAV, type CrmNavItem } from "./nav";
+import { CRM, crmNav, type CrmNavItem, type CrmNavSet } from "./nav";
+import { AccessOff, MeUnavailable } from "./auth/AccessOff";
+import { FirstPassword } from "./auth/FirstPassword";
+import { Bell, NotificationsProvider } from "./notifications/Bell";
 import { mainSiteIsCrossOrigin } from "@/lib/host";
 import { cn } from "@/lib/utils";
 
@@ -26,41 +31,79 @@ function readCollapsed(): boolean {
  * THE CRM SHELL, at /crm on the main site, or at the root of its own
  * subdomain (crm.ideovent.in, see nav.ts). Full screen, its own tab, outside
  * the admin shell but behind the same sign-in. Left: a slim rail (collapsible,
- * remembered per browser). Top: lead search, New lead, Back to admin. Phones:
- * a bottom tab bar with the four daily screens and "More".
+ * remembered per browser). Top: lead search, New lead, the bell, Back to admin.
+ * Phones: a bottom tab bar with the daily screens and "More".
+ *
+ * THE TEAM (spec 10.1). Who is signed in comes first (CrmMeProvider, crm_me),
+ * then the gates, in order:
+ *   1. loading;
+ *   2. AccessOff: no role (switched off, not in the team, signed out);
+ *   3. FirstPassword: while they must set their own password;
+ *   4. the shell, with the rail, tabs and header of their role (nav.ts crmNav).
+ * The leads are loaded only behind the gates, as that person: the data
+ * providers start over whenever the person changes (local mode's Act as, or
+ * a role Mehdi changed), so nothing of one person's view outlives them.
  */
 export default function CrmLayout() {
   const { mode, actions } = useCms();
 
-  // This browser is Mehdi's: his own demo opens from it never send an alert.
+  // A team browser (Mehdi's, or a team member's): opens of demos from it never count or alert.
   useEffect(() => {
-    try {
-      localStorage.setItem(ADMIN_DEVICE_KEY, "1");
-    } catch {
-      /* storage blocked: the alert's other admin checks still apply */
-    }
+    markTeamDevice();
   }, []);
 
-  // Content first loaded as a visitor hides demo opens and drafts; reload as the admin.
+  // Content first loaded as a visitor hides demo opens and drafts; reload signed in.
   useEffect(() => {
     if (mode === "supabase") void actions.refresh();
   }, [mode, actions]);
 
   return (
-    <OutreachProvider>
+    <CrmMeProvider>
+      <CrmGates />
+    </CrmMeProvider>
+  );
+}
+
+function FullScreenLoader({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background" role="status" aria-label={label}>
+      <Seo title="CRM" noindex />
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
+    </div>
+  );
+}
+
+function CrmGates() {
+  const { me, loading, ready, error } = useCrmMe();
+  if (loading) return <FullScreenLoader label="Checking your access" />;
+  if (!ready) return <MeUnavailable error={error || "No answer from the CRM."} />;
+  if (!me.role) return <AccessOff />;
+  if (me.mustChangePassword) return <FirstPassword />;
+  return <CrmApp />;
+}
+
+/** The data, as this person. A new person (Act as, a changed role or See all) loads it afresh. */
+function CrmApp() {
+  const { me, actingAs } = useCrmMe();
+  const who = [actingAs || "", me.memberId || "", me.role || "", me.viewAll ? "all" : "own", me.legacy ? "legacy" : ""].join("|");
+  return (
+    <OutreachProvider key={who}>
       <CrmDataProvider>
-        <Seo title="CRM" noindex />
-        <CrmShell />
+        <NotificationsProvider>
+          <CrmShell />
+        </NotificationsProvider>
       </CrmDataProvider>
     </OutreachProvider>
   );
 }
 
 function useBadge(item: CrmNavItem): number {
-  const { metrics } = useCrmData();
+  const { metrics, leads } = useCrmData();
   if (item.badge === "due") return metrics.due.today.length + metrics.due.overdue.length;
   if (item.badge === "hot") return metrics.hot.length;
   if (item.badge === "unlinkedDemos") return metrics.unlinkedDemos;
+  /* The pool: open leads nobody works (assigneeId null; undefined = no team data). */
+  if (item.badge === "unassigned") return leads.filter((l) => l.assigneeId === null && isOpenStatus(l.status)).length;
   return 0;
 }
 
@@ -95,7 +138,7 @@ function RailLink({ item, collapsed }: { item: CrmNavItem; collapsed: boolean })
   );
 }
 
-function Rail() {
+function Rail({ nav }: { nav: CrmNavSet }) {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const toggle = () => {
     setCollapsed((c) => {
@@ -126,19 +169,27 @@ function Rail() {
         </button>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
-        {CRM_NAV.map((item) => (
+        {nav.rail.map((item) => (
           <RailLink key={item.to} item={item} collapsed={collapsed} />
         ))}
       </nav>
+      {/* Below the list: Mehdi's Team link in part 1 of the team build, an admin's Me (nav.ts crmNav). */}
+      {nav.railFooter.length > 0 && (
+        <div role="navigation" aria-label={nav.railFooter.map((i) => i.label).join(", ")} className="space-y-0.5 border-t border-border p-2">
+          {nav.railFooter.map((item) => (
+            <RailLink key={item.to} item={item} collapsed={collapsed} />
+          ))}
+        </div>
+      )}
     </aside>
   );
 }
 
 /**
- * "Back to admin". The admin lives on the main site: from the CRM's own
- * subdomain that is another origin, which a router <Link> cannot leave to, so
- * there it is a plain link to MAIN_ORIGIN/admin. On the main site it is the
- * same in-app link as before.
+ * "Back to admin" (Mehdi only: /admin is his). The admin lives on the main
+ * site: from the CRM's own subdomain that is another origin, which a router
+ * <Link> cannot leave to, so there it is a plain link to MAIN_ORIGIN/admin. On
+ * the main site it is the same in-app link as before.
  */
 function BackToAdmin({ className }: { className: string }) {
   const label = (
@@ -153,45 +204,56 @@ function BackToAdmin({ className }: { className: string }) {
   );
 }
 
-function BottomBar() {
+function MoreLink({ item }: { item: CrmNavItem }) {
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      className={({ isActive }) => cn("flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm", isActive ? "bg-primary/10 text-primary" : "hover:bg-muted")}
+    >
+      <item.icon className="h-4 w-4" aria-hidden="true" />
+      {item.label}
+      <Badge item={item} />
+    </NavLink>
+  );
+}
+
+function BottomBar({ nav }: { nav: CrmNavSet }) {
   const [more, setMore] = useState(false);
   const { pathname } = useLocation();
   useEffect(() => setMore(false), [pathname]);
-  const primary = CRM_NAV.filter((i) => i.primary);
-  const rest = CRM_NAV.filter((i) => !i.primary);
+  const hasMore = nav.more.length > 0 || nav.moreFooter.length > 0 || nav.backToAdmin;
   const tab =
     "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
   return (
     <>
       {more && <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={() => setMore(false)} aria-hidden="true" />}
-      {more && (
+      {more && hasMore && (
         <div id="crm-more" className="fixed inset-x-3 bottom-[4.25rem] z-50 rounded-xl border border-border bg-card p-1.5 shadow-xl md:hidden">
-          {rest.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => cn("flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm", isActive ? "bg-primary/10 text-primary" : "hover:bg-muted")}
-            >
-              <item.icon className="h-4 w-4" aria-hidden="true" />
-              {item.label}
-              <Badge item={item} />
-            </NavLink>
+          {nav.more.map((item) => (
+            <MoreLink key={item.to} item={item} />
           ))}
-          <BackToAdmin className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted" />
+          {nav.backToAdmin && <BackToAdmin className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted" />}
+          {nav.moreFooter.length > 0 && (nav.more.length > 0 || nav.backToAdmin) && <div className="mx-2 my-1 border-t border-border" aria-hidden="true" />}
+          {nav.moreFooter.map((item) => (
+            <MoreLink key={item.to} item={item} />
+          ))}
         </div>
       )}
       <nav aria-label="CRM tabs" className="fixed inset-x-0 bottom-0 z-50 flex border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-        {primary.map((item) => (
+        {nav.tabs.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn(tab, isActive ? "text-primary" : "text-muted-foreground")}>
             <item.icon className="h-5 w-5" aria-hidden="true" />
             {item.label}
             <Badge item={item} dotOnly />
           </NavLink>
         ))}
-        <button type="button" className={cn(tab, more ? "text-primary" : "text-muted-foreground")} aria-expanded={more} aria-controls="crm-more" onClick={() => setMore((m) => !m)}>
-          <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-          More
-        </button>
+        {hasMore && (
+          <button type="button" className={cn(tab, more ? "text-primary" : "text-muted-foreground")} aria-expanded={more} aria-controls="crm-more" onClick={() => setMore((m) => !m)}>
+            <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+            More
+          </button>
+        )}
       </nav>
     </>
   );
@@ -201,23 +263,30 @@ const topBtn =
   "inline-flex h-9 items-center gap-1.5 rounded-lg text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 function CrmShell() {
-  const { mode, loading, error } = useCrmData();
+  const { mode, loading, error, metrics } = useCrmData();
+  const { me, can } = useCrmMe();
+  const nav = crmNav(me);
+  /* "(3) CRM": the due and overdue follow-ups, in the tab's title (spec 10.8). */
+  const due = metrics.due.today.length + metrics.due.overdue.length;
   return (
     <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+      <Seo title={due > 0 ? `(${due}) CRM` : "CRM"} noindex />
       <a href="#crm-main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-primary-foreground">
         Skip to content
       </a>
-      <Rail />
+      <Rail nav={nav} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-3 md:gap-3 md:px-5">
           <Link to={CRM.root} className="font-display text-[15px] font-semibold md:hidden">CRM</Link>
           <GlobalSearch className="min-w-0 flex-1 md:max-w-md" />
           <div className="ml-auto flex items-center gap-1.5">
-            <Link to={CRM.newLead} className={cn(topBtn, "bg-primary px-2.5 font-medium text-primary-foreground hover:opacity-90 sm:px-3")}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">New lead</span>
-              <span className="sr-only sm:hidden">New lead</span>
-            </Link>
+            {can("lead.add") && (
+              <Link to={CRM.newLead} className={cn(topBtn, "bg-primary px-2.5 font-medium text-primary-foreground hover:opacity-90 sm:px-3")}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">New lead</span>
+                <span className="sr-only sm:hidden">New lead</span>
+              </Link>
+            )}
             <span
               className={cn(
                 "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] lg:px-2.5",
@@ -229,7 +298,11 @@ function CrmShell() {
               <span className="lg:hidden">{mode === "supabase" ? "Live" : "Local"}</span>
               <span className="hidden lg:inline">{mode === "supabase" ? "Live" : "Local mode"}</span>
             </span>
-            <BackToAdmin className={cn(topBtn, "hidden border border-border px-3 text-muted-foreground hover:bg-muted hover:text-foreground sm:inline-flex")} />
+            <ActAsMenu />
+            {nav.bell && <Bell />}
+            {nav.backToAdmin && (
+              <BackToAdmin className={cn(topBtn, "hidden border border-border px-3 text-muted-foreground hover:bg-muted hover:text-foreground sm:inline-flex")} />
+            )}
             <ThemeToggle />
           </div>
         </header>
@@ -249,7 +322,7 @@ function CrmShell() {
           )}
         </main>
       </div>
-      <BottomBar />
+      <BottomBar nav={nav} />
     </div>
   );
 }

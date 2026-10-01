@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LEAD_STATUS_LABELS, type LeadStatus } from "@/lib/outreach/types";
+import { can, crmErrorText } from "@/lib/outreach/access";
+import type { CrmMe } from "@/lib/outreach/team";
+import { isUntouched } from "@/admin/outreach/derive";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { CRM, useOpenLead } from "../nav";
@@ -9,6 +12,10 @@ import { FilterBar } from "../leads/FilterBar";
 import { matchesFilters, type LeadRow } from "../leads/leadQuery";
 import { useLeadRows } from "../leads/useLeadRows";
 import { useWide, ViewSwitch } from "../leads/ViewSwitch";
+import { LostReasonPrompt } from "../leads/BulkBar";
+import { useCrmMe } from "../useCrmMe";
+import { ScopeSwitch } from "../dashboard/ScopeSwitch";
+import { useOwnerId } from "../today/TodayQueue";
 import { PipelineCard } from "./PipelineCard";
 
 interface Lane {
@@ -33,12 +40,58 @@ function laneOrder(a: LeadRow, b: LeadRow): number {
   return t(a.lead.nextActionAt) - t(b.lead.nextActionAt) || t(b.lead.updatedAt) - t(a.lead.updatedAt);
 }
 
-/** /crm/pipeline: the leads as a board, one column per status. */
+/** What a member reads on the Call, Proposal and Won columns (spec 10.4). */
+export const MEMBER_LANE_TIP = "Mehdi handles calls, proposals and wins: use Hand to Mehdi";
+const MONEY: LeadStatus[] = ["proposal", "won"];
+
+/**
+ * Why this person cannot move a lead from one status to another, or null when
+ * they can: the database's own rules (0011 crm_leads_guard; access.ts can()).
+ * Only Mehdi moves a lead to or from Proposal and Won, and takes one off Do
+ * not contact; a member never moves one to or from Call (a hand-over does).
+ */
+export function moveBlock(me: CrmMe, from: LeadStatus, to: LeadStatus): string | null {
+  if (from === to || !me.role || me.role === "owner") return null;
+  const member = me.role === "member";
+  if ((MONEY.includes(from) || MONEY.includes(to)) && !can(me, "stage.proposalWon")) {
+    return member ? MEMBER_LANE_TIP : "Only Mehdi moves a lead to or from Proposal and Won";
+  }
+  if ((from === "call" || to === "call") && !can(me, "stage.call")) return MEMBER_LANE_TIP;
+  if (from === "do_not_contact" && !can(me, "dnc.lift")) return "Only Mehdi can take a lead off Do not contact";
+  return null;
+}
+
+/** A column this person can never drop a card on, with the reason (for its tooltip). */
+function laneBlock(me: CrmMe, lane: Lane): string | null {
+  if (me.role === "owner" || !me.role) return null;
+  if (MONEY.includes(lane.drop) && !can(me, "stage.proposalWon")) return me.role === "member" ? MEMBER_LANE_TIP : "Only Mehdi moves a lead to Proposal or Won";
+  if (lane.drop === "call" && !can(me, "stage.call")) return MEMBER_LANE_TIP;
+  return null;
+}
+
+/**
+ * /crm/pipeline: the leads as a board, one column per status.
+ *
+ * Whose leads (spec 10.4): Mehdi and admins pick the scope (Mine by default:
+ * his own and the Unassigned pool, so on the day of the team update the board
+ * is as before). A member sees only their own cards. The Call, Proposal and
+ * Won columns refuse a member's drop ("Mehdi handles calls, proposals and
+ * wins: use Hand to Mehdi"), Proposal and Won refuse an admin's, and a
+ * member's drop on Lost asks why first.
+ */
 export default function CrmPipeline() {
-  const { data, rows, filters, setFilters, params } = useLeadRows();
-  const { leads, now, opens, setStatus, loading } = data;
+  const { data, rows: rowsAll, filters, setFilters, params } = useLeadRows();
+  const { scopedLeads, now, opens, setStatus, markLost, loading, me, isStaff, isMember, nameOf, eventsFor } = data;
+  const { can: canDo } = useCrmMe();
   const openLead = useOpenLead();
   const wide = useWide();
+  const ownerId = useOwnerId();
+  const leads = scopedLeads;
+  /* The rows of this screen's scope (useLeadRows reads the scope too: kept here so the board never shows more). */
+  const rows = useMemo(() => {
+    const ids = new Set(leads.map((l) => l.id));
+    return rowsAll.filter((r) => ids.has(r.lead.id));
+  }, [rowsAll, leads]);
 
   const byLane = useMemo(() => {
     const m = new Map<string, LeadRow[]>(LANES.map((l) => [l.id, []]));
@@ -54,18 +107,37 @@ export default function CrmPipeline() {
 
   /* Moves: optimistic via setStatus (records the status event), result announced. */
   const [live, setLive] = useState<{ text: string; bad?: boolean } | null>(null);
+  const [askLost, setAskLost] = useState<string | null>(null);
   const refocus = useRef<string | null>(null);
   const move = useCallback(
     (id: string, s: LeadStatus) => {
       const lead = leads.find((l) => l.id === id);
       if (!lead || lead.status === s) return;
+      const block = moveBlock(me, lead.status, s);
+      if (block) {
+        setLive({ text: `${lead.instituteName} did not move. ${block}.`, bad: true });
+        return;
+      }
+      /* A member says why a lead is lost (the database refuses Lost without a reason). */
+      if (s === "lost" && isMember) {
+        setAskLost(id);
+        return;
+      }
       setLive({ text: `Moved ${lead.instituteName} to ${LEAD_STATUS_LABELS[s]}.` });
       setStatus(id, s).catch((e: unknown) =>
-        setLive({ text: e instanceof Error ? `${lead.instituteName} did not move. ${e.message}` : `${lead.instituteName} did not move.`, bad: true }),
+        setLive({ text: `${lead.instituteName} did not move. ${crmErrorText(e)}`, bad: true }),
       );
     },
-    [leads, setStatus],
+    [leads, me, isMember, setStatus],
   );
+  const lostLead = askLost ? leads.find((l) => l.id === askLost) : undefined;
+  const confirmLost = (reason: string) => {
+    const lead = lostLead;
+    setAskLost(null);
+    if (!lead) return;
+    setLive({ text: `Moved ${lead.instituteName} to Lost: ${reason}.` });
+    markLost(lead.id, reason).catch((e: unknown) => setLive({ text: `${lead.instituteName} did not move. ${crmErrorText(e)}`, bad: true }));
+  };
   const step = useCallback(
     (id: string, dir: -1 | 1) => {
       const lead = leads.find((l) => l.id === id);
@@ -88,12 +160,14 @@ export default function CrmPipeline() {
     }
   });
 
-  /* HTML5 drag and drop */
+  /* HTML5 drag and drop. A column this person may not drop on never takes the card. */
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
+  const dragged = dragId ? leads.find((l) => l.id === dragId) : undefined;
   const dropProps = (lane: Lane) => ({
     onDragOver: (e: DragEvent) => {
       if (!dragId) return;
+      if (dragged && !lane.statuses.includes(dragged.status) && moveBlock(me, dragged.status, lane.drop)) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
       if (over !== lane.id) setOver(lane.id);
@@ -115,17 +189,24 @@ export default function CrmPipeline() {
   const [phoneLane, setPhoneLane] = useState<string>("new");
   const [more, setMore] = useState<Record<string, number>>({});
 
+  /* A card this person cannot move anywhere stays put (an admin's Proposal, a member's Do not contact). */
+  const movable = (s: LeadStatus) => LANES.some((l) => !l.statuses.includes(s) && !moveBlock(me, s, l.drop));
+
   const cards = (lane: Lane) => {
     const list = byLane.get(lane.id) || [];
     const cap = more[lane.id] || PER_LANE;
+    const refused = laneBlock(me, lane);
     return (
       <>
         <ul className="space-y-1.5" aria-label={`${lane.label} leads`}>
           {list.slice(0, cap).map((r) => (
             <li key={r.lead.id}>
-              <PipelineCard row={r} now={now} opens={opens} draggable={wide} dragging={dragId === r.lead.id}
+              <PipelineCard row={r} now={now} opens={opens} draggable={wide && movable(r.lead.status)} dragging={dragId === r.lead.id}
                 onOpen={openLead} onMove={move} onStep={step}
-                onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOver(null); }} />
+                onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOver(null); }}
+                blockOf={me.role === "owner" ? undefined : (to) => moveBlock(me, r.lead.status, to)}
+                ownerName={isStaff && r.lead.assigneeId && r.lead.assigneeId !== me.memberId ? nameOf(r.lead.assigneeId) : undefined}
+                untouched={Boolean(r.lead.assigneeId && r.lead.assigneeId !== ownerId && isUntouched(r.lead, eventsFor(r.lead.id), now))} />
             </li>
           ))}
         </ul>
@@ -135,8 +216,8 @@ export default function CrmPipeline() {
           </button>
         )}
         {!list.length && (
-          <p className="rounded-lg border border-dashed border-border px-2 py-6 text-center text-[12px] text-muted-foreground">
-            {wide ? "Drop a lead here" : "No leads here"}
+          <p className="rounded-lg border border-dashed border-border px-2 py-6 text-center text-[12px] text-muted-foreground" data-lane-note={refused ? "refused" : undefined}>
+            {refused ? `${refused}.` : wide ? "Drop a lead here" : "No leads here"}
           </p>
         )}
       </>
@@ -151,36 +232,49 @@ export default function CrmPipeline() {
     </h2>
   );
 
+  const none = data.leads.length === 0;
+  const empty = (
+    <EmptyState
+      title={none ? "No leads yet" : "No leads here"}
+      body={isMember
+        ? "Your board fills as Mehdi assigns you leads."
+        : !none
+          ? "Nothing in this view. Pick All above to see every lead."
+          : canDo("finder")
+            ? "The board fills as you add leads. Find them on the map, import a CSV, or add one by hand."
+            : "The board fills as leads come in."}
+      action={none && (canDo("finder") || canDo("lead.import") || canDo("lead.add")) ? (
+        <div className="flex flex-wrap justify-center gap-2">
+          {canDo("finder") && <Link to={CRM.finder} className={crm.btn}>Lead finder</Link>}
+          {canDo("lead.import") && <Link to={CRM.import} className={crm.btn}>Import</Link>}
+          {canDo("lead.add") && <Link to={CRM.newLead} className={crm.btnPrimary}>New lead</Link>}
+        </div>
+      ) : undefined}
+    />
+  );
+
   return (
     <div>
       <PageHeader
         title="Pipeline"
         subtitle={<span className={crm.num}>{loading ? "Loading..." : `${total} of ${leads.length} leads on the board`}</span>}
-        actions={<ViewSwitch current="board" params={params} />}
+        actions={<><ScopeSwitch screen="pipeline" /><ViewSwitch current="board" params={params} /></>}
       />
       <FilterBar leads={leads} filters={filters} setFilters={setFilters} showStatus={false} />
       <div aria-live="polite" className="sr-only">{live?.text}</div>
       {live?.bad && (
         <p role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">{live.text}</p>
       )}
+      <LostReasonPrompt open={Boolean(lostLead)} onCancel={() => setAskLost(null)} onConfirm={confirmLost} />
 
       {!loading && leads.length === 0 ? (
-        <EmptyState
-          title="No leads yet"
-          body="The board fills as you add leads. Find them on the map, import a CSV, or add one by hand."
-          action={
-            <div className="flex flex-wrap justify-center gap-2">
-              <Link to={CRM.finder} className={crm.btn}>Lead finder</Link>
-              <Link to={CRM.import} className={crm.btn}>Import</Link>
-              <Link to={CRM.newLead} className={crm.btnPrimary}>New lead</Link>
-            </div>
-          }
-        />
+        empty
       ) : wide ? (
         <div className="flex h-[calc(100dvh-13.5rem)] min-h-[24rem] gap-3 overflow-x-auto pb-2" onDragEnd={() => setOver(null)}>
           {LANES.map((lane) => {
             const isOver = over === lane.id;
             const folded = lane.id === "closed" && !closedOpen && !isOver;
+            const refused = laneBlock(me, lane);
             if (folded)
               return (
                 <section key={lane.id} aria-label={lane.label} {...dropProps(lane)}
@@ -194,8 +288,9 @@ export default function CrmPipeline() {
                 </section>
               );
             return (
-              <section key={lane.id} aria-label={lane.label} {...dropProps(lane)}
-                className={cn(crm.panel, "flex w-60 shrink-0 flex-col p-2 transition-colors", isOver && "border-primary bg-primary/5 ring-2 ring-primary/30")}>
+              <section key={lane.id} aria-label={lane.label} {...dropProps(lane)} title={refused || undefined} data-refused={refused ? "1" : undefined}
+                className={cn(crm.panel, "flex w-60 shrink-0 flex-col p-2 transition-colors", isOver && "border-primary bg-primary/5 ring-2 ring-primary/30",
+                  refused && dragId && "opacity-60")}>
                 <div className="flex items-center">
                   <div className="min-w-0 flex-1">{head(lane)}</div>
                   {lane.id === "closed" && (
@@ -231,6 +326,7 @@ export default function CrmPipeline() {
       {wide && leads.length > 0 && (
         <p className="mt-2 hidden text-[12px] text-muted-foreground lg:block">
           Drag a card to change its status. With the keyboard: focus a card, then [ or ] moves it one column; the menu on a card moves it anywhere.
+          {isMember ? ` ${MEMBER_LANE_TIP}.` : ""}
         </p>
       )}
     </div>

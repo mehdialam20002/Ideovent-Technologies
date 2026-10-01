@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
+import type { OutreachLead } from "@/lib/outreach/types";
 import type { CrmMetrics } from "../metrics";
 import { CRM } from "../nav";
 import { crm, pct } from "../ui";
@@ -66,14 +67,19 @@ function TileCard({ t, big }: { t: Tile; big?: boolean }) {
   );
 }
 
-/** Counts: how many leads reached each stage, with the last 7 days under it. */
-export function CountTiles({ m }: { m: CrmMetrics }) {
+/**
+ * Counts: how many leads reached each stage, with the last 7 days under it.
+ * `leads`: the dashboard's scope (spec 10.4) when it is not every lead.
+ */
+export function CountTiles({ m, leads: inScope }: { m: CrmMetrics; leads?: OutreachLead[] }) {
   const w = m.week.thisWeek;
   const p = m.week.lastWeek;
   const reached = (stage: string) => m.funnel.find((f) => f.stage === stage)?.count ?? 0;
   // The tiles that open a saved view count with that view's own test, so the
   // number on the tile is the number of rows the click shows.
-  const { leads, events, opens, demoForLead, now } = useCrmData();
+  const data = useCrmData();
+  const { events, opens, demoForLead, now } = data;
+  const leads = inScope ?? data.leads;
   const rows = useMemo(() => buildRows(leads, events, opens, demoForLead, now), [leads, events, opens, demoForLead, now]);
   const inView = (id: ViewId) => rows.filter(viewOf(id).test).length;
   const tiles: Tile[] = [
