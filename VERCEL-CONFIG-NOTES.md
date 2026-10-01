@@ -98,3 +98,27 @@ but tell the SEO owner.
 **Image caching.** `/work`, `/blog-covers`, `/og` and `/icons` answer
 `Cache-Control: public, max-age=86400, stale-while-revalidate=604800` instead of
 revalidating on every view. Give a changed image a new file name.
+
+## The first message's picture pages, /w/ (1 Oct 2026)
+
+`public/w/dental/index.html`, `public/w/school/index.html` and `public/w/coaching/index.html`,
+with `public/w/dental.jpg`, `school.jpg` and `coaching.jpg` beside them, are plain static files.
+A first WhatsApp to a clinic, school or coaching institute carries the link to its kind's page
+(`src/lib/outreach/preview.ts`), and WhatsApp draws the page's `og:image` as the message's
+picture card. They need nothing from this file to be served: Vercel serves a real file before it
+applies a rewrite, so `/w/dental` gets `w/dental/index.html` exactly as `/services/seo` gets its
+prerendered file, and none of the rewrites can reach them anyway (the scraper rewrites match
+`/site/...`, `/pitch/...` or one bare segment).
+
+What is here for them: `"w"` is in the reserved segments of the bare-slug rules, so no pitch
+slug can take `/w`, and `/w/(.*)` sends `X-Robots-Tag: noindex, nofollow` (the pages also carry
+a robots meta tag). Both are written and checked by `scripts/sync-noindex-header.mjs`, like the
+CRM host's rules. robots.txt does not disallow `/w/`: a crawler has to fetch a page to read its
+noindex, and the link scrapers must reach it.
+
+The pages' `og:image` is the absolute `https://www.ideovent.in/w/<kind>.jpg`, with its real width
+and height; a WhatsApp card wants a JPEG of at most 300 KB, so a new picture keeps to that, and the
+page's `og:image:width` and `og:image:height` change with it. `scripts/test-outreach-engine.mjs`
+checks the tags, the size and the reservation. Check a deploy with:
+
+    curl -s https://www.ideovent.in/w/dental | grep -o '<meta property="og:image" content="[^"]*"'

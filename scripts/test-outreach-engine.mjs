@@ -45,6 +45,17 @@
  *      centre is never offered a cost range its demo does not show, an "other"
  *      business is offered what its demo's kind has, principals are called after
  *      school, the approved day-16 words.
+ *  14. (section 15 below) The picture link of 1 Oct 2026: every live WhatsApp
+ *      first message of a clinic, school or coaching institute that says the
+ *      sample is made has exactly one link, its kind's picture page
+ *      (https://www.ideovent.in/w/<kind>), in a part of its own just before the
+ *      ask, which asks for their own sample's link; no other first message has
+ *      a link (the "offer" twins, whose lead has no sample yet while the picture
+ *      says one was built, the pitch-page message, other businesses, every
+ *      e-mail); checkSend lets exactly that one link through and nothing else;
+ *      the three static pages carry the card tags, noindex and the Haan button,
+ *      their JPEGs are 600 px wide or more and 300 KB or less, and "w" is
+ *      reserved from pitch slugs.
  *
  * NEGATIVE CONTROL
  *
@@ -58,8 +69,9 @@
  * follow-ups offered again, the greeting lost, the specialist clinics' specialty
  * lost, a coaching first WhatsApp flattened back into one paragraph, "ji" after
  * "Dr. Mehta" in the summary, a cost range promised by an implant centre's
- * message, principals called at 11 am). The run must then FAIL on each; it
- * exits 0 only when every expected failure was seen.
+ * message, principals called at 11 am, a clinic's message carrying the school's
+ * picture link). The run must then FAIL on each; it exits 0 only when every
+ * expected failure was seen.
  *
  * Bundled with esbuild exactly like scripts/test-from-template.mjs; nothing mocked.
  * Every lead here is fictional (example.org, "Example ..." names).
@@ -137,6 +149,8 @@ if (NEGATIVE) {
     if (t.channel === "email" && !real.carriesOptOut(t.stage)) body = `${body}\n\n${real.EMAIL_OPT_OUT_EN}`;
     // ...and a coaching institute's first WhatsApp goes back to one paragraph ("msz me line break nahi").
     if (t.channel === "whatsapp" && t.stage === "first" && t.kind === "coaching") body = body.replace(/\s*\n+\s*/g, " ");
+    // ...and a clinic's first WhatsApp carries the school's picture link.
+    if (t.kind === "dental") body = body.replace("https://www.ideovent.in/w/dental", "https://www.ideovent.in/w/school");
     return { ...r, body };
   };
   M.mailtoUrl = (input) => real.mailtoUrl({ ...input, subject: "" });
@@ -183,6 +197,11 @@ function check(ok, message) {
 /* Built from code points so this file itself contains no em or en dash. */
 const DASH = new RegExp(`[${String.fromCharCode(8212)}${String.fromCharCode(8211)}]`);
 const URL_IN_TEXT = /https?:\/\/|www\.|\.vercel\.app|wa\.me/i;
+/** Every web address in a text, each once per place it appears. */
+const URL_ALL = /\bhttps?:\/\/\S+|\bwww\.\S+|\b[a-z0-9-]+\.(?:vercel\.app|com|in|org|net)\/\S*|wa\.me\/\S*/gi;
+const linksIn = (s) => s.match(URL_ALL) || [];
+/** The kinds with a picture page (preview.ts). */
+const KIND3 = ["dental", "school", "coaching"];
 const HYPE = /\b(best|free|guarantee\w*|urgent\w*|hurry|limited time|offer ends|today only|last chance|no\.?\s?1|number one|cheapest|lowest price)\b/i;
 const EMPTY_CLAIM = /left (the space )?empty|deliberately empty|empty on purpose|khaali|खाली/i;
 const EMOJI = /\p{Extended_Pictographic}/u;
@@ -266,7 +285,7 @@ for (const t of T) {
   const text = `${said}\n${t.label}\n${t.note ?? ""}`;
   check(!DASH.test(text), `${t.id}: no em or en dash`);
   check(!/₹|\bRs\.?\s?\d|\bINR\b/i.test(text), `${t.id}: no price`);
-  check(!/ideovent\.in\b/i.test(text), `${t.id}: does not print ideovent.in (not live yet)`);
+  check(!/ideovent\.in\b/i.test(text), `${t.id}: does not type ideovent.in (the picture link comes from {previewLink})`);
   check(!HYPE.test(said), `${t.id}: no hype word (${(said.match(HYPE) || [""])[0]})`);
   check(!EMPTY_CLAIM.test(said), `${t.id}: never says a space was left empty`);
   check(!EMOJI.test(said), `${t.id}: no emoji`);
@@ -274,6 +293,7 @@ for (const t of T) {
   check(!/nothing in (this|it) for (me|us)|mera koi kaam nahi|कोई काम नहीं/i.test(said), `${t.id}: never says there is nothing in it for us`);
   const shown = `${t.label}\n${t.note ?? ""}`;
   check(!/\.md\b|playbook/i.test(shown) && !/[A-Z]{3,}-[A-Z]{3,}/.test(shown), `${t.id}: label and note name no internal playbook file`);
+  check(!URL_IN_TEXT.test(text), `${t.id}: types no web address into its text, label or note (a link comes from a merge field)`);
   check(t.channel !== "email" || Boolean(t.subject), `${t.id}: e-mail has a subject`);
   check(t.allowsLink || !/\{(demoLink|pitchLink)\}/.test(said), `${t.id}: allowsLink false has no link field`);
   check(!t.retired, `${t.id}: a live template is not retired`);
@@ -285,7 +305,7 @@ for (const o of M.OBSERVATIONS) {
   check(Boolean(o.id && o.label && o.en && o.hinglish), `observation ${o.id} has id, label, en and hinglish`);
   check(!DASH.test(o.en + o.hinglish + o.label) && !/\b20\d\d-\d\d\b/.test(o.en + o.hinglish), `observation ${o.id}: no dash, no typed session year`);
 }
-for (const f of ["greeting", "senderFirstName", "timeOfDay", "kindNoun", "offer", "callSlots"]) {
+for (const f of ["greeting", "senderFirstName", "timeOfDay", "kindNoun", "offer", "callSlots", "previewLink"]) {
   check(M.MERGE_FIELDS.includes(f), `{${f}} is a documented merge field`);
 }
 
@@ -343,19 +363,32 @@ for (const t of T) {
  * set it out, so the text splits on "\n\n" into six blocks:
  *   greeting "Namaste Dr. Sharma ji," | who "Main Mehdi, ..." | the problem | the impact (one line) |
  *   the solution (a line ending ":" and exactly three "• " bullets) | the ask and the easy no (two lines).
+ * A WhatsApp message that says the sample is made, to a clinic, school or coaching institute, has
+ * one more block just before the ask (1 Oct 2026): the picture link, "Ek jhalak yahan dekhiye:
+ * https://www.ideovent.in/w/<kind>", and its ask is "Kya main aapke <noun> ka sample link bhej doon?".
  * An e-mail has the same parts as paragraphs above "Regards,", with the greeting alone in part 1.
  */
 const BULLET = "• ";
 const PRICE = /₹|\bRs\b|\bINR\b|\b\d{1,3}(,\d{2})*,\d{3}\b|\d\s?\/-/;
-function shapeOf(text, channel) {
+/** The picture line as rendered for a kind, in a language. */
+const pictureLine = (language, kind) => M.PREVIEW_LINE[language].replace("{previewLink}", `https://www.ideovent.in/w/${kind}`);
+/** The ask a first message ends with, as rendered: the picture link's ask names their place ({kindNoun}). */
+function askOf(t, noun) {
+  if (M.carriesPreview(t)) return M.PREVIEW_ASK[t.language].replace("{kindNoun}", noun);
+  return (t.sample === "offer" ? M.OFFER_ASK : M.APPROVED_ASK)[t.language];
+}
+function shapeOf(text, channel, picture = "") {
   const blocks = text.split("\n\n");
   const why = [];
-  const want = channel === "whatsapp" ? 6 : 5;
+  const want = (channel === "whatsapp" ? 6 : 5) + (picture ? 1 : 0);
   if (blocks.length !== want) why.push(`${blocks.length} blocks, not ${want}`);
   if (blocks.some((b) => !b.trim() || /^\s|\s$/.test(b))) why.push("an empty block or a stray space");
   const [greet, ...rest] = blocks;
   const who = channel === "whatsapp" ? rest.shift() : undefined;
-  const [problem, impact, solution, ask] = rest;
+  const [problem, impact, solution, ...tail] = rest;
+  const look = picture ? tail.shift() : undefined;
+  const [ask] = tail;
+  if (picture && look !== picture) why.push(`picture line "${look}", not "${picture}"`);
   if (!/^(Namaste|Good (morning|afternoon|evening)|Dear|नमस्ते) [^\n]+,$/.test(greet ?? "")) why.push(`greeting "${greet}"`);
   if (channel === "whatsapp" && ![M.WHO.hinglish, M.WHO.en, M.WHO.hi].map((w) => w.replace("{senderFirstName}", "Mehdi")).includes(who)) why.push(`who "${who}"`);
   if (!problem || problem.includes("\n") || problem.includes(BULLET)) why.push("the problem is not one paragraph");
@@ -375,11 +408,20 @@ for (const t of FIRST) {
   const lead = leadFor(t, kind);
   const r = M.render(t, lead, { now: NOW });
   const words = ownWords(t, r);
-  check(t.allowsLink === false && !M.containsLink(`${t.subject ?? ""}${t.body}`), `${t.id}: a first message carries no link`);
-  check(!URL_IN_TEXT.test(textOf(r)), `${t.id}: rendered with no URL`);
-  const ask = (t.sample === "offer" ? M.OFFER_ASK : M.APPROVED_ASK)[t.language];
-  check(words.endsWith(`\n\n${ask}`) && ask.split("\n")[1] === M.EASY_NO[t.language],
-    `${t.id}: ends with the approved ${t.sample === "offer" ? "offer" : "question"} and easy no, each on its own line`);
+  // The picture link (1 Oct 2026): a WhatsApp message that says the sample is made, to a clinic, school or coaching institute.
+  const pic = M.carriesPreview(t);
+  const picture = pic ? pictureLine(t.language, t.kind) : "";
+  const tplText = `${t.subject ?? ""}${t.body}`;
+  check(pic === (t.channel === "whatsapp" && t.sample === "made" && t.promises === "demo" && KIND3.includes(t.kind)),
+    `${t.id}: carries the picture link exactly when it is a WhatsApp 'sample made' message to a clinic, school or coaching institute`);
+  check(t.allowsLink === false && !M.containsLink(pic ? tplText.replace("{previewLink}", "") : tplText) && tplText.split("{previewLink}").length === (pic ? 2 : 1),
+    `${t.id}: a first message carries no link${pic ? " but its one {previewLink}" : ""}`);
+  check(pic ? JSON.stringify(linksIn(textOf(r))) === JSON.stringify([`https://www.ideovent.in/w/${t.kind}`]) : !URL_IN_TEXT.test(textOf(r)),
+    pic ? `${t.id}: rendered with exactly one link, its kind's picture page (${linksIn(textOf(r)).join(", ")})` : `${t.id}: rendered with no URL`);
+  const ask = askOf(t, M.kindNounFor(kind, t.language, kind === "dental" ? M.dentalSpecialty(lead) : "general"));
+  check(words.endsWith(`\n\n${pic ? `${picture}\n\n` : ""}${ask}`) && ask.split("\n").at(-1) === M.EASY_NO[t.language] && ask.split("\n").length === 2,
+    `${t.id}: ends with the approved ${pic ? "picture link, then the question" : t.sample === "offer" ? "offer" : "question"} and easy no, each on its own line`);
+  if (pic) check(/sample link bhej doon\?|link to your [^\n]+'s sample\?|सैंपल लिंक भेज दूँ\?/.test(ask), `${t.id}: with the picture, the ask is for the link to their own sample`);
   check((words.match(/\?/g) || []).length === 1, `${t.id}: exactly one question`);
   check(t.sample === "offer" ? M.promisedPage(t) === null : M.promisedPage(t) !== null, `${t.id}: ${t.sample === "offer" ? "promises nothing" : "says what is made"}`);
   check(t.body.includes("{impact}") && (t.promises === "pitch" || t.body.includes("\n{offer}\n\n")), `${t.id}: says the impact, then the bullets under the solution line`);
@@ -393,13 +435,18 @@ for (const t of FIRST) {
   for (const observation of obsIds) {
     for (const tags of specialties) {
       for (const demo of [undefined, { phone: true, whatsapp: true }]) {
-        const one = M.render(t, leadFor(t, kind, { observation, tags }), { now: NOW, demo });
+        const oneLead = leadFor(t, kind, { observation, tags });
+        const one = M.render(t, oneLead, { now: NOW, demo });
         const own = ownWords(t, one);
-        const s = shapeOf(own, t.channel);
+        const s = shapeOf(own, t.channel, picture);
         shapes++;
         if (s.why.length) bad.push(`${observation ?? "no site"} ${tags[0] ?? ""}${demo ? " +number" : ""}: ${s.why.join("; ")}`);
-        if (s.askLines.join("\n") !== ask) bad.push(`ask ${JSON.stringify(s.askLines)}`);
-        if (URL_IN_TEXT.test(textOf(one)) || PRICE.test(own) || EMOJI.test(own) || DASH.test(own)) bad.push(`${observation}: a link, price, emoji or dash`);
+        const want = askOf(t, M.kindNounFor(kind, t.language, kind === "dental" ? M.dentalSpecialty(oneLead) : "general"));
+        if (s.askLines.join("\n") !== want) bad.push(`ask ${JSON.stringify(s.askLines)}`);
+        const links = linksIn(textOf(one));
+        if ((pic ? links.join(" ") !== `https://www.ideovent.in/w/${t.kind}` : links.length > 0) || PRICE.test(own) || EMOJI.test(own) || DASH.test(own)) {
+          bad.push(`${observation}: a link (${links.join(", ")}), price, emoji or dash`);
+        }
         if ((own.match(/\?/g) || []).length !== 1) bad.push("not exactly one question");
         longest = Math.max(longest, own.length);
         longestLine = Math.max(longestLine, ...own.split("\n").map((l) => l.length));
@@ -407,13 +454,15 @@ for (const t of FIRST) {
       }
     }
   }
-  check(bad.length === 0, `${t.id}: five parts (greeting and who, problem, impact, the solution with three bullets, the ask and the easy no), a blank line between parts, for every lead it can go to (${bad.slice(0, 3).join(" | ")})`);
+  check(bad.length === 0, `${t.id}: five parts (greeting and who, problem, impact, the solution with three bullets, ${pic ? "the picture link, " : ""}the ask and the easy no), a blank line between parts, for every lead it can go to (${bad.slice(0, 3).join(" | ")})`);
   if (t.channel === "whatsapp") {
     check(r.body.startsWith(`${M.GREET[t.language].replace("{greeting}", M.greetingFor(lead.contactName, kind, t.language)).replace("{timeOfDay}", "afternoon")}\n\n${M.WHO[t.language].replace("{senderFirstName}", "Mehdi")}\n\n`),
       `${t.id}: opens with the approved greeting, then who, each on its own line (${r.body.slice(0, 80)})`);
     // Short lines; the whole message about as long as the approved examples, with every observation and specialty.
+    // The picture line and the longer ask add about 90 characters to the messages that carry them.
+    const cap = pic ? 740 : 650;
     check(longestLine <= 160, `${t.id}: every line is short (longest ${longestLine} characters)`);
-    check(longest <= 650, `${t.id}: under 650 characters with every observation and specialty (max ${longest})`);
+    check(longest <= cap, `${t.id}: under ${cap} characters with every observation and specialty (max ${longest})`);
   } else {
     check(r.subject === `${lead.instituteName} website`, `${t.id}: subject "<name> website" (${r.subject})`);
     check(/^(Dear|Namaste) [^,\n]+,\n\n/.test(r.body), `${t.id}: greets by name and title on its own line`);
@@ -453,46 +502,48 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   const clinic = (over = {}) => leadOf("dental", { instituteName: "Example Smile Care", ...over });
   const site = { website: "https://example.org" };
   const NUMBER = { demo: { phone: true, whatsapp: true } };
-  const ASK = "Kya main aapko link bhej doon?\nPasand na aaye to koi baat nahi.";
+  // 1 Oct 2026: the picture link, a part of its own just before the ask, and the ask for their own sample's link.
+  const ASK = (kind, noun) => `Ek jhalak yahan dekhiye: https://www.ideovent.in/w/${kind}\n\nKya main aapke ${noun} ka sample link bhej doon?\nPasand na aaye to koi baat nahi.`;
   const HELLO = (name) => `Namaste ${name},\n\nMain Mehdi, Ideovent Technologies (Saket, Delhi) se.\n\n`;
   const dentalNew = say("wa_first_new_dental_hinglish", clinic({ contactName: "Dr. Sharma" }), NUMBER);
   check(dentalNew === `${HELLO("Dr. Sharma ji")}Google par aapka clinic dekha. Clinic ki apni website nahi hai, sirf Google listing hai.\n\n` +
     "Aaj patient clinic chunne se pehle timings, treatments aur fees online dekhte hain. Ye na mile to wo aksar agle clinic ko call kar lete hain.\n\n" +
-    "Isliye humne aapke clinic ke naam se ek sample website banayi hai:\n• Saare treatments aur timings ek jagah\n• Ek tap mein call ya WhatsApp\n• Online appointment booking\n\n" + ASK,
+    "Isliye humne aapke clinic ke naam se ek sample website banayi hai:\n• Saare treatments aur timings ek jagah\n• Ek tap mein call ya WhatsApp\n• Online appointment booking\n\n" + ASK("dental", "clinic"),
   `approved sample: dental, no website (${dentalNew})`);
   // The problem is the lead's own checked observation: here the words Mehdi typed in the approved example.
   const poor = say("wa_first_fix_dental_hinglish", clinic({ contactName: "Dr. Gupta", ...site, observation: "Wo theek se khul nahi rahi, aur timings kahin nahi dikhi." }), NUMBER);
   check(poor === `${HELLO("Dr. Gupta ji")}Aapke clinic ki website phone par kholi. Wo theek se khul nahi rahi, aur timings kahin nahi dikhi.\n\n` +
     "Zyaadatar patient phone se hi dekhte hain. Site na khule to wo booking ki jagah doosra clinic dhoondh lete hain.\n\n" +
-    "Isliye humne aapke clinic ka ek naya sample banaya hai:\n• Phone par jaldi khulne wali site\n• Timings aur treatments pehli screen par\n• Ek tap mein call, WhatsApp ya booking\n\n" + ASK,
+    "Isliye humne aapke clinic ka ek naya sample banaya hai:\n• Phone par jaldi khulne wali site\n• Timings aur treatments pehli screen par\n• Ek tap mein call, WhatsApp ya booking\n\n" + ASK("dental", "clinic"),
   `approved sample: dental, poor website (${poor})`);
   const schoolNew = say("wa_first_new_school_hinglish", leadOf("school", { contactName: "Principal Ma'am" }), { demo: { whatsapp: true } });
   check(schoolNew === `${HELLO("Principal Ma'am")}Google par aapka school dekha. School ki apni website nahi hai, sirf Google listing hai.\n\n` +
     "Parents admission se pehle fees, facilities aur admission ka process online dhoondhte hain. Ye na mile to wo aksar doosre school mein enquiry kar lete hain.\n\n" +
-    "Isliye humne aapke school ke naam se ek sample website banayi hai:\n• Admission ka process aur zaroori dates\n• Fees aur facilities ki jaankari\n• Enquiry form, jo seedha aapke phone par aata hai\n\n" + ASK,
+    "Isliye humne aapke school ke naam se ek sample website banayi hai:\n• Admission ka process aur zaroori dates\n• Fees aur facilities ki jaankari\n• Enquiry form, jo seedha aapke phone par aata hai\n\n" + ASK("school", "school"),
   `approved sample: school, no website (${schoolNew})`);
   // The old session is typed into the [blank] before sending, as the approved example's "2023-24".
   const old = say("wa_first_fix_school_hinglish", leadOf("school", { contactName: "Sharma Sir", ...site, observation: "old_session" }), { demo: { whatsapp: true } })
     .replace("[jo purana session dikha]", "2023-24");
   check(old === `${HELLO("Sharma Sir")}Aapke school ki website dekhi. Usme abhi bhi 2023-24 ke admission likhe hain, aur fees kahin nahi hai.\n\n` +
     "Parents admission se pehle yahi sab online dekhte hain. Purani jaankari dekhkar wo aksar call hi nahi karte.\n\n" +
-    "Isliye humne aapke school ka ek naya sample banaya hai:\n• 2027-28 admission ki jaankari\n• Fees ka poora structure\n• Enquiry form, jo seedha aapke phone par aata hai\n\n" + ASK,
+    "Isliye humne aapke school ka ek naya sample banaya hai:\n• 2027-28 admission ki jaankari\n• Fees ka poora structure\n• Enquiry form, jo seedha aapke phone par aata hai\n\n" + ASK("school", "school"),
   `approved sample: school, old website (${old})`);
   const coachNew = say("wa_first_new_coaching_hinglish", leadOf("coaching", { contactName: "Verma" }), NUMBER);
   check(coachNew === `${HELLO("Verma ji")}Google par aapka institute dekha. Institute ki apni website nahi hai, sirf Google listing hai.\n\n` +
     "Students join karne se pehle batch, timing aur fees online compare karte hain. Ye na mile to wo aksar doosre institute mein enquiry kar lete hain.\n\n" +
-    "Isliye humne aapke institute ke naam se ek sample website banayi hai:\n• Saare courses aur batch timings ek jagah\n• Fees ki saaf jaankari\n• Ek tap mein enquiry, call ya WhatsApp\n\n" + ASK,
+    "Isliye humne aapke institute ke naam se ek sample website banayi hai:\n• Saare courses aur batch timings ek jagah\n• Fees ki saaf jaankari\n• Ek tap mein enquiry, call ya WhatsApp\n\n" + ASK("coaching", "institute"),
   `approved sample: coaching, no website (${coachNew})`);
   const coachPoor = say("wa_first_fix_coaching_hinglish", leadOf("coaching", { contactName: "Singh Sir", ...site, observation: "NEET batch ki timing aur fees kahin nahi mili." }), NUMBER);
   check(coachPoor === `${HELLO("Singh Sir")}Aapke institute ki website phone par kholi. NEET batch ki timing aur fees kahin nahi mili.\n\n` +
     "Ye jaanne ke liye student ko pehle call karna padta hai. Kai students call karne ki jagah agla institute dekh lete hain.\n\n" +
-    "Isliye humne aapke institute ka ek naya sample banaya hai:\n• Saare batches aur timings ek jagah\n• Har course ki fees saaf likhi\n• Phone par jaldi khulne wali site, ek tap mein enquiry\n\n" + ASK,
+    "Isliye humne aapke institute ka ek naya sample banaya hai:\n• Saare batches aur timings ek jagah\n• Har course ki fees saaf likhi\n• Phone par jaldi khulne wali site, ek tap mein enquiry\n\n" + ASK("coaching", "institute"),
   `approved sample: coaching, poor website (${coachPoor})`);
   // English: the approved voice, impact, bullets and close. The problem line is what was checked: no website of its own.
   const en = say("wa_first_new_dental_en", clinic({ contactName: "Dr. Mehta" }), NUMBER);
   check(en === "Good afternoon Dr. Mehta,\n\nI am Mehdi from Ideovent Technologies, Saket, Delhi.\n\nI found your clinic on Google, but it has no website of its own, only the Google listing.\n\n" +
     "Most patients check timings and book from their phone. When they cannot, they often call the next clinic on the list.\n\n" +
-    "So we made a sample website for your clinic:\n• All treatments and timings in one place\n• One tap to call or WhatsApp\n• Online appointment booking\n\nShall I send you the link?\nIf it is not useful, no problem at all.",
+    "So we made a sample website for your clinic:\n• All treatments and timings in one place\n• One tap to call or WhatsApp\n• Online appointment booking\n\n" +
+    "A quick look: https://www.ideovent.in/w/dental\n\nShall I send you the link to your clinic's sample?\nIf it is not useful, no problem at all.",
   `approved sample: dental, English (${en})`);
   check(say("wa_fu1_dental_hinglish", clinic({ contactName: "Dr. Sharma" })) ===
     "Namaste Dr. Sharma ji,\n\nMehdi, Ideovent se. Kuch din pehle aapke clinic ke sample page ki baat ki thi.\n\nMain yahin chhod raha hoon. Kabhi dekhna ho to bas \"haan\" likh dijiye.",
@@ -777,6 +828,11 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
     const text = new URL(href).searchParams.get("text");
     check(text === one.body && href.includes("%0A%0A") && href.split("%0A%0A").length === one.body.split("\n\n").length && href.includes("%0A%E2%80%A2%20"),
       `${id}: the wa.me link carries every blank line (%0A%0A) and bullet, and decodes to the text on screen`);
+    if (t1.stage === "first") {
+      const pic = `https://www.ideovent.in/w/${t1.kind}`;
+      check(href.includes(encodeURIComponent(pic)) && JSON.stringify(linksIn(text)) === JSON.stringify([pic]),
+        `${id}: the wa.me link carries the picture link, and it decodes to that one link`);
+    }
   }
   const odd = new URLSearchParams(M.mailtoUrl({ to: lead.email, subject: "a&b=c", body: "x+y #1 50%" }).split("?")[1]);
   check(odd.get("subject") === "a&b=c" && odd.get("body") === "x+y #1 50%", "mailto: & = + # % survive");
@@ -843,6 +899,36 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   check(blockedBy(M.checkSend(lead, { ...waFirst, id: "bad3", allowsLink: true }, "whatsapp", SETTINGS, 0, now), /must not carry a link/i), "first WhatsApp marked allowsLink blocks");
   check(blockedBy(M.checkSend(lead, { ...emFirst, id: "bad4", body: `${emFirst.body}\n{demoLink}`, allowsLink: true }, "email", SETTINGS, 0, now), /must not carry a link/i), "a first e-mail with the demo link blocks too");
   check(blockedBy(M.checkSend(lead, { ...M.getTemplate("wa_fu1_hinglish"), body: "see {pitchLink}" }, "whatsapp", SETTINGS, 0, now), /no-link/i), "allowsLink false with a link field blocks at any stage");
+
+  // The picture link (1 Oct 2026): the one link a first WhatsApp may carry, once, its own kind's page; nothing else.
+  const shown = M.render(waFirst, lead, { now }).body;
+  const onScreen = (body, t = waFirst, l = lead, ch = "whatsapp", subject) => M.checkSend(l, t, ch, SETTINGS, 0, now, { text: { subject, body } });
+  check(shown.includes("\n\nEk jhalak yahan dekhiye: https://www.ideovent.in/w/school\n\n") && onScreen(shown).ok, "the first WhatsApp as rendered, with its picture link, goes");
+  check(blockedBy(onScreen(`${shown}\nhttps://www.ideovent.in/w/school`), /must not carry a link/i), "the picture link twice blocks");
+  check(blockedBy(onScreen(shown.replace("/w/school", "/w/dental")), /must not carry a link/i), "another kind's picture link blocks");
+  check(blockedBy(onScreen(shown.replace("/w/school", "/w/schools")), /must not carry a link/i) && blockedBy(onScreen(shown.replace("/w/school", "/w/school/x")), /must not carry a link/i),
+    "an address longer than the picture link is another link, and blocks");
+  check(blockedBy(onScreen(`${shown}\nhttps://ideovent.vercel.app/site/example-school`), /must not carry a link/i), "the sample's own link next to the picture link blocks");
+  check(blockedBy(onScreen(shown.replace("https://www.ideovent.in/w/school", "www.example.org")), /must not carry a link/i), "the picture line pointing anywhere else blocks");
+  check(onScreen(shown.replace(/\n\nEk jhalak yahan dekhiye: \S+/, "")).ok, "the picture line taken out by hand: the message still goes (the link may go, it need not)");
+  const offerT = M.getTemplate("wa_first_new_school_hinglish_offer");
+  const noDemoLead = { ...lead, demoSlug: undefined };
+  const offerShown = M.render(offerT, noDemoLead, { now }).body;
+  check(!M.carriesPreview(offerT) && !linksIn(offerShown).length && onScreen(offerShown, offerT, noDemoLead).ok, "the twin that offers to make a sample has no picture link, and goes");
+  check(blockedBy(onScreen(`${offerShown}\n\nEk jhalak yahan dekhiye: https://www.ideovent.in/w/school`, offerT, noDemoLead), /must not carry a link/i),
+    "the picture link typed into the twin that offers a sample blocks: the picture says the sample is already built");
+  const mailShown = M.render(emFirst, lead, { now });
+  check(blockedBy(onScreen(`${mailShown.body}\nhttps://www.ideovent.in/w/school`, emFirst, lead, "email", mailShown.subject), /must not carry a link/i), "the picture link typed into a first e-mail blocks: e-mails carry no link");
+  check(blockedBy(M.checkSend(lead, { ...M.getTemplate("wa_fu1_hinglish"), body: "see {previewLink}" }, "whatsapp", SETTINGS, 0, now), /no-link/i) &&
+    M.render({ ...M.getTemplate("wa_fu1_hinglish"), body: "see {previewLink}" }, lead, { now }).warnings.some((w) => /Only a first message may carry the picture link/.test(w)),
+  "{previewLink} anywhere but a first message blocks, and render says so");
+  const doubled = { ...waFirst, id: "synthetic_two_pictures", body: `${waFirst.body}\n\n{previewLink}` };
+  check(blockedBy(M.checkSend(lead, doubled, "whatsapp", SETTINGS, 0, now), /must not carry a link/i), "a template with the picture link twice blocks");
+  const otherLead = leadOf("other");
+  const otherPic = { ...M.getTemplate("wa_first_new_any_hinglish"), id: "synthetic_other_picture", body: M.getTemplate("wa_first_new_any_hinglish").body.replace("\n\nKya main", "\n\nEk jhalak yahan dekhiye: {previewLink}\n\nKya main") };
+  const otherR = M.render(otherPic, otherLead, { now });
+  check(!/Ek jhalak|\{previewLink\}/.test(otherR.body) && !linksIn(otherR.body).length && !/\n{3,}/.test(otherR.body) && otherR.warnings.some((w) => /No picture for this kind of lead/.test(w)),
+    "a kind with no picture (any other business) gets no picture line at all, and the preview says why");
 
   const noDemo = { ...lead, demoId: undefined, demoSlug: undefined };
   check(blockedBy(M.checkSend(noDemo, waFirst, "whatsapp", SETTINGS, 0, now), /no demo yet/i), "a first message saying the sample is made blocks with no demo");
@@ -1027,7 +1113,8 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   // A specialist clinic (implant, braces, kids: its demo's template, else its segment or name) hears its
   // own words: {kindNoun} names the specialty, {impact} says why its patients look online first (the
   // approved implant and kids lines of 30 Sep), and the bullets list its own information.
-  const ASK_HI = "Kya main aapko link bhej doon?\nPasand na aaye to koi baat nahi.";
+  // With the picture link (1 Oct 2026), the ask names their place: "aapke kids dental clinic ka sample link".
+  const ASK_HI = "Ek jhalak yahan dekhiye: https://www.ideovent.in/w/dental\n\nKya main aapke kids dental clinic ka sample link bhej doon?\nPasand na aaye to koi baat nahi.";
   const clinic = (over = {}) => leadOf("dental", { contactName: "Dr. Kapoor", ...over });
   const wNew = M.getTemplate("wa_first_new_dental_hinglish");
   const wFix = M.getTemplate("wa_first_fix_dental_hinglish");
@@ -1130,6 +1217,107 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   check(M.getTemplate("wa_first_new_any_hinglish").note.includes("check the demo shows it") && !M.getTemplate("wa_first_new_any_hinglish_offer").note.includes("check the demo shows it"), "the neutral 'made' message tells Mehdi to check the demo shows what it names");
 }
 
+/* ── 15. The picture link (1 Oct 2026) ───────────────────────────────────── */
+
+{
+  check(KIND3.every((k) => M.previewLinkFor(k) === `https://www.ideovent.in/w/${k}`) && ["other", "any", "", undefined].every((k) => M.previewLinkFor(k) === ""),
+    "{previewLink} is the kind's picture page on www.ideovent.in, and nothing for any other kind");
+  // Every live WhatsApp first message of a clinic, school or coaching institute that says the sample is made.
+  const withPic = FIRST.filter((t) => t.channel === "whatsapp" && KIND3.includes(t.kind) && t.sample === "made");
+  check(withPic.length === 13 && withPic.every((t) => M.carriesPreview(t)),
+    `all 13 WhatsApp 'sample made' first messages of a clinic, school or coaching institute carry the picture link (${withPic.filter((t) => !M.carriesPreview(t)).map((t) => t.id).join(", ")})`);
+  check(KIND3.every((k) => ["new_website", "fix_website"].every((p) => ["hinglish", "en"].every((l) => withPic.some((t) => t.kind === k && t.pitch === p && t.language === l)))),
+    "both pitches and both languages of each kind carry it (and the Hindi school message)");
+  const bad = [];
+  const noLink = [];
+  let picRenders = 0;
+  for (const t of FIRST) {
+    // A neutral pitch-page message goes to every kind; the other neutral ones only to other businesses.
+    const kinds = t.kind !== "any" ? [t.kind] : M.templateNotFor(t, "dental") ? ["other"] : KINDS;
+    for (const k of kinds) {
+      const obsIds = t.pitch === "fix_website" ? M.observationsFor(k).map((o) => o.id).filter((id) => id !== "no_website") : [undefined];
+      for (const observation of obsIds) {
+        for (const tags of k === "dental" ? [[], ["DENTAL_IMPLANT"], ["DENTAL_ORTHO"], ["DENTAL_KIDS"]] : [[]]) {
+          for (const demo of [undefined, { phone: true, whatsapp: true }]) {
+            const lead = leadFor(t, k, { observation, tags });
+            const r = M.render(t, lead, { now: NOW, demo });
+            const links = linksIn(textOf(r));
+            const tag = `${t.id} [${k} ${observation ?? "no site"}${tags.length ? ` ${tags[0]}` : ""}${demo ? " +number" : ""}]`;
+            if (!withPic.includes(t)) {
+              if (links.length) noLink.push(`${tag}: ${links.join(", ")}`);
+              continue;
+            }
+            picRenders++;
+            const want = `https://www.ideovent.in/w/${t.kind}`;
+            const blocks = r.body.split("\n\n");
+            const at = blocks.findIndex((b) => b.includes(want));
+            const placed = at === blocks.length - 2 && blocks[at] === pictureLine(t.language, t.kind) && /\?\n/.test(blocks[at + 1] ?? "");
+            const sent = M.checkSend({ ...lead, phone: "98765 43210" }, t, "whatsapp", SETTINGS, 0, NOW, { text: { body: r.body } });
+            const linkBlock = sent.blockers.filter((b) => /link/i.test(b));
+            if (links.length !== 1 || links[0] !== want || !placed || linkBlock.length) {
+              bad.push(`${tag}: ${links.join(", ") || "no link"}${placed ? "" : ", not a part of its own just before the ask"}${linkBlock.length ? `, blocked: ${linkBlock.join(" ")}` : ""}`);
+            }
+          }
+        }
+      }
+    }
+  }
+  check(picRenders > 250 && bad.length === 0,
+    `every live WhatsApp first message of a dental, school or coaching kind that says the sample is made has exactly one link, its kind's picture page, in its own part just before the ask, and checkSend lets it go (${picRenders} renders; ${bad.slice(0, 3).join(" | ")})`);
+  check(noLink.length === 0, `no other first message has a link: the offer twins, the pitch-page message, other businesses, every e-mail (${noLink.slice(0, 3).join(" | ")})`);
+  // The approved e-mails do not change: they keep "Kya main aapko link bhej doon?" / "Shall I send you the link?".
+  check(FIRST.filter((t) => t.channel === "email" && t.sample === "made").every((t) => t.body.endsWith(`\n\n${M.APPROVED_ASK[t.language]}`)), "every first e-mail keeps its approved ask and carries no picture");
+}
+
+/* The three static pages WhatsApp reads, and their pictures (public/w/). */
+{
+  /** Width and height from a JPEG's start-of-frame marker; baseline is marker C0. */
+  const jpegSize = (buf) => {
+    for (let i = 2; i + 9 < buf.length;) {
+      if (buf[i] !== 0xff) return null;
+      const marker = buf[i + 1];
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+        return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7), baseline: marker === 0xc0 };
+      }
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+    return null;
+  };
+  for (const k of KIND3) {
+    const html = readFileSync(join(ROOT, "public", "w", k, "index.html"), "utf8");
+    const jpg = readFileSync(join(ROOT, "public", "w", `${k}.jpg`));
+    const head = html.split("</head>")[0];
+    const meta = (key) => (head.match(new RegExp(`<meta (?:property|name)="${key.replace(/[.:]/g, "\\$&")}" content="([^"]*)"`)) || [])[1];
+    const size = jpegSize(jpg) || {};
+    check(jpg[0] === 0xff && jpg[1] === 0xd8 && size.baseline && size.width >= 600 && size.width === 1200 && jpg.length <= 300_000,
+      `/w/${k}.jpg: a baseline JPEG, 1200 px wide (600 or more) and at most 300 KB (${size.width}x${size.height}, ${jpg.length} bytes)`);
+    check(meta("og:image") === `https://www.ideovent.in/w/${k}.jpg` && meta("og:image:secure_url") === meta("og:image") && meta("og:image:type") === "image/jpeg" &&
+      Number(meta("og:image:width")) === size.width && Number(meta("og:image:height")) === size.height,
+      `/w/${k}: og:image is the absolute https address of its JPEG, with its real width, height and type (${meta("og:image")} ${meta("og:image:width")}x${meta("og:image:height")})`);
+    check(Boolean(meta("og:title")) && Boolean(meta("og:description")) && meta("og:url") === M.previewLinkFor(k) && meta("og:type") === "website" && Boolean(meta("og:image:alt")),
+      `/w/${k}: og:title, og:description, og:url (${meta("og:url")}), og:type and og:image:alt in the static head`);
+    check(/^<!doctype html>/i.test(html) && head.length < 4000 && head.indexOf("og:image") < head.indexOf("<style"), `/w/${k}: a small static head with the card tags before the styles`);
+    check(meta("robots") === "noindex, nofollow", `/w/${k}: noindex`);
+    check(!/<script|<iframe|<link[^>]+stylesheet|@import|google-analytics|gtag|fbq|clarity/i.test(html), `/w/${k}: inline CSS only, no script, no tracker`);
+    check(!DASH.test(html) && !EMOJI.test(html), `/w/${k}: no em or en dash, no emoji`);
+    check(html.includes(`<img src="/w/${k}.jpg" width="${size.width}" height="${size.height}"`), `/w/${k}: shows its picture full width, with its size given`);
+    const btn = html.match(/<a class="cta" href="https:\/\/wa\.me\/917761921786\?text=([^"]+)"[^>]*>([^<]+)<\/a>/);
+    check(Boolean(btn) && btn[2].trim() === "Haan, sample dikhaiye" && /^Haan/.test(decodeURIComponent(btn[1])), `/w/${k}: the "Haan, sample dikhaiye" button opens WhatsApp to +91 77619 21786 with a reply typed (${btn && decodeURIComponent(btn[1])})`);
+    check(html.includes('href="https://www.ideovent.in"'), `/w/${k}: links to https://www.ideovent.in`);
+    check(/@media[^{]*max-width/.test(html) || /width:\s*100%/.test(html), `/w/${k}: sized for a 360 px phone`);
+  }
+  const sitemap = readFileSync(join(ROOT, "public", "sitemap.xml"), "utf8");
+  check(!/\/w\//.test(sitemap), "the picture pages are not in the sitemap");
+  const vercel = JSON.parse(readFileSync(join(ROOT, "vercel.json"), "utf8"));
+  check(vercel.headers.some((h) => h.source === "/w/(.*)" && h.headers.some((x) => x.key === "X-Robots-Tag" && /noindex/.test(x.value))), "vercel.json sends noindex on /w/");
+  const reservedIn = (src) => (src.match(/\(\?:([^)]*)\)/) || [, ""])[1].split("|");
+  const pitchRule = vercel.headers.find((h) => String(h.source).startsWith("/:pitchSlug("));
+  const shareRule = vercel.rewrites.find((r) => String(r.source).startsWith("/:slug("));
+  check(reservedIn(pitchRule?.source || "").includes("w") && reservedIn(shareRule?.source || "").includes("w"), "no pitch slug can take /w: vercel.json's bare-slug rules leave it out");
+  check(/STATIC_PATHS = \[[^\]]*"w"/.test(readFileSync(join(SRC, "lib", "pitch", "reservedRoutes.ts"), "utf8")), "reservedRoutes.ts reserves w");
+  check(!vercel.rewrites.some((r) => /^\/w\b/.test(r.source)), "no rewrite is aimed at /w: Vercel serves the static files");
+}
+
 /* ── Verdict ─────────────────────────────────────────────────────────────── */
 
 if (NEGATIVE) {
@@ -1142,6 +1330,7 @@ if (NEGATIVE) {
     /carries no REMOVE line/, /dental lead is never offered the neutral first message or summary/,
     /specialist clinic: the kids clinic/, /\{addressAs\} "Dr\. Mehta"/, /implant centre is never offered a cost range/, /schools are called after school/,
     /wa_first_new_coaching_hinglish: five parts/, /approved sample: coaching, no website/,
+    /has exactly one link, its kind's picture page, in its own part just before the ask/,
   ];
   const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
   console.log(`\nNEGATIVE CONTROL: ${failures.length} failures seen.`);

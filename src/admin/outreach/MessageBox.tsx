@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { Check } from "lucide-react";
+import { Check, ImageOff } from "lucide-react";
+import type { PreviewPage } from "@/lib/outreach/preview";
 import { cn } from "@/lib/utils";
 import { inputCls } from "./ui";
 import { suggestionsFor, type Piece } from "./placeholders";
+import { CreativeCard } from "./CreativeCard";
+
+/** The picture under a first WhatsApp (CreativeCard), and what Share needs. */
+export interface MessagePicture {
+  page: PreviewPage;
+  shareBlocked: boolean;
+  onShared: () => void;
+}
 
 /**
  * The message as it will be sent, merge fields already filled for this lead,
@@ -11,8 +20,12 @@ import { suggestionsFor, type Piece } from "./placeholders";
  * blank; what is typed there goes into the text. The highlight is a layer
  * under a transparent textarea with the same font, padding and wrapping; the
  * textarea grows with its text, so it never scrolls and the two never drift.
+ *
+ * Under a first WhatsApp that carries the picture link, the picture itself
+ * (1 Oct 2026): `picture`, with Copy image, Share and Download. Under the twin
+ * that offers to make a sample, `pictureNote` says why it has none.
  */
-export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSubject, onBody, onFill, now }: {
+export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSubject, onBody, onFill, now, picture, pictureNote }: {
   isEmail: boolean;
   subject: string;
   body: string;
@@ -25,6 +38,10 @@ export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSu
   onBody: (v: string) => void;
   onFill: (name: string, value: string) => void;
   now: Date;
+  /** The picture that goes with this message: a first WhatsApp with the picture link. */
+  picture?: MessagePicture | null;
+  /** Why this message has no picture, when its kind has one (the twin that offers to make a sample). */
+  pictureNote?: string;
 }) {
   const left = blanks.filter((b) => !(fills[b] ?? "").trim());
   return (
@@ -72,6 +89,13 @@ export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSu
             })}
           </div>
         </div>
+      )}
+
+      {picture && <CreativeCard page={picture.page} text={body} shareBlocked={picture.shareBlocked} onShared={picture.onShared} />}
+      {!picture && pictureNote && (
+        <p className="flex gap-2 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground" data-testid="creative-none">
+          <ImageOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> <span>{pictureNote}</span>
+        </p>
       )}
     </div>
   );

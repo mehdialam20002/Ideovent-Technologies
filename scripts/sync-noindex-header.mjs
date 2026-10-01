@@ -1,7 +1,8 @@
 /**
  * Keep the noindex header on the bare pitch slug in step with the route table,
  * and keep the crm.ideovent.in rules (noindex everywhere, its own robots.txt)
- * in vercel.json; see CRM_HOST below.
+ * and the /w/ rule (the first message's picture pages, noindex) in vercel.json;
+ * see CRM_HOST and PREVIEW_SOURCE below.
  *
  *   node scripts/sync-noindex-header.mjs          rewrite vercel.json
  *   node scripts/sync-noindex-header.mjs --check  fail if it is stale
@@ -54,7 +55,7 @@ const RULE_PREFIX = "/:pitchSlug(";
  * containing a dot, which is also why robots.txt and sitemap.xml keep their
  * ordinary headers.
  */
-const STATIC_PATHS = ["assets", "api", "blog-covers", "certificates", "demo", "home", "icons", "og", "work"];
+const STATIC_PATHS = ["assets", "api", "blog-covers", "certificates", "demo", "home", "icons", "og", "w", "work"];
 
 function firstSegment(path) {
   const seg = String(path).replace(/^\/+/, "").split("/")[0] || "";
@@ -167,6 +168,22 @@ const crmNoindex = {
 const crmRobots = { source: "/robots.txt", has: ON_CRM_HOST, destination: "/robots-crm.txt", permanent: false };
 const forCrmHost = (r) => Array.isArray(r.has) && r.has.some((h) => h && h.type === "host" && h.value === CRM_HOST);
 
+/**
+ * THE FIRST MESSAGE'S PICTURE PAGES (1 Oct 2026).
+ *
+ * public/w/dental, /w/school and /w/coaching are static pages whose only job
+ * is the picture card WhatsApp draws for the link in a first message
+ * (src/lib/outreach/preview.ts), with their JPEGs beside them. They are for the
+ * prospect the message goes to, not for a search engine: each page carries a
+ * robots meta tag, and this header says the same with the first byte, for the
+ * JPEGs too. "w" is in STATIC_PATHS above, so no pitch slug can take it.
+ * robots.txt does NOT disallow /w/: a crawler must fetch a page to read its
+ * noindex, and the link scrapers must reach it. Written and checked here, so a
+ * hand edit of vercel.json that drops it fails `npm run build`.
+ */
+const PREVIEW_SOURCE = "/w/(.*)";
+const previewNoindex = { source: PREVIEW_SOURCE, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] };
+
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 const headers = cfg.headers || [];
@@ -181,16 +198,29 @@ const redirects = cfg.redirects || [];
 const crmHeaderAt = headers.findIndex((h) => h.source === crmNoindex.source && forCrmHost(h));
 const crmRobotsAt = redirects.findIndex((r) => r.source === crmRobots.source && forCrmHost(r));
 
+const previewAt = headers.findIndex((h) => h.source === PREVIEW_SOURCE && !h.has);
+
 const slugInSync = Boolean(current && same(current, rule) && currentRw && same(currentRw, shareRewrite));
 const crmInSync =
   crmHeaderAt >= 0 && same(headers[crmHeaderAt], crmNoindex) && crmRobotsAt >= 0 && same(redirects[crmRobotsAt], crmRobots);
-const inSync = slugInSync && crmInSync;
+const previewInSync = previewAt >= 0 && same(headers[previewAt], previewNoindex);
+const inSync = slugInSync && crmInSync && previewInSync;
 
 if (process.argv.includes("--check")) {
   if (inSync) {
     console.log("ok    bare-slug noindex header and share rewrite match the route table");
     console.log(`ok    ${CRM_HOST}: noindex on every path, /robots.txt goes to /robots-crm.txt`);
+    console.log("ok    /w/ (the first message's picture pages): noindex");
     process.exit(0);
+  }
+  if (!previewInSync) {
+    console.error("FAIL  vercel.json's /w/ rule is missing or changed.");
+    console.error("      The picture pages and their JPEGs must send X-Robots-Tag: noindex, nofollow.");
+    console.error("      found: " + (previewAt >= 0 ? JSON.stringify(headers[previewAt]) : "(none)"));
+    console.error("");
+    console.error("      Fix with:  npm run sync:noindex");
+    if (slugInSync && crmInSync) process.exit(1);
+    console.error("");
   }
   if (slugInSync) console.log("ok    bare-slug noindex header and share rewrite match the route table");
   if (!crmInSync) {
@@ -241,6 +271,15 @@ if (!crmInSync) {
   else redirects.push(crmRobots);
 }
 
+if (!previewInSync) {
+  if (previewAt >= 0) headers[previewAt] = previewNoindex;
+  else {
+    // Next to the other noindex rules: just before the bare-slug one.
+    const before = headers.findIndex((h) => typeof h.source === "string" && h.source.startsWith(RULE_PREFIX));
+    headers.splice(before < 0 ? headers.length : before, 0, previewNoindex);
+  }
+}
+
 cfg.headers = headers;
 cfg.rewrites = rewrites;
 cfg.redirects = redirects;
@@ -252,4 +291,7 @@ if (!slugInSync) {
 }
 if (!crmInSync) {
   console.log((crmHeaderAt >= 0 || crmRobotsAt >= 0 ? "updated" : "added  ") + ` ${CRM_HOST} rules: noindex header, robots.txt redirect`);
+}
+if (!previewInSync) {
+  console.log((previewAt >= 0 ? "updated" : "added  ") + " /w/ noindex header (the first message's picture pages)");
 }

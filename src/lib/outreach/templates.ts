@@ -15,6 +15,14 @@
  *   4. the solution line ("Isliye humne aapke clinic ke naam se ek sample website
  *      banayi hai:") and {offer}, three bullets that answer the problem (engine.ts offerFor);
  *   5. the ask and the easy no, each on its own line.
+ * THE PICTURE (1 Oct 2026, preview.ts). A WhatsApp first message that says the
+ * sample is made, to a clinic, a school or a coaching institute, has one more
+ * part just before the ask: PREVIEW_LINE, "Ek jhalak yahan dekhiye: {previewLink}",
+ * the kind's picture page, which WhatsApp shows as a picture card. Its ask
+ * then asks for their own sample's link (PREVIEW_ASK, "Kya main aapke
+ * {kindNoun} ka sample link bhej doon?"). Mehdi approved this one link in a
+ * first message for this one purpose. The twin that offers to make a sample,
+ * the pitch-page message, any other business and every e-mail stay without it.
  * Every other stage (the link after a yes, the follow-up, the summary, the
  * proposal) has the same look: short lines, a blank line between parts,
  * bullets where a list helps. An e-mail has the same parts as paragraphs; it
@@ -23,18 +31,22 @@
  * scripts/test-outreach-engine.mjs renders the approved examples word for word
  * and checks the shape of every first message;
  * 04-sales-kit/OUTREACH-TEMPLATES-RENDERED-2026-10-01.md shows every message
- * as it renders.
+ * as it renders, and OUTREACH-FIRST-MESSAGES-WITH-PREVIEW-2026-10-01.md the
+ * first WhatsApps with the picture link.
  *
  * THE RULES OF 30 SEP 2026 STILL HOLD (APPROVED-MESSAGES-2026-09-30.md): no
- * link, price, emoji, "best", "free", "guaranteed" or urgency in a first
- * message; the problem line is something checked the same day, never a guess;
- * one message, then wait.
+ * link (but the one picture link above), price, emoji, "best", "free",
+ * "guaranteed" or urgency in a first message; the problem line is something
+ * checked the same day, never a guess; one message, then wait.
  *
  * THE LADDER
- *   first        WhatsApp and e-mail, no link. "Isliye humne ... sample website
- *                banayi hai:", the bullets, "Kya main aapko link bhej doon?" and the
- *                easy no. A lead with no demo yet gets the twin that OFFERS to make
- *                one (sample "offer"): no message says a sample is made when it is not.
+ *   first        WhatsApp and e-mail, no link but the picture link. "Isliye humne ...
+ *                sample website banayi hai:", the bullets, on WhatsApp "Ek jhalak yahan
+ *                dekhiye: {previewLink}", then "Kya main aapke {kindNoun} ka sample link
+ *                bhej doon?" (an e-mail: "Kya main aapko link bhej doon?") and the easy
+ *                no. A lead with no demo yet gets the twin that OFFERS to make one
+ *                (sample "offer"), with no picture: no message says a sample is made
+ *                when it is not.
  *   after_reply  after a yes: the link on its own line, "Ye sirf demonstration hai ...", two call times.
  *   follow_up_1  WhatsApp: the ONE follow-up, on day 4, and the last WhatsApp.
  *                E-mail: day 4, as a reply in the same thread.
@@ -53,7 +65,8 @@
  * number is on the demo (a template duplicate clears every contact). No client,
  * result, number or rating is claimed; no price is typed into a message (the
  * summary and the proposal leave [package and price] to the sender). No em
- * dashes. No web address is printed in a first message.
+ * dashes. No web address is printed in a first message but the picture link,
+ * and no template types one: {previewLink} fills it.
  *
  * MERGE FIELDS: MERGE_FIELDS below. engine.ts render() fills them; its header
  * says what each one says in each language.
@@ -94,7 +107,11 @@ export interface MessageTemplate {
   subject?: string;
   /** For e-mail: everything above the signature. render() adds "Regards,", the signature and, on a cold e-mail, the opt-out. */
   body: string;
-  /** false forbids {demoLink}, {pitchLink} and any URL in the text. */
+  /**
+   * false forbids {demoLink}, {pitchLink} and any URL in the text. The one
+   * exception is a first message's own picture link, {previewLink} (preview.ts):
+   * it is not a link to their sample, so a first message keeps allowsLink false.
+   */
   allowsLink: boolean;
   /**
    * Kinds a generic ("any") template is never offered to, because its words
@@ -129,6 +146,7 @@ export const MERGE_FIELDS = [
   "city",
   "demoLink",
   "pitchLink",
+  "previewLink",
   "observation",
   "senderName",
   "senderPhone",
@@ -248,6 +266,35 @@ export const EASY_NO: Record<TemplateLanguage, string> = {
 };
 
 /**
+ * The picture link (1 Oct 2026, preview.ts): a part of its own, just before the
+ * ask, in a WhatsApp first message that says the sample is made to a clinic, a
+ * school or a coaching institute. {previewLink} is the kind's picture page,
+ * which WhatsApp draws as a picture card. The link ends the line, with no full
+ * stop after it, so no app takes the stop into the address.
+ */
+export const PREVIEW_LINE: Record<TemplateLanguage, string> = {
+  hinglish: "Ek jhalak yahan dekhiye: {previewLink}",
+  en: "A quick look: {previewLink}",
+  hi: "एक झलक यहाँ देखिए: {previewLink}",
+};
+
+/** The ask after the picture link: their own sample's link, which goes after a yes; then the easy no. */
+export const PREVIEW_ASK: Record<TemplateLanguage, string> = {
+  hinglish: `Kya main aapke {kindNoun} ka sample link bhej doon?\n${EASY_NO.hinglish}`,
+  en: `Shall I send you the link to your {kindNoun}'s sample?\n${EASY_NO.en}`,
+  hi: `क्या मैं आपके {kindNoun} का सैंपल लिंक भेज दूँ?\n${EASY_NO.hi}`,
+};
+
+/** The note on a message with the picture link. */
+const PREVIEW_NOTE =
+  "Its one link is the picture page for this kind, which WhatsApp shows as a picture card; their own sample's link goes after they say yes. To send the picture itself as well, use Copy image or Share under the message.";
+
+/** True when a template carries the picture link ({previewLink}). */
+export function carriesPreview(t: Pick<MessageTemplate, "body">): boolean {
+  return t.body.includes("{previewLink}");
+}
+
+/**
  * Why a specialist clinic's patients look online first (the approved implant and
  * kids lines of 30 Sep 2026), without the full stop. engine.ts says them as the
  * impact line of a specialist clinic with no website ("... dhoondhte hain. Ye na
@@ -303,7 +350,10 @@ const parts = (...p: string[]): string => p.join("\n\n");
  * The words of one kind's first messages on one channel, in one language. The
  * builder puts the five parts together, a blank line between each: the greeting
  * and who (an e-mail: the greeting only), the problem, {impact}, the solution
- * line with {offer} under it, and the ask with the easy no.
+ * line with {offer} under it, and the ask with the easy no. A WhatsApp message
+ * that says the sample is made, to a clinic, school or coaching institute, has
+ * the picture link (PREVIEW_LINE) as a part of its own just before the ask, and
+ * asks for their own sample's link (PREVIEW_ASK).
  *   noSite    the problem when they have no website of their own (the approved
  *             "Google par aapka clinic dekha. Clinic ki apni website nahi hai,
  *             sirf Google listing hai.");
@@ -357,13 +407,16 @@ function firstSet(kind: TemplateKind, channel: TemplateChannel, language: Templa
   const add = (pitch: "new_website" | "fix_website", sample: "made" | "offer", problem: string, extra?: string) => {
     const fix = pitch === "fix_website";
     const id = `${channel === "email" ? "em" : "wa"}_first_${fix ? "fix" : "new"}_${kind}_${language}${sample === "offer" ? "_offer" : ""}`;
+    // The picture link: on WhatsApp, when the message says the sample is made, for a kind with a picture.
+    const preview = channel === "whatsapp" && sample === "made" && kind !== "any";
+    const ask = preview ? parts(PREVIEW_LINE[language], PREVIEW_ASK[language]) : sample === "made" ? APPROVED_ASK[language] : OFFER_ASK[language];
     const note = [
       WHEN[kind],
       fix ? "Only with something you checked on their site today." : "Only when you searched today and found no website of their own; it says you saw them on Google.",
       sample === "made" ? "Needs the demo: it says the sample is made." : "For a lead with no demo yet: it offers to make one.",
       sample === "made" ? NUMBER_NOTE[kind] : undefined,
       sample === "made" ? l.madeNote : undefined,
-      `No link${channel === "email" ? " in this e-mail" : ""}: the link goes after they say yes.`,
+      preview ? PREVIEW_NOTE : `No link${channel === "email" ? " in this e-mail" : ""}: the link goes after they say yes.`,
       extra,
     ];
     out.push({
@@ -376,13 +429,7 @@ function firstSet(kind: TemplateKind, channel: TemplateChannel, language: Templa
       label: `First message: ${fix ? "their site" : "no website"}, ${sample === "made" ? "sample made" : "offer a sample"} (${TAG[kind]})`,
       note: note.filter(Boolean).join(" "),
       ...(channel === "email" ? { subject: "{instituteName} website" } : {}),
-      body: parts(
-        head,
-        problem,
-        "{impact}",
-        `${SOLUTION[language][sample][fix ? "fix" : "new"](l.noun)}\n{offer}`,
-        sample === "made" ? APPROVED_ASK[language] : OFFER_ASK[language],
-      ),
+      body: parts(head, problem, "{impact}", `${SOLUTION[language][sample][fix ? "fix" : "new"](l.noun)}\n{offer}`, ask),
       allowsLink: false,
       sample,
       promises: sample === "made" ? "demo" : null,

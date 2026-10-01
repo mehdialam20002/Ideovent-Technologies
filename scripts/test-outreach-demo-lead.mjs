@@ -157,6 +157,9 @@ check(relinked && !relinked.created && relinked.lead.kind === "dental", "linking
   check(kids.r?.body.includes("Google par aapka kids dental clinic dekha. Clinic ki apni website nahi hai, sirf Google listing hai.\n\nParents bachche ki pehli visit se pehle online dekhte hain ki kya hoga. Ye na mile to wo aksar agle clinic ko call kar lete hain.\n\nIsliye humne aapke clinic ke naam se ek sample website banayi hai:\n• Bachche ki pehli visit mein kya hota hai\n"),
     `a d6 demo's lead gets the approved kids words (${kids.r?.body})`);
   check(M.suggestedStage(implant.lead.status, "whatsapp", 0) === "first" && !implant.r.warnings.length, "a new demo's lead starts at the first message, and the 'Google par' line raises nothing for a demo-created lead");
+  // 1 Oct 2026: its demo is made, so the first WhatsApp carries the clinic's picture link and asks for their own sample's link.
+  check(implant.r.body.endsWith("\n\nEk jhalak yahan dekhiye: https://www.ideovent.in/w/dental\n\nKya main aapke implant centre ka sample link bhej doon?\nPasand na aaye to koi baat nahi."),
+    `the lead a demo makes gets the clinic's picture link, and the ask for its own sample's link (${implant.r?.body.slice(-160)})`);
   check(M.checkSend({ ...implant.lead, phone: "+91 98765 43210" }, implant.t, "whatsapp", settings, 0, NOW).ok, "the lead has its demo, so 'we made a sample' may be said");
 
   const fixLead = (d) => ({ instituteName: d.instituteName, kind: "dental", website: "https://example.org", observation: "no_timings", demoSlug: d.slug, contactName: "Dr. Gupta" });

@@ -15,7 +15,11 @@
  *     is ranked but cannot go until its [blanks] are filled;
  *   - the preview shows the approved look of 1 Oct 2026 (a textarea over a
  *     white-space: pre-wrap layer) and the send links carry its blank lines
- *     and bullets (%0A%0A, %0A%E2%80%A2).
+ *     and bullets (%0A%0A, %0A%E2%80%A2);
+ *   - the picture (1 Oct 2026): a first WhatsApp that says the sample is made
+ *     carries its kind's picture link before the ask, and the compose shows
+ *     the picture under it with Copy image, Share and Download, each with a
+ *     hint; the offer twin and the e-mails carry none.
  * Bundled with esbuild like test-outreach-engine.mjs; nothing mocked. Fictional leads only.
  *
  *   node scripts/test-outreach-compose.mjs
@@ -47,8 +51,8 @@ const out = join(tmpdir(), `ideovent-test-outreach-compose-${process.pid}.mjs`);
 const bundled = await build({
   stdin: {
     contents: `export * from "@/admin/outreach/compose";
-export { OBSERVATIONS, observationsFor, checkSend, render, whatsappUrl, mailtoUrl } from "@/lib/outreach/engine";
-export { STAGE_LABELS, stagesFor, getTemplate } from "@/lib/outreach/templates";`,
+export { OBSERVATIONS, observationsFor, checkSend, render, whatsappUrl, mailtoUrl, previewFor } from "@/lib/outreach/engine";
+export { STAGE_LABELS, stagesFor, getTemplate, carriesPreview } from "@/lib/outreach/templates";`,
     resolveDir: ROOT,
     loader: "ts",
   },
@@ -197,8 +201,33 @@ for (const o of C.OBSERVATIONS.filter((x) => (x.kinds || []).includes("dental"))
   const t = C.getTemplate("wa_first_new_dental_en");
   const r = C.render(t, clinic(), { now: new Date("2026-09-29T09:00:00.000Z"), demo: { phone: true, whatsapp: true } });
   const href = C.whatsappUrl("+91 98765 43210", r.body);
-  check(r.body.split("\n\n").length === 6 && href.includes("%0A%0A") && new URL(href).searchParams.get("text") === r.body && C.mailtoUrl({ to: "a@example.org", body: r.body }).includes("%0A%E2%80%A2%20"),
-    "a first WhatsApp's five parts reach WhatsApp and the mail app with their blank lines and bullets");
+  // Six blocks of the five parts (the greeting and who are two) and, since 1 Oct 2026, the picture link before the ask.
+  check(r.body.split("\n\n").length === 7 && href.includes("%0A%0A") && new URL(href).searchParams.get("text") === r.body && C.mailtoUrl({ to: "a@example.org", body: r.body }).includes("%0A%E2%80%A2%20"),
+    "a first WhatsApp's five parts and its picture link reach WhatsApp and the mail app with their blank lines and bullets");
+  check(href.includes(encodeURIComponent("\n\nA quick look: https://www.ideovent.in/w/dental\n\n")) && r.body.split("\n\n").at(-2) === "A quick look: https://www.ideovent.in/w/dental",
+    "the wa.me link carries the clinic's picture link, in its own part just before the ask");
+}
+
+/* The picture (1 Oct 2026): under a first WhatsApp with the picture link, the compose shows the picture of the
+   kind the link is for, with Copy image (a PNG on the clipboard), Share (the picture and the text) and Download,
+   each with a one-line hint; the twin that offers to make a sample shows why it has none; other kinds nothing. */
+{
+  const box = readFileSync(join(SRC, "admin/outreach/MessageBox.tsx"), "utf8");
+  const panel = readFileSync(join(SRC, "admin/outreach/ComposePanel.tsx"), "utf8");
+  const card = readFileSync(join(SRC, "admin/outreach/CreativeCard.tsx"), "utf8");
+  check(/<CreativeCard page=\{picture\.page\} text=\{body\}/.test(box) && /data-testid="creative-none"/.test(box), "the message box shows the picture under the text, or the note on why there is none");
+  check(/carriesPreview\(template\) \? previewFor\(pictureKind\)/.test(panel) && /firstWa = !isEmail && template\?\.stage === "first"/.test(panel) && /shareBlocked: blocked/.test(panel),
+    "the compose panel shows it only under a first WhatsApp that carries the picture link, and Share waits while the send is blocked");
+  check(/"image\/png"/.test(card) && /new ClipboardItem/.test(card) && /navigator\.share\(\{ files: \[file\], text \}\)/.test(card) && /download=\{page\.fileName\}/.test(card),
+    "Copy image puts a PNG on the clipboard, Share sends the picture with the message text, Download saves the JPEG");
+  for (const id of ["creative-copy-hint", "creative-share-hint", "creative-download-hint"]) check(card.includes(`data-testid="${id}"`), `each button has its one-line hint (${id})`);
+  // Built from code points, so this file itself contains no em or en dash.
+  check(!new RegExp(`[${String.fromCharCode(8211)}${String.fromCharCode(8212)}]`).test(card + box), "the picture card has no en or em dash");
+  check(C.previewFor("dental")?.image === "/w/dental.jpg" && C.previewFor("school")?.image === "/w/school.jpg" && C.previewFor("coaching")?.image === "/w/coaching.jpg" && C.previewFor("other") === undefined,
+    "each kind maps to its own picture, and a kind without one to none");
+  const offer = C.getTemplate("wa_first_new_dental_en_offer");
+  check(!C.carriesPreview(offer) && C.carriesPreview(C.getTemplate("wa_first_new_dental_en")) && !C.carriesPreview(C.getTemplate("em_first_new_dental_en")),
+    "the picture goes with the WhatsApp that says the sample is made, not with its offer twin or an e-mail");
 }
 
 console.log(`test-outreach-compose: ${pass} passed, ${fail} failed${NEGATIVE ? " (NEGATIVE CONTROL: failures expected)" : ""}`);

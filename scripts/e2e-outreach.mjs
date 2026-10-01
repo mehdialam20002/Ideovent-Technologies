@@ -23,6 +23,12 @@
  *   cannot be sent until the blank is filled; the Call script card walks the
  *   approved seven steps in the words of the lead's kind, and its Call done
  *   moves the message to After the call. The first e-mail carries no link.
+ *   Then (1 Oct 2026) the picture: a first WhatsApp that says the sample is
+ *   made carries one link, its kind's picture page (/w/school, /w/dental), and
+ *   the compose shows the picture under it with Copy image (a PNG on the
+ *   clipboard), Share (the picture and the text) and Download, each with a
+ *   one-line hint; a clinic with no demo yet and any other business get no
+ *   picture and no link.
  *
  * E-mail opens in the mail app only (Open in Gmail was removed 28 Sep 2026):
  * no Gmail link or Gmail wording may appear anywhere on the lead page or in
@@ -141,6 +147,22 @@ await context.addInitScript(() => {
   /* The clipboard: record what the page copies. */
   window.__copied = [];
   if (window.Clipboard) Clipboard.prototype.writeText = function (t) { window.__copied.push(String(t)); return Promise.resolve(); };
+  /* An image on the clipboard (Copy image under a first WhatsApp): each item's types and the size of each blob. */
+  window.__copiedItems = [];
+  if (window.Clipboard) Clipboard.prototype.write = async function (items) {
+    for (const item of items) {
+      const types = [...item.types];
+      const sizes = [];
+      for (const t of types) sizes.push((await item.getType(t)).size);
+      window.__copiedItems.push({ types, sizes });
+    }
+  };
+  /* The share sheet (Share under a first WhatsApp): record what would be shared; nothing leaves the page. */
+  window.__shared = [];
+  Object.defineProperty(navigator, "canShare", { configurable: true, value: (data) => Boolean(data && Array.isArray(data.files) && data.files.length) });
+  Object.defineProperty(navigator, "share", { configurable: true, value: async (data) => {
+    window.__shared.push({ text: data.text || "", files: (data.files || []).map((f) => ({ name: f.name, type: f.type, size: f.size })) });
+  } });
   const Real = window.WebSocket;
   window.WebSocket = function (url, protocols) {
     if (/localhost|127\.0\.0\.1/.test(String(url))) return { addEventListener() {}, removeEventListener() {}, send() {}, close() {}, readyState: 0 };
@@ -299,7 +321,11 @@ if ((await wa.evaluate((el) => el.tagName)) !== "A") {
   const href = (await wa.getAttribute("href")) || "";
   check(href.startsWith(`https://wa.me/${LEAD.phoneDigits}?text=`), "Open WhatsApp is a wa.me link to the lead's number", "bad wa.me href: " + href);
   const text = decodeURIComponent(href.split("?text=")[1] || "");
-  check(!/https?:\/\/|\/site\//.test(text), "the first WhatsApp message carries no link", "first WhatsApp carries a link: " + text);
+  /* 1 Oct 2026: its one link is the school's picture page (WhatsApp draws it as a picture card); the sample's own link waits for a yes. */
+  const waLinks = text.match(/https?:\/\/\S+|www\.\S+/g) || [];
+  check(JSON.stringify(waLinks) === JSON.stringify(["https://www.ideovent.in/w/school"]) && !/\/site\//.test(text),
+    "the first WhatsApp carries one link only, the school's picture page, and not the sample's link", "links: " + waLinks.join(", ") + " | " + text.slice(-200));
+  check((await compose.getByTestId("creative").getAttribute("data-kind").catch(() => "")) === "school", "the school's picture shows under the message");
   check(!/[–—]/.test(text), "the WhatsApp text has no en or em dash");
   const web = (await compose.getByTestId("open-whatsapp-web").getAttribute("href")) || "";
   check(web.startsWith(`https://web.whatsapp.com/send?phone=${LEAD.phoneDigits}&text=`), "WhatsApp Web link is built for the same number");
@@ -701,6 +727,54 @@ await unfold(page, "history-details");
 check(/Email opened in email app/.test(await page.getByTestId("history").innerText()), "the dental send is logged as Email opened in email app");
 await noGmail("the dental lead page");
 
+/* The first WhatsApp with the clinic's picture (1 Oct 2026): the picture link is the message's one link, and the
+   picture itself shows under the text with Copy image, Share and Download, each with its one-line hint. */
+await page.setViewportSize({ width: 1280, height: 900 });
+await dc.getByRole("tab", { name: /^whatsapp/i }).click();
+await page.waitForTimeout(300);
+await dc.locator('[data-stage="first"]').click();
+await page.waitForTimeout(400);
+const pic = dc.getByTestId("creative");
+check((await pic.count()) === 1 && (await pic.getAttribute("data-kind")) === "dental", "a dental lead's first WhatsApp shows the clinic's picture under the message", `${await pic.count()} picture card(s)`);
+const picImg = dc.getByTestId("creative-image");
+await picImg.evaluate((el) => (el.complete ? null : new Promise((r) => { el.onload = r; el.onerror = r; }))).catch(() => {});
+const picInfo = await picImg.evaluate((el) => ({ src: el.getAttribute("src"), w: el.naturalWidth, h: el.naturalHeight, alt: el.alt })).catch(() => null);
+check(picInfo?.src === "/w/dental.jpg" && picInfo.w === 1200 && picInfo.h === 1097 && /dental clinic/.test(picInfo.alt), "the picture is /w/dental.jpg, loaded at 1200 by 1097, with a description for a screen reader", JSON.stringify(picInfo));
+for (const [id, name] of [["creative-copy", /copy image/i], ["creative-share", /share/i], ["creative-download", /download/i]]) {
+  const hint = (await dc.getByTestId(`${id}-hint`).innerText().catch(() => "")).trim();
+  check((await dc.getByTestId(id).count()) === 1 && name.test(await dc.getByTestId(id).innerText()) && hint.length > 15 && !/\n/.test(hint) && !/[–—]/.test(hint),
+    `${id.replace("creative-", "")}: the button is there with its one-line hint`, hint || "no hint");
+}
+const dWa = dc.getByTestId("open-whatsapp");
+if ((await dWa.evaluate((el) => el.tagName)) !== "A") {
+  fail("Open in WhatsApp is blocked for the dental lead: " + (await dc.locator('[aria-label="Blocked"]').innerText().catch(() => "")));
+} else {
+  const dHref = (await dWa.getAttribute("href")) || "";
+  const dText = new URL(dHref).searchParams.get("text") || "";
+  const dLinks = dText.match(/https?:\/\/\S+|www\.\S+/g) || [];
+  check(dHref.startsWith("https://wa.me/919876543283?text=") && dHref.includes(encodeURIComponent("https://www.ideovent.in/w/dental")) && JSON.stringify(dLinks) === JSON.stringify(["https://www.ideovent.in/w/dental"]),
+    "the wa.me href carries the clinic's picture page, its one link", `${dHref.slice(0, 60)} | ${dLinks.join(", ")}`);
+  check(/\n\n(A quick look|Ek jhalak yahan dekhiye): https:\/\/www\.ideovent\.in\/w\/dental\n\n[^\n]*sample[^\n]*\?\n[^\n]+$/.test(dText), "the picture link is a part of its own, just before the ask for their sample's link", dText.slice(-220));
+}
+await dc.getByTestId("creative-copy").click();
+await page.waitForFunction(() => window.__copiedItems.length > 0, null, { timeout: 10000 }).catch(() => {});
+const copiedPic = await page.evaluate(() => window.__copiedItems.at(-1) || null);
+check(Boolean(copiedPic) && copiedPic.types.includes("image/png") && copiedPic.sizes[0] > 100000, "Copy image puts the picture on the clipboard as a PNG", JSON.stringify(copiedPic));
+check(/Ctrl\+V/.test(await dc.getByTestId("creative-status").innerText().catch(() => "")), "and says to press Ctrl+V in the WhatsApp chat");
+const dl = dc.getByTestId("creative-download");
+check((await dl.getAttribute("href")) === "/w/dental.jpg" && /\.jpg$/.test((await dl.getAttribute("download")) || ""), "Download saves the clinic's JPEG", `${await dl.getAttribute("href")} ${await dl.getAttribute("download")}`);
+await page.waitForFunction(() => document.querySelector('[data-testid="creative-share"]')?.disabled === false, null, { timeout: 10000 }).catch(() => {});
+await dc.getByTestId("creative-share").click();
+await page.waitForFunction(() => window.__shared.length > 0, null, { timeout: 5000 }).catch(() => {});
+const shared = await page.evaluate(() => window.__shared.at(-1) || null);
+const dOnScreen = await dc.getByLabel("Message text").inputValue();
+check(Boolean(shared) && shared.files.length === 1 && shared.files[0].type === "image/jpeg" && shared.files[0].size > 100000 && shared.text === dOnScreen,
+  "Share hands over the picture and the message on screen together", JSON.stringify(shared && { files: shared.files, text: shared.text.slice(0, 50) }));
+await page.waitForTimeout(400);
+check(/WhatsApp opened in the share sheet \(First message\)/.test(await page.getByTestId("history").innerText()), "a share is recorded as the first WhatsApp sent");
+await tallShot("lead-dental-whatsapp-1280.png", 1280);
+await tallShot("lead-dental-whatsapp-390.png", 390);
+
 /* Leads table: the Kind filter; dashboard breakdown; pipeline card. */
 await page.setViewportSize({ width: 1440, height: 1000 });
 await page.goto(BASE + "/crm/leads?view=all", { waitUntil: "domcontentloaded" });
@@ -788,6 +862,36 @@ for (const s of STAGED) {
     `a ${s.status} ${s.kind} lead opens on ${PLAIN[["first", "after_yes", "follow_up", "after_call", "proposal", "closing"].indexOf(s.want)]}`,
     `pressed ${on}, now ${now}, heading "${heading}"`);
   check(!/[–—]/.test(await c.getByTestId("stage-hint").innerText()), `${s.id}: the stage's one-line hint has no dash`);
+}
+{
+  /* The picture (1 Oct 2026). A clinic with no demo yet is offered the message that offers to make one: no
+     picture, since the picture says the sample is already built, and a line that says so; no link at all.
+     Any other business has no picture of its own: no picture and no line. */
+  const c = await openStaged(STAGED[0]);
+  await c.getByRole("tab", { name: /^whatsapp/i }).click();
+  await page.waitForTimeout(300);
+  const tpl = (await c.getByTestId("template-list").first().locator('[aria-checked="true"]').getAttribute("data-template-id").catch(() => "")) || "";
+  const why = await c.getByTestId("creative-none").innerText().catch(() => "");
+  check(/^wa_first_new_dental_\w+_offer$/.test(tpl) && (await c.getByTestId("creative").count()) === 0 && /already built/.test(why),
+    "a clinic with no demo yet gets the message that offers one, with no picture and a line saying why", `${tpl}, ${await c.getByTestId("creative").count()} card(s), "${why}"`);
+  const offerHref = (await c.getByTestId("open-whatsapp").getAttribute("href")) || "";
+  check(offerHref.startsWith("https://wa.me/") && !/https?:\/\/|www\./.test(new URL(offerHref).searchParams.get("text") || ""), "and that WhatsApp carries no link at all", offerHref.slice(0, 80));
+  const other = {
+    id: "ol_e2estage_other", status: "new", kind: "other", contactName: "Mrs. Rao", city: "Patna", instituteName: "Example Stage Yoga Studio E2E",
+    phone: "+919810070099", email: "other@example-stage-e2e.example", demoSlug: "example-stage-other-e2e",
+    createdAt: new Date(Date.now() - 864e5).toISOString(), updatedAt: new Date().toISOString(),
+  };
+  await page.evaluate(([k, lead]) => {
+    const d = JSON.parse(localStorage.getItem(k) || "{}");
+    d.leads = [...(d.leads || []).filter((l) => l.id !== lead.id), lead];
+    localStorage.setItem(k, JSON.stringify(d));
+  }, [OUTREACH_KEY, other]);
+  const o = await openStaged(other);
+  await o.getByRole("tab", { name: /^whatsapp/i }).click();
+  await page.waitForTimeout(300);
+  const oHref = (await o.getByTestId("open-whatsapp").getAttribute("href").catch(() => "")) || "";
+  check((await o.getByTestId("creative").count()) === 0 && (await o.getByTestId("creative-none").count()) === 0 && oHref.startsWith("https://wa.me/") && !/https?:\/\/|www\./.test(new URL(oHref).searchParams.get("text") || ""),
+    "any other business: no picture, no picture line and no link in its first WhatsApp", `${await o.getByTestId("creative").count()} card(s), ${oHref.slice(0, 60)}`);
 }
 {
   /* WhatsApp: the first message and the one follow-up have gone, so the screen says to stop there. */
