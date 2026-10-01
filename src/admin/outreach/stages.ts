@@ -1,4 +1,5 @@
 import { FOLLOW_UP_DAYS } from "@/lib/outreach/engine";
+import { previewFor } from "@/lib/outreach/preview";
 import { STAGE_LABELS, getTemplate, templatesFor, type MessageTemplate, type TemplateChannel, type TemplateStage } from "@/lib/outreach/templates";
 import type { OutreachEvent, OutreachLead } from "@/lib/outreach/types";
 
@@ -10,6 +11,8 @@ import type { OutreachEvent, OutreachLead } from "@/lib/outreach/types";
  *
  *   First message        first         to someone who has not heard from us: the checked
  *                                       problem, the sample, one question, an easy no, no link
+ *                                       but, on WhatsApp to a clinic, school or coaching
+ *                                       institute, the kind's picture link (1 Oct 2026)
  *   After they say yes   after_reply   the sample link, the honest line, two call times
  *   Follow-up            follow_up_1/2 no reply: WhatsApp once; e-mail as replies in the thread
  *   After the call       after_call    the same day: what was agreed, in writing
@@ -141,9 +144,12 @@ export function stageHint(plain: PlainStage, channel: TemplateChannel, kind: Out
   const close = days(ladder.filter((s) => plainStageOf(s) === "closing"));
   switch (plain) {
     case "first":
-      return "To someone who has not heard from you: the one problem you checked today, the sample you made, one question, an easy no. No link.";
+      // On WhatsApp a clinic, school or coaching institute also gets its picture: the one link a first message may carry.
+      return channel === "whatsapp" && previewFor(kind)
+        ? "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, the picture link, one question and an easy no. Their own sample's link goes after a yes."
+        : "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, one question and an easy no. No link.";
     case "after_yes":
-      return "They said yes: the full sample link, one true line that it is a demonstration, and two times for a 10-minute call. Within the hour.";
+      return "They said yes: the full sample link on its own line, the true lines that it is a demonstration, and two times for a 10-minute call. Within the hour.";
     case "follow_up":
       if (!fu.length) return `No follow-up on ${channel === "email" ? "e-mail" : "WhatsApp"} for this lead.`;
       return channel === "whatsapp"
