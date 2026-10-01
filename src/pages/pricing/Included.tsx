@@ -3,8 +3,10 @@ import { ALWAYS_INCLUDED, NEVER_INCLUDED, PAYMENT_STAGES, RULES } from "./copy";
 import { SectionHead, Ticks } from "./ui";
 
 /**
- * The one-time model's fine print, unchanged in substance: what every project
- * includes, what no package includes, the 50 / 30 / 20 stages and the rules.
+ * The one-time model's fine print: what every project includes, what no
+ * package includes, the two payment stages and the rules. The stages are
+ * 50 / 50 since 1 Oct 2026 (Mehdi), in India and abroad; they were 50 / 30 / 20
+ * here and 40 / 30 / 30 for projects invoiced in US dollars.
  * The 60/40 split is kept from the old page: the "always" list is longer, so an
  * even split left a hole under the shorter card.
  */
@@ -42,13 +44,13 @@ export default function Included() {
           </div>
         </div>
 
-        <h3 className="mt-12 font-display text-xl font-semibold">Fifty, thirty, twenty</h3>
+        <h3 className="mt-12 font-display text-xl font-semibold">Half to start, half at launch</h3>
         <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground text-pretty">
-          The Indian milestone split. Projects invoiced in US dollars are paid 40 / 30 / 30 instead.
+          The same in India and abroad, whether your invoice is in rupees or in US dollars.
         </p>
-        <ol className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <ol className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
           {PAYMENT_STAGES.map((s) => (
-            <li key={s.pct} className="rounded-3xl border border-border bg-card/60 p-6">
+            <li key={s.when} className="rounded-3xl border border-border bg-card/60 p-6">
               <p className="font-display text-4xl font-semibold text-foreground">{s.pct}</p>
               <p className="mt-3 font-display text-base font-semibold">{s.when}</p>
               <p className="mt-1.5 text-sm text-muted-foreground text-pretty">{s.note}</p>

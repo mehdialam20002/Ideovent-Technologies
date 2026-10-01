@@ -84,7 +84,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
         { name: "items", label: "List", type: "stringlist", full: true },
       ] },
       { name: "faqCategory", label: "FAQ category shown on the page", type: "text", placeholder: "seo", help: "The FAQs of this category (FAQs collection) appear on this page and are marked up here." },
-      { name: "hideProcess", label: "Hide the four project stages", type: "boolean", help: "Tick for a monthly service (SEO, care plans): 50/30/20 and code on final payment are project terms." },
+      { name: "hideProcess", label: "Hide the four project stages", type: "boolean", help: "Tick for a monthly service (SEO, care plans): 50% to start, 50% at launch and code on final payment are project terms." },
     ],
   },
   projects: {
@@ -617,22 +617,17 @@ export const singletonSchemas: Record<SingletonKey, SingletonSchema> = {
         { name: "whatsapp", label: "WhatsApp button", type: "group", full: true, help: "The link is https://wa.me/ then the number in digits with 91 in front, and an optional ?text= message.", fields: [
           { name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" },
         ] },
-        { name: "plansLink", label: "Small link to the monthly plans", type: "group", full: true, help: "No price in the first screen (Mehdi, 26 Sep 2026): a plain label such as \"See the monthly website plans\". If a figure is ever wanted here, write {starter} and the page fills it in from src/lib/pricing.ts as \"₹899/month + ₹2,999 one-time setup, 12-month plan\"; never type a monthly figure yourself (drip pricing). Clear the label to hide the line.", fields: [
-          { name: "label", label: "Label", type: "text", full: true }, { name: "href", label: "Link", type: "text" },
-        ] },
-        { name: "plansNote", label: "Words after that link (optional)", type: "text", full: true, help: "Leave empty unless the link above carries a price." },
+        /* "plansLink" (the small link to the monthly plans) and "plansNote"
+           (words after it) are out of this form since 1 Oct 2026. Mehdi: no
+           projects and no pricing in the hero ("mat dikhao project ya pricing
+           yahan"), and the hero no longer renders them. The prices are on
+           /pricing and in the home page price block further down. */
         { name: "trust", label: "Facts, in one line", type: "stringlist", full: true, help: "Short and checkable, from FACTS.md only. Never a count of clients, projects or people, never a rating, never 'guaranteed' or 'No. 1'. Only the domain is the client's on every plan; the code is theirs on one-time projects." },
-        { name: "frames", label: "Screenshots", type: "array", full: true, help: "Our own templates only: never a prospect's demo, never a photo of a person, never a sample rating in view. Width and height are the image file's pixel size.", itemFields: [
-          { name: "src", label: "Image", type: "image", full: true },
-          { name: "label", label: "Label under it", type: "text" },
-          { name: "alt", label: "Alt text", type: "text" },
-          { name: "width", label: "Width (px)", type: "number" },
-          { name: "height", label: "Height (px)", type: "number" },
-        ] },
-        { name: "framesCaption", label: "Caption under the screenshots", type: "textarea", full: true, help: "Must say they are samples, and that the names in them are made up." },
-        { name: "framesLink", label: "Link after the caption", type: "group", full: true, fields: [
-          { name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" },
-        ] },
+        /* "frames" (the strip of template screenshots), "framesCaption" and
+           "framesLink" (its "Sites we built for clients" link to /work) are
+           out of this form since 1 Oct 2026, for the same reason as the plans
+           link above: no projects in the hero. Client work is on /work and in
+           the work section further down the home page. */
       ] },
       { name: "priceTeaser", label: "Price block (home page, 'What it costs' section)", type: "group", full: true, help: "NOT SHOWN ON THE SITE SINCE 1 OCT 2026. The home page price block, /pricing, the service pages and the enquiry form all read their prices from src/lib/pricing.ts, so a price is changed there, in code, and every page moves together. Editing these fields changes nothing visible.", fields: [
         { name: "heading", label: "Heading", type: "text" },

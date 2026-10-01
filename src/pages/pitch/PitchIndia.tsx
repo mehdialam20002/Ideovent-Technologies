@@ -344,10 +344,11 @@ const TEAM: TeamMember[] = [
   //   role: "Co-Founder & Marketing Lead",
   //   line: "Runs how the site is found once it is live: your Google listing, your search results, your first page.",
   // },
-  // Added 28 Sep 2026 (Mehdi). A team member, not a partner. No line under
-  // his title on purpose: nothing about his work is on record yet beyond the
-  // title, and this page does not guess. The card renders without it.
-  { name: "Saif Ali", role: "Senior App Developer" },
+  // Added 28 Sep 2026 (Mehdi). A team member, not a partner. His line is the
+  // description Mehdi asked for on 1 Oct 2026, the same as on /about: what the
+  // role does, and nothing about experience, skills or a start date, which
+  // are still not on record.
+  { name: "Saif Ali", role: "Senior App Developer", line: "Builds the apps in our client projects, from the first screen to the release." },
   {
     name: "Abhilasha Kumari",
     role: "Developer",

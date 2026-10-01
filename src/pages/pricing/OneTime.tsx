@@ -17,7 +17,7 @@ export default function OneTime() {
         <SectionHead
           id="one-time-heading"
           title="Buy your website or software outright"
-          intro="One price, paid in three stages, and the custom code is yours on the final payment. Every figure is a starting price for a real scope, fixed in writing after one call."
+          intro="One price, paid in two halves: 50% to start and 50% at launch. The custom code is yours on the final payment. Every figure is a starting price for a real scope, fixed in writing after one call."
         />
 
         {SERVICE_LINES.map((line) => (

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useSingleton } from "@/lib/cms/context";
+import { liveEmail } from "@/lib/mailbox";
 import { GST_LINE } from "@/lib/pricing";
 import { unbreakable } from "@/lib/typography";
 import { DELIVERY } from "./copy";
@@ -11,8 +12,10 @@ import { SectionHead } from "./ui";
  * address and phone, and links to the terms, privacy, refund and cancellation,
  * and shipping (for a service business, delivery) policies. All of it is on
  * this page, next to the prices. The street address and PIN are not confirmed
- * (FACTS.md: "Saket, New Delhi, India"), so none is printed; e-mail is left to
- * /contact because no mailbox exists on ideovent.in yet (FACTS.md, 30 Sep 2026).
+ * (FACTS.md: "Saket, New Delhi, India"), so none is printed. The email is
+ * contact@ideovent.in, a working mailbox since 1 Oct 2026 (Zoho Mail; FACTS.md,
+ * CORRECTION 30 Sep 2026, item 6), printed from the CMS contact settings through
+ * liveEmail(), so it disappears again if src/lib/mailbox.ts is ever switched off.
  */
 const POLICIES = [
   { to: "/terms", label: "Terms and conditions" },
@@ -27,6 +30,7 @@ export default function Policies() {
   const contact = useSingleton("contact");
   const a = contact.address;
   const address = [a?.line1, a?.city, a?.country].filter(Boolean).join(", ");
+  const email = liveEmail(contact);
 
   return (
     <section id="policies" className="section-tight" aria-labelledby="policies-heading">
@@ -53,6 +57,16 @@ export default function Policies() {
                   <dd>
                     <a href={contact.phoneHref} className="text-foreground underline underline-offset-2 hover:text-primary">
                       {unbreakable(contact.phoneDisplay)}
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {email && (
+                <div>
+                  <dt className="text-muted-foreground">Email</dt>
+                  <dd>
+                    <a href={email.href} className="text-foreground underline underline-offset-2 hover:text-primary">
+                      {email.display}
                     </a>
                   </dd>
                 </div>

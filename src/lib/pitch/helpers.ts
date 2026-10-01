@@ -47,8 +47,9 @@ export const IDEOVENT_CITY = "Saket, New Delhi";
 
 /* ── Commercial terms, identical on every page because they are contractual ── */
 
-export const PAYMENT_SPLIT =
-  "50% to start, 30% at the design and build milestone, 20% before handover";
+/* 1 Oct 2026 (Mehdi): 50% advance and 50% at launch, in India and abroad.
+   Was "50% to start, 30% at the design and build milestone, 20% before handover". */
+export const PAYMENT_SPLIT = "50% to start, 50% at launch";
 export const REVISION_ROUNDS = "Two revision rounds at every design stage";
 export const SUPPORT_WINDOW = "30 days of free support after launch";
 /**

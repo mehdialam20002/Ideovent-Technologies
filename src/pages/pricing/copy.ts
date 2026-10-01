@@ -107,7 +107,8 @@ export const COMPARE: { label: string; monthly: string; oneTime: string }[] = [
   {
     label: "Then",
     monthly: `${inr(s.monthly)} a month on Starter, ${inr(g.monthly)} on Growth, for ${TERM_MONTHS} months`,
-    oneTime: "30% at the design-and-build milestone, 20% before handover",
+    // 1 Oct 2026 (Mehdi): 50/50. Was "30% at the design-and-build milestone, 20% before handover".
+    oneTime: "The other 50% at launch, once you have checked the finished site",
   },
   {
     label: "First year in total",
@@ -182,7 +183,9 @@ export const PRICING_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "How do one-time payments work?",
-    a: "In India: 50% when you sign, 30% at the design-and-build milestone and 20% before handover. Invoices are due within 7 days. Clients outside India pay 40 / 30 / 30, set in their Statement of Work.",
+    // 1 Oct 2026 (Mehdi): one split for India and abroad. Was "In India: 50% when you sign, 30% at the
+    // design-and-build milestone and 20% before handover. ... Clients outside India pay 40 / 30 / 30, ..."
+    a: "In two halves: 50% when you sign, and the other 50% at launch, once you have checked the finished site on a staging link. The same in India and for clients outside India. Invoices are due within 7 days.",
   },
 ];
 
@@ -229,10 +232,13 @@ export const NEVER_INCLUDED = [
   "Anything not on the agreed scope list",
 ];
 
+/* 1 Oct 2026 (Mehdi): 50% advance and 50% at launch, for India and abroad.
+   It replaced 50 / 30 / 20 here (on signing, at the design-and-build milestone,
+   before handover) and 40 / 30 / 30 for US-dollar projects. Both rows read
+   50%, so Included.tsx keys them on `when`. */
 export const PAYMENT_STAGES = [
   { pct: "50%", when: "On signing", note: "Books your slot in the calendar. Work starts once it clears." },
-  { pct: "30%", when: "At the design-and-build milestone", note: "Due when you accept the milestone described in the agreement." },
-  { pct: "20%", when: "Before handover", note: "Source code, live deployment and admin credentials are released once this clears." },
+  { pct: "50%", when: "At launch", note: "Due once you have checked the finished site on the staging link. It goes live on your domain, and the source code and admin credentials are handed over, once this clears." },
 ];
 
 export const RULES: { term: string; detail: string }[] = [

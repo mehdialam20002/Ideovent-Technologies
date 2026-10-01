@@ -65,7 +65,9 @@ export default function Contact() {
   return (
     <Layout>
       {/* Title and description: src/lib/seo/pages.ts (PAGE_SEO["/contact"]). The
-          old description gave contact@ideovent.in, which has no mailbox yet. */}
+          description leads with WhatsApp and the phone number. contact@ideovent.in
+          has been a working mailbox since 1 Oct 2026 (Zoho Mail, src/lib/mailbox.ts),
+          and the contact block in ContactForm prints it as a mailto: link. */}
       <Seo
         path="/contact"
         breadcrumbs={[{ name: "Contact", path: "/contact" }]}

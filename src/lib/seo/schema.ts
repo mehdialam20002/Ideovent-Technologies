@@ -51,8 +51,10 @@ export function absolutizeUrls<T>(node: T, host: string): T {
 /**
  * Organization. Legal form is a partnership firm (FACTS.md, 24 Sep 2026), so
  * the generic Organization type is used rather than anything that implies a
- * registered company, and no numberOfEmployees / foundingDate beyond 2024 is
- * claimed. There is NO `founder` property: on 28 Sep 2026 Mehdi asked for
+ * registered company, and no numberOfEmployees is claimed. foundingDate is
+ * 2019, the year Mehdi Alam started Ideovent (his decision of 1 Oct 2026; it
+ * was 2024, the year it became a partnership firm, which the About page also
+ * states). There is NO `founder` property: on 28 Sep 2026 Mehdi asked for
  * every Founder / Co-Founder title to come off every person on the site, and
  * a JSON-LD `founder` is the same claim made to Google instead of a reader.
  * People are listed as `employee` with their job titles only, the same three
@@ -116,7 +118,7 @@ export function organizationNode(
     description: ORG_DESCRIPTION,
     ...email,
     telephone: contact.phoneHref.replace(/^tel:/, ""),
-    foundingDate: "2024",
+    foundingDate: "2019",
     employee: [
       { "@type": "Person", name: "Mehdi Alam", jobTitle: "Software Developer" },
       { "@type": "Person", name: "Abhishek Tiwari", jobTitle: "Product Manager" },
