@@ -119,7 +119,7 @@ function resolveTs(base) {
 
 const out = join(tmpdir(), `ideovent-test-outreach-${process.pid}.mjs`);
 const bundled = await build({
-  stdin: { contents: `export * from "@/lib/outreach/store"; export * from "@/lib/outreach/types";`, resolveDir: ROOT, loader: "ts" },
+  stdin: { contents: `export * from "@/lib/outreach/store"; export * from "@/lib/outreach/types"; export { CrmAccessError } from "@/lib/outreach/access";`, resolveDir: ROOT, loader: "ts" },
   bundle: true,
   format: "esm",
   platform: "node",
@@ -198,11 +198,20 @@ check((await store.listLeads())[0].id === b.id, "listLeads is newest-updated fir
 
 const e1 = await store.addEvent({ leadId: a.id, type: "sent", channel: "whatsapp", templateId: "wa_first_en" });
 await store.addEvent({ leadId: b.id, type: "sent", channel: "whatsapp", at: new Date(Date.now() + 1000).toISOString() });
-await store.addEvent({ leadId: a.id, type: "note", detail: "Call after 3 pm", at: new Date(Date.now() - 86400000 * 2).toISOString() });
+/* 0011: the server dates every history line (a browser cannot backdate a touch); only a "demo opened" line keeps the open's time. */
+const noteAt = new Date(Date.now() - 86400000 * 2).toISOString();
+const note = await store.addEvent({ leadId: a.id, type: "note", detail: "Call after 3 pm", at: noteAt });
 check(/^oe_/.test(e1.id) && e1.at, "addEvent fills id and at");
+check(note.at !== noteAt && Math.abs(Date.parse(note.at) - Date.now()) < 60000, "addEvent dates the line with the store's clock, not the one it was given (as the database does)");
 check((await store.listEvents(a.id)).length === 2 && (await store.listEvents()).length === 3, "listEvents filters by lead");
+const openedAt = new Date(Date.now() - 3600e3).toISOString();
+const olderAt = new Date(Date.now() - 7200e3).toISOString();
+await store.addEvent({ leadId: b.id, type: "demo_opened", detail: "older open", at: olderAt });
+await store.addEvent({ leadId: a.id, type: "demo_opened", detail: "newer open", at: openedAt });
+const opened = (await store.listEvents()).filter((e) => e.type === "demo_opened");
+check(opened.length === 2 && opened[0].at === openedAt && opened[1].at === olderAt, "a demo-opened line keeps the open's time, and listEvents is newest first");
 const allEv = await store.listEvents();
-check(allEv[0].leadId === b.id, "listEvents is newest first");
+check(allEv[allEv.length - 1].type === "demo_opened" && allEv[allEv.length - 1].at === olderAt, "the oldest line comes last");
 check(M.countSentToday(allEv, "whatsapp") === 2 && M.countSentToday(allEv, "email") === 0, "countSentToday counts today's sends per channel");
 
 const s0 = await store.getSettings();
@@ -240,7 +249,7 @@ check((await store.findDuplicate({ phone: "9811111111", email: "new@x.in" })) ==
 
 await store.deleteLead(b.id);
 check((await store.getLead(b.id)) === null && (await store.listEvents(b.id)).length === 0, "deleteLead removes the lead and its events");
-check((await store.listEvents(a.id)).length === 2, "deleteLead leaves other leads' events");
+check((await store.listEvents(a.id)).length === 3, "deleteLead leaves other leads' events");
 
 const broken = memStorage();
 broken.setItem(M.OUTREACH_LOCAL_KEY, "{not json");
@@ -353,6 +362,8 @@ function fakeSupabase({ failUpsert = false } = {}) {
   };
   return {
     calls, stored,
+    /* 0011 not applied: PostgREST cannot find the team functions, so the store keeps today's calls. */
+    rpc: async (fn) => ({ data: null, error: { code: "PGRST202", message: `Could not find the function public.${fn} without parameters in the schema cache` }, status: 404 }),
     from: (table) => ({
       ...reader(),
       upsert: async (rows, opts) => {
@@ -487,6 +498,264 @@ console.log("      template columns: " + M.LEAD_TEMPLATE_COLUMNS.join(","));
   check(M.mapCsvRow({ org_name: "Example", phone: "98765 43213", website_state: "NONE|SOCIAL_ONLY|DIRECTORY_ONLY" }).lead?.pitch === undefined, "the template's placeholder website_state is ignored");
   const tplLead = M.mapCsvRow(M.parseCsv(tplDoc)[0]).lead;
   check(tplLead?.pitch === "fix_website", "the template's example row (NO_ENQUIRY_FORM) imports as a fix-website lead");
+}
+
+/* ── 8. The team data layer (0011): patch, append, create, delete, legacy ── */
+/*
+  A fake PostgREST client that records every call. `fns` answers the team
+  functions; `actor` is who the server stamps on a history line; `canDelete`
+  is whether row security lets the caller delete. Rows are kept WITH their
+  columns and projected to the columns a select names.
+*/
+function fakeTeamClient({ fns = {}, actor = null, canDelete = true, leads = [], events = [] } = {}) {
+  const calls = { select: [], rpc: [], insert: [], upsert: [], del: [], update: [] };
+  const tables = { outreach_leads: leads.map((r) => ({ ...r })), outreach_events: events.map((r) => ({ ...r })) };
+  const pick = (row, cols) => {
+    if (!cols || cols === "*") return { ...row };
+    const out = {};
+    for (const c of cols.split(",").map((s) => s.trim())) if (c in row) out[c] = row[c];
+    return out;
+  };
+  const respond = (q) => {
+    const rows = tables[q.table] || [];
+    const match = (r) => q.filters.every(([c, v]) => r[c] === v);
+    if (q.op === "select") {
+      calls.select.push({ table: q.table, cols: q.cols });
+      const hit = rows.filter(match).map((r) => pick(r, q.cols));
+      if (q.single) return { data: hit[0] || null, error: null };
+      return { data: q.range ? hit.slice(q.range[0], q.range[1] + 1) : hit, error: null };
+    }
+    if (q.op === "insert") {
+      const list = [].concat(q.payload);
+      calls.insert.push({ table: q.table, rows: list, cols: q.cols });
+      const saved = list.map((r) => {
+        const row = { ...r };
+        if (q.table === "outreach_events") {
+          row.actor_id = actor;
+          row.created_at = "2026-10-01T10:00:00.123456+00:00";
+          row.data = { ...r.data, id: r.id, leadId: r.lead_id, at: "2026-10-01T10:00:00.123Z" };
+        }
+        if (q.table === "outreach_leads" && !q.legacy) Object.assign(row, { assigned_to: actor, created_by: actor, assigned_at: "2026-10-01T10:00:00+00:00" });
+        rows.push(row);
+        return row;
+      });
+      return { data: q.cols ? pick(saved[0], q.cols) : null, error: null };
+    }
+    if (q.op === "delete") {
+      calls.del.push({ table: q.table, filters: q.filters.slice(), cols: q.cols });
+      if (!canDelete) return { data: [], error: null };
+      const gone = rows.filter(match);
+      tables[q.table] = rows.filter((r) => !match(r));
+      return { data: gone.map((r) => pick(r, q.cols || "id")), error: null };
+    }
+    if (q.op === "update") {
+      calls.update.push({ table: q.table, payload: q.payload, filters: q.filters.slice() });
+      return { data: null, error: null };
+    }
+    return { data: null, error: null };
+  };
+  const builder = (table, op, payload) => {
+    const q = { table, op, payload, cols: op === "select" ? payload : null, filters: [], single: false, range: null };
+    const api = {
+      select(cols) { q.cols = cols; return api; },
+      order() { return api; },
+      limit() { return api; },
+      eq(c, v) { q.filters.push([c, v]); return api; },
+      is(c, v) { q.filters.push([c, v]); return api; },
+      in() { return api; },
+      gte() { return api; },
+      lt() { return api; },
+      range(a, b) { q.range = [a, b]; return api; },
+      maybeSingle() { q.single = true; return api; },
+      single() { q.single = true; return api; },
+      then(ok, bad) { return Promise.resolve().then(() => respond(q)).then(ok, bad); },
+    };
+    return api;
+  };
+  return {
+    calls,
+    tables,
+    rpc: async (fn, args) => {
+      calls.rpc.push({ fn, args });
+      const f = fns[fn];
+      if (!f) return { data: null, error: { code: "PGRST202", message: `Could not find the function public.${fn}` }, status: 404 };
+      const out = typeof f === "function" ? f(args) : f;
+      return { status: out.error ? 400 : 200, data: null, error: null, ...out };
+    },
+    from: (table) => ({
+      select: (cols) => builder(table, "select", cols),
+      insert: (rows) => builder(table, "insert", rows),
+      upsert: async (rows, opts) => {
+        calls.upsert.push({ table, rows: [].concat(rows), opts });
+        return { error: null };
+      },
+      delete: () => builder(table, "delete"),
+      update: (payload) => builder(table, "update", payload),
+    }),
+  };
+}
+const leadRow = (id, data, cols = {}) => ({ id, data: { id, instituteName: `School ${id}`, kind: "school", status: "new", createdAt: "2026-09-20T05:00:00.000Z", updatedAt: "2026-09-20T05:00:00.000Z", ...data }, ...cols });
+const refusal = async (p) => { try { await p; return null; } catch (e) { return e; } };
+
+/* 8a. Legacy: 0011 not applied. Everything is today's call. */
+{
+  const fake = fakeTeamClient({ leads: [leadRow("L1", { phone: "+919810012345", observation: "old obs" })] });
+  globalThis.__fakeSupabase = fake;
+  const sb = new M.SupabaseOutreachStore();
+  const me = await sb.me();
+  check(me.legacy === true && me.role === "owner", "legacy: crm_me missing (PGRST202) means 0011 is not applied: Mehdi, owner, legacy");
+  await sb.listLeads();
+  check(fake.calls.select.every((s) => s.cols === "id, data"), "legacy: reads select id, data as today (no 0011 columns)", JSON.stringify(fake.calls.select));
+  const patched = await sb.patchLead("L1", { status: "contacted", observation: undefined });
+  check(!fake.calls.rpc.some((c) => c.fn === "crm_patch_lead") && fake.calls.upsert.length === 1, "legacy: patchLead falls back to today's whole-lead upsert");
+  const up = fake.calls.upsert[0]?.rows[0];
+  check(up?.data.status === "contacted" && !("observation" in JSON.parse(JSON.stringify(up.data))) && up?.data.phone === "+919810012345" && up?.updated_at,
+    "legacy: ...of the merged lead: the patch applied, the removed key gone, the rest kept", JSON.stringify(up?.data));
+  check(patched.status === "contacted", "legacy: patchLead returns the saved lead");
+  await sb.createLead({ instituteName: "Legacy New" });
+  check(fake.calls.insert.length === 1 && fake.calls.upsert.length === 1 && fake.calls.insert[0].rows[0].updated_at, "legacy: createLead inserts (never upserts), with updated_at as today");
+  await sb.addEvent({ leadId: "L1", type: "note", detail: "x" });
+  check(fake.calls.insert[1]?.table === "outreach_events" && fake.calls.insert[1].rows[0].created_at, "legacy: addEvent sends its own created_at as today");
+  await sb.deleteLead("L1");
+  check(fake.calls.del.length === 2 && fake.calls.del[0].table === "outreach_events" && fake.calls.del[1].table === "outreach_leads", "legacy: deleteLead deletes the history first, then the lead (no foreign key yet)");
+  check((await sb.listRequests()).length === 0 && (await sb.notifications()).length === 0 && (await sb.teamNames()).length === 0 && (await sb.dbUsage()) === null,
+    "legacy: the team's reads answer empty, so a screen that asks shows nothing");
+  const e = await refusal(sb.assignLeads(["x"], "m1"));
+  check(e && /0011/.test(e.message), "legacy: a team write says it needs the database update", e?.message);
+  delete globalThis.__fakeSupabase;
+}
+
+/* 8b. 0011 applied, signed in as a member: only what changed travels; the server's rows come back. */
+{
+  const ASHA = "11111111-1111-1111-1111-111111111111";
+  const MEHDI = "22222222-2222-2222-2222-222222222222";
+  const memberMe = { memberId: ASHA, role: "member", email: "asha@example.org", displayName: "Asha", viewAll: false, canAddLeads: true, mayColdCall: false,
+    waDailyLimit: 25, newLeadCap: 40, targets: { callsPerDay: 15 }, senderName: null, senderPhone: "+919811100001", senderChecked: false, signature: null,
+    hostWhatsapp: "+917761921786", mustChangePassword: true };
+  const serverLead = leadRow("L2", { notes: "Old note", phone: "+919810012345", status: "replied", assigneeId: "junk-in-data" },
+    { assigned_to: ASHA, assigned_at: "2026-09-30T05:00:00+00:00", assigned_by: MEHDI, created_by: MEHDI, qualified_by: null, closed_at: null });
+  const fake = fakeTeamClient({
+    actor: ASHA,
+    canDelete: false,
+    leads: [serverLead],
+    fns: {
+      crm_me: { data: memberMe },
+      crm_patch_lead: (args) => (args.p_id === "GONE"
+        ? { error: { code: "P0002", message: "crm: this lead is not yours, or it was deleted" } }
+        : args.p_id === "BUSY"
+          ? { error: { code: "54000", message: "crm: that is more than one person may do in a day (400 a day). It starts again at midnight India time; if this is real work, ask Mehdi." } }
+          : { data: [{ ...serverLead, data: { ...serverLead.data, ...args.p_set, updatedAt: "2026-10-01T10:00:00.000Z" } }] }),
+      crm_append_notes: (args) => ({ data: [{ ...serverLead, data: { ...serverLead.data, notes: `Old note\n${args.p_text}` } }] }),
+      crm_find_duplicate: { data: [{ lead_id: "LB", institute_name: "Bilal Classes Two", assignee_name: "Bilal", visible: false }] },
+      crm_distribute: { data: [{ member_id: ASHA, assigned: 2 }, { member_id: null, assigned: 1 }] },
+      crm_activity_stats: { data: [{ member_id: ASHA, display_name: "Asha", role: "member", active: true, first_whatsapp: 3, calls_connected: 1, handoffs_confirmed: 2, last_seen_at: "2026-10-01T09:00:00+00:00" }] },
+    },
+  });
+  globalThis.__fakeSupabase = fake;
+  const sb = new M.SupabaseOutreachStore();
+  const me = await sb.me();
+  check(me.legacy === false && me.role === "member" && me.memberId === ASHA && me.newLeadCap === 40 && me.senderChecked === false
+    && me.hostWhatsapp === "+917761921786" && me.mustChangePassword === true && me.senderName === undefined,
+    "crm_me maps to CrmMe (member, her cap, number not checked, Mehdi's number, must set her password)", JSON.stringify(me));
+  const listed = await sb.listLeads();
+  check(fake.calls.select.some((s) => s.table === "outreach_leads" && /assigned_to/.test(s.cols) && /closed_at/.test(s.cols)), "listLeads reads the 0011 columns with the data");
+  const l2 = listed.find((l) => l.id === "L2");
+  check(l2?.assigneeId === ASHA && l2?.createdById === MEHDI && l2?.assignedById === MEHDI && l2?.assignedAt === "2026-09-30T05:00:00.000Z"
+    && l2?.qualifiedById === undefined && l2?.closedAt === undefined, "the columns become the mirrors (assigneeId, createdById, assignedById, assignedAt)", JSON.stringify(l2));
+  check(l2 && !("junk" in l2) && l2.assigneeId !== "junk-in-data", "a mirror key found in the data never wins over the column");
+
+  fake.calls.rpc.length = 0;
+  const p = await sb.patchLead("L2", { phone: "098100 12345", notes: undefined, status: "replied", assigneeId: "someone-else", closedAt: "2020-01-01" });
+  const pc = fake.calls.rpc.find((c) => c.fn === "crm_patch_lead");
+  check(pc && pc.args.p_id === "L2" && JSON.stringify(pc.args.p_set) === JSON.stringify({ phone: "+919810012345", status: "replied" }) && JSON.stringify(pc.args.p_unset) === JSON.stringify(["notes"]),
+    "patchLead sends ONLY the changed keys to crm_patch_lead (normalised), a removed key in p_unset, never a mirror", JSON.stringify(pc?.args));
+  check(fake.calls.upsert.length === 0 && p.assigneeId === ASHA && p.updatedAt === "2026-10-01T10:00:00.000Z", "...no whole-lead upsert; the server's row comes back");
+  const ap = await sb.appendNotes("L2", "Called, call back Monday");
+  check(fake.calls.rpc.some((c) => c.fn === "crm_append_notes" && c.args.p_id === "L2" && c.args.p_text === "Called, call back Monday") && ap.notes === "Old note\nCalled, call back Monday",
+    "appendNotes calls crm_append_notes (appended on the server)");
+
+  const created = await sb.createLead({ instituteName: "Asha Found It", phone: "9830000007", assigneeId: "x", createdById: "y", closedAt: "z" });
+  const ins = fake.calls.insert.find((c) => c.table === "outreach_leads");
+  check(ins && fake.calls.upsert.length === 0 && !("updated_at" in ins.rows[0]) && /assigned_to/.test(ins.cols || ""), "createLead INSERTS (never upserts) and reads back the row with its columns");
+  check(ins && ["assigneeId", "createdById", "closedAt"].every((k) => !(k in ins.rows[0].data)) && ins.rows[0].data.phone === "+919830000007", "...its data carries no mirror keys, and the phone is normalised");
+  check(created.assigneeId === ASHA && created.createdById === ASHA, "...and the server decides whose it is (the member's own)");
+
+  const delErr = await refusal(sb.deleteLead("L2"));
+  check(delErr && delErr.message === "Only Mehdi deletes leads" && fake.calls.del.length === 1 && fake.calls.del[0].table === "outreach_leads",
+    "deleteLead: 0 rows deleted (row security) is refused out loud: 'Only Mehdi deletes leads'; no separate history delete", delErr?.message);
+
+  const ev = await sb.addEvent({ leadId: "L2", type: "call", channel: "call", detail: "Called", at: "2020-01-01T00:00:00.000Z", actorId: "forged" });
+  const evIns = fake.calls.insert.find((c) => c.table === "outreach_events");
+  check(evIns && !("created_at" in evIns.rows[0]) && !("actorId" in evIns.rows[0].data) && /actor_id/.test(evIns.cols || ""), "addEvent sends no created_at and no writer: the server stamps both");
+  check(ev.actorId === ASHA && ev.at === "2026-10-01T10:00:00.123Z", "...and returns the SERVER row (its time and writer)", JSON.stringify(ev));
+
+  const dup = await sb.findDuplicate({ phone: "098100 00002", email: "Office@Bilal.example" });
+  const dc = fake.calls.rpc.find((c) => c.fn === "crm_find_duplicate");
+  check(dc && dc.args.p_phone === "+919810000002" && dc.args.p_email === "office@bilal.example", "findDuplicate asks crm_find_duplicate (whole team) with the normalised phone and e-mail", JSON.stringify(dc?.args));
+  check(dup && dup.leadId === "LB" && dup.assigneeName === "Bilal" && dup.visible === false && dup.instituteName === "Bilal Classes Two" && !dup.phone && !dup.email,
+    "...and answers whose it is and that she cannot open it, with no contact detail", JSON.stringify(dup));
+
+  const busy = await refusal(sb.patchLead("BUSY", { status: "contacted" }));
+  check(busy instanceof M.CrmAccessError && busy.code === "54000" && /^That is more than one person may do in a day \(400 a day\)/.test(busy.message),
+    "a refusal comes back as CrmAccessError with the database's sentence, its 'crm: ' cut (the daily budget, 54000)", busy?.message);
+  const gone = await refusal(sb.patchLead("GONE", { status: "contacted" }));
+  check(gone?.code === "P0002" && gone.message === "This lead is not yours any more (it may have been moved).", "P0002 reads: This lead is not yours any more", gone?.message);
+
+  const dist = await sb.distributeLeads(["a", "b", "c"], [ASHA], "balanced");
+  check(dist.length === 2 && dist[0].memberId === ASHA && dist[0].assigned === 2 && dist[1].memberId === null && dist[1].assigned === 1, "distributeLeads maps the rows (null = left over)");
+  const stats = await sb.activityStats("2026-10-01T00:00:00.000Z");
+  check(stats[0]?.firstWhatsapp === 3 && stats[0]?.callsConnected === 1 && stats[0]?.handoffsConfirmed === 2 && stats[0]?.notes === 0 && stats[0]?.lastSeenAt === "2026-10-01T09:00:00.000Z",
+    "activityStats maps the SQL's columns to MemberStats", JSON.stringify(stats[0]));
+
+  fake.calls.upsert.length = 0;
+  const imp = await sb.importLeads(thirtyRows);
+  check(imp.added.length === 30 && fake.calls.upsert.length === 1 && fake.calls.upsert[0].rows.length === 30, "0011 applied: an import is still ONE upsert");
+  delete globalThis.__fakeSupabase;
+}
+
+/* 8c. Local store: the mirrors are read, never written into a lead's data. */
+{
+  const st = new M.LocalOutreachStore(memStorage());
+  const l = await st.upsertLead({ instituteName: "Mirror School", phone: "9810012399", assigneeId: "m_x", createdById: "m_y", assigneeName: "X", closedAt: "2020-01-01" });
+  const raw = JSON.parse(st["storage"].getItem(M.OUTREACH_LOCAL_KEY)).leads[0];
+  check(!["assigneeId", "createdById", "assigneeName", "closedAt"].some((k) => k in raw), "local: upsertLead stores no mirror key it was handed", JSON.stringify(raw));
+  check(l.assigneeId === null && l.createdById === "m_owner", "local: a lead Mehdi adds reads as his, Unassigned (the pool)");
+  const p = await st.patchLead(l.id, { city: "  Patna ", phone: "098100 12399", website: "" });
+  check(p.city === "Patna" && p.phone === "+919810012399" && !("website" in p) && p.kind === "other", "local: patchLead normalises only the keys it carries");
+}
+
+/* 8d. Odd stored values (an old row, any other writer) are dropped on read, never shown: one object
+       where text belongs would otherwise break every CRM page for everyone. */
+{
+  const OWNER_ID = "22222222-2222-2222-2222-222222222222";
+  const odd = leadRow("ODD", { city: { x: 1 }, tags: ["hot", 5, { y: 2 }], notes: ["a"], contactName: {}, status: "maybe", kind: 7, instituteName: { n: 1 }, updatedAt: 5 },
+    { assigned_to: OWNER_ID, created_by: OWNER_ID });
+  const fake = fakeTeamClient({
+    actor: OWNER_ID,
+    leads: [odd, leadRow("FINE", { city: "Patna", tags: ["warm"] }, { assigned_to: null, created_by: OWNER_ID })],
+    events: [
+      { id: "EV1", lead_id: "ODD", actor_id: "33333333-3333-3333-3333-333333333333", created_at: "2026-10-01T09:00:00+00:00",
+        data: { id: "EV1", leadId: "ODD", type: "status", detail: ["Status: Contacted to Won"], stage: ["after_call"], outcome: 5 } },
+      { id: "EV2", lead_id: "ODD", actor_id: OWNER_ID, created_at: "2026-10-01T09:05:00+00:00", data: { id: "EV2", leadId: "ODD", type: "note", detail: "Fine" } },
+    ],
+    fns: { crm_me: { data: { memberId: OWNER_ID, role: "owner", displayName: "Mehdi Alam", viewAll: true, canAddLeads: true, mayColdCall: true, newLeadCap: 1000, targets: {} } } },
+  });
+  globalThis.__fakeSupabase = fake;
+  const sb = new M.SupabaseOutreachStore();
+  const leads = await sb.listLeads();
+  const o = leads.find((l) => l.id === "ODD");
+  check(o && o.city === undefined && o.notes === undefined && o.contactName === undefined && JSON.stringify(o.tags) === JSON.stringify(["hot"]),
+    "read: a value that is not text is dropped (city, notes, contact), tags keep only their words", JSON.stringify(o));
+  check(o && o.instituteName === "" && o.status === "new" && o.kind === "other" && o.updatedAt === undefined && o.assigneeId === OWNER_ID,
+    "read: no name reads as '', an unknown stage as New, an unknown kind as Other; the columns still come through", JSON.stringify(o));
+  check(leads.find((l) => l.id === "FINE")?.city === "Patna", "read: an ordinary lead is untouched");
+  const evs = await sb.listEvents("ODD");
+  const e1 = evs.find((e) => e.id === "EV1");
+  check(e1 && e1.type === "status" && e1.detail === undefined && e1.stage === undefined && e1.outcome === undefined && e1.at === "2026-10-01T09:00:00.000Z",
+    "read: a history line's odd fields are dropped (no forged win reaches the numbers); a line with no time takes its row's", JSON.stringify(e1));
+  check(evs.find((e) => e.id === "EV2")?.detail === "Fine", "read: an ordinary line is untouched");
+  check(M.cleanLeadData([1, 2]).instituteName === "" && M.cleanEventData("x").type === "note", "read: data that is not an object at all reads as an empty lead or note");
+  delete globalThis.__fakeSupabase;
 }
 
 /* ── Result ──────────────────────────────────────────────────────────────── */

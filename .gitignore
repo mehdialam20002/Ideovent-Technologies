@@ -48,3 +48,8 @@ scripts/build-outreach-demos.mjs
 
 # e2e-poster-import screenshot (test artifact)
 /poster-review-390.png
+
+# Screenshots pasted into the repo root (VS Code names them image.png, image-1.png, ...).
+# They show the live CRM (real leads), so they never go into this public repo.
+/image.png
+/image-*.png

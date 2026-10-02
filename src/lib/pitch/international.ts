@@ -148,7 +148,9 @@ export const OFFSHORE_TERMS: TermRow[] = [
   },
   {
     q: "How does the money work?",
-    a: "Three payments: 50% to start, 30% once the design and the working build are on a staging link you can open yourself, and 20% before handover. Every one of them is against something you have already seen. The final payment is the one that assigns the source code and the intellectual property to you.",
+    // 1 Oct 2026 (Mehdi): 50% advance and 50% at launch. Was "Three payments: 50% to start, 30% once the
+    // design and the working build are on a staging link you can open yourself, and 20% before handover. ..."
+    a: "Two payments: 50% to start, and 50% at launch, once you have checked the finished build on a staging link you can open yourself. The final payment is the one that assigns the source code and the intellectual property to you.",
   },
   {
     q: "What if you get it wrong?",
@@ -181,7 +183,8 @@ export const OFFSHORE_TERMS: TermRow[] = [
     q: "Who is Ideovent?",
     // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
     // Original: "... based in Saket, New Delhi. Three partners, named further down this page, and the people who work with them. ..."
-    a: "A partnership firm founded in 2024 and based in Saket, New Delhi. The partners are named further down this page, with the people who work with them. We do not publish a headcount, a client count or a satisfaction score, because none of those has ever been measured here, and a number nobody measured is a number somebody invented.",
+    // 1 Oct 2026 (Mehdi): founded 2019; the partnership firm dates from 2024. Was "A partnership firm founded in 2024 and based in Saket, New Delhi. ..."
+    a: "Founded in 2019, a partnership firm since 2024, and based in Saket, New Delhi. The partners are named further down this page, with the people who work with them. We do not publish a headcount, a client count or a satisfaction score, because none of those has ever been measured here, and a number nobody measured is a number somebody invented.",
   },
 ];
 
@@ -233,11 +236,15 @@ export const EVERY_PROJECT = [
   "A recorded walkthrough at handover that you keep",
 ];
 
-/** The money, as three things you pay against rather than as one number. */
+/**
+ * The money, as two things you pay against rather than as one number.
+ * 1 Oct 2026 (Mehdi): 50% advance and 50% at launch, for India and abroad
+ * alike. It replaced 50 / 30 / 20 (to start, at the design and build
+ * milestone, before handover). Both rows carry 50%, so render keys use `when`.
+ */
 export const PAYMENT_STAGES = [
   { pct: "50%", when: "To start", what: "The statement of work is signed, the build is scheduled, work begins." },
-  { pct: "30%", when: "At the design and build milestone", what: "You have opened the staging link and seen the design and the working build." },
-  { pct: "20%", when: "Before handover", what: "Final payment is what assigns the source code and the IP to you." },
+  { pct: "50%", when: "At launch", what: "You have checked the finished build on the staging link. This final payment assigns the source code and the IP to you." },
 ];
 
 /**

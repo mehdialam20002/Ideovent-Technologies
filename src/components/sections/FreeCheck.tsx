@@ -14,9 +14,11 @@ import { useSingleton } from "@/lib/cms/context";
  * never invent a defect.
  *
  * The third column is the real contract, said plainly (the "Godfather offer"
- * without inventing a guarantee). Sources: 50/30/20, two revision rounds per
- * design stage, 30 days of free fixes and code on final payment are FACTS.md;
- * admin logins handed over rests on Pricing.tsx (the 20% row); "your domain
+ * without inventing a guarantee). Sources: 50% to start and 50% at launch
+ * (Mehdi, 1 Oct 2026; it replaced 50/30/20), two revision rounds per design
+ * stage, 30 days of free fixes and code on final payment are FACTS.md; admin
+ * logins handed over rests on src/pages/pricing/copy.ts (the launch row of
+ * PAYMENT_STAGES); "your domain
  * stays under your control" rests on FAQ f3. The turnaround is
  * `contact.responseTimePromise`, until Mehdi sets one for the check itself.
  *
@@ -54,7 +56,7 @@ const COLUMNS = [
     items: [
       "A written scope, with what is not included.",
       "A fixed price before you pay anything.",
-      "You pay 50%, then 30%, then 20%. The middle payment comes when you can see the work.",
+      "You pay 50% to start and 50% at launch, once you have seen the finished site.",
       "Two rounds of changes at each design stage.",
       "30 days of free fixes after launch.",
       "On the final payment, the code and the admin logins are handed to you. Your domain stays under your control.",

@@ -48,7 +48,8 @@ const WHY_POINTS = [
   },
   {
     title: "A fixed price and a written scope",
-    description: "You get the number and the exclusions list before anything starts. Payment runs 50% to begin, 30% at the design-and-build milestone, 20% before handover.",
+    // 1 Oct 2026 (Mehdi): 50/50. Was "Payment runs 50% to begin, 30% at the design-and-build milestone, 20% before handover."
+    description: "You get the number and the exclusions list before anything starts. Payment is 50% to begin and 50% at launch.",
   },
   {
     title: "Two revision rounds, per design stage",

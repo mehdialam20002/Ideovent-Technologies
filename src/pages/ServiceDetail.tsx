@@ -39,7 +39,7 @@ import WebsitesStrip from "./websites/WebsitesStrip";
   It was also a SECOND process section: every one of these pages already
   renders <ProcessSection />'s four stages, and those carry the real
   commitments out of the signed agreement (two revision rounds per design
-  stage, 50 / 30 / 20, thirty days of defect fixes, code on final payment).
+  stage, 50 / 50 since 1 Oct 2026, thirty days of defect fixes, code on final payment).
   Two process sections on one page, one of them true and one of them adjectives,
   is worse than one.
 */
@@ -353,7 +353,7 @@ export default function ServiceDetail() {
           numerals to 4.49:1, i.e. under the bar by six hundredths. The gold
           rule the rail is hung from already separates this band from the hero
           above it, so the tint was buying nothing and costing that. */}
-      {/* Off for a monthly service (SEO, care plans): 50/30/20 and "code on the
+      {/* Off for a monthly service (SEO, care plans): 50/50 and "code on the
           final payment" are project terms and would misdescribe it. */}
       {!service.hideProcess && <ProcessSection />}
 

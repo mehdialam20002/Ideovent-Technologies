@@ -1,10 +1,10 @@
-import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useCms, useCollection } from "@/lib/cms/context";
 import { resolveDemoSite } from "@/lib/demo/record";
 import { isTemplateSlug } from "@/lib/demo/templates/ids";
-import { recordDemoOpen } from "@/lib/demo/opens";
+import { isTeamPreview, markTeamDevice, recordDemoOpen, withoutTeamPreview } from "@/lib/demo/opens";
 import NotFound from "./NotFound";
 import DemoExpired from "./site/DemoExpired";
 import DemoSiteView from "./site/DemoSiteView";
@@ -69,9 +69,37 @@ import DemoSiteView from "./site/DemoSiteView";
  *    card, because that is a dead link rather than a reading. The write is
  *    fire and forget and cannot fail visibly: see src/lib/demo/opens.ts, which
  *    also explains why it does not go through the store.
+ *
+ *    NOT FOR THE TEAM (1 Oct 2026). A link with `?team=1` is a team preview,
+ *    opened from the CRM (`teamPreviewUrl` in opens.ts): nothing is recorded,
+ *    and this browser is marked as a team device on THIS origin, the main
+ *    site's, which the CRM's own subdomain cannot write to. A later open of
+ *    any demo from this browser, by the plain link too, then records nothing.
  */
 export default function DemoSiteRoute() {
   const { slug, "*": rest } = useParams<{ slug: string; "*": string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+  /*
+    Read once, from the address this page was opened at. The effect below
+    takes the marker out of the address bar, and the page must still know
+    afterwards that this load was the team's.
+  */
+  const [teamPreview] = useState(() => isTeamPreview(location.search));
+  useEffect(() => {
+    if (!teamPreview) return;
+    /*
+      Storage blocked: the marker stays in the address, so a reload still
+      counts nothing. Stored: the address becomes the plain link, so a link
+      copied from the address bar and sent to the prospect still counts.
+    */
+    if (!markTeamDevice()) return;
+    navigate(
+      { pathname: location.pathname, search: withoutTeamPreview(location.search), hash: location.hash },
+      { replace: true, state: location.state },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const sites = useCollection("demoSites");
   /*
     `loading` is why the effect below is gated. ContentProvider renders the
@@ -101,7 +129,7 @@ export default function DemoSiteRoute() {
 
   const trackedId = reachability === "ok" && site ? site.id : null;
   useEffect(() => {
-    if (loading || !trackedId || !site) return;
+    if (teamPreview || loading || !trackedId || !site) return;
     // The alert context rides along; opens.ts decides whether to e-mail.
     void recordDemoOpen(trackedId, {
       site: { id: site.id, slug: site.slug, status: site.status, instituteName: site.instituteName, city: site.city },

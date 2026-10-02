@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { ScrollToTop } from "@/components/util/ScrollToTop";
 import { RouteErrorBoundary, RouteRendered } from "@/components/util/RouteErrorBoundary";
@@ -57,6 +57,28 @@ const CrmDemos = lazy(() => import("@/crm/demos/CrmDemos"));
 const CrmFinder = lazy(() => import("@/crm/finder/CrmFinder"));
 const CrmImport = lazy(() => import("@/crm/import/CrmImport"));
 const CrmSettings = lazy(() => import("@/crm/settings/CrmSettings"));
+/* The team (1 Oct 2026, spec 10.1): a person's own page, and the gates by role. */
+const CrmMePage = lazy(() => import("@/crm/me/CrmMePage"));
+const RoleGate = lazy(() => import("@/crm/auth/RoleGate"));
+const ByRole = lazy(() => import("@/crm/auth/RoleGate").then((m) => ({ default: m.ByRole })));
+
+/*
+  Two team screens are built by other work packages of the same release
+  (spec 14.2): My day (src/crm/home/MyDay.tsx) and the Team page
+  (src/crm/team/CrmTeam.tsx). Until its file exists a route shows an interim
+  screen (Today's queue; a short note), and the glob picks the file up the
+  moment it lands, with no edit here. Once both exist, these become plain
+  lazy imports like the ones above.
+*/
+const LATER_SCREENS = import.meta.glob<Record<string, unknown>>(["./crm/home/MyDay.tsx", "./crm/team/CrmTeam.tsx"]);
+function laterScreen(path: string, name: string, interim: () => Promise<{ default: ComponentType }>) {
+  const load = LATER_SCREENS[path];
+  return lazy(load ? () => load().then((m) => ({ default: (m.default ?? m[name]) as ComponentType })) : interim);
+}
+const MyDay = laterScreen("./crm/home/MyDay.tsx", "MyDay", () => import("@/crm/today/CrmToday"));
+const CrmTeam = laterScreen("./crm/team/CrmTeam.tsx", "CrmTeam", () =>
+  import("@/crm/auth/RoleGate").then((m) => ({ default: m.TeamPending })),
+);
 
 function PageLoader() {
   return (
@@ -78,18 +100,24 @@ function PageLoader() {
 const ON_CRM_HOST = isCrmHost();
 
 /* The CRM's screens, relative to wherever it is mounted (/crm or /). CRM.* in
-   src/crm/nav.ts builds the links to them from the same host test. */
+   src/crm/nav.ts builds the links to them from the same host test.
+   Who opens which (spec 10.1): the first screen is My day for a member and
+   the dashboard for everyone else; RoleGate shows "This screen is Mehdi's" to
+   anyone the screen is not for (admins: Demos, Lead finder, Import, Settings;
+   members: those and Team). The database refuses the same people anyway. */
 const CRM_SCREENS = (
   <>
-    <Route index element={<CrmDashboard />} />
+    <Route index element={<ByRole member={<MyDay />} other={<CrmDashboard />} />} />
     <Route path="leads" element={<CrmLeads />} />
     <Route path="leads/:id" element={<CrmLeadPage />} />
     <Route path="pipeline" element={<CrmPipeline />} />
     <Route path="today" element={<CrmToday />} />
-    <Route path="demos" element={<CrmDemos />} />
-    <Route path="finder" element={<CrmFinder />} />
-    <Route path="import" element={<CrmImport />} />
-    <Route path="settings" element={<CrmSettings />} />
+    <Route path="team" element={<RoleGate action="team.view"><CrmTeam /></RoleGate>} />
+    <Route path="me" element={<CrmMePage />} />
+    <Route path="demos" element={<RoleGate action="demos.manage"><CrmDemos /></RoleGate>} />
+    <Route path="finder" element={<RoleGate action="finder"><CrmFinder /></RoleGate>} />
+    <Route path="import" element={<RoleGate action="lead.import"><CrmImport /></RoleGate>} />
+    <Route path="settings" element={<RoleGate action="settings"><CrmSettings /></RoleGate>} />
   </>
 );
 
@@ -250,10 +278,11 @@ const App = () => (
             what is already linked and indexed; this is an alias, not a move. */}
         <Route path="/launchpad" element={<Navigate to="/internship" replace />} />
 
-        {/* Admin */}
+        {/* Admin: Mehdi's alone. Since the CRM team (0011) other people can sign in
+            (to the CRM); ownerOnly shows them "This page is for Mehdi" here. */}
         <Route path="/admin" element={<AdminAuthProvider><Outlet /></AdminAuthProvider>}>
           <Route path="login" element={<AdminLogin />} />
-          <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+          <Route element={<ProtectedRoute ownerOnly><AdminLayout /></ProtectedRoute>}>
             <Route index element={<AdminDashboard />} />
             <Route path="c/:collection" element={<AdminCollection />} />
             <Route path="s/:singleton" element={<AdminSingleton />} />
@@ -291,7 +320,7 @@ const App = () => (
             inside the admin shell, because a template is judged as the design
             a director will see. Same login: ProtectedRoute wraps it directly.
           */}
-          <Route path="preview/template/:id/*" element={<ProtectedRoute><AdminTemplatePreview /></ProtectedRoute>} />
+          <Route path="preview/template/:id/*" element={<ProtectedRoute ownerOnly><AdminTemplatePreview /></ProtectedRoute>} />
         </Route>
 
         {/*

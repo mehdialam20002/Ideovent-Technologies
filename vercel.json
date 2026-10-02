@@ -205,7 +205,7 @@
       "destination": "/api/share?kind=pitch&slug=:slug"
     },
     {
-      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|w|websites|work)/?$)[^/.]+)",
+      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|me|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|team|templates|terms|today|verify|w|websites|work)/?$)[^/.]+)",
       "has": [
         {
           "type": "header",
@@ -319,7 +319,7 @@
       ]
     },
     {
-      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|templates|terms|today|verify|w|websites|work)/?$)[^/.]+)",
+      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|me|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|team|templates|terms|today|verify|w|websites|work)/?$)[^/.]+)",
       "headers": [
         {
           "key": "X-Robots-Tag",

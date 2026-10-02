@@ -411,7 +411,8 @@ export const seed: ContentData = {
                 {
                   label: "About Ideovent",
                   href: "/about",
-                  description: "A partnership firm in Saket, New Delhi, founded in 2024. Who the partners are and how the studio runs.",
+                  // 1 Oct 2026 (Mehdi): founded 2019. Was "A partnership firm in Saket, New Delhi, founded in 2024. ..."
+                  description: "Founded in 2019, now a partnership firm in Saket, New Delhi. Who the partners are and how the studio runs.",
                 },
                 {
                   label: "Writing",
@@ -558,9 +559,13 @@ export const seed: ContentData = {
     // THE HOME HERO SINCE 1 OCT 2026 (Hero.tsx reads this block and nothing
     // else). Mehdi: the old hero "looks AI-generated". Out: the pill, the
     // gradient italic line, the glow and the grid. In: plain words, a real
-    // phone number, the partners' names and screenshots of our own templates.
+    // phone number and the partners' names (the screenshots of our own
+    // templates that followed them were taken out the same day, see `frames`).
     // Brief: seo-pricing/hero-brief.md. Every fact is from _assets/FACTS.md:
-    // Saket, New Delhi; founded 2024; Udyam UDYAM-BR-13-0030570; two partners.
+    // Saket, New Delhi; Udyam-registered (the number goes on invoices and
+    // agreements only, never on the site: Mehdi, 1 Oct 2026); two partners. The year is
+    // Mehdi's of 1 Oct 2026: Ideovent started in 2019 ("mai apne college se
+    // phle se ispe kaam kr rha tha"), and became a partnership firm in 2024.
     // "The code stays yours" is NOT here: a site on a monthly plan is licensed
     // while the plan runs, so only the domain is yours on every plan.
     hero: {
@@ -572,42 +577,38 @@ export const seed: ContentData = {
         href: `https://wa.me/917761921786?text=${encodeURIComponent("Hi Ideovent, I saw your website and have a question.")}`,
         variant: "outline",
       },
-      // NO PRICE IN THE FIRST SCREEN (repair, 1 Oct 2026). Mehdi on 26 Sep:
-      // "ye pricing starting me hi kyu dikha rahe?", and the hero brief keeps
-      // price out of the hero for that reason. So this is a plain link with no
-      // figure; the figures, each with its setup fee and 12-month term beside
-      // it, are on /pricing#monthly and in the price block further down this
-      // page (PriceSummary.tsx). Hero.tsx still fills a "{starter}" token from
-      // src/lib/pricing.ts if one is ever typed in /admin, so a monthly figure
-      // can never print here without the setup fee and the term (drip pricing,
-      // CCPA dark-pattern guidelines, 2023).
-      plansLink: { label: "See the monthly website plans", href: "/pricing#monthly" },
+      // NO PRICING IN THE HERO AT ALL (1 Oct 2026). Mehdi on 26 Sep: "ye
+      // pricing starting me hi kyu dikha rahe?", and on 1 Oct: "mat dikhao
+      // project ya pricing yahan". The plain plans link that sat here, with no
+      // figure, is gone too. Was:
+      //   plansLink: { label: "See the monthly website plans", href: "/pricing#monthly" },
+      // The figures, each with its setup fee and 12-month term beside it, are
+      // on /pricing#monthly and in the price block further down this page
+      // (PriceSummary.tsx). Removed from the /admin form the same day.
       trust: [
         "Saket, New Delhi",
-        "Since 2024",
+        // 1 Oct 2026 (Mehdi): founded 2019. Was "Since 2024".
+        "Since 2019",
         "Udyam-registered MSME",
         "Your domain stays in your name",
         "You talk directly to the partners, Mehdi Alam and Abhishek Tiwari",
       ],
-      // Our own templates at 390px, 2x, top 540 CSS px (above every sample
-      // rating and every photo of a person), captured 1 Oct 2026 from the
-      // admin preview with the demo ribbon hidden. Never a prospect's demo.
-      // CHOSEN FOR THE FEWEST TEMPLATE HABITS (repair, 1 Oct 2026). The first
-      // set opened with the kids' dental sample, whose pill chip and
-      // underlined "first tooth" were the generated-page look Mehdi asked us
-      // to remove, and it also carried a boarding school with tracked capitals
-      // and a coaching page with pill tags. The first frame, the one a phone
-      // sees first, now has no chip, no italic and no highlight; two clinics
-      // and two coaching pages, so education is not the whole picture
-      // (Ideovent builds for every kind of business).
-      frames: [
-        { src: `${B}home/sample-c2-hindi-tuition.webp`, width: 780, height: 1080, label: "Tuition centre, in Hindi", alt: "Sample website in Hindi for a tuition centre, the top of its home page on a phone" },
-        { src: `${B}home/sample-d5-ortho-clinic.webp`, width: 780, height: 1080, label: "Orthodontic clinic", alt: "Sample website for an orthodontic clinic, the top of its home page on a phone" },
-        { src: `${B}home/sample-c3-science-coaching.webp`, width: 780, height: 1080, label: "Science coaching", alt: "Sample website for a science coaching institute, the top of its home page on a phone" },
-        { src: `${B}home/sample-d1-family-dental.webp`, width: 780, height: 1080, label: "Family dental clinic", alt: "Sample website for a family dental clinic, the top of its home page on a phone" },
-      ],
-      framesCaption: "Sample sites from our own templates, as they open on a phone. The names and numbers in them are made up.",
-      framesLink: { label: "Sites we built for clients", href: "/work" },
+      // NO SCREENSHOTS IN THE HERO EITHER (1 Oct 2026, the same message: "mat
+      // dikhao project ya pricing yahan"). The strip of four template phone
+      // screenshots, its caption and its "Sites we built for clients" link to
+      // /work are out of the seed and of the /admin form. Hero.tsx draws the
+      // strip only when `frames` holds an image, so with no `frames` here the
+      // hero ends on the facts line. Client work stays in the work section
+      // further down this page and on /work. The image files are still under
+      // public/home/ (the hero job's folder). Was, restore by uncommenting:
+      //   frames: [
+      //     { src: `${B}home/sample-c2-hindi-tuition.webp`, width: 780, height: 1080, label: "Tuition centre, in Hindi", alt: "Sample website in Hindi for a tuition centre, the top of its home page on a phone" },
+      //     { src: `${B}home/sample-d5-ortho-clinic.webp`, width: 780, height: 1080, label: "Orthodontic clinic", alt: "Sample website for an orthodontic clinic, the top of its home page on a phone" },
+      //     { src: `${B}home/sample-c3-science-coaching.webp`, width: 780, height: 1080, label: "Science coaching", alt: "Sample website for a science coaching institute, the top of its home page on a phone" },
+      //     { src: `${B}home/sample-d1-family-dental.webp`, width: 780, height: 1080, label: "Family dental clinic", alt: "Sample website for a family dental clinic, the top of its home page on a phone" },
+      //   ],
+      //   framesCaption: "Sample sites from our own templates, as they open on a phone. The names and numbers in them are made up.",
+      //   framesLink: { label: "Sites we built for clients", href: "/work" },
     },
     // ── Everything below, down to `stat`, is the hero before 1 Oct 2026 and
     // is no longer rendered, except `priceTeaser` (PriceSummary.tsx). ──────
@@ -616,7 +617,7 @@ export const seed: ContentData = {
     // costs ~28px of a fold that has three answers to fit into. What the studio
     // does is the h1's job anyway; this line carries where it is and since when,
     // both of which are facts in _assets/FACTS.md.
-    badge: "Saket, New Delhi · est. 2024",
+    badge: "Saket, New Delhi · est. 2019",
     // _assets/HOMEPAGE-COPY-DECK-V2.md A1 (26 Sep 2026). The h1 is about the
     // buyer's customers, not about what we build, and it speaks to any growing
     // business. headingLines accents a whole line: the accent is the last line.
@@ -671,11 +672,12 @@ export const seed: ContentData = {
     // hides this whole block (stars included) while `avatars` is empty.
     socialProof: {
       line1: "An independent studio in New Delhi,",
-      line2: "building since 2024",
+      line2: "building since 2019",
       avatars: [],
     },
     mainImage: { src: `${B}ideovent.png`, alt: "Ideovent Technologies" },
-    stat: { value: "2024", label: "Building since" },
+    // Not rendered (see above). The year follows Mehdi's of 1 Oct 2026: 2019.
+    stat: { value: "2019", label: "Building since" },
   },
 
   /* ──────────────────────────────────────────────────────────────────────────
@@ -936,7 +938,8 @@ export const seed: ContentData = {
     footnote:
       // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
       // Original: "... a partnership firm founded in 2024, whose partners are Mehdi Alam, Abhishek Tiwari and Animesh Raturi, based in ..."
-      "EduFlow is a product of Ideovent Technologies, a partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024 and based in Saket, New Delhi. EduFlow is currently in development and is not a released product.",
+      // 1 Oct 2026 (Mehdi): founded 2019. Was "... a partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024 and based in ..."
+      "EduFlow is a product of Ideovent Technologies, founded in 2019 and since 2024 a partnership firm of Mehdi Alam and Abhishek Tiwari, based in Saket, New Delhi. EduFlow is currently in development and is not a released product.",
   },
 
   // The four public legal documents, generated from the canonical Markdown in
@@ -1072,7 +1075,7 @@ export const seed: ContentData = {
           "Dashboards and internal tools for your staff",
           "SaaS products you sell to other businesses",
         ] },
-        { heading: "How custom software is priced", body: "In three stages: discovery at a fixed fee agreed before it starts, the build at a fixed price from the discovery document, then running it on a care plan or a development retainer. A portal or web app is priced as one project. Payment runs 50% to start, 30% at the design-and-build milestone and 20% before handover, and the code is yours on the final payment." },
+        { heading: "How custom software is priced", body: "In three stages: discovery at a fixed fee agreed before it starts, the build at a fixed price from the discovery document, then running it on a care plan or a development retainer. A portal or web app is priced as one project. Payment is 50% to start and 50% at launch, and the code is yours on the final payment." },
         { heading: "Work you can check", body: "HRMS Lite and Lead CRM are client software we built. Both sit behind a login, so each case study says what the product does and what we cannot claim. EduFlow, our own software for schools and coaching institutes, is in development.", links: [
           { label: "HRMS Lite case study", href: "/work/hrms-lite" },
           { label: "Lead CRM case study", href: "/work/lead-crm" },
@@ -1382,13 +1385,20 @@ export const seed: ContentData = {
    * person's photograph was fetchable at a public URL and 258 KB of it shipped
    * into every build for nothing. It now lives in _unpublished/ instead.
    * ────────────────────────────────────────────────────────────────────────── */
+  /* 1 OCT 2026, Mehdi: "saif ka v description daal do and bakio ka v best bana
+   * do". Each bio is built only from _assets/FACTS.md and his decisions of that
+   * day: the 2019 start (before college) and the employers in his work history.
+   * WTFGO is named as work he did AT Witness The Fitness, never as our client
+   * work. Earlier bios are kept beside each entry. */
   team: [
     { id: "mehdi", name: "Mehdi Alam", role: "Software Developer", visible: true, order: 0,
-      bio: "A partner in the firm, and the developer who writes the code: the person you will talk to about scope, timelines and price.",
+      // Was: "A partner in the firm, and the developer who writes the code: the person you will talk to about scope, timelines and price."
+      bio: "A partner in the firm and the developer who writes your code. He started Ideovent in 2019, before college, and has built production software at Finolity Consultancy, the International Water Management Institute and Witness The Fitness, where he worked on the WTFGO gym platform. You talk to him about scope, timelines and price.",
       photo: { src: "", alt: "" },
       socials: [{ platform: "LinkedIn", url: "https://www.linkedin.com/in/mehdi-alam-9411751b7", icon: "Linkedin" }] },
     { id: "abhishek", name: "Abhishek Tiwari", role: "Product Manager", visible: true, order: 1,
-      bio: "A partner in the firm. Holds the scope, the acceptance criteria and the written change note, so what was agreed is what gets built.",
+      // Was: "A partner in the firm. Holds the scope, the acceptance criteria and the written change note, so what was agreed is what gets built."
+      bio: "A partner in the firm. He turns what you ask for into a written scope with clear acceptance criteria, and every change is agreed in writing before it is built, so what you approved is what you get.",
       photo: { src: "", alt: "" },
       socials: [] },
     // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
@@ -1396,27 +1406,46 @@ export const seed: ContentData = {
     //   bio: "Co-founder and a partner in the firm. Runs how Ideovent reaches the businesses it builds for.",
     //   photo: { src: "", alt: "" },
     //   socials: [] },
-    // Added 28 Sep 2026 (Mehdi). A team member, not a partner. The bio is
-    // his title and nothing more: nothing else about him is on record yet,
-    // and a bio is not the place to guess.
+    // Added 28 Sep 2026 (Mehdi). A team member, not a partner. His bio, asked
+    // for by Mehdi on 1 Oct 2026, says what the role does and nothing more:
+    // his experience, skills and start date are still not on record, and a
+    // bio is not the place to guess. Was: "" (no bio).
     { id: "saif", name: "Saif Ali", role: "Senior App Developer", visible: true, order: 3,
-      bio: "",
+      bio: "Builds the apps in our client projects, from the first screen to the release.",
       photo: { src: "", alt: "" },
       socials: [] },
     { id: "abhilasha", name: "Abhilasha Kumari", role: "Developer", visible: true, order: 4,
-      bio: "Developer at Ideovent, working across React front-ends and modern web tooling.",
+      // Was: "Developer at Ideovent, working across React front-ends and modern web tooling."
+      bio: "Builds the React front-ends of our websites and web apps: the part your customers see and use.",
       photo: { src: "", alt: "" },
       socials: [] },
   ],
 
   // "2025. First enterprise client" was removed: there is no enterprise client
   // on record, and nothing supports the claim.
+  //
+  // THE JOURNEY, REBUILT 1 OCT 2026 from dated facts only (Mehdi: "company
+  // founded in 2019 kar do harr jagah ... journey sbkuch"; he has worked on
+  // Ideovent since before college). Sources: Mehdi, 1 Oct 2026 (2019 start);
+  // _assets/FACTS.md (B.Tech 2020 to 2024; partnership firm, Saket, 2024;
+  // go-live and monthly plans 1 Oct 2026); certificates.seed.json (Ankit Kumar
+  // Nov 2024 to Apr 2025, issued 30 Apr 2025; Shreya Jun to Aug 2025, issued
+  // 31 Aug 2025); the release history (school and coaching templates 26 Sep
+  // 2026, dental templates and the CRM 28 Sep 2026). No client work is dated
+  // before 2024, because none is on record. Earlier entries, for the record:
+  //   m1 2024 "Ideovent is founded": "Ideovent Technologies is established as a partnership firm by Mehdi Alam and Abhishek Tiwari."
+  //   m3 2025 "LaunchPad internship": "Launched our mentored internship programme, with QR-verifiable certificates that anyone can check at /verify."
+  //   m4 2026 "Product engineering": "Expanded from websites into full product builds: a real-time desktop AI copilot, commerce storefronts and internal business tools." (dropped: no date on record)
+  // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
+  // Original m1 description: "Ideovent Technologies is established as a partnership firm by Mehdi Alam, with co-founders Abhishek Tiwari and Animesh Raturi."
   milestones: [
-    // HIDDEN 27 Sep 2026 (Mehdi): Animesh Raturi removed for now; restore by uncommenting.
-    // Original description: "Ideovent Technologies is established as a partnership firm by Mehdi Alam, with co-founders Abhishek Tiwari and Animesh Raturi."
-    { id: "m1", year: "2024", title: "Ideovent is founded", description: "Ideovent Technologies is established as a partnership firm by Mehdi Alam and Abhishek Tiwari.", order: 0 },
-    { id: "m3", year: "2025", title: "LaunchPad internship", description: "Launched our mentored internship programme, with QR-verifiable certificates that anyone can check at /verify.", order: 1 },
-    { id: "m4", year: "2026", title: "Product engineering", description: "Expanded from websites into full product builds: a real-time desktop AI copilot, commerce storefronts and internal business tools.", order: 2 },
+    { id: "m1", year: "2019", title: "Ideovent begins", description: "Mehdi Alam starts Ideovent, before college.", order: 0 },
+    { id: "m2", year: "2020 to 2024", title: "Alongside a degree", description: "Mehdi Alam runs it alongside his B.Tech in Data Science.", order: 1 },
+    { id: "m3", year: "2024", title: "A partnership firm", description: "Ideovent Technologies becomes a partnership firm of Mehdi Alam and Abhishek Tiwari, in Saket, New Delhi.", order: 2 },
+    { id: "m4", year: "Nov 2024", title: "The first intern", description: "Ankit Kumar joins as a web developer intern. In April 2025 he earns the first LaunchPad certificate, which anyone can check at /verify.", order: 3 },
+    { id: "m5", year: "Jun to Aug 2025", title: "The second intern", description: "Shreya completes the internship and earns the second LaunchPad certificate.", order: 4 },
+    { id: "m6", year: "Sep 2026", title: "Our own templates and CRM", description: "Website templates for schools, coaching institutes and dental clinics, and our own CRM for managing leads.", order: 5 },
+    { id: "m7", year: "1 Oct 2026", title: "www.ideovent.in goes live", description: "The site you are reading, with monthly website plans next to one-time projects.", order: 6 },
   ],
 
   /* ──────────────────────────────────────────────────────────────────────────
@@ -1433,24 +1462,27 @@ export const seed: ContentData = {
    *
    * The figures below are the service-commitment table in _assets/FACTS.md and
    * the payment structure on /pricing: two revision rounds per design stage,
-   * 50 / 30 / 20 in India, 30 days of post-launch support, source code
+   * 50% to start and 50% at launch (Mehdi, 1 Oct 2026, India and abroad; it
+   * replaced 50 / 30 / 20), 30 days of post-launch support, source code
    * transferring on final payment. If one of those moves it moves in FACTS.md
    * and in the signed agreement first, and here in the same pass.
    * ────────────────────────────────────────────────────────────────────────── */
   process: [
     // HOMEPAGE-COPY-DECK.md section 8. p3 used to add "40 / 30 / 30 outside
-    // India". That split is not in FACTS.md, so it is off until Mehdi confirms it
-    // (it is still on /pricing; decision 8 in the deck).
+    // India". Since 1 Oct 2026 one split covers India and abroad, so p3 needs
+    // no second line.
     { id: "p1", number: "01", title: "Scope", description: "One call about what is not working, or what you want to build. Then you get a written scope, a list of what is not included, and a fixed price. You read both before you pay anything.", order: 0 },
     { id: "p2", number: "02", title: "Design", description: "Two rounds of changes at the design stage, written into the agreement. If your site has admin screens, they are a second stage, with their own two rounds.", order: 1 },
-    { id: "p3", number: "03", title: "Build", description: "You pay 50%, then 30%, then 20%. The middle payment falls at the design-and-build stage, so you pay it against work you can see.", order: 2 },
+    // Was: "You pay 50%, then 30%, then 20%. The middle payment falls at the design-and-build stage, so you pay it against work you can see."
+    { id: "p3", number: "03", title: "Build", description: "You pay 50% to start and the other 50% at launch. Before that second payment, you check the finished site on a staging link.", order: 2 },
     { id: "p4", number: "04", title: "Handover", description: "Thirty days of free fixes after launch, with or without a care plan. On the final payment, the code and admin logins are handed to you. Your domain stays under your control.", order: 3 },
   ],
 
   /* ──────────────────────────────────────────────────────────────────────────
    * FAQs
    * Answers here must match the canonical figures in _assets/FACTS.md and the
-   * signed agreements, 50/30/20, two revision rounds per design stage, 30 days
+   * signed agreements, 50% to start and 50% at launch (since 1 Oct 2026; it
+   * was 50/30/20), two revision rounds per design stage, 30 days
    * of free defect support, 48h / 24h / same-working-day response targets.
    * If one of those moves, it moves in the contract first and here the same day.
    *
@@ -1477,7 +1509,8 @@ export const seed: ContentData = {
     { id: "f3", question: "Who will update it after launch?", answer: `On a monthly plan, we do: ${ServicePrices.PLANS.starter.changesPerMonth} content changes a month on Starter, ${ServicePrices.PLANS.growth.changesPerMonth} on Growth. On a site you bought outright, your team can: on a website with editable pages, you change text, photos, prices and notices yourself. If something breaks in the first 30 days, we fix it free, with or without a care plan. After that, a care plan is optional: ${ServicePrices.inr(ServicePrices.CARE[0].monthly)}, ${ServicePrices.inr(ServicePrices.CARE[1].monthly)} or ${ServicePrices.inr(ServicePrices.CARE[2].monthly)} a month, with a first reply within 48 working hours, 24 working hours or the same working day. Cancel with 30 days’ notice. You keep the code, the accounts, the backups and your domain.`, category: "services", order: 4 },
     { id: "f12", question: "What if you disappear after launch?", answer: "You are not stuck. On the final payment, the code and admin logins are handed to you, and your domain stays under your control. Any developer can pick it up from there. We fix anything that breaks in the first 30 days for free. After that, the optional care plan gives you written reply times.", category: "services", order: 5 },
     { id: "f7", question: "Do I own the website?", answer: "If you buy it outright, yes. The code we write for you becomes yours on the final payment, and the admin logins are handed to you. We build on some parts we reuse across projects. Those stay ours, and you get a free licence to use them in your site, for as long as you want. On a monthly plan the website is licensed to you while the plan runs, and you can buy it out at any time. Either way your domain is registered in your name and stays yours.", category: "services", order: 6 },
-    { id: "f6", question: "How does payment work?", answer: `For a website bought outright: 50% when you sign, 30% at the design-and-build stage, when you can see the work, and 20% before handover. Invoices are due within 7 days. On a monthly plan: the ${ServicePrices.inr(ServicePrices.SETUP_FEE)} setup once, then the monthly fee for ${ServicePrices.TERM_MONTHS} months, by UPI AutoPay or card through Razorpay once online payment is live, or by UPI or bank transfer on WhatsApp. We are not registered under GST, so the price we quote is the full amount you pay.`, category: "services", order: 7 },
+    // f6, 1 Oct 2026 (Mehdi): 50/50. Was "50% when you sign, 30% at the design-and-build stage, when you can see the work, and 20% before handover."
+    { id: "f6", question: "How does payment work?", answer: `For a website bought outright: 50% when you sign, and the other 50% at launch, once you have checked the finished site. Invoices are due within 7 days. On a monthly plan: the ${ServicePrices.inr(ServicePrices.SETUP_FEE)} setup once, then the monthly fee for ${ServicePrices.TERM_MONTHS} months, by UPI AutoPay or card through Razorpay once online payment is live, or by UPI or bank transfer on WhatsApp. We are not registered under GST, so the price we quote is the full amount you pay.`, category: "services", order: 7 },
     { id: "f13", question: "Do you build apps and software too?", answer: "Yes. Web apps, portals, SaaS products, and Android and iPhone apps. We built HRMS Lite and Lead CRM for clients, and our own app Aura Orbit is live with Razorpay payments. Tell us the process or the idea. The first call is free.", category: "services", order: 8 },
     { id: "f14", question: "Do you work with schools and coaching institutes?", answer: "Yes, it is one of the fields we know well. We built the website for HighQ Classes, a coaching institute. We can show you a sample site made for your school or institute. We are also building EduFlow, software for schools and coaching, which is still in development.", category: "services", order: 9 },
 

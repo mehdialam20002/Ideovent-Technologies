@@ -170,10 +170,11 @@ const TEAM = [
   //   role: "Co-Founder & Marketing Lead",
   //   line: "Runs how a finished site gets found: your search presence, your listings, and the pages that answer what people actually type.",
   // },
-  // Added 28 Sep 2026 (Mehdi). A team member, not a partner. No line under
-  // his title on purpose: nothing about his work is on record yet beyond the
-  // title, and this page does not guess. The card renders without it.
-  { name: "Saif Ali", role: "Senior App Developer" },
+  // Added 28 Sep 2026 (Mehdi). A team member, not a partner. His line is the
+  // description Mehdi asked for on 1 Oct 2026, the same as on /about: what the
+  // role does, and nothing about experience, skills or a start date, which
+  // are still not on record.
+  { name: "Saif Ali", role: "Senior App Developer", line: "Builds the apps in our client projects, from the first screen to the release." },
   {
     name: "Abhilasha Kumari",
     role: "Developer",
@@ -1239,17 +1240,16 @@ export default function PitchInternational({ page }: { page: PitchPage }) {
                   </div>
                 </div>
 
-                {/* How the money is actually staged. Three payments against
-                    three things you have already seen. */}
-                <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
+                {/* How the money is actually staged. Two payments since 1 Oct
+                    2026 (Mehdi): 50% to start, 50% at launch, against the
+                    finished build you have already seen. Keyed on `when`: both
+                    rows read 50%. */}
+                <div className="grid gap-px border-t border-border bg-border sm:grid-cols-2">
                   {PAYMENT_STAGES.map((s) => (
-                    <div key={s.pct} className="bg-card p-5 sm:p-6">
-                      {/* min-h holds two lines of label. "At the design and
-                          build milestone" wraps in a third of the card and the
-                          other two do not, so without it the 30% sat a line
-                          lower than the 50% and the 20% beside it, and three
-                          numbers that are meant to be read across came out on
-                          two different baselines. */}
+                    <div key={s.when} className="bg-card p-5 sm:p-6">
+                      {/* min-h holds two lines of label, so the two numbers
+                          that are meant to be read across stay on one baseline
+                          if a label is ever long enough to wrap. */}
                       <span className="block min-h-[2rem] text-[0.66rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                         {s.when}
                       </span>
@@ -1374,8 +1374,8 @@ export default function PitchInternational({ page }: { page: PitchPage }) {
                 The contract position, in one line
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Master services agreement plus a statement of work per project, milestone payments at
-                50/30/20, intellectual property and source code assigned to you on final payment, NDA on
+                Master services agreement plus a statement of work per project, payments of 50% to start
+                and 50% at launch, intellectual property and source code assigned to you on final payment, NDA on
                 request, and a governing-law clause that defaults to Indian law and the courts in New
                 Delhi while carrying your own jurisdiction as the alternative. Which of the two applies
                 is chosen and written down before either of us signs.
@@ -1420,7 +1420,9 @@ export default function PitchInternational({ page }: { page: PitchPage }) {
                   The people, <Loud>not an account manager</Loud>
                 </>
               }
-              sub="Ideovent Technologies is a partnership firm in Saket, New Delhi, founded in 2024. You deal with the partners directly, and the person who writes the code is the person who answers your email."
+              /* 1 Oct 2026 (Mehdi): founded 2019; a partnership firm since 2024.
+                 Was "... a partnership firm in Saket, New Delhi, founded in 2024. ..." */
+              sub="Ideovent Technologies, founded in 2019, is a partnership firm in Saket, New Delhi. You deal with the partners directly, and the person who writes the code is the person who answers your email."
             />
             <ul className="mt-8 grid gap-x-10 border-b border-border sm:mt-10 sm:grid-cols-2">
               {TEAM.map((m) => (

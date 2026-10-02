@@ -68,6 +68,15 @@ const GATES = [
     why: "tsc -b --force, the only form that checks anything here" },
   { name: "from template", cmd: "node", args: ["scripts/test-from-template.mjs"],
     why: "a duplicated template must carry no fact about the fictional institute onto a real one" },
+  // The CRM team (0011). "crm rls" runs the real SQL in PGlite: it needs the dev dependency
+  // @electric-sql/pglite, or PGLITE_FROM=<a folder that has it> in the environment.
+  { name: "crm rls", cmd: "node", args: ["scripts/test-crm-rls.mjs"],
+    why: "the database rules: an intern reads and changes only the leads Mehdi gave them, and never money" },
+  { name: "crm access", cmd: "node", args: ["scripts/test-crm-access.mjs"],
+    why: "the same rules in the local store and the screens, and their constants still equal the SQL" },
+  // Next, once scripts/test-crm-wording.mjs exists (lead page and compose, part 2):
+  // { name: "crm wording", cmd: "node", args: ["scripts/test-crm-wording.mjs"],
+  //   why: "a message an intern sends never claims Mehdi's own work, offers call times or quotes a price" },
   { name: "build", cmd: "npm", args: ["run", "build"],
     why: "the deploy runs this, so it fails here or it fails on Vercel" },
   { name: "gutters", cmd: "node", args: ["scripts/measure-gutters.mjs", `http://localhost:${PORT}`],

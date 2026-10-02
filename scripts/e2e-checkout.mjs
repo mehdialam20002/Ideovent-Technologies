@@ -69,7 +69,11 @@ async function startVite(withKey) {
     logLevel: "error",
     clearScreen: false,
     // watch: null turns the file watcher off altogether (Vite 5.1+), not just its reloads.
-    server: { host: "127.0.0.1", port: PORT, strictPort: true, hmr: false, watch: null },
+    // It is set from a config hook because an inline server.watch: null is dropped: Vite
+    // merges this inline config over vite.config.ts, and mergeConfig skips null values, so
+    // the watcher stayed on (found 2 Oct 2026, Vite 5.4.10).
+    plugins: [{ name: "e2e-watch-off", config(c) { c.server = { ...c.server, watch: null }; } }],
+    server: { host: "127.0.0.1", port: PORT, strictPort: true, hmr: false },
   });
   await server.listen();
   return server;

@@ -191,21 +191,30 @@ export interface HomeHeroContent {
   /** WhatsApp button: its label and the full wa.me link. */
   whatsapp: Cta;
   /**
-   * Small text link to the monthly plans on /pricing, with NO figure (Mehdi,
-   * 26 Sep 2026: no price in the first screen). If a "{starter}" token is ever
-   * typed in, Hero.tsx prints the monthly figure with its setup fee and
-   * 12-month term in the same line (no drip pricing). Empty label hides it.
+   * NOT SHOWN SINCE 1 OCT 2026 (Mehdi: no projects and no pricing in the
+   * hero). Out of the seed and of the /admin form; kept optional here only so
+   * a stored row that still has it loads, and so the hero component compiles
+   * while it changes. Was: a small text link to the monthly plans on /pricing,
+   * with no figure; a "{starter}" token printed the monthly figure with its
+   * setup fee and 12-month term (no drip pricing).
    */
   plansLink?: Cta;
-  /** Optional words after that link. Empty unless the link carries a price. */
+  /** Words after that link. Not shown since 1 Oct 2026, like `plansLink`. */
   plansNote?: string;
   /** One line of short, true facts (FACTS.md only). Empty list hides it. */
   trust: string[];
-  /** Screenshots of our own templates. Empty list hides the strip. */
-  frames: HomeHeroFrame[];
-  /** Caption under the frames. Must say they are samples. */
-  framesCaption: string;
-  /** Link after the caption, to real client work. Optional. */
+  /**
+   * NOT SHOWN SINCE 1 OCT 2026 (Mehdi: no projects and no pricing in the
+   * hero). Out of the seed and of the /admin form, like `plansLink`; kept
+   * optional here only so a stored row that still has it loads, and so the
+   * hero component compiles while it changes. Was: screenshots of our own
+   * templates in a strip under the facts line. A missing or empty list hides
+   * the strip.
+   */
+  frames?: HomeHeroFrame[];
+  /** Caption under the frames (said they were samples). Not shown since 1 Oct 2026, like `frames`. */
+  framesCaption?: string;
+  /** Link after the caption, to /work. Not shown since 1 Oct 2026, like `frames`. */
   framesLink?: Cta;
 }
 
@@ -499,8 +508,8 @@ export interface Service extends BaseDoc {
   /** Show the `faqs` of this category on the page (and mark them up there). */
   faqCategory?: string;
   /**
-   * Hide the four project stages (ProcessSection: two revision rounds, 50/30/20,
-   * code on final payment) on a monthly service such as SEO or a care plan,
+   * Hide the four project stages (ProcessSection: two revision rounds, 50% to
+   * start and 50% at launch, code on final payment) on a monthly service such as SEO or a care plan,
    * where those project terms do not apply. Unset: shown, as before.
    */
   hideProcess?: boolean;

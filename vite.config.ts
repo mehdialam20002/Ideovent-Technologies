@@ -38,6 +38,20 @@ export default defineConfig(({ mode }) => {
     port: 8080,
   },
   plugins: [react()],
+  /*
+    The home hero's 3D layer runs in a module worker
+    (src/components/sections/hero/scene/hero3d.worker.ts). Its tiny entry
+    checks for WebGL2 first and only then does `import("./render")`, so a
+    visitor without WebGL2 never downloads three.js. A dynamic import inside a
+    worker is code splitting, which the default "iife" worker format refuses
+    ("UMD and IIFE output formats are not supported for code-splitting
+    builds"); "es" emits the entry and a separate render chunk. Firefox before
+    114 cannot run module workers: the worker errors and the hero keeps its
+    drawn still. The render chunk (three.js, about 545 KB raw) is over
+    chunkSizeWarningLimit below on purpose, a documented exception for this
+    one worker chunk; scripts/check-hero-3d.mjs holds its own budget.
+  */
+  worker: { format: "es" },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

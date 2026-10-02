@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { fmtDate, fmtDateTime } from "@/admin/outreach/ui";
+import { teamDemoUrl } from "@/lib/demo/opens";
 import { CRM } from "../nav";
 import { crm, StatusDot } from "../ui";
 import { cn } from "@/lib/utils";
@@ -15,13 +16,13 @@ const STATUS_CLS: Record<string, string> = {
 };
 const STATUS_TEXT: Record<string, string> = { sent: "Sent", draft: "Draft", free: "Free", closed: "Closed" };
 
-const COLS: { key: DemoSortKey; label: string; right?: boolean }[] = [
+const COLS: { key: DemoSortKey; label: string; right?: boolean; hint?: string }[] = [
   { key: "institute", label: "Institute" },
   { key: "status", label: "Status" },
   { key: "source", label: "Source" },
   { key: "created", label: "Created" },
   { key: "lead", label: "Lead" },
-  { key: "opens", label: "Opens", right: true },
+  { key: "opens", label: "Opens", right: true, hint: "Opens of the link by the people it was sent to. Opens from the team's own browsers are never counted." },
   { key: "fresh", label: "Since contact", right: true },
   { key: "lastOpen", label: "Last opened" },
 ];
@@ -36,7 +37,7 @@ export function DemoTable({ items, sort, onSort, h }: { items: DemoItem[]; sort:
               const on = sort.key === c.key;
               return (
                 <th key={c.key} className={cn(crm.th, c.right && "text-right", "first:rounded-tl-xl")} aria-sort={on ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
-                  <button type="button" onClick={() => onSort(c.key)} className={cn("inline-flex items-center gap-1 rounded hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", on && "text-foreground")}>
+                  <button type="button" onClick={() => onSort(c.key)} title={c.hint} className={cn("inline-flex items-center gap-1 rounded hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", on && "text-foreground")}>
                     {c.label}
                     {on && (sort.dir === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />)}
                   </button>
@@ -51,7 +52,21 @@ export function DemoTable({ items, sort, onSort, h }: { items: DemoItem[]; sort:
             <tr key={i.demo.id} data-testid="demo-row" className="hover:bg-muted/40">
               <td className={cn(crm.td, "py-2", "max-w-[240px]")}>
                 <span className="block truncate font-medium" title={i.demo.instituteName}>{i.demo.instituteName || i.demo.slug}</span>
-                <span className="block truncate text-[12px] text-muted-foreground">/site/{i.demo.slug}{i.demo.city ? ` · ${i.demo.city}` : ""}</span>
+                {/* A sent demo's address opens its live page as a TEAM PREVIEW (?team=1): looking
+                    at it from the CRM never counts as the prospect's open. The name stays the
+                    first span: e2e-crm reads it from there. */}
+                <span className="block truncate text-[12px] text-muted-foreground">
+                  {i.status === "sent" ? (
+                    <a href={teamDemoUrl(i.demo.slug)} target="_blank" rel="noopener noreferrer" data-testid="demo-live-link"
+                      title="Open the live link. Opening it from here never counts as an open."
+                      className="rounded hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      /site/{i.demo.slug}
+                    </a>
+                  ) : (
+                    `/site/${i.demo.slug}`
+                  )}
+                  {i.demo.city ? ` · ${i.demo.city}` : ""}
+                </span>
               </td>
               <td className={cn(crm.td, "py-2", STATUS_CLS[i.status])}>{STATUS_TEXT[i.status] || i.status}</td>
               <td className={cn(crm.td, "py-2", "text-muted-foreground")}>
