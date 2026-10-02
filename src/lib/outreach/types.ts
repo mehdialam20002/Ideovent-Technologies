@@ -194,6 +194,12 @@ export interface OutreachSettings {
   senderGmail?: string;
   signature: string;
   /**
+   * Where Open in Zoho Mail opens a new e-mail (2 Oct 2026): a Zoho Mail address, e.g.
+   * https://mail.zoho.in (Zoho India, where contact@ideovent.in is). Blank means that one.
+   * mailLinks.ts zohoMailOrigin reads it; anything not on Zoho Mail is refused.
+   */
+  zohoMailUrl?: string;
+  /**
    * RETIRED. It was a forced cap of 10 a day, and every saved settings row
    * carries that 10, so it cannot mean "Mehdi chose 10". Nothing reads it any
    * more; `whatsappDailyLimit` replaced it (28 Sep 2026: "remove the WhatsApp

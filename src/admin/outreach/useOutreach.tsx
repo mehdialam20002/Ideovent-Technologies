@@ -28,6 +28,7 @@ import type {
   OutreachSettings,
 } from "@/lib/outreach/types";
 import { demoOpenEventId, opensSinceContact, OUTREACH_CHANGED } from "./derive";
+import { linkWentCold } from "@/lib/outreach/linkChoice";
 
 export function announceOutreachChange() {
   try {
@@ -389,6 +390,9 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     member's both see the open, the second write is refused as a duplicate
     and taken as "already written". Lines from before carry the open's id in
     their text, which is checked too. Only for leads the caller may change.
+    Not after a cold link (2 Oct 2026): when the last link they got went in a
+    first message, an open is not a yes, so the lead stays Contacted and only
+    the history line is written; it still shows under Hot.
   */
   const marking = useRef(new Set<string>());
   useEffect(() => {
@@ -417,7 +421,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
           if (!isDuplicate(err)) console.warn("CRM: the demo open was not recorded.", err);
           return;
         }
-        if (lead.status !== "contacted") return;
+        if (lead.status !== "contacted" || linkWentCold(lead.id, events)) return;
         try {
           await patchLead(lead.id, { status: "demo_opened" });
         } catch (err) {
