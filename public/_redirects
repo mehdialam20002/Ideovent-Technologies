@@ -18,6 +18,29 @@
 # Exact match only — /blogs/<slug> is a real route and falls through to the SPA.
 /launchpad        /internship   301
 
+# ── Removed blog posts (2 Oct 2026) ───────────────────────────────────────────
+# The nine posts of 2025 were removed and replaced by five new guides. Each old
+# address goes in one hop to the page that replaced it, the same rules as
+# vercel.json: the post's /blog/<slug> and the old site's /blogs/<id>.
+/blog/how-seo-can-boost-your-business-growth  /services/seo  301
+/blog/why-every-business-must-have-a-website-in-2025  /websites  301
+/blog/why-a-high-performance-website-is-essential-for-small-business-growth-and-how-id  /websites  301
+/blog/10-common-website-mistakes-small-businesses-make-and-how-ideovent-fixes-them  /websites  301
+/blog/what-to-look-for-in-a-tech-partner-and-how-we-work  /blog/website-cost-in-india  301
+/blog/one-team-for-design-build-and-seo-why-it-beats-juggling-vendors  /blog/website-cost-in-india  301
+/blog/how-ideovent-technologies-empowers-small-businesses-in-new-delhi  /websites  301
+/blog/what-working-with-ideovent-technologies-is-like  /websites  301
+/blog/why-digital-transformation-is-the-key-to-business-growth-in-2025-an-ideovent-per  /websites  301
+/blogs/1          /services/seo  301
+/blogs/2          /websites      301
+/blogs/3          /websites      301
+/blogs/4          /websites      301
+/blogs/5          /blog/website-cost-in-india  301
+/blogs/6          /blog/website-cost-in-india  301
+/blogs/7          /websites      301
+/blogs/8          /websites      301
+/blogs/9          /websites      301
+
 # ── Policy paths ──────────────────────────────────────────────────────────────
 # 03-legal-docs/policies/POLICIES-README.md publishes the documents at these
 # paths; the site's routes are shorter. Both work.
@@ -31,4 +54,6 @@
 
 # ── SPA fallback — must be the last rule ──────────────────────────────────────
 # 200, not 301: the browser keeps the requested URL and React Router renders it.
-/*                /index.html   200
+# The shell, not index.html: since 2 Oct 2026 the built index.html is the
+# homepage with its own canonical (scripts/prerender-heads.mjs, SHELL_FILE).
+/*                /spa-shell.html   200

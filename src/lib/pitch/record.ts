@@ -19,6 +19,7 @@ import type {
   PitchObservedProblem,
 } from "@/lib/cms/types";
 import { SLUG_MAX, isWellFormedSlug, slugify } from "@/lib/slug";
+import { ONE_TIME, inr } from "@/lib/pricing";
 
 export type {
   PitchPage,
@@ -110,7 +111,10 @@ export const PITCH_PACKAGES: PitchPackageOption[] = [
     id: "school-website",
     market: "india",
     label: "School website",
-    range: "₹20,000 to ₹45,000",
+    // The Website band, read from src/lib/pricing.ts since 2 Oct 2026, so a
+    // pitch page can never quote the old ₹20,000 to ₹45,000 again (the band is
+    // ₹12,000 to ₹25,000 since Mehdi's change of 1 Oct 2026).
+    range: `${inr(ONE_TIME.website.min)} to ${inr(ONE_TIME.website.max ?? ONE_TIME.website.min)}`,
     timeline: "3 to 5 weeks from the advance and your content",
     href: "/pricing#school-website",
     summary: "Up to eight pages, built around admission season.",

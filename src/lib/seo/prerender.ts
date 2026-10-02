@@ -24,6 +24,8 @@ import rawLegal from "../cms/data/legal.seed.json";
 import { SEO as SEO_PRICES } from "../pricing";
 // The same Service + Offer nodes /pricing passes to <Seo> (plain data, no React).
 import { pricingSchema } from "../../pages/pricing/schema";
+// The /websites pages' trail, Service and FAQPage, as the page passes them to <Seo>.
+import { websitesSchema } from "../../pages/websites/schema";
 import { LEGAL_PAGES, PAGE_SEO, legalSeo, postSeo, projectSeo, serviceSeo, type PageSeo } from "./pages";
 import {
   absolute, absolutizeUrls, blogPostingNode, breadcrumbNode, caseStudyNode, faqPageNode,
@@ -119,6 +121,9 @@ const ownedFaqCategories = new Set(services.map((s) => s.faqCategory).filter(Boo
 /** The head for one public path, or null for a path this module does not know. */
 export function headFor(path: string): HeadSpec | null {
   const reg = PAGE_SEO[path];
+  // /websites and its four pages: a two-level trail, so their own builder.
+  const site = reg ? websitesSchema(path) : null;
+  if (reg && site) return spec(path, reg, { crumbs: site.crumbs, nodes: site.nodes });
   if (reg) {
     const crumbs = reg.crumb ? [{ name: reg.crumb, path }] : undefined;
     const nodes: (Json | undefined)[] = [];
@@ -173,11 +178,12 @@ export function headFor(path: string): HeadSpec | null {
 }
 
 /**
- * dist/index.html. It is the homepage AND the file served for every address that
- * has no file of its own (pitch pages, demos, the admin, a post added in /admin
- * after the build), so it carries NO canonical and no og:url: <Seo> sets those at
- * runtime, which Google accepts when the HTML has none. It keeps the homepage's
- * title, description and no-script summary.
+ * dist/spa-shell.html (since 2 Oct 2026; it used to be dist/index.html, which is
+ * now the homepage with headFor("/") and its canonical). The file served for every
+ * address that has no file of its own (pitch pages, demos, the admin, a post added
+ * in /admin after the build), so it carries NO canonical and no og:url: <Seo> sets
+ * those at runtime, which Google accepts when the HTML has none. It keeps the
+ * homepage's title, description and no-script summary.
  */
 export function shellHead(): HeadSpec {
   const home = headFor("/")!;

@@ -26,14 +26,16 @@
     -->
     <!--
       NO CANONICAL AND NO og:url IN THIS FILE (1 Oct 2026, SEO audit P0-3).
-      This file is served for every address that has no prerendered HTML of its
-      own (pitch pages, demos, the admin, a mistyped URL), so a canonical here
-      told Google that each of those was the homepage, and JavaScript then
-      changed it, which Google's JavaScript SEO guide says not to do. Every
-      public page now gets its own head at build time (scripts/prerender-heads.mjs
-      writes dist/<route>/index.html from src/lib/seo/pages.ts), and <Seo> sets
-      the canonical at runtime for the rest. The title and description below
-      are the homepage's, rewritten from the same source at build.
+      The build makes two files out of it (scripts/prerender-heads.mjs, 2 Oct
+      2026): dist/index.html, the homepage, which gets the homepage's canonical
+      there, and dist/spa-shell.html, which vercel.json serves for every address
+      that has no prerendered HTML of its own (pitch pages, demos, the admin, a
+      mistyped URL) and which keeps NO canonical: one here would tell Google that
+      each of those was the homepage, and JavaScript would then change it, which
+      Google's JavaScript SEO guide says not to do. Every public page gets its own
+      head at build time (dist/<route>/index.html from src/lib/seo/pages.ts), and
+      <Seo> sets the canonical at runtime for the rest. The title and description
+      below are the homepage's, rewritten from the same source at build.
     -->
     <title>Web Design &amp; Software Company in New Delhi | Ideovent</title>
     <meta
@@ -158,6 +160,7 @@
             "@id": "%VITE_PUBLIC_URL%/#website",
             "url": "%VITE_PUBLIC_URL%/",
             "name": "Ideovent Technologies",
+            "alternateName": "Ideovent",
             "inLanguage": "en-IN",
             "publisher": { "@id": "%VITE_PUBLIC_URL%/#organization" }
           }

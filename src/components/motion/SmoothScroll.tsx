@@ -17,10 +17,21 @@ import { useEffect } from "react";
  *    check runs BEFORE the import, so those visitors pay nothing for it. The
  *    media query is also watched, so toggling the OS setting takes effect without
  *    a reload.
+ *
+ * 3. Nor on a phone or a tablet (2 Oct 2026). Lenis smooths WHEEL scrolling only
+ *    (`smoothWheel`; touch smoothing, `syncTouch`, is off by default and not
+ *    turned on here), so on a device whose main pointer is a finger it changed
+ *    nothing a visitor could feel, while it cost a chunk download and a
+ *    requestAnimationFrame callback on every frame for as long as the page was
+ *    open: about 250 callbacks in the first seconds of a phone page load, traced
+ *    at 4x CPU throttling. `(pointer: coarse)` is the PRIMARY pointer, so a
+ *    touchscreen laptop driven by its trackpad still gets the smooth wheel.
  */
+const NO_SMOOTH_SCROLL = "(prefers-reduced-motion: reduce), (pointer: coarse)";
+
 export function SmoothScroll() {
   useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const query = window.matchMedia(NO_SMOOTH_SCROLL);
     let cleanup: (() => void) | null = null;
     let cancelled = false;
 

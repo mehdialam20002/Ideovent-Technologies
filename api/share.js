@@ -44,7 +44,10 @@
  */
 export const config = { runtime: "edge" };
 
-const SMALL_WORDS = new Set(["of", "and", "the", "for", "in", "at", "on", "de", "la"]);
+/** The SPA fallback the build writes (scripts/prerender-heads.mjs, SHELL_FILE). */
+const SHELL_PATH = "/spa-shell.html";
+
+const SMALL_WORDS =new Set(["of", "and", "the", "for", "in", "at", "on", "de", "la"]);
 
 /** "st-xaviers-high-school" -> "St Xaviers High School" */
 function titleFromSlug(slug) {
@@ -114,11 +117,14 @@ export default async function handler(request) {
 
   let html;
   try {
-    const res = await fetch(new URL("/index.html", url.origin), {
-      headers: { "user-agent": "ideovent-share-fn" },
-    });
+    /* The SPA fallback, not /index.html: since 2 Oct 2026 index.html is the
+       homepage and carries the homepage's canonical (scripts/prerender-heads.mjs,
+       SHELL_FILE). /index.html is only the second try, for a build made before. */
+    let res = await fetch(new URL(SHELL_PATH, url.origin), { headers: { "user-agent": "ideovent-share-fn" } });
+    if (!res.ok) res = await fetch(new URL("/index.html", url.origin), { headers: { "user-agent": "ideovent-share-fn" } });
     if (!res.ok) throw new Error(String(res.status));
-    html = await res.text();
+    // A demo's or a pitch's card is not the homepage: never pass a canonical on.
+    html = (await res.text()).replace(/[ \t]*<link\b[^>]*\brel=["']canonical["'][^>]*>[ \t]*\r?\n?/gi, "");
   } catch {
     // Falling through to the SPA is the right failure: the card is wrong, which
     // is where we started, rather than the link being broken.

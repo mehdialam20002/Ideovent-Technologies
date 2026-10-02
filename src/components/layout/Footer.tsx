@@ -5,6 +5,7 @@ import { getIcon } from "@/lib/icons";
 import { CtaButton } from "@/components/ui/cta-button";
 import { unbreakable } from "@/lib/typography";
 import { liveEmail } from "@/lib/mailbox";
+import { WEBSITES_HEADING, WEBSITE_LINKS } from "@/pages/websites/links";
 
 /**
  * Site footer.
@@ -261,7 +262,27 @@ export default function Footer() {
 ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row">
+        {/* THE /websites PAGES (2 Oct 2026), a plain row of links on every page,
+            so each one has a link a crawler can follow from everywhere. Built
+            from code (src/pages/websites/links.ts), not the CMS navigation, and
+            a row rather than a fifth column: the 12-column grid above is full. */}
+        <div className="mt-12 flex flex-col gap-2 border-t border-border pt-6 sm:flex-row sm:items-baseline sm:gap-5">
+          <h3 className="shrink-0 font-display text-sm font-semibold uppercase tracking-wider text-foreground">{WEBSITES_HEADING}</h3>
+          <ul className="flex flex-wrap gap-x-5 gap-y-1">
+            {WEBSITE_LINKS.map((l) => (
+              <li key={l.href}>
+                <Link
+                  to={l.href}
+                  className="inline-flex items-center rounded-md py-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground active:text-foreground/70"
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row">
           <p>© {year} {settings.siteName}. All rights reserved.</p>
           <p>Built in {contact.address.line1}, {contact.address.city}.</p>
         </div>

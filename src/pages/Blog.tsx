@@ -15,14 +15,9 @@ import { useCollection } from "@/lib/cms/context";
 import { cn } from "@/lib/utils";
 import type { BlogPost } from "@/lib/cms/types";
 import { PAGE_SEO } from "@/lib/seo/pages";
+import { formatPostDate as formatDate } from "@/lib/postDate";
 
 const ALL = "All";
-
-function formatDate(value: string) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-}
 
 /** Insights & articles index. */
 export default function Blog() {
@@ -76,8 +71,8 @@ export default function Blog() {
               Ideas worth <span className="accent-italic text-gradient">building</span> on
             </p>
             <p className="text-base text-muted-foreground text-pretty md:text-lg">
-              Plain notes for business owners: websites that load fast, the mistakes small-business
-              sites keep making, local SEO, and choosing who builds for you.
+              Plain guides for business owners: what a website costs in India, paying monthly or
+              once, and what a clinic, school or coaching institute website needs to show.
             </p>
           </div>
         </div>
@@ -144,7 +139,8 @@ export default function Blog() {
                           </span>
                           {featured.publishDate ? (
                             <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
-                              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(featured.publishDate)}
+                              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />{" "}
+                              <time dateTime={featured.publishDate}>{formatDate(featured.publishDate)}</time>
                             </span>
                           ) : <span aria-hidden="true" />}
                         </div>
@@ -267,7 +263,8 @@ export default function Blog() {
                             </span>
                             {p.publishDate ? (
                               <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
-                                <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(p.publishDate)}
+                                <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />{" "}
+                                <time dateTime={p.publishDate}>{formatDate(p.publishDate)}</time>
                               </span>
                             ) : <span aria-hidden="true" />}
                           </div>

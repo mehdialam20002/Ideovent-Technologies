@@ -21,7 +21,7 @@ import type { ContentData, LegalKind } from "./types";
  * that needs a body mounts.
  */
 
-interface DeferredBodies {
+export interface DeferredBodies {
   /** Blog post id (as a string, matching BlogPost.id) → HTML body. */
   posts: Record<string, string>;
   /** Legal document kind → HTML body. */

@@ -151,9 +151,20 @@ export interface Band {
   anchor: string;
 }
 
+/*
+  THE WEBSITE BAND, 1 Oct 2026 (FACTS.md, "CORRECTION, 1 Oct 2026", item 5):
+  Mehdi lowered the one-time Website band from ₹20,000-₹45,000 to
+  ₹12,000-₹25,000. The band's two ends are his figures. The tiers are
+  ₹12,000 / ₹18,000 / ₹25,000, and THE MIDDLE TIER, ₹18,000, IS STILL FOR
+  MEHDI TO CONFIRM (FACTS.md, "Still open, for Mehdi"; _assets/FILL-INS.md).
+  Pages that only need the band print bandRange(); /pricing prints the tiers.
+  The landing band (₹8,000-₹20,000) now overlaps it between ₹12,000 and
+  ₹20,000, which is also his to decide.
+*/
 export const ONE_TIME: Record<"landing" | "website" | "portal" | "software", Band> = {
   landing: { label: "Landing page or single page", min: 8000, max: 20000, tiers: [8000, 12500, 20000], anchor: "business-website" },
-  website: { label: "Website", min: 20000, max: 45000, tiers: [20000, 30000, 45000], anchor: "school-website" },
+  // tiers[1] (₹18,000) awaits Mehdi's confirmation; see the note above.
+  website: { label: "Website", min: 12000, max: 25000, tiers: [12000, 18000, 25000], anchor: "school-website" },
   portal: { label: "Portal or web app", min: 40000, max: 85000, tiers: [40000, 58500, 85000], anchor: "portal" },
   software: { label: "Custom software", min: 90000, tiers: [90000], anchor: "custom-saas" },
 };
@@ -291,7 +302,9 @@ export function servicePrice(slug: string): ServicePrice | null {
  * by components/lead/core.ts as BUDGETS. The label is what the enquiry e-mail,
  * the stored lead and the WhatsApp message carry, so a monthly choice always
  * carries its setup fee. The ids are stored with every enquiry, and
- * scripts/e2e-lead-popup.mjs selects "20k-45k": keep the old ids.
+ * scripts/e2e-lead-popup.mjs selects "20k-45k": keep the old ids. ("20k-45k"
+ * is the Website line's id; its label follows the band, ₹12,000-₹25,000 since
+ * 1 Oct 2026.)
  */
 export const BUDGET_CHOICES = [
   { id: "monthly-starter", label: `${inr(PLANS.starter.monthly)}/month + ${inr(PLANS.starter.setup)} setup`, hint: `Starter website plan, ${TERM_MONTHS} months` },

@@ -18,6 +18,7 @@ const Internship = lazy(() => import("./pages/Internship"));
 const EduFlow = lazy(() => import("./pages/EduFlow"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const WebsiteLanding = lazy(() => import("./pages/websites/WebsiteLanding"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const CheckoutResult = lazy(() => import("./pages/CheckoutResult"));
 const Legal = lazy(() => import("./pages/Legal"));
@@ -212,6 +213,17 @@ const App = () => (
         <Route path="/eduflow" element={<EduFlow />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/faq" element={<FAQ />} />
+        {/* Keyword landing pages (2 Oct 2026), one component, content in
+            src/pages/websites/content/. Each path is a static line on purpose:
+            scripts/generate-sitemap.mjs lists static routes only, and this
+            file is how "websites" is reserved against a pitch slug
+            (src/lib/pitch/reservedRoutes.ts, scripts/sync-noindex-header.mjs).
+            The paths are fixed: other pages and posts link to them. */}
+        <Route path="/websites" element={<WebsiteLanding id="hub" />} />
+        <Route path="/websites/dental-clinic" element={<WebsiteLanding id="dental-clinic" />} />
+        <Route path="/websites/school" element={<WebsiteLanding id="school" />} />
+        <Route path="/websites/coaching-institute" element={<WebsiteLanding id="coaching-institute" />} />
+        <Route path="/websites/899-per-month" element={<WebsiteLanding id="899-per-month" />} />
         {/* Paying for a monthly or yearly website plan with Razorpay (noindex,
             and out of the sitemap: every route here is parameterised or a
             <Navigate>). The flow and its fallback: src/pages/Checkout.tsx. */}

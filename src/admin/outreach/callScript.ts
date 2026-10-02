@@ -1,6 +1,7 @@
 import { CALL_WINDOWS, greetingFor, observationText, timeOfDay } from "@/lib/outreach/engine";
 import type { LeadKind, OutreachLead } from "@/lib/outreach/types";
 import { startingObservation } from "./compose";
+import { ONE_TIME, inr } from "@/lib/pricing";
 
 /**
  * THE CALL SCRIPT on the lead page (30 Sep 2026). The approved call flow, from
@@ -201,13 +202,21 @@ const NEEDS: Record<LeadKind, string> = {
   other: "Logo, services and prices, timings, 5 or 6 photos.",
 };
 
-/** /pricing, Website line, lowest first. The clinic range in the approved flow is the same Rs 20,000 to 45,000. */
+/**
+ * /pricing, Website line, lowest first, read from src/lib/pricing.ts (2 Oct
+ * 2026): the band is Rs 12,000 to 25,000 since Mehdi's change of 1 Oct, and the
+ * middle tier (Rs 18,000) is still his to confirm. These used to be typed out
+ * as Rs 20,000 / 30,000 / 45,000, which is how a call script ends up quoting a
+ * price the website no longer shows.
+ */
+const rs = (n: number) => inr(n).replace("₹", "Rs ");
+const W = ONE_TIME.website.tiers;
 const PRICE_OPTIONS = [
-  "Rs 20,000: Website Essential, up to 8 pages, 3 weeks.",
-  "Rs 30,000: Website Professional, up to 15 pages, custom design, 4 weeks.",
-  "Rs 45,000: Website Premium, enquiry tracking and more than one branch, 5 weeks.",
+  `${rs(W[0])}: Website Essential, up to 8 pages, 3 weeks.`,
+  `${rs(W[1])}: Website Professional, up to 15 pages, custom design, 4 weeks.`,
+  `${rs(W[2])}: Website Premium, enquiry tracking and more than one branch, 5 weeks.`,
 ];
-const PORTAL = "Student records, fee receipts or attendance are the portal line, from Rs 40,000. Only if they ask.";
+const PORTAL = `Student records, fee receipts or attendance are the portal line, from ${rs(ONE_TIME.portal.min)}. Only if they ask.`;
 
 /** The whole script for one lead, in the language of the call. */
 export function callScriptFor(lead: OutreachLead, opts: { hasDemo: boolean; language: ScriptLanguage; now?: Date }): CallScript {
@@ -254,8 +263,8 @@ export function callScriptFor(lead: OutreachLead, opts: { hasDemo: boolean; lang
       title: "The price, in 2 or 3 options",
       how: "Plainly, lowest first. Payment: 50% advance, 50% at launch.",
       say: en
-        ? "There are three options: Rs 20,000, Rs 30,000 and Rs 45,000. The difference is the number of pages and how much you manage yourself. Payment is 50% advance and 50% at launch."
-        : "Teen option hain: Rs 20,000, Rs 30,000 aur Rs 45,000. Farak pages ka hai, aur is baat ka ki aap khud kitna manage karte hain. Payment 50% advance, 50% launch par.",
+        ? `There are three options: ${rs(W[0])}, ${rs(W[1])} and ${rs(W[2])}. The difference is the number of pages and how much you manage yourself. Payment is 50% advance and 50% at launch.`
+        : `Teen option hain: ${rs(W[0])}, ${rs(W[1])} aur ${rs(W[2])}. Farak pages ka hai, aur is baat ka ki aap khud kitna manage karte hain. Payment 50% advance, 50% launch par.`,
       list: kind === "school" || kind === "coaching" ? [...PRICE_OPTIONS, PORTAL] : PRICE_OPTIONS,
     },
     {

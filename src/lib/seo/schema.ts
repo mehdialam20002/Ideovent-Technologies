@@ -162,7 +162,13 @@ export function organizationNode(
   };
 }
 
-/** WebSite. No SearchAction: the site has no search endpoint to point at. */
+/**
+ * WebSite. No SearchAction: the site has no search endpoint to point at.
+ * `alternateName` (2 Oct 2026): Google's site-name documentation
+ * (developers.google.com/search/docs/appearance/site-names) recommends it next to
+ * the required name and url, on the home page; "Ideovent" is the short name the
+ * Organization node already carries.
+ */
 export function webSiteNode(settings: SiteSettings): Json {
   const host = settings.defaultSeo.canonicalHost.replace(/\/$/, "");
   return {
@@ -170,6 +176,7 @@ export function webSiteNode(settings: SiteSettings): Json {
     "@id": `${host}/${SITE_ID}`,
     url: `${host}/`,
     name: settings.siteName,
+    alternateName: "Ideovent",
     description: ORG_DESCRIPTION,
     inLanguage: "en-IN",
     publisher: { "@id": `${host}/${ORG_ID}` },
@@ -350,6 +357,9 @@ interface PostNodeInput {
  * A blog post. BlogPosting, the narrower type Google documents for articles.
  * The byline is the studio: no post is attributed to a named person in FACTS.md.
  * `datePublished` only when the record carries a real date.
+ * author.url is /about, the page that names the people behind the byline: Google
+ * "strongly recommend[s] using the type and url (or sameAs)" on an author (Article
+ * structured data, author markup best practices; SEO audit, 2 Oct 2026).
  */
 export function blogPostingNode(p: PostNodeInput): Json {
   return {
@@ -359,7 +369,7 @@ export function blogPostingNode(p: PostNodeInput): Json {
     ...(p.coverImage ? { image: p.coverImage } : {}),
     ...(p.publishDate ? { datePublished: p.publishDate } : {}),
     inLanguage: "en-IN",
-    author: { "@type": "Organization", name: p.author || "Ideovent Technologies" },
+    author: { "@type": "Organization", name: p.author || "Ideovent Technologies", url: "/about" },
     mainEntityOfPage: { "@type": "WebPage", "@id": `/blog/${p.slug}` },
     ...(p.tags?.length ? { keywords: p.tags.join(", ") } : {}),
   };

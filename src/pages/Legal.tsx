@@ -61,7 +61,7 @@ export default function Legal({ kind }: { kind: LegalKind }) {
           previously noindex, which is why nothing external could ever link to them.
           A draft page is the one exception. It should not be indexed while it is
           still full of blanks. */}
-      {/* "Privacy Policy | Ideovent" and the description: legalSeo(), the same
+      {/* "Privacy Policy: How Ideovent Technologies Handles Your Data" and the description: legalSeo(), the same
           helper the build uses for this page's prerendered head. */}
       <Seo
         title={legalSeo(kind, doc.title).title}
