@@ -114,19 +114,50 @@ export function startingObservation(lead: OutreachLead): string {
 }
 
 /**
+ * Words that say WHAT a business is, not WHICH one. A lead named only with
+ * these ("Kids Dental Clinic", "Dental Clinic", "Public School") is the same
+ * phrase our own templates write ("Google par aapka kids dental clinic
+ * dekha"), so it cannot tell one lead from another (2 Oct 2026: every
+ * kids-dental message was blocked by a lead called "Kids Dental Clinic").
+ */
+const GENERIC_NAME_WORDS = new Set([
+  "the", "and", "of", "for", "pvt", "ltd", "private", "limited", "india", "indian", "new", "delhi",
+  "kid", "kids", "child", "children", "childrens", "paediatric", "pediatric", "pedodontic",
+  "dental", "dentist", "dentists", "dentistry", "clinic", "clinics", "care", "smile", "smiles", "tooth", "teeth", "oral",
+  "implant", "implants", "ortho", "orthodontic", "orthodontics", "braces", "aligner", "aligners", "cosmetic", "aesthetic", "aesthetics",
+  "multispeciality", "multispecialty", "multi", "speciality", "specialty", "family", "hospital", "centre", "center", "health", "healthcare",
+  "school", "schools", "public", "convent", "senior", "secondary", "sr", "sec", "high", "higher", "primary", "play", "playschool",
+  "pre", "preschool", "nursery", "international", "global", "model", "modern", "english", "medium", "academy", "academic",
+  "coaching", "classes", "class", "institute", "tutorials", "tuition", "tuitions", "education", "educational", "learning", "study",
+]);
+
+/** Lower case, every run of non-letters and non-digits as one space, padded, so matches are whole words. */
+const words = (s: string) => ` ${s.toLowerCase().replace(/[^a-z0-9ऀ-ॿ]+/g, " ").trim()} `;
+
+/** True when every word of the name only says what kind of business it is. */
+export function isGenericLeadName(name: string): boolean {
+  const ws = words(name).trim().split(" ").filter(Boolean);
+  return ws.length > 0 && ws.every((w) => GENERIC_NAME_WORDS.has(w));
+}
+
+/**
  * Other leads whose institute name appears in this text. One lead's name in
  * another lead's message is exactly the 28 Sep 2026 bug (one imported
- * lead's name in every mail), so the send is blocked while it is there. Short or
- * generic names (under 8 letters) and names this lead's own name contains are
- * ignored, so "Academy" never trips it.
+ * lead's name in every mail), so the send is blocked while it is there. Short
+ * names (under 8 letters), names made only of generic business words, and names
+ * this lead's own name contains are ignored, so "Academy" or "Kids Dental
+ * Clinic" never trips it; a distinctive name ("Verma Coaching Academy") still
+ * does. Names match as whole words.
  */
 export function otherLeadsNamed(text: string, lead: OutreachLead, leads: OutreachLead[]): OutreachLead[] {
-  const hay = text.toLowerCase();
-  const own = lead.instituteName.toLowerCase();
+  const hay = words(text);
+  const own = words(lead.instituteName);
   return leads.filter((l) => {
     if (l.id === lead.id) return false;
-    const n = (l.instituteName || "").trim().toLowerCase();
-    return n.length >= 8 && !own.includes(n) && hay.includes(n);
+    const raw = (l.instituteName || "").trim();
+    if (raw.length < 8 || isGenericLeadName(raw)) return false;
+    const n = words(raw);
+    return !own.includes(n) && hay.includes(n);
   });
 }
 
