@@ -29,11 +29,24 @@
  * open it, and when last", rather than "how many times did the bundle run".
  * The guard is `sessionStorage`, which is per tab and cleared when the tab
  * closes, so a genuine second visit tomorrow counts again.
+ *
+ * TEAM DEVICES NEVER COUNT (1 Oct 2026, CRM team spec B10, package H). An
+ * open is a hint about whom to call first, so an open by anybody on the team
+ * is a false hot lead. Nothing is recorded when this browser is a team
+ * device (`viewerIsAdmin`: Mehdi's session, the device marker, or any
+ * Supabase login on this origin). Interns sign in on crm.ideovent.in, whose
+ * storage the demo's origin cannot read, so the CRM opens demos as TEAM
+ * PREVIEWS: the live link with `?team=1` (`teamPreviewUrl`). The public
+ * route records nothing for one and marks this browser as a team device on
+ * the main site's own origin (`markTeamDevice`), so a later plain open from
+ * it counts nothing either. A prospect's link carries no marker and counts.
  */
 
 import type { DemoSite, DemoSiteOpen } from "@/lib/cms/types";
 import type { DemoOpenedAlert } from "@/lib/leads";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseEnabled } from "@/lib/cms/config";
+import { mainSiteUrl } from "@/lib/host";
+import { demoSitePath } from "./record";
 
 /** sessionStorage key prefix. One entry per demo id. */
 const SEEN_PREFIX = "ideovent_demo_open_";
@@ -77,6 +90,14 @@ function openId(): string {
  *
  * `keepalive` so the request survives the reader navigating away half a second
  * after the page paints, which on a link opened from a chat app is common.
+ *
+ * THE TIME IS THE SERVER'S ONCE 0011 IS APPLIED. `at` below is this phone's
+ * clock. supabase/migrations/0011 (private.crm_demo_open_guard, visitors only)
+ * rewrites the row to { id: doc_id, demoId, at: the server's time }, keeps it
+ * only for a demo whose link is live, and at most 30 a day per demo; anything
+ * else is dropped without an error. Before 0011 the phone's time is stored,
+ * so it is still sent. The anon key goes as Bearer on purpose: that is what
+ * makes the request a visitor's, whatever login this browser holds elsewhere.
  */
 async function insertOpenRow(demoId: string): Promise<void> {
   const url = `${(SUPABASE_URL || "").replace(/\/$/, "")}/rest/v1/content`;
@@ -118,6 +139,9 @@ export async function recordDemoOpen(demoId: string, alert?: DemoOpenAlertContex
   // bring it back. This also stops test browsers that open sent demos from
   // spending the EmailJS monthly quota, which they did in September.
   void alert;
+  // A TEAM DEVICE RECORDS NOTHING (see the top of this file). Checked before
+  // the session guard, so a team preview leaves no trace in this tab either.
+  if (viewerIsAdmin()) return;
   if (!firstInThisSession(demoId)) return;
 
   try {
@@ -193,8 +217,10 @@ export type DemoAlertOutcome =
 /** localStorage key prefix; the value is the local date (YYYY-MM-DD) of the last alert. */
 export const ALERT_PREFIX = "ideovent_demo_alert_";
 /**
- * Optional marker an admin screen may set in localStorage to say "this device
- * is Mehdi's", so opening his own demo from a fresh tab never alerts him.
+ * The marker that says "this browser is the team's" (Mehdi's or a team
+ * member's), in localStorage. Set by the admin shell and the CRM shell on
+ * their own origins, and by a team preview (`?team=1`) on the demo's origin
+ * (`markTeamDevice`). A marked browser records no open and sends no alert.
  */
 export const ADMIN_DEVICE_KEY = "ideovent_admin_device";
 /** The local-mode admin session flag written by src/admin/auth.tsx. */
@@ -209,10 +235,11 @@ function localDay(now: Date): string {
 }
 
 /**
- * True when this browser has an admin session. Cheap, no SDK: the local-mode
- * sessionStorage flag, the marker above, or a stored Supabase auth token
- * (supabase-js keeps it in localStorage under `sb-<project>-auth-token` and
- * removes it on sign-out).
+ * True when this browser is a team device: it has an admin session or the
+ * marker. Cheap, no SDK: the local-mode sessionStorage flag, the marker above,
+ * or a stored Supabase auth token (supabase-js keeps it in localStorage under
+ * `sb-<project>-auth-token` and removes it on sign-out). The name is older
+ * than the team: any login on this origin counts, an intern's included.
  */
 export function viewerIsAdmin(): boolean {
   try {
@@ -284,5 +311,102 @@ export async function maybeAlertDemoOpen(
     return ok ? "sent" : "failed";
   } catch {
     return "failed";
+  }
+}
+
+/* ───────────────────────────── Team previews ──────────────────────────────── */
+
+/*
+ * "Team previews never count as a prospect's open" (CRM team spec, package H).
+ *
+ * WHY A MARKER IN THE LINK. A team member signs in on crm.ideovent.in, while
+ * the demo opens on the main site, a different origin whose storage cannot
+ * see that login. Members cannot open /admin either, so the only way they
+ * can look at a demo is its live link. The CRM therefore links to it with
+ * `?team=1`, and the public route, seeing it, records nothing and marks the
+ * browser (`markTeamDevice`) on the main site's origin.
+ *
+ * NEVER IN A LINK FOR A PROSPECT. The copy buttons and the messages carry the
+ * plain link (`demoLinkFor` in src/lib/outreach/engine.ts). A prospect who
+ * opened a team link would count nothing, then or later, from that browser.
+ * The route also takes the marker out of the address bar once the browser is
+ * marked, so a link copied from it is the plain one.
+ */
+
+/** The query parameter of a team preview: /site/<slug>?team=1. */
+export const TEAM_PREVIEW_PARAM = "team";
+
+/** The key of one `a=b` pair of a query string, decoded ("" when it cannot be). */
+function pairKey(pair: string): string {
+  const raw = pair.split("=")[0] || "";
+  try {
+    return decodeURIComponent(raw.replace(/\+/g, " "));
+  } catch {
+    return raw;
+  }
+}
+
+/** A query string ("?a=1&b=2", "a=1" or "") without its team pairs, as written otherwise. */
+function queryWithoutTeam(query: string): string {
+  return query
+    .replace(/^\?/, "")
+    .split("&")
+    .filter((p) => p && pairKey(p) !== TEAM_PREVIEW_PARAM)
+    .join("&");
+}
+
+/** True when a query string ("?team=1", "lang=hi&team=1") marks a team preview. */
+export function isTeamPreview(search: string | null | undefined): boolean {
+  if (!search) return false;
+  try {
+    return new URLSearchParams(search).getAll(TEAM_PREVIEW_PARAM).includes("1");
+  } catch {
+    return false;
+  }
+}
+
+/** The same query string without the team marker: "?lang=hi", or "" when nothing is left. */
+export function withoutTeamPreview(search: string): string {
+  const rest = queryWithoutTeam(search || "");
+  return rest ? `?${rest}` : "";
+}
+
+/**
+ * `url` as a team preview: `team=1` added to its query, the rest of the query
+ * and the hash kept as written, any other `team` value replaced. Relative or
+ * absolute. A url that already is one comes back unchanged.
+ */
+export function teamPreviewUrl(url: string): string {
+  if (!url) return url;
+  const hashAt = url.indexOf("#");
+  const head = hashAt >= 0 ? url.slice(0, hashAt) : url;
+  const hash = hashAt >= 0 ? url.slice(hashAt) : "";
+  const q = head.indexOf("?");
+  const path = q >= 0 ? head.slice(0, q) : head;
+  const query = q >= 0 ? head.slice(q + 1) : "";
+  const rest = queryWithoutTeam(query);
+  if (query && query === `${rest ? `${rest}&` : ""}${TEAM_PREVIEW_PARAM}=1`) return url;
+  return `${path}?${rest ? `${rest}&` : ""}${TEAM_PREVIEW_PARAM}=1${hash}`;
+}
+
+/**
+ * The team preview of a demo's live page, on the main site: relative there,
+ * absolute from the CRM's own subdomain (`mainSiteUrl`). What the CRM opens
+ * when someone on the team wants to see the page a prospect gets.
+ */
+export function teamDemoUrl(slug: string): string {
+  return teamPreviewUrl(mainSiteUrl(demoSitePath(slug)));
+}
+
+/**
+ * Mark this browser, on this origin, as a team device. True when the marker
+ * is stored and reads back; false when storage is blocked (never throws).
+ */
+export function markTeamDevice(): boolean {
+  try {
+    localStorage.setItem(ADMIN_DEVICE_KEY, "1");
+    return localStorage.getItem(ADMIN_DEVICE_KEY) === "1";
+  } catch {
+    return false;
   }
 }

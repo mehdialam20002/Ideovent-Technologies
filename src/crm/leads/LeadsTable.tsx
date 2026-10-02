@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import type { LeadStatus } from "@/lib/outreach/types";
 import { cn } from "@/lib/utils";
 import { crm } from "../ui";
-import type { Column } from "./columns";
+import type { CellCtx, Column } from "./columns";
 import type { LeadRow, Sort, SortKey } from "./leadQuery";
 
 export interface TableProps {
@@ -21,6 +21,8 @@ export interface TableProps {
   setStatus: (id: string, s: LeadStatus) => void;
   /** Bumped when the keyboard moves focus, so the row takes DOM focus. */
   focusTick: number;
+  /** Masking and the status rules for the person signed in (the team). */
+  cellCtx?: Omit<CellCtx, "now" | "setStatus">;
 }
 
 /** True when the click landed on a control inside the row, not the row itself. */
@@ -89,7 +91,7 @@ export function LeadsTable(p: TableProps) {
                 </td>
                 {p.cols.map((c) => (
                   <td key={c.id} className={cn(crm.td, c.className)}>
-                    {c.cell(r, { now: p.now, setStatus: p.setStatus })}
+                    {c.cell(r, { ...p.cellCtx, now: p.now, setStatus: p.setStatus })}
                   </td>
                 ))}
               </tr>

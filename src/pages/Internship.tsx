@@ -640,7 +640,9 @@ export default function Internship() {
                   <span className="accent-italic text-gradient">reading it</span>
                 </>
               }
-              subtitle="Ideovent Technologies is a partnership firm founded in 2024, based in Saket, New Delhi, building websites, web apps and software for growing businesses."
+              /* 1 Oct 2026 (Mehdi): founded 2019; a partnership firm since 2024.
+                 Was "... is a partnership firm founded in 2024, based in ..." */
+              subtitle="Ideovent Technologies, founded in 2019 and a partnership firm since 2024, builds websites, web apps and software for growing businesses from Saket, New Delhi."
             />
 
             <motion.div

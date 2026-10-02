@@ -47,9 +47,10 @@
  * are exactly the two things the timer reads.
  */
 import { chromium } from "playwright-core";
-import { spawn } from "node:child_process";
+import { createServer } from "vite";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 const args = process.argv.slice(2);
 const BASE = (args.find((a) => /^https?:\/\//.test(a)) || "http://localhost:5199").replace(/\/$/, "");
@@ -609,20 +610,30 @@ if (RUN_NEGATIVE) {
   // LEAD_E2E_NEG_PORT: another run (or a concurrent agent) may already hold 5196.
   const port = Number(process.env.LEAD_E2E_NEG_PORT) || 5196;
   console.log(`\nNEGATIVE CONTROL: dev server on ${port} with VITE_LEAD_POPUP_FORGET_DISMISSAL=1`);
-  const server = spawn(process.execPath, [resolve(root, "node_modules/vite/bin/vite.js"), "--port", String(port), "--strictPort"], {
-    cwd: root,
-    env: { ...process.env, VITE_LEAD_POPUP_FORGET_DISMISSAL: "1" },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  // Started in this process, not as a plain `vite`, so that it gets its own dependency
+  // cache, as the servers of e2e-checkout and e2e-hero3d do. A plain `vite` uses
+  // node_modules/.vite, which every other dev server on this project shares (and any
+  // worktree whose node_modules is a junction to this one); started from plain node it
+  // hashes bun.lockb rather than package-lock.json, so it rebuilt that cache under them
+  // (2 Oct 2026). process.env wins over .env files in Vite, so the flag reaches the page.
+  process.env.VITE_LEAD_POPUP_FORGET_DISMISSAL = "1";
+  let server = null;
   let ready = false;
-  server.stdout.on("data", (d) => {
-    if (/ready in|Local:/.test(String(d))) ready = true;
-  });
-  server.stderr.on("data", (d) => {
-    if (!/browserslist|caniuse|update-browserslist|update-db/i.test(String(d))) process.stderr.write(String(d));
-  });
   try {
-    for (let i = 0; i < 120 && !ready; i++) await new Promise((r) => setTimeout(r, 500));
+    server = await createServer({
+      root,
+      configFile: join(root, "vite.config.ts"),
+      cacheDir: join(tmpdir(), "ideovent-e2e-lead-popup-vite"),
+      logLevel: "warn",
+      clearScreen: false,
+      server: { port, strictPort: true },
+    });
+    await server.listen();
+    ready = true;
+  } catch (e) {
+    console.error(String(e?.message || e));
+  }
+  try {
     if (!ready) {
       check(false, "negative control: the flagged dev server did not start");
     } else {
@@ -645,7 +656,7 @@ if (RUN_NEGATIVE) {
       );
     }
   } finally {
-    server.kill();
+    await server?.close().catch(() => {});
   }
 }
 

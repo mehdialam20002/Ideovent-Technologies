@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, Download, FileUp, Upload } from "lucide-react";
 import { leadImportTemplateCsv, mapCsvRow, parseCsv, sameContact } from "@/lib/outreach/store";
 import { downloadText } from "@/admin/downloadFile";
@@ -28,8 +28,13 @@ type PreviewRow =
 
 /** Guidance in the name itself: CSV has nowhere to put a note. */
 const TEMPLATE_FILE = "ideovent-leads-import-template-replace-example-row.csv";
-export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
-  const { leads, importLeads } = useOutreach();
+/**
+ * `afterImport` renders under the result of a finished import: in the CRM,
+ * the step that assigns the new leads to people (spec 10.3.4). It runs as a
+ * second call, so the import itself stays one write.
+ */
+export function ImportTab({ onOpen, afterImport }: { onOpen: (id: string) => void; afterImport?: (result: ImportResult) => ReactNode }) {
+  const { leads, importLeads, logAccess } = useOutreach();
   const [text, setText] = useState("");
   const [onDuplicate, setOnDuplicate] = useState<"skip" | "merge">("skip");
   const [busy, setBusy] = useState(false);
@@ -81,6 +86,8 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
       const r = await importLeads(rows, { onDuplicate });
       setResult(r);
       setText("");
+      /* On the access log (Team > Access counts imports; nothing happens before the team update). */
+      void logAccess("import", undefined, { count: r.added.length, duplicates: r.duplicates.length, onDuplicate });
     } catch (e) {
       setErr("Import failed, nothing was saved. Reason: " + ((e as Error).message || "unknown error") + ". Your list is still here; try again.");
     } finally {
@@ -167,6 +174,7 @@ export function ImportTab({ onOpen }: { onOpen: (id: string) => void }) {
           )}
         </div>
       )}
+      {result && afterImport?.(result)}
 
       {err && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">{err}</p>}
 

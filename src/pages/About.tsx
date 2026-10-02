@@ -56,13 +56,18 @@ const RECORD: { term: string; detail: string }[] = [
   },
   {
     term: "Founded",
+    // 1 Oct 2026 (Mehdi): founded 2019, "mai apne college se phle se ispe kaam
+    // kr rha tha"; the partnership firm dates from 2024 (FACTS.md). Was: "2024,
+    // and it has run alongside salaried work rather than instead of it. We are
+    // not going to imply a longer history than that."
     detail:
-      "2024, and it has run alongside salaried work rather than instead of it. We are not going to imply a longer history than that.",
+      "2019, when Mehdi Alam started it, before college. It ran alongside his degree, became a partnership firm in 2024, and has run alongside salaried work rather than instead of it.",
   },
   {
     term: "Where",
+    // 1 Oct 2026: one payment split everywhere. Was "... in US dollars, on the milestone split set out on the pricing page."
     detail:
-      "Saket, New Delhi. Client work across Delhi NCR and the rest of India. The US, UK, UAE and Australia are markets we quote into, in US dollars, on the milestone split set out on the pricing page.",
+      "Saket, New Delhi. Client work across Delhi NCR and the rest of India. The US, UK, UAE and Australia are markets we quote into, in US dollars, on the same terms as in India: 50% to start and 50% at launch.",
   },
   {
     term: "GST",
@@ -74,11 +79,12 @@ const RECORD: { term: string; detail: string }[] = [
     detail:
       "An authorised partner, for the firm. Partners carry unlimited joint liability, which is the part of a partnership nobody advertises and every client is entitled to know.",
   },
-  {
-    term: "Photographs",
-    detail:
-      "None, on purpose. Two of the faces that used to be on this page were stock photographs of strangers. Initials are honest; a stock photograph of somebody who has never worked here is not.",
-  },
+  // REMOVED 1 Oct 2026: the "Photographs" row. Mehdi asked for the "No
+  // photographs" line to go, and this row said the same thing. Initials
+  // avatars stay. Was: { term: "Photographs", detail: "None, on purpose. Two of
+  // the faces that used to be on this page were stock photographs of
+  // strangers. Initials are honest; a stock photograph of somebody who has
+  // never worked here is not." }
 ];
 
 export default function About() {
@@ -139,8 +145,9 @@ export default function About() {
                     Original: "Founded in 2024. Owned by three partners, who are named below with what each of them actually does." */}
                 {/* 28 Sep 2026 (Mehdi): no founder titles on anybody. Was "The
                     founders are named below with what each of them actually does." */}
-                Founded in 2024. The people are named below with what each of them
-                actually does.
+                {/* 1 Oct 2026 (Mehdi): founded 2019. Was "Founded in 2024." */}
+                Founded in 2019, and a partnership firm since 2024. The people are named
+                below with what each of them actually does.
               </p>
             </Reveal>
             <Reveal delay={0.15}>
@@ -182,10 +189,14 @@ export default function About() {
               <h2 className="mt-5 text-display font-display font-thin-display">
                 What we are, <span className="font-loud-display">on paper</span>
               </h2>
+              {/* 1 Oct 2026: a plain line about what the record holds. It used
+                  to describe the four cards that were deleted from here ("Four
+                  cards reading Craft, Speed, Partnership and Transparency used
+                  to sit here. ..."), which told a visitor about the page's
+                  history instead of about us. */}
               <p className="mt-5 text-sm text-muted-foreground text-pretty">
-                Four cards reading Craft, Speed, Partnership and Transparency used to sit here.
-                None of them was something you could check, so they are gone rather than
-                rewritten. This is what is left when only the checkable part stays.
+                The facts a client checks before signing: what kind of firm this is, since
+                when, where, how tax works on your invoice, and who signs.
               </p>
             </div>
           </Reveal>
@@ -252,7 +263,11 @@ export default function About() {
                   <span className="accent-italic text-gradient">what each does</span>
                 </>
               }
-              subtitle="No photographs, by choice: initials instead. Two of the faces that used to be on this page were stock photographs of people who have never worked here."
+              /* 1 Oct 2026 (Mehdi): a straight line instead of "No photographs,
+                 by choice: initials instead. Two of the faces that used to be on
+                 this page were stock photographs of people who have never
+                 worked here." The initials avatars stay. */
+              subtitle="The people who build your project. You talk to them directly."
               className="max-w-3xl"
             />
 
@@ -330,7 +345,7 @@ export default function About() {
           <div className="container-page">
             <SectionHeading
               align="left"
-              eyebrow="Since 2024"
+              eyebrow="Since 2019"
               /* Weight contrast. Both serif accents on this page are spent.
                  Deliberately not "three entries": `milestones` is a CMS
                  collection and a count written into a heading is a fact that
@@ -341,7 +356,11 @@ export default function About() {
                   <span className="font-loud-display">happened so far</span>
                 </>
               }
-              subtitle="A short list, because the firm is young. We would rather print what can be dated than pad it out."
+              /* 1 Oct 2026: the journey starts in 2019 (Mehdi). Was "A short
+                 list, because the firm is young. We would rather print what
+                 can be dated than pad it out." Every entry still has a date
+                 on record (see `milestones` in seed.ts). */
+              subtitle="Every step with its date, from the start in 2019 to the site you are reading."
               className="max-w-3xl"
             />
 

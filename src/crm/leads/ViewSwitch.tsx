@@ -3,9 +3,46 @@ import { Link } from "react-router-dom";
 import { Columns3, Rows3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CRM } from "../nav";
+import { CRM_SCOPE_LABELS, useCrmData, type CrmScope } from "../useCrmData";
 
 /** Filter params both screens share; the table's view and sort stay on the table. */
-const SHARED = ["q", "kind", "city", "source", "assignee", "demo", "hot", "overdue"];
+const SHARED = ["q", "kind", "city", "source", "assignee", "old", "demo", "hot", "overdue"];
+
+const SCOPE_TITLE: Record<CrmScope, string> = {
+  mine: "Leads you work (Mehdi: also the Unassigned pool)",
+  team: "Leads someone else in the team works",
+  all: "Every lead",
+  unassigned: "Open leads nobody works yet: the pool to share out",
+};
+
+/**
+ * WHOSE LEADS (spec 10.4): Mine, Team, All, Unassigned, for Mehdi and admins.
+ * Each screen remembers its own choice in this browser (useCrmData). Nothing
+ * shows for a member (they read only their own leads) or before the team.
+ * Buttons, not tabs: the saved views below are the tabs.
+ */
+export function ScopeSwitch({ className, counts }: { className?: string; counts?: Partial<Record<CrmScope, number>> }) {
+  const { scopes, scope, setScope } = useCrmData();
+  if (!scopes.length) return null;
+  const item =
+    "inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:h-10 max-md:flex-1 max-md:justify-center max-md:px-1.5";
+  return (
+    <div role="group" aria-label="Whose leads" data-testid="crm-scope"
+      className={cn("inline-flex rounded-lg border border-border bg-background p-0.5 max-md:flex max-md:w-full", className)}>
+      {scopes.map((s) => {
+        const on = s === scope;
+        const n = counts?.[s];
+        return (
+          <button key={s} type="button" aria-pressed={on} title={SCOPE_TITLE[s]} onClick={() => setScope(s)}
+            className={cn(item, on ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}>
+            {CRM_SCOPE_LABELS[s]}
+            {n !== undefined && n > 0 && <span className="rounded-full bg-primary/10 px-1.5 text-[11px] tabular-nums text-primary">{n}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function carry(params: URLSearchParams, extra: string[] = []): string {
   const n = new URLSearchParams();

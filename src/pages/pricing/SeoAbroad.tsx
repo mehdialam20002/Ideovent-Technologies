@@ -78,11 +78,12 @@ export default function SeoAbroad() {
             </ul>
           </div>
 
-          {/* The milestone split differs by market: PACKAGES-INTERNATIONAL.html and
-              the MSA use 40 / 30 / 30, against 50 / 30 / 20 in India. */}
+          {/* One split in every market since 1 Oct 2026 (Mehdi): 50% advance and
+              50% at launch. It replaced 40 / 30 / 30 (kickoff, acceptance,
+              delivery) for these projects and 50 / 30 / 20 in India. */}
           <p className="mt-6 max-w-3xl text-sm text-muted-foreground text-pretty">
-            International projects are paid <strong className="font-medium text-foreground">40 / 30 / 30</strong>{" "}
-            (kickoff, acceptance, delivery) rather than the 50 / 30 / 20 used in India, and the exact shares are set in
+            International projects are paid the same way as projects in India:{" "}
+            <strong className="font-medium text-foreground">50% to start and 50% at launch</strong>, written into
             your Statement of Work. Ideovent Technologies is not registered under GST and no export LUT has been filed,
             so invoices are non-GST and say so on their face. Tell us where you are on the first call and we will show
             you what your invoice will look like before you commit.

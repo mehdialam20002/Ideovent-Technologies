@@ -116,7 +116,7 @@ export function groupEvents(events: OutreachEvent[]): Map<string, OutreachEvent[
 
 /** A status event that moved a lead to Won (LeadPage writes "Status: X to Won"). */
 export function isWinEvent(e: OutreachEvent): boolean {
-  return e.type === "status" && /\bto Won$/.test(e.detail || "");
+  return e.type === "status" && typeof e.detail === "string" && /\bto Won$/.test(e.detail);
 }
 
 /* ── Rates ─────────────────────────────────────────────────────────────── */
@@ -264,6 +264,54 @@ export function sendsPerDay(events: OutreachEvent[], opens: DemoSiteOpen[], days
   return points;
 }
 
+/* ── Who works a lead (0011): people, the old label, the owner filter ────── */
+
+/** A team member's name from their id (crm_team); undefined when not known. */
+export type NameOf = (id: string | null | undefined) => string | undefined;
+
+const noNames: NameOf = () => undefined;
+
+/** The owner filter's value for the Unassigned pool. An empty filter ("" or undefined) is everyone. */
+export const UNASSIGNED_OWNER = "__unassigned__";
+
+/** True when the lead belongs to `owner`: a team member id, UNASSIGNED_OWNER for the pool, empty for everyone. */
+export function ownedBy(lead: OutreachLead, owner?: string | null): boolean {
+  if (!owner) return true;
+  if (owner === UNASSIGNED_OWNER) return !lead.assigneeId;
+  return lead.assigneeId === owner;
+}
+
+/** The leads of one owner (the dashboard's owner filter); every lead when the filter is empty. */
+export function leadsOfOwner(leads: OutreachLead[], owner?: string | null): OutreachLead[] {
+  return owner ? leads.filter((l) => ownedBy(l, owner)) : leads;
+}
+
+/** A person's name for a label; an id nobody named (not in the caller's roster) reads as below. */
+export function personLabel(id: string, nameOf: NameOf = noNames): string {
+  return nameOf(id) || "Someone in the team";
+}
+
+export interface OwnerOption {
+  /** A team member id, or UNASSIGNED_OWNER. */
+  id: string;
+  label: string;
+  count: number;
+}
+
+/** The owner filter's choices: everyone holding leads (most first), then Unassigned when any lead is. */
+export function ownerOptions(leads: OutreachLead[], nameOf: NameOf = noNames): OwnerOption[] {
+  const counts = new Map<string, number>();
+  let pool = 0;
+  for (const l of leads) {
+    if (l.assigneeId) counts.set(l.assigneeId, (counts.get(l.assigneeId) || 0) + 1);
+    else pool++;
+  }
+  const people = [...counts]
+    .map(([id, count]) => ({ id, label: personLabel(id, nameOf), count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  return pool ? [...people, { id: UNASSIGNED_OWNER, label: "Unassigned", count: pool }] : people;
+}
+
 /* ── Breakdowns: by city, kind, source, assignee ─────────────────────────── */
 
 export interface BreakdownRow {
@@ -274,28 +322,48 @@ export interface BreakdownRow {
   contacted: number;
   replied: number;
   won: number;
+  /** Assignee rows: the person (a team member id) this row is. */
+  personId?: string;
+  /** Assignee rows: the old free-text label ("Aman") of leads nobody is assigned to yet. */
+  oldLabel?: string;
 }
 
 export type BreakdownDim = "city" | "kind" | "source" | "assignee";
 
 const NONE_KEY = "__none__";
+const OLD_LABEL_KEY = "old:";
 
-function dimValue(l: OutreachLead, dim: BreakdownDim): string {
-  const raw = dim === "city" ? l.city : dim === "kind" ? l.kind : dim === "source" ? l.source : l.assignedTo;
+function dimValue(l: OutreachLead, dim: Exclude<BreakdownDim, "assignee">): string {
+  const raw = dim === "city" ? l.city : dim === "kind" ? l.kind : l.source;
   return (raw || "").trim();
 }
 
-/** Largest first; the "Not set" bucket always last. */
-export function breakdown(leads: OutreachLead[], events: OutreachEvent[], dim: BreakdownDim): BreakdownRow[] {
+/**
+ * A lead's group on the assignee breakdown: the person who works it
+ * (assigneeId, by name); a lead nobody is assigned to yet but with an old
+ * free-text label is "Old: Aman"; anything else is Unassigned (null).
+ */
+function assigneeGroup(l: OutreachLead, nameOf: NameOf): Pick<BreakdownRow, "key" | "label" | "personId" | "oldLabel"> | null {
+  if (l.assigneeId) return { key: l.assigneeId, label: personLabel(l.assigneeId, nameOf), personId: l.assigneeId };
+  const old = (l.assignedTo || "").trim();
+  return old ? { key: OLD_LABEL_KEY + old.toLowerCase(), label: `Old: ${old}`, oldLabel: old } : null;
+}
+
+/** Largest first; the "Not set" (assignee: "Unassigned") bucket always last. `nameOf` names the people. */
+export function breakdown(leads: OutreachLead[], events: OutreachEvent[], dim: BreakdownDim, nameOf: NameOf = noNames): BreakdownRow[] {
   const byLead = groupEvents(events);
   const rows = new Map<string, BreakdownRow>();
   for (const l of leads) {
-    const raw = dimValue(l, dim);
-    const key = raw ? raw.toLowerCase() : NONE_KEY;
-    let r = rows.get(key);
+    let group: Pick<BreakdownRow, "key" | "label" | "personId" | "oldLabel">;
+    if (dim === "assignee") group = assigneeGroup(l, nameOf) || { key: NONE_KEY, label: "Unassigned" };
+    else {
+      const raw = dimValue(l, dim);
+      group = { key: raw ? raw.toLowerCase() : NONE_KEY, label: raw || "Not set" };
+    }
+    let r = rows.get(group.key);
     if (!r) {
-      r = { key, label: raw || "Not set", total: 0, open: 0, contacted: 0, replied: 0, won: 0 };
-      rows.set(key, r);
+      r = { ...group, total: 0, open: 0, contacted: 0, replied: 0, won: 0 };
+      rows.set(group.key, r);
     }
     const evs = byLead.get(l.id) || [];
     r.total++;
@@ -392,6 +460,7 @@ export interface CrmMetrics {
   byCity: BreakdownRow[];
   byKind: BreakdownRow[];
   bySource: BreakdownRow[];
+  /** By the person who works each lead; old free-text labels as "Old: Aman". */
   byAssignee: BreakdownRow[];
   /** Demo opened after the last contact, most recent open first. */
   hot: HotLead[];
@@ -399,17 +468,32 @@ export interface CrmMetrics {
   demos: DemoRow[];
   /** Real demos with no lead linked. */
   unlinkedDemos: number;
+  /** The owner filter the funnel and the breakdowns were counted with ("" = everyone). */
+  owner: string;
+  /** The owner filter's choices, over every lead given. */
+  owners: OwnerOption[];
 }
 
+/**
+ * Every number at once. `owner` (a team member id, or UNASSIGNED_OWNER)
+ * narrows the funnel and the breakdowns to that person's leads; everything
+ * else counts every lead given. `nameOf` names the people on the assignee
+ * breakdown and the owner choices. Without either, the numbers are exactly
+ * those before the team (only the assignee breakdown now groups by person).
+ */
 export function computeMetrics(input: {
   leads: OutreachLead[];
   events: OutreachEvent[];
   opens: DemoSiteOpen[];
   demos: DemoSite[];
   now?: Date;
+  owner?: string | null;
+  nameOf?: NameOf;
 }): CrmMetrics {
   const { leads, events, opens, demos } = input;
   const now = input.now || new Date();
+  const nameOf = input.nameOf || noNames;
+  const owned = leadsOfOwner(leads, input.owner);
   const demoList = demoRows(demos, leads, opens);
   return {
     total: leads.length,
@@ -418,11 +502,13 @@ export function computeMetrics(input: {
     week: weekCompare(leads, events, opens, now),
     rates: rates(leads, events, opens),
     sendsPerDay: sendsPerDay(events, opens, 30, now),
-    funnel: funnel(leads, events),
-    byCity: breakdown(leads, events, "city"),
-    byKind: breakdown(leads, events, "kind"),
-    bySource: breakdown(leads, events, "source"),
-    byAssignee: breakdown(leads, events, "assignee"),
+    funnel: funnel(owned, events),
+    byCity: breakdown(owned, events, "city"),
+    byKind: breakdown(owned, events, "kind"),
+    bySource: breakdown(owned, events, "source"),
+    byAssignee: breakdown(owned, events, "assignee", nameOf),
+    owner: input.owner || "",
+    owners: ownerOptions(leads, nameOf),
     hot: hotLeads(leads, opens, now),
     due: due(leads, now),
     demos: demoList,

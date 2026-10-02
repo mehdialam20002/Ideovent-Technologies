@@ -30,21 +30,31 @@ const SRC = resolve(REPO, "../../03-legal-docs/policies");
 const OUT = resolve(REPO, "src/lib/cms/data/legal.seed.json");
 
 /* ── The business mailbox ─────────────────────────────────────────────────────
-   contact@ideovent.in has NO MAILBOX yet: _assets/FACTS.md, CORRECTION 30 Sep
-   2026, item 6 ("legal and billing templates keep the [[EMAIL]] blank until a
-   message sent from an outside address is received and answered"), and the
-   domain had no MX record on 1 Oct 2026. Until that day [[EMAIL]] stays a
-   visible blank on every page this script builds, and the policies name
-   WhatsApp as the written channel. Flip this together with MAILBOX_LIVE in
-   src/lib/mailbox.ts, then rebuild. */
-const MAILBOX_LIVE = false;
+   contact@ideovent.in HAS A WORKING MAILBOX SINCE 1 OCT 2026: Zoho Mail (the
+   Forever Free plan, on Zoho's India data centre). Its MX, SPF, DKIM and DMARC
+   records are in Vercel DNS and Zoho verified all of them; the same morning
+   the mailbox sent to two outside test services, MxToolbox and Port25, both
+   answers arrived (11:02 and 11:07 IST), and Port25 reported SPF, DKIM and
+   iprev pass. Source: 07-website/GO-LIVE-IDEOVENT-IN.md, section 5, and
+   _assets/FACTS.md, CORRECTION 30 Sep 2026, item 6 ("Live since 1 Oct 2026"),
+   whose rule from that day lets documents print the address in place of
+   [[EMAIL]]. mehdi@ideovent.in was never created: never print it.
+
+   So the policy sources in 03-legal-docs/policies/ now name the address
+   themselves, and while this is true every mention of it on a built page is a
+   mailto: link (step 3d in build()). Keep it in step with MAILBOX_LIVE in
+   src/lib/mailbox.ts. Set both to false only if the mailbox stops working:
+   the run then refuses to build a page that still names the address. */
+const MAILBOX_LIVE = true;
+const MAILBOX = "contact@ideovent.in";
 
 /* ── Blanks we can evidence ──────────────────────────────────────────────────
    Source for every one of these is named. If it is not named, it is not here. */
 const RESOLVED = {
-  // _assets/FACTS.md → Contact → Email: the PLANNED address. Filled only while
-  // MAILBOX_LIVE is true (deleted just below otherwise).
-  EMAIL: "contact@ideovent.in",
+  // The business mailbox, working since 1 Oct 2026 (see MAILBOX_LIVE above).
+  // The sources now write the address out, so this only catches an [[EMAIL]]
+  // that comes back; deleted just below while MAILBOX_LIVE is false.
+  EMAIL: MAILBOX,
 
   // src/lib/cms/seed.ts settings.analytics is {} and no analytics script exists
   // anywhere in index.html or src/. This is a statement of fact about the build.
@@ -57,11 +67,16 @@ const RESOLVED = {
   PAYMENT_GATEWAY: "Razorpay (Razorpay Software Private Limited)",
   PAYMENT_GATEWAY_REGION: "India",
 
-  // src/components/sections/ContactForm.tsx posts through EmailJS; leads are also
-  // written to the CMS store (Supabase when VITE_SUPABASE_URL is set, otherwise
-  // the visitor's own browser). The region depends on the Supabase project region,
-  // which is not yet chosen, so FORM_BACKEND_REGION stays a blank.
+  // src/lib/leads.ts sends every enquiry through EmailJS and, with
+  // VITE_SUPABASE_URL set (production since 26 Sep 2026), writes it to Supabase,
+  // whose project is in Mumbai (07-website/GO-LIVE-IDEOVENT-IN.md, section 2).
   FORM_BACKEND: "EmailJS (email delivery of the form) and Supabase (lead storage)",
+
+  // Since 1 Oct 2026 Privacy-Policy.md writes all of the above out itself,
+  // together with the values the live page was hand-finished with on 26 Sep
+  // 2026 (retention, hosting, the regions) and Zoho Mail for business email,
+  // so none of these tokens is left in a document this script builds. They
+  // stay here, with their evidence, for a source that brings a token back.
 };
 if (!MAILBOX_LIVE) delete RESOLVED.EMAIL;
 
@@ -77,18 +92,14 @@ const CORRECTIONS = {
   // the source .md and in the printable .html, so overriding them here would be
   // a second copy of the same edit and would throw the moment the source moved
   // again. A correction belongs here only while the source still disagrees.
-  "Privacy-Policy.md": [
-    {
-      // There is no Cookie Policy page and no consent banner on this site. The
-      // original sentence promised both. Replaced with what the site really stores.
-      from: "Cookies and similar technologies are covered in the separate **Cookie Policy**: the categories we\nuse, why, and how to switch them off. Non-essential cookies are not set for visitors in the EEA and\nthe UK until consent is given through the banner.",
-      to: "**This site sets no advertising, marketing or analytics cookies.** What it stores on your device is limited to what the site needs to work: your light/dark theme choice, a cached copy of the site's own content so pages load quickly, and, only if you log in to the admin area, a session marker that is discarded when you close the tab. None of it identifies you and none of it is shared with anyone. Because nothing non-essential is set, no consent banner is shown. If analytics or any other non-essential technology is ever added, a full Cookie Policy and a consent banner will be published **before** it goes live, not after.",
-    },
-    {
-      from: "- **Cookies and similar technologies**, see the separate **Cookie Policy**.",
-      to: "- **Cookies and similar technologies**, see section 13. The site sets no advertising or analytics cookies.",
-    },
-  ],
+  //
+  // Folded into the sources on 1 Oct 2026, and so removed from here:
+  //   - Privacy-Policy.md, both cookie entries (section 13 and the cookie line
+  //     of section 3b: no Cookie Policy page and no consent banner exist);
+  //   - Refund-and-Cancellation-Policy.md, the payment schedule (Mehdi, 1 Oct
+  //     2026: one-time projects are 50% in advance and 50% at launch, in India
+  //     and abroad). The .md says it in its own words now, sections 1, 2, 6
+  //     and 10, and the printable .html matches.
   "Terms-of-Service.md": [
     {
       // The Cookie Policy is not published, so it cannot form part of the terms.
@@ -116,8 +127,12 @@ const CORRECTIONS = {
        the kill fee and the 7-day invoice term for each client; "any" or "if
        it sets one" where the agreement has no such clause, and no pointer
        at all where it sets nothing (project file retention);
-     - the e-mail address: left out while MAILBOX_LIVE is false. WhatsApp and
-       the phone number are already beside it on every page;
+     - the e-mail address: needs no wording any more. Since 1 Oct 2026 the
+       sources write contact@ideovent.in out themselves (MAILBOX_LIVE above),
+       so the four EMAIL entries that dropped it from the terms, the
+       disclaimer and the refund policy were removed the same day;
+     - whether the firm is registered under the Partnership Act: left out, in
+       the terms and in the privacy policy alike, until it is known;
      - the effective date: see PUBLISHED below.
 
    PUBLISHED COPY ONLY. The .md in 03-legal-docs/policies/ keeps its
@@ -146,10 +161,15 @@ const NEUTRAL = {
       from: "will not exceed **Rs. [[SITE_LIABILITY_CAP]]** in aggregate. That cap applies to the website,",
       to: "is limited to the fullest extent Indian law allows. That limit applies to the website,",
     },
-    { token: "EMAIL", from: /^\|\s*Email\s*\|\s*\[\[EMAIL\]\]\s*\|[ \t]*\n/m, to: "" },
   ],
-  "Disclaimer.md": [
-    { token: "EMAIL", from: /^\|\s*Email\s*\|\s*\[\[EMAIL\]\]\s*\|[ \t]*\n/m, to: "" },
+  "Privacy-Policy.md": [
+    {
+      // Same unknown as in the terms. The page published since 26 Sep 2026
+      // already reads exactly this in its section 1 table.
+      token: "PARTNERSHIP_REGISTRATION_STATUS",
+      from: "Partnership firm under the Indian Partnership Act, 1932. Registration status: [[PARTNERSHIP_REGISTRATION_STATUS]] |",
+      to: "Partnership firm under the Indian Partnership Act, 1932 |",
+    },
   ],
   "Refund-and-Cancellation-Policy.md": [
     /* Section 2, the short version. */
@@ -180,7 +200,6 @@ const NEUTRAL = {
       to: "Event 5 is the backstop: once that period has passed,",
     },
     /* Section 4, cancelling before work has commenced. */
-    { token: "EMAIL", from: "**+91 77619 21786** is enough, or an email to [[EMAIL]].", to: "**+91 77619 21786** is enough." },
     {
       token: "PRE_KICKOFF_RETENTION_PERCENT",
       from: "a **reservation retention of [[PRE_KICKOFF_RETENTION_PERCENT]]%** of the advance, covering",
@@ -264,12 +283,6 @@ const NEUTRAL = {
       from: "The plan's files are kept for **[[POST_CANCELLATION_FILE_RETENTION_MONTHS]] months** and then deleted.",
       to: "The plan's files are kept for the period written in your plan agreement, agreed before you pay the setup fee, and then deleted.",
     },
-    /* Section 13, if something has gone wrong. */
-    {
-      token: "EMAIL",
-      from: "call **+91 77619 21786**, or write to [[EMAIL]], with what is wrong",
-      to: "call **+91 77619 21786** with what is wrong",
-    },
   ],
 };
 
@@ -281,10 +294,13 @@ const NEUTRAL = {
    publication date only if the page is otherwise final, else keep the page
    noindex as it is").
 
-   On 1 Oct 2026 only the privacy policy is here, with the date it went live.
-   Its .md still has blanks, so a rebuild keeps the hand-finished live copy
-   (see "Which documents to rebuild" below); listing it records the date.
-   Terms (liability cap) and Refund (most of its figures) still have undecided
+   Only the privacy policy is here. It went live on 26 September 2026; its
+   current version is dated 1 October 2026, the day contact@ideovent.in became
+   a working mailbox and business email moved to Zoho Mail (sections 6 and 7),
+   with "founded in 2019" (Mehdi, 1 Oct 2026) in section 1. Since that day its
+   .md carries every value of the hand-finished live copy, so it rebuilds from
+   the source with no blank. Effective date and last updated both read the
+   date below. Terms (liability cap) and Refund (most of its figures) still have undecided
    values behind their neutral wording, so they stay drafts. The Disclaimer
    has none of its own, but it "forms part of the Terms of Service" and sends
    website liability to section 9 of the Terms, which is still a draft, so it
@@ -295,7 +311,7 @@ const NEUTRAL = {
    out of the sitemap), and its date lines read "Effective date: not set yet
    (draft)" instead of showing two blanks. */
 const PUBLISHED = {
-  privacy: "26 September 2026",
+  privacy: "1 October 2026", // first published 26 September 2026
 };
 
 /** `from` as a pattern in which any run of whitespace stands for any other. */
@@ -546,6 +562,30 @@ function build(file, title, date = "") {
     .replace(/(?<=\d) (?=\d)/g, " ")
     .replace(/ (?=[₹$]\d)/g, " ");
 
+  /*
+    3d. THE MAILBOX, AS A LINK (1 Oct 2026).
+
+    The policies give contact@ideovent.in for data requests, grievances and
+    cancellations, and it has been a working mailbox since 1 Oct 2026
+    (MAILBOX_LIVE above). A visitor on a phone should be able to tap it, so
+    every mention becomes a mailto: link HERE, after the Markdown is HTML,
+    rather than in the .md, which stays plain text for the printed copies. An
+    address already inside a link is left as it is. While MAILBOX_LIVE is
+    false the address must not be printed at all, so the run stops instead of
+    publishing an address with no mailbox behind it.
+  */
+  if (MAILBOX_LIVE) {
+    body = body.replace(/<a\b[^>]*>[\s\S]*?<\/a>|contact@ideovent\.in/g, (m) =>
+      m.startsWith("<a") ? m : `<a href="mailto:${MAILBOX}">${MAILBOX}</a>`
+    );
+  } else if (body.includes(MAILBOX)) {
+    throw new Error(
+      `build-legal: ${file} names ${MAILBOX}, but MAILBOX_LIVE is false. Take the address ` +
+        `out of the source (the [[EMAIL]] wording and its NEUTRAL entries are in git history ` +
+        `before 1 Oct 2026), or set MAILBOX_LIVE back to true once the mailbox works.`
+    );
+  }
+
   // 4. Anything still unresolved becomes a visible chip, never a silent gap.
   const remaining = [...new Set(body.match(/\[\[[A-Z_0-9]+\]\]/g) || [])];
   body = body.replace(/\[\[([A-Z_0-9]+)\]\]/g, (_m, t) => `<mark data-blank="${t}">[[${t}]]</mark>`);
@@ -560,11 +600,12 @@ function build(file, title, date = "") {
      --force                                      also replace a published page
 
    A PUBLISHED page (one with an updatedAt date) is never replaced by a rebuild
-   that has MORE blanks than the copy already on the site. The live privacy
-   policy was finished by hand on 26 Sep 2026 with values the .md does not carry
-   yet (retention periods, hosting, the email provider), so rebuilding it from
-   the .md puts 13 blanks back and turns /privacy into a noindexed draft. Such a
-   page is kept and the run says so. Carry the values into the .md first. */
+   that has MORE blanks than the copy already on the site. Until 1 Oct 2026 that
+   kept /privacy: it was finished by hand on 26 Sep 2026 with values its .md did
+   not carry (retention periods, hosting, the email provider), and a rebuild
+   would have put 13 blanks back and made it a noindexed draft. Those values
+   are in the .md now, so privacy rebuilds like the others; the guard stays for
+   the next page someone finishes by hand. Carry the values into the .md first. */
 const SOURCES = {
   privacy: ["Privacy-Policy.md", "Privacy Policy"],
   terms: ["Terms-of-Service.md", "Terms of Service"],

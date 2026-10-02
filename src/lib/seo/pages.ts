@@ -72,8 +72,9 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   },
   "/about": {
     title: "About Ideovent Technologies, Saket, New Delhi",
+    // 1 Oct 2026 (Mehdi): founded 2019. Was "A partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024 and working from Saket, New Delhi. ..."
     description:
-      "A partnership firm of Mehdi Alam and Abhishek Tiwari, founded in 2024 and working from Saket, New Delhi. Who builds your website and how the studio runs.",
+      "Founded in 2019, and since 2024 a partnership firm of Mehdi Alam and Abhishek Tiwari in Saket, New Delhi. Who builds your website and how the studio runs.",
     h1: "A partnership firm in Saket, New Delhi",
     crumb: "About",
   },
