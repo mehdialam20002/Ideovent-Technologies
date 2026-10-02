@@ -52,6 +52,16 @@ export default defineConfig(({ mode }) => {
     one worker chunk; scripts/check-hero-3d.mjs holds its own budget.
   */
   worker: { format: "es" },
+  /*
+    Dev server only. three.js is reached only through the hero worker, which
+    Vite's startup scan does not follow, so the first visit to the home page
+    used to find it late, re-bundle and reload every open page ("optimized
+    dependencies changed. reloading"). With HMR off, as the gate and the e2e
+    servers run, that reload never reaches the page and a check can fail
+    half-way (measure-gutters did, 2 Oct 2026). Listing it here bundles it at
+    startup. The production build does not read optimizeDeps.
+  */
+  optimizeDeps: { include: ["three"] },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
