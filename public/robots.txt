@@ -1,4 +1,4 @@
-# Ideovent Technologies, https://ideovent.vercel.app
+# Ideovent Technologies, https://www.ideovent.in
 # The site is a single-page React app served from index.html, so every crawlable
 # URL is listed in the sitemap below rather than discovered from a directory tree.
 
@@ -68,4 +68,4 @@ Disallow: /crm
 Disallow: /crm/
 Disallow: /api/
 
-Sitemap: https://ideovent.vercel.app/sitemap.xml
+Sitemap: https://www.ideovent.in/sitemap.xml

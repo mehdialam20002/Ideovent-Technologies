@@ -108,6 +108,28 @@ for (const n of notes) check(C.looksLikeNote(n) === true, `note not caught: ${n}
 for (const s of sentences) check(C.looksLikeNote(s) === false, `sentence taken for a note: ${s}`);
 check(C.startingObservation({ observation: notes[0] }) === "", "a footer note starts a message");
 
+// 2 Oct 2026: a lead named only with generic words ("Kids Dental Clinic") blocked every
+// kids-dental message, because our own template says "aapka kids dental clinic dekha".
+{
+  const me = { id: "a", instituteName: "Care Bear Dental Clinic" };
+  const others = [
+    { id: "b", instituteName: "Kids Dental Clinic" },
+    { id: "c", instituteName: "Dental Clinic" },
+    { id: "d", instituteName: "Verma Coaching Academy" },
+    { id: "e", instituteName: "Sunrise Public School" },
+    { id: "f", instituteName: "Smile Dental" },
+  ];
+  const msg = "Namaste Dr. Neha Singh ji,\n\nGoogle par aapka kids dental clinic dekha. Public school aur coaching classes bhi.";
+  check(C.otherLeadsNamed(msg, me, [me, ...others]).length === 0, "generic names (Kids Dental Clinic, Dental Clinic) do not block our own template words");
+  check(C.isGenericLeadName("Kids Dental Clinic") && C.isGenericLeadName("Public School") && !C.isGenericLeadName("Verma Coaching Academy"), "generic-name test separates generic from distinctive names");
+  const leak = C.otherLeadsNamed("Namaste, Verma Coaching Academy ke liye sample banaya hai.", me, [me, ...others]);
+  check(leak.length === 1 && leak[0].id === "d", "a distinctive other lead's name (the 28 Sep bug) still blocks the send");
+  const leak2 = C.otherLeadsNamed("Sunrise Public School ka sample", me, [me, ...others]);
+  check(leak2.length === 1 && leak2[0].id === "e", "a distinctive school name still blocks");
+  check(C.otherLeadsNamed("Sunrise Public Schools ki list", me, [me, ...others]).length === 0, "names match as whole words only");
+  check(C.otherLeadsNamed("Care Bear Dental Clinic ka sample", me, [me, ...others]).length === 0, "the lead's own name never blocks");
+}
+
 /* Fixtures: fictional leads (example.org). */
 const settings = { signature: "Mehdi", quietStart: "00:00", quietEnd: "00:00", alertOnDemoOpen: false };
 const school = (language, over = {}) => ({

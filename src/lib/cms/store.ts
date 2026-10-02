@@ -102,6 +102,10 @@ export function sortByOrder<T extends BaseDoc>(list: T[]): T[] {
  * The public site never touches it: it reads content from the seed via LocalStore. So the
  * real store is resolved through a dynamic import the first time a method is called, which
  * moves the SDK into its own chunk.
+ *
+ * Since 2 Oct 2026 a visitor's page does not call it at all, in Supabase mode either: the
+ * provider reads what the address needs with a plain fetch (./publicRead.ts, chosen by
+ * ./scope.ts), so the SDK chunk is downloaded only by the admin and the CRM.
  */
 function createDeferredSupabaseStore(): Store {
   let real: Store | null = null;

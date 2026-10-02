@@ -4,7 +4,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import { MotionConfig, MotionGlobalConfig } from "framer-motion";
 import App from "./App.tsx";
-import { ContentProvider } from "./lib/cms/context";
+import { ContentProvider, primeContent } from "./lib/cms/context";
 import { TRANSITION } from "./lib/motion";
 import "./index.css";
 import "./styles/system.css";
@@ -102,6 +102,14 @@ function Motion({ children }: { children: ReactNode }) {
     </MotionConfig>
   );
 }
+
+/*
+  THE CONTENT READ STARTS HERE, BEFORE REACT (2 Oct 2026). With Supabase on, the
+  read for this address (src/lib/cms/scope.ts) leaves now, while React builds the
+  first frame from the seed, instead of after the first render and after a
+  214 KB SDK chunk. A demo's own row is usually back before its template's chunk.
+*/
+primeContent();
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

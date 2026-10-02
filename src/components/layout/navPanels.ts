@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useCollection } from "@/lib/cms/context";
 import type { NavItem } from "@/lib/cms/types";
+import { WEBSITES_HEADING, WEBSITE_LINKS } from "@/pages/websites/links";
 
 /**
  * Turns the navigation singleton into the panels the header renders.
@@ -47,13 +48,15 @@ export interface ResolvedNavItem {
   The project bands, and their headings, are the ones /work already uses
   (src/pages/Work.tsx, BANDS). A visitor who opens the panel and then lands on the
   page must not be told the work is organised two different ways, and, more
-  importantly, "Client projects" and "Elsewhere" are the distinction that keeps
+  importantly, "Client projects" and "Experience" are the distinction that keeps
   the portfolio honest: employer work is never folded into the paid-client list.
 */
 const PROJECT_BANDS: { key: string; heading: string }[] = [
+  // First since 2 Oct 2026, as on /work (Mehdi: "project me wtfgos.com ko phle
+  // dikhao"). Each item's line still names the employer: employerLine() below.
+  { key: "employer work", heading: "Experience" },
   { key: "web", heading: "Client projects" },
   { key: "product", heading: "Our own products" },
-  { key: "employer work", heading: "Elsewhere" },
 ];
 
 /**
@@ -90,7 +93,12 @@ export function useResolvedNav(items: NavItem[]): ResolvedNavItem[] {
           description: s.shortDescription,
         });
       }
-      return order.map((heading) => ({ heading, links: byCategory.get(heading)! }));
+      const groups = order.map((heading) => ({ heading, links: byCategory.get(heading)! }));
+      // The /websites pages (2 Oct 2026), from code rather than the CMS, so a
+      // services list edited in /admin cannot drop them. Last, after the
+      // services themselves. Labels only: src/pages/websites/links.ts.
+      groups.push({ heading: WEBSITES_HEADING, links: WEBSITE_LINKS.map((l) => ({ ...l })) });
+      return groups;
     };
 
     const projectPanel = (): PanelGroup[] => {

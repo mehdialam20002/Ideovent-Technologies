@@ -122,3 +122,39 @@ page's `og:image:width` and `og:image:height` change with it. `scripts/test-outr
 checks the tags, the size and the reservation. Check a deploy with:
 
     curl -s https://www.ideovent.in/w/dental | grep -o '<meta property="og:image" content="[^"]*"'
+
+## The SPA fallback is /spa-shell.html, and / has its own canonical (2 Oct 2026)
+
+Until 2 Oct 2026 `dist/index.html` was two things at once: the homepage, and the file the
+catch-all rewrite served for every address without a file of its own. It could not carry a
+canonical (a pitch page, a demo or a mistyped URL would have claimed to be the homepage), so
+the homepage was the one public page with no canonical in its HTML. Google's JavaScript SEO
+guide: "The best way to set the canonical URL is to use HTML".
+
+Now `scripts/prerender-heads.mjs` writes two files:
+
+- `dist/index.html`: the homepage, with its canonical (`https://www.ideovent.in/`), og:url,
+  title, description, JSON-LD and no-script text. Vercel serves it for `/` as a real file.
+- `dist/spa-shell.html`: the fallback, with the homepage's title and description but **no
+  canonical and no og:url**. The catch-all rewrite `/((?!assets/).*)` now points at
+  `/spa-shell.html`; `<Seo>` sets the canonical at runtime on the pages it serves.
+
+The build fails if `/` does not carry exactly one canonical or if the shell carries one. Things
+that name the shell and change with it: `api/share.js` (`SHELL_PATH`, the preview cards for
+demos and pitches; it also strips any canonical it is handed), `scripts/sync-noindex-header.mjs`,
+`scripts/e2e-crm-host.mjs`, `public/_redirects` (Netlify) and the manual GitHub Pages workflow.
+On crm.ideovent.in, `/` also gets `dist/index.html`; that host is noindex on every path, so the
+homepage canonical there changes nothing. Check a deploy with:
+
+    curl -s https://www.ideovent.in/ | grep -o 'rel="canonical" href="[^"]*"'
+    curl -s https://www.ideovent.in/any-missing-page | grep -c 'rel="canonical"'
+
+The first must print `https://www.ideovent.in/`, the second `0`.
+
+## IndexNow (2 Oct 2026)
+
+`public/<key>.txt` is the IndexNow key file: its name and its content are the key, and Vercel
+serves it as a real file, so no rule here touches it (a name with a dot never matches the
+bare-slug rules). Bing, Yandex, Seznam, Naver and Yep read it to check that a submission is
+ours. `node scripts/indexnow.mjs` submits the sitemap's changed URLs BY HAND after a deploy;
+it never runs during a build. Usage is at the top of that script.

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { liveEmail, whatsappInstead } from "@/lib/mailbox";
 import { PAGE_SEO } from "@/lib/seo/pages";
 import { serviceListNodes } from "@/lib/seo/schema";
+import WebsitesStrip from "./websites/WebsitesStrip";
 
 /*
   WHAT YOU ACTUALLY GET.
@@ -257,6 +258,10 @@ export default function ServicesPage() {
 );
             })}
           </motion.div>
+
+          {/* The /websites pages (2 Oct 2026): a website for a clinic, a school
+              or a coaching institute, and the monthly plan, one page each. */}
+          <WebsitesStrip as="h3" className="mt-14" />
         </div>
       </section>
 

@@ -1,5 +1,5 @@
 // Relative, not "@/": scripts/prerender-heads.mjs bundles this file with esbuild.
-import { inr, ONE_TIME, PLANS, SEO, SETUP_FEE, TERM_MONTHS, usdWord } from "../pricing";
+import { bandRange, firstYearTotal, inr, monthlyLine, ONE_TIME, PLANS, SEO, SETUP_FEE, TERM_MONTHS, termLine, usdWord } from "../pricing";
 
 /**
  * SEARCH METADATA FOR EVERY PUBLIC PAGE, IN ONE PLACE (1 Oct 2026).
@@ -40,11 +40,13 @@ export interface PageSeo {
 const starter = PLANS.starter;
 /** "₹899/month + ₹2,999 setup on a 12-month plan": price, fee and term together. */
 const monthlyFromLine = `${inr(starter.monthly)}/month + ${inr(SETUP_FEE)} setup on a ${TERM_MONTHS}-month plan`;
+/** "₹899/month + ₹2,999 setup, 12 months": the short form the /websites descriptions fit. */
+const websiteMonthly = `${inr(starter.monthly)}/month + ${inr(starter.setup)} setup, ${starter.months} months`;
 
 export const PAGE_SEO: Record<string, PageSeo> = {
   "/": {
     title: "Web Design & Software Company in New Delhi | Ideovent",
-    description: `Websites, web apps and software for businesses, built in Saket, New Delhi. Buy outright from ${inr(ONE_TIME.landing.min)}, or ${monthlyFromLine}.`,
+    description: `Websites, web apps and software for businesses, built in Saket, New Delhi. Buy outright from ${inr(ONE_TIME.landing.min)}, or pay ${monthlyFromLine}.`,
     // The home h1 is the hero's own (seed.home.hero.lines, owned by the hero);
     // this line is only a fallback for the prerendered no-script copy.
     h1: "Websites, apps and software for businesses, built in New Delhi",
@@ -58,14 +60,14 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   },
   "/pricing": {
     title: "Website Price in India: Monthly Plans & Packages | Ideovent",
-    description: `Website from ${inr(starter.monthly)}/month + ${inr(SETUP_FEE)} setup (${TERM_MONTHS}-month plan) or ${inr(ONE_TIME.landing.min)} one-time. Portals from ${inr(ONE_TIME.portal.min)}, software from ${inr(ONE_TIME.software.min)}, local SEO from ${inr(SEO.indiaFrom)}/month.`,
+    description: `Website from ${inr(starter.monthly)}/month + ${inr(SETUP_FEE)} setup (${TERM_MONTHS}-month plan) or from ${inr(ONE_TIME.landing.min)} one-time. Portals from ${inr(ONE_TIME.portal.min)}, software from ${inr(ONE_TIME.software.min)}, local SEO from ${inr(SEO.indiaFrom)}/month.`,
     h1: "Website and software prices, in writing",
     crumb: "Pricing",
   },
   "/work": {
     title: "Our Work: Live Websites, Apps & Software | Ideovent",
     description:
-      "Client websites and apps you can open: GYM MAP, WedArt Films, Atelier Co., Tamkuhi Bazaar and more, each with what it does and the stack behind it.",
+      "Client websites and apps you can open: GYM MAP, WedArt Films, Atelier Co., Tamkuhi Bazaar and more, each with what it does and the tech stack behind it.",
     h1: "Websites, apps and software we have built",
     crumb: "Work",
     image: "/og/ideovent-og-work.png",
@@ -88,15 +90,16 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   "/faq": {
     title: "FAQ: Website Cost, Timelines, SEO & Ownership | Ideovent",
     description:
-      "Straight answers: what a website costs, how long it takes, who owns the code and the domain, how long SEO takes, and what happens after launch.",
+      "Straight answers: what a website costs, how long it takes to build, who owns the code and the domain, how long SEO takes, and what happens after launch.",
     h1: "Questions about websites, prices and SEO, answered",
     crumb: "FAQ",
   },
+  // Rewritten 2 Oct 2026 with the blog itself: five guides replaced nine posts.
   "/blog": {
-    title: "Website & SEO Guides for Small Businesses | Ideovent",
+    title: "Website Guides for Small Businesses in India | Ideovent",
     description:
-      "Plain notes for business owners on websites, speed, common website mistakes, local SEO and choosing a tech partner, from the people who build the sites.",
-    h1: "Guides on websites and local SEO for small businesses",
+      "Plain guides for business owners in India: what a website costs, paying monthly or paying once, and what clinic, school and coaching websites need to show.",
+    h1: "Guides on websites for small businesses in India",
     crumb: "Blog",
   },
   "/eduflow": {
@@ -109,16 +112,53 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   "/internship": {
     title: "Web Development Internship in New Delhi | Ideovent LaunchPad",
     description:
-      "A 12-week web development internship in New Delhi, mentored by Ideovent's partners, with a 100-mark rubric and a certificate anyone can verify.",
+      "A 12-week web development internship in New Delhi, mentored by Ideovent's two partners, with a 100-mark rubric and a certificate that anyone can verify.",
     h1: "A 12-week web development internship in New Delhi",
     crumb: "Internship",
   },
   "/verify": {
-    title: "Verify an Ideovent Internship Certificate",
+    title: "Verify an Ideovent Technologies Internship Certificate",
     description:
-      "Check whether an Ideovent Technologies internship certificate is genuine. Enter the certificate ID printed on it, or scan its QR code.",
+      "Check whether an Ideovent Technologies internship certificate is genuine. Enter the certificate ID printed on it, or scan its QR code, to see its record.",
     h1: "Check an Ideovent certificate",
     crumb: "Verify a certificate",
+  },
+
+  /* ── THE /websites PAGES (2 Oct 2026): keyword landing pages, content in
+     src/pages/websites/. Each title is 50 to 60 characters with the searched
+     term first, each description 150 to 155. The monthly plan's URL carries
+     "899" because that is what people type; its title and description still
+     carry the setup fee and the 12-month term. `crumb` is the last crumb; the
+     full trail (Home > Websites > page) is in src/pages/websites/content/. ── */
+  "/websites": {
+    title: "Website Design in Delhi for Small Businesses | Ideovent",
+    description: `Websites for clinics, schools, coaching institutes and shops in Delhi: ${monthlyLine(starter)}, ${termLine(starter)}, or bought outright from ${inr(ONE_TIME.landing.min)}.`,
+    h1: "Website design in Delhi for small businesses",
+    crumb: "Websites",
+  },
+  "/websites/dental-clinic": {
+    title: `Dental Clinic Website in Delhi, from ${inr(ONE_TIME.website.min)} | Ideovent`,
+    description: `Dental clinic website with treatments, fees, timings and WhatsApp appointment requests. ${bandRange(ONE_TIME.website)} one time, or ${websiteMonthly}.`,
+    h1: "A dental clinic website patients can use on their phone",
+    crumb: "Dental clinic website",
+  },
+  "/websites/school": {
+    title: `School Website Design in Delhi, from ${inr(ONE_TIME.website.min)} | Ideovent`,
+    description: `School website with admissions, notices, fees, results and the CBSE disclosure page. ${bandRange(ONE_TIME.website)} one time, or ${websiteMonthly}.`,
+    h1: "School website design for admissions, notices and parents",
+    crumb: "School website",
+  },
+  "/websites/coaching-institute": {
+    title: `Coaching Institute Website Design, from ${inr(ONE_TIME.website.min)} | Ideovent`,
+    description: `Coaching institute website with courses, batch timings, fees and demo class requests. ${bandRange(ONE_TIME.website)} one time, or ${websiteMonthly}.`,
+    h1: "Coaching institute website with courses, batches and fees",
+    crumb: "Coaching institute website",
+  },
+  "/websites/899-per-month": {
+    title: `Website for ${inr(starter.monthly)}/month + ${inr(starter.setup)} Setup, ${starter.months} Months | Ideovent`,
+    description: `Business website on a ${termLine(starter)}: ${monthlyLine(starter)}. Hosting, SSL, a WhatsApp button and ${starter.changesPerMonth} changes a month. First year ${inr(firstYearTotal(starter))} in all.`,
+    h1: `Website for ${monthlyLine(starter)}, ${termLine(starter)}`,
+    crumb: "Website on a monthly plan",
   },
 };
 
@@ -146,11 +186,21 @@ export function clip(text: string, max = DESCRIPTION_MAX): string {
   return `${cut.slice(0, word > 0 ? word : max - 1).replace(/[,;:.\s]+$/, "")}…`;
 }
 
-/** "X | Ideovent" when that fits, else X alone (a title over 60 is cut by Google anyway). */
+/** Shortest <title> the helpers aim for: under this, the full name is used (SEO audit, 2 Oct 2026). */
+export const TITLE_MIN = 50;
+
+/**
+ * "X | Ideovent" when that fits, else X alone (a title over 60 is cut by Google
+ * anyway). When "X | Ideovent" would be under 50 characters, the full name
+ * "X | Ideovent Technologies" is used instead, if it fits in 60: a short case
+ * study or policy title then still names the firm in full.
+ */
 export function withBrand(name: string): string {
   const n = name.trim();
   if (/ideovent/i.test(n)) return n;
   const branded = `${n} | Ideovent`;
+  const full = `${n} | Ideovent Technologies`;
+  if (branded.length < TITLE_MIN && full.length <= TITLE_MAX) return full;
   return branded.length <= TITLE_MAX ? branded : n;
 }
 
@@ -179,6 +229,9 @@ interface ProjectLike {
   summary?: string;
   clientName?: string;
   category?: string;
+  /** Optional overrides, as on services: the complete <title> and the meta description. */
+  seoTitle?: string;
+  metaDescription?: string;
 }
 
 /**
@@ -197,9 +250,15 @@ export function projectSeo(p: ProjectLike): PageSeo {
     const employer = (p.clientName || "").split(/,\s/)[0].trim();
     title = employer ? `${name}, built by Mehdi Alam at ${employer}` : name;
   } else {
-    title = withBrand(rest ? `${name}: ${rest}` : name);
+    // seoTitle never replaces the employer-work title above: its attribution stays.
+    title = p.seoTitle?.trim() || withBrand(rest ? `${name}: ${rest}` : name);
   }
-  return { title, description: clip(p.summary || ""), h1: p.title, crumb: p.title };
+  return {
+    title,
+    description: clip(p.metaDescription?.trim() || p.summary || ""),
+    h1: p.title,
+    crumb: p.title,
+  };
 }
 
 interface PostLike {
@@ -222,7 +281,7 @@ export const LEGAL_PAGES = {
   privacy: {
     path: "/privacy",
     description:
-      "How Ideovent Technologies collects, uses and protects personal data under India's DPDP Act and the GDPR, and how to reach our Grievance Officer.",
+      "How Ideovent Technologies collects, uses and protects your personal data under India's DPDP Act and the GDPR, and how to contact our Grievance Officer.",
   },
   terms: {
     path: "/terms",
@@ -241,6 +300,16 @@ export const LEGAL_PAGES = {
   },
 } as const;
 
+/**
+ * A policy's <title> where "<document title> | Ideovent Technologies" stays under
+ * TITLE_MIN (SEO audit, 2 Oct 2026: "Privacy Policy | Ideovent Technologies" is 38
+ * characters). The h1 and the breadcrumb keep the document's own title. Terms and
+ * Disclaimer are drafts (noindex, outside the sitemap): give them one when they go live.
+ */
+const LEGAL_TITLES: Partial<Record<keyof typeof LEGAL_PAGES, string>> = {
+  privacy: "Privacy Policy: How Ideovent Technologies Handles Your Data",
+};
+
 export function legalSeo(kind: keyof typeof LEGAL_PAGES, docTitle: string): PageSeo {
-  return { title: withBrand(docTitle), description: LEGAL_PAGES[kind].description, h1: docTitle, crumb: docTitle };
+  return { title: LEGAL_TITLES[kind] || withBrand(docTitle), description: LEGAL_PAGES[kind].description, h1: docTitle, crumb: docTitle };
 }

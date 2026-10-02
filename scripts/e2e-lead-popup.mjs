@@ -391,7 +391,7 @@ async function t(fn) {
     await v.page.getByRole("button", { name: "Send details" }).click();
     await v.page.waitForTimeout(1500);
     const p2 = v.emails[1]?.template_params || {};
-    check(/Details added/.test((await v.page.locator(CARD).textContent()) || "") && p2.organisation === "Riverbend Dental Clinic" && p2.city === "Patna" && p2.timeline === "In 1 to 3 months" && /₹20,000-₹45,000/.test(p2.budget || "") && Boolean(p2.follow_up_of), "the optional second step sends and points at the first", JSON.stringify({ org: p2.organisation, city: p2.city, timeline: p2.timeline, budget: p2.budget, followUp: Boolean(p2.follow_up_of) }));
+    check(/Details added/.test((await v.page.locator(CARD).textContent()) || "") && p2.organisation === "Riverbend Dental Clinic" && p2.city === "Patna" && p2.timeline === "In 1 to 3 months" && /₹12,000-₹25,000/.test(p2.budget || "") && Boolean(p2.follow_up_of), "the optional second step sends and points at the first", JSON.stringify({ org: p2.organisation, city: p2.city, timeline: p2.timeline, budget: p2.budget, followUp: Boolean(p2.follow_up_of) }));
 
     await v.reload();
     await v.advance(125000);

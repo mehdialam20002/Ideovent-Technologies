@@ -43,19 +43,29 @@ const asset = (p?: string): string => {
   return `${B}${p.replace(/^\//, "")}`;
 };
 
-/* Search titles for the posts whose own title runs past 60 characters with the
- * brand (keyword plan, 1 Oct 2026). The page keeps the full title as its h1; this
- * is only the <title> and the share card. Keyed by post id. */
-const POST_SEO_TITLES: Record<string, string> = {
-  "3": "Why a Fast Website Matters for Small Business | Ideovent",
-  "4": "10 Common Website Mistakes Small Businesses Make | Ideovent",
-  "6": "One Team for Design, Build and SEO | Ideovent",
-  "7": "How Ideovent Helps Small Businesses in New Delhi",
-  "9": "Digital Transformation and Business Growth | Ideovent",
-};
+/* Search titles for a post whose own title runs past 60 characters (keyword
+ * plan, 1 Oct 2026). The page keeps the full title as its h1; this is only the
+ * <title> and the share card. Keyed by post id.
+ *
+ * EMPTY SINCE 2 Oct 2026: the nine posts it covered (ids 1 to 9) were taken off
+ * the blog and 301-redirected, and the five that replaced them (ids 10 to 14)
+ * have titles of 50 to 60 characters, which postSeo() uses as they are. Never
+ * reuse ids 1 to 9: an old entry here, or an old CMS row, would attach to it. */
+const POST_SEO_TITLES: Record<string, string> = {};
+
+/** One entry of blogs.seed.json, as its metadata half (blogs.meta.json) carries it. */
+interface RawPost {
+  id?: number | string;
+  title: string;
+  slug?: string;
+  image?: string;
+  description?: string;
+  /** YYYY-MM-DD, the day the post went up. Absent where no date is on record. */
+  publishDate?: string;
+}
 
 /* Map the legacy public/blogs.json shape → typed BlogPost */
-const seedPosts: BlogPost[] = (rawBlogs as any[]).map((b, i) => ({
+const seedPosts: BlogPost[] = (rawBlogs as RawPost[]).map((b, i) => ({
   ...(POST_SEO_TITLES[String(b.id ?? i + 1)] ? { seo: { title: POST_SEO_TITLES[String(b.id ?? i + 1)] } } : {}),
   id: String(b.id ?? i + 1),
   title: b.title,
@@ -71,11 +81,16 @@ const seedPosts: BlogPost[] = (rawBlogs as any[]).map((b, i) => ({
   // skeleton on.
   body: "",
   author: "Ideovent Team",
-  // EMPTY ON PURPOSE (1 Oct 2026). Every imported post carried "2025-06-01",
-  // printed on the page and sent to Google as datePublished, and it was the
-  // date of none of them. The real dates are not recorded anywhere, so no date
-  // is shown or marked up until a post has one (set it in /admin → Posts).
-  publishDate: "",
+  // ONLY A DATE THAT IS ON RECORD (1 Oct 2026). Every imported post carried
+  // "2025-06-01", printed on the page and sent to Google as datePublished, and
+  // it was the date of none of them, so a post without its own date shows none
+  // and marks none up. Since 2 Oct 2026 a post can carry its real date as
+  // "publishDate" (YYYY-MM-DD) in blogs.seed.json. The five posts of that
+  // release carry 2026-10-02, the day they were written and released; if they
+  // first go live on a later day, that day is the one to put there. The page
+  // prints it, BlogPosting sends it as datePublished, and the sitemap gives the
+  // post a <lastmod>. Anything that is not a YYYY-MM-DD date is no date.
+  publishDate: /^\d{4}-\d{2}-\d{2}$/.test(b.publishDate ?? "") ? (b.publishDate as string) : "",
   tags: ["Insights"],
   status: "published",
   featured: i < 2,
@@ -147,7 +162,23 @@ const seedPosts: BlogPost[] = (rawBlogs as any[]).map((b, i) => ({
  *    `completion` takes its place on the public record: a verifier is checking
  *    whether the programme was completed, not what somebody scored.
  */
-const seedCerts: Certificate[] = (rawCerts as any[]).map((c, i) => ({
+/** One entry of certificates.seed.json. */
+interface RawCertificate {
+  id: string;
+  name: string;
+  designation: string;
+  issuedBy?: string;
+  programme?: string;
+  duration: string;
+  location?: string;
+  project?: string;
+  profileImage?: string;
+  certificateImage?: string;
+  completion?: string;
+  issuedAt?: string;
+}
+
+const seedCerts: Certificate[] = (rawCerts as RawCertificate[]).map((c, i) => ({
   id: c.id,
   certificateId: c.id,
   internName: c.name,
@@ -951,14 +982,14 @@ export const seed: ContentData = {
       deliverables: ["Responsive web design", "E-commerce solutions", "Progressive web apps", "CMS integration", "Performance optimization"],
       // Search fields, keyword plan 1 Oct 2026. Prices from src/lib/pricing.ts,
       // and the monthly price only ever with its setup fee and term beside it.
-      seoTitle: "Website Development Company in Delhi | Ideovent",
+      seoTitle: "Website Development Company in New Delhi | Ideovent",
       metaDescription: `Business websites that open fast on a phone and send every enquiry to you. One-time from ${ServicePrices.inr(ServicePrices.ONE_TIME.landing.min)}, or ${ServicePrices.inr(ServicePrices.PLANS.starter.monthly)}/month + ${ServicePrices.inr(ServicePrices.SETUP_FEE)} setup (${ServicePrices.TERM_MONTHS} months). Saket, Delhi.`,
       h1: "Website design and development in Delhi" },
     { id: "uiux", title: "UI/UX Design", slug: "ui-ux-design", icon: "PenTool", category: "Design", showOnHome: true, showInFooter: true, order: 5,
       shortDescription: "Screens planned around what your visitor came to do, so they find it without asking.",
       longDescription: "We start from the questions your visitors ask, then design pages and admin screens that answer them. Two rounds of changes at each design stage are in the agreement.",
       deliverables: ["User research", "Wireframing & prototyping", "Interface design", "Usability testing", "Design systems"],
-      seoTitle: "UI/UX Design Services in New Delhi | Ideovent",
+      seoTitle: "UI/UX Design Services for Websites & Apps, Delhi | Ideovent",
       metaDescription: "Screens planned around what your visitors came to do: research, wireframes, interface design and usability checks. Two rounds of changes per design stage.",
       h1: "UI/UX design for websites and apps" },
     /* LOCAL SEO, 1 Oct 2026 (Mehdi: "SEO v daal de service me ache se"; his
@@ -1010,7 +1041,7 @@ export const seed: ContentData = {
       longDescription: "Product pages, a secure online checkout (Razorpay in India), and an order list your staff can work from.",
       deliverables: ["Storefront design & build", "Secure checkout", "Payment gateway integration", "Inventory & orders", "Conversion optimization"],
       seoTitle: "E-commerce Website Development in Delhi | Ideovent",
-      metaDescription: "Online stores with product pages, Razorpay checkout and an order list your staff can use. Fixed price in writing. See Atelier Co., a store we built.",
+      metaDescription: "Online stores with product pages, Razorpay checkout and an order list your staff can work from. Fixed price in writing. See Atelier Co., a store we built.",
       h1: "E-commerce website development" },
     { id: "mobile", title: "Mobile App Development", slug: "mobile-app-development", icon: "Smartphone", category: "Mobile", showOnHome: true, showInFooter: true, order: 4,
       shortDescription: "An app your customers or staff open every day, on Android and iPhone.",
@@ -1024,7 +1055,7 @@ export const seed: ContentData = {
       longDescription: "Logo, colours, type and a short guide, so whoever makes your next banner or brochure gets it right.",
       deliverables: ["Logo design", "Visual identity", "Brand guidelines", "Marketing collateral", "Brand strategy"],
       seoTitle: "Logo & Brand Identity Design, New Delhi | Ideovent",
-      metaDescription: "A logo, colours, type and a short guide, so your name looks the same on your shopfront, your WhatsApp and your website.",
+      metaDescription: "A logo, colours, type and a short guide, so your name looks the same on your shopfront, your WhatsApp and your website. From a studio in Saket, New Delhi.",
       h1: "Logo and brand identity design" },
     /* Two services FACTS.md lists ("Custom SaaS", "Maintenance & Support") that had
        no page of their own (keyword plan, 1 Oct 2026). Every commitment below is
@@ -1092,8 +1123,13 @@ export const seed: ContentData = {
    * ────────────────────────────────────────────────────────────────────────── */
   projects: [
     /* ── Client work ─────────────────────────────────────────────────────── */
-    { id: "gym-map", title: "GYM MAP. Gym Discovery & Joining Platform", slug: "gym-map", category: "web", sector: "Fitness · marketplace", clientName: "GYM MAP", featured: true, order: 0,
+    { id: "gym-map", title: "GYM MAP. Gym Discovery & Joining Platform", slug: "gym-map", category: "web", sector: "Fitness · marketplace", clientName: "GYM MAP", featured: true, order: 1,
       summary: "A gym discovery platform: search by city, area or gym name, compare gyms side by side on price, distance and facilities, and join from the listing. It runs on a sample catalogue while accounts, online joining and payments are built out. And the product says so on its own page rather than filling itself with gyms that do not exist.",
+      // Search description (SEO audit, 2 Oct 2026): the summary's first sentence, fitted to 150-155.
+      // Truth check, 2 Oct 2026: the summary says joining is still being built
+      // ("a sample catalogue while accounts, online joining and payments are
+      // built out"), so the search snippet must not offer joining today.
+      metaDescription: "A gym discovery platform: search by city, area or gym name and compare gyms side by side on price, distance and facilities. Online joining is being built.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/gym-map.webp`, gallery: [], liveUrl: "https://gym-map-customer-web.vercel.app",
       tryThis: "Open it and scroll to the footer. The product tells you, in its own words, that its catalogue is sample data and that accounts and payments are still being built, instead of filling itself with gyms and five-star reviews that do not exist.",
@@ -1107,8 +1143,10 @@ export const seed: ContentData = {
       ],
       noClaims: "There are no member numbers, no gym numbers and no conversion figures here, because the product has not onboarded a gym yet. Any such figure today would be invented. “Verified gyms”, “transparent pricing” and “earned reviews” are the product’s own promises, written on its page. They are not outcomes we are claiming to have delivered." },
 
-    { id: "wedart", title: "WedArt Films. Wedding Photography & Films Studio", slug: "wedart-films", category: "web", sector: "Wedding photography", clientName: "WedArt Films", featured: true, order: 1,
+    { id: "wedart", title: "WedArt Films. Wedding Photography & Films Studio", slug: "wedart-films", category: "web", sector: "Wedding photography", clientName: "WedArt Films", featured: true, order: 2,
       summary: "A portfolio and booking site for a cinematic wedding photography and films studio: a filterable gallery of wedding stories, pre-wedding shoots and cinematic films, three named packages, a team section and an enquiry form with WhatsApp beside it.",
+      // The summary is one long sentence, which clip() would cut mid-list with "…".
+      metaDescription: "A portfolio and booking site for a wedding photography and films studio: a filterable gallery, three named packages, and an enquiry form with WhatsApp.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/wedart-films.webp`, gallery: [], liveUrl: "https://wedart.vercel.app",
       tryThis: "Scroll to Investment. The three packages are named on the page (Essential, Luxury and Royal) rather than hidden behind “price on request”, so a couple can see what fits their budget before they write in.",
@@ -1122,7 +1160,7 @@ export const seed: ContentData = {
       ],
       noClaims: "We claim no bookings, no revenue and no enquiry uplift. There is no earlier site to compare against, and inventing one would be worse than having none. The studio’s own testimonials and star ratings belong to the studio and say nothing about us. One thing about the live page that we would rather tell you than have you notice: the gallery photographs are still placeholders from a stock library. A wedding studio’s portfolio is its only proof, and a portfolio of other people’s photographs proves nothing: the studio’s own images are the outstanding item on this build and they are the studio’s to supply." },
 
-    { id: "atelier", title: "Atelier Co. Clothing E-Commerce Storefront", slug: "atelier-co", category: "web", sector: "Clothing retail", clientName: "Atelier Co.", featured: true, order: 2,
+    { id: "atelier", title: "Atelier Co. Clothing E-Commerce Storefront", slug: "atelier-co", category: "web", sector: "Clothing retail", clientName: "Atelier Co.", featured: true, order: 3,
       summary: "A clothing storefront built to read as an editorial magazine rather than a grid of products: a three-panel hero, occasion-led collections, a best-seller rail with colour selection in the card, a saved-items and bag flow, and a styling journal.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/atelier-co.webp`, gallery: [], liveUrl: "https://eccom2.vercel.app",
@@ -1142,7 +1180,7 @@ export const seed: ContentData = {
       ],
       noClaims: "The dispatch window, the average fit rating, the count of seasonal drops and the rating on every product card are the client’s own copy. None of them came from a customer, an order or a review, and none of them is repeated here as an outcome." },
 
-    { id: "tamkuhi-bazaar", title: "Tamkuhi Bazaar. Local Delivery Marketplace", slug: "tamkuhi-bazaar", category: "web", sector: "Quick commerce", clientName: "Tamkuhi Bazaar", featured: true, order: 3,
+    { id: "tamkuhi-bazaar", title: "Tamkuhi Bazaar. Local Delivery Marketplace", slug: "tamkuhi-bazaar", category: "web", sector: "Quick commerce", clientName: "Tamkuhi Bazaar", featured: true, order: 4,
       summary: "A hyperlocal delivery marketplace for groceries, food and daily essentials in a cluster of small towns, built so a customer enters a delivery location on the first screen and never has to leave it to find a shop.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/tamkuhi-bazaar.webp`, gallery: [], liveUrl: "https://tamkuhibazaar-online.vercel.app",
@@ -1157,7 +1195,7 @@ export const seed: ContentData = {
       ],
       noClaims: "We claim no orders, no revenue and no delivery times. Those are the client’s operation, not ours, and they would be theirs to report. The customer count and the app-store rating on the live site are the client’s own copy and are not repeated here." },
 
-    { id: "highq", title: "HighQ Classes. Coaching Institute Website", slug: "highq-classes", category: "web", sector: "Coaching institute", clientName: "HighQ Classes", featured: false, order: 4,
+    { id: "highq", title: "HighQ Classes. Coaching Institute Website", slug: "highq-classes", category: "web", sector: "Coaching institute", clientName: "HighQ Classes", featured: false, order: 5,
       summary: "A responsive website for a coaching institute, course and batch information, faculty details and an enquiry form, so a student or parent can read what a course covers without phoning the institute.",
       technologies: ["React", "TypeScript", "Node.js", "Tailwind CSS"],
       coverImage: "", gallery: [],
@@ -1166,18 +1204,24 @@ export const seed: ContentData = {
       // returns HTTP 000. Sending a prospect to a dead address is worse than
       // sending them nowhere, and it is a client-service problem before it is a
       // portfolio problem: if our domain is down, this client's website is down.
-      // Restore the link the day the domain resolves, over https.
+      // Checked again 2 Oct 2026: ideovent.com is unregistered (Verisign RDAP
+      // 404) and highqclasses.ideovent.com does not resolve. highqclasses.com
+      // answers, but it is a WordPress site, not the React build listed here,
+      // so it is NOT our work and must not be linked as it. Restore a link only
+      // to an address where our build is confirmed to run, over https.
       noImageReason:
-        "No screenshot on file, and the site is temporarily unreachable. It is served from a subdomain of ideovent.com, and that domain is not resolving at the moment. We have left the link off rather than send you to a dead address.",
+        "No screenshot on file, and its address no longer works: it was a subdomain of ideovent.com, our old domain, which has lapsed. We have left the link off rather than send you to a dead address.",
       noLiveUrlReason:
-        "The site lives at highqclasses.ideovent.com: a subdomain of ideovent.com, and that domain is not resolving. A dead link on the case study of a named client is worse than no link, so it is off the page until the domain is restored, and it goes back over https rather than the http:// it used to carry.",
+        "The site was served at highqclasses.ideovent.com, a subdomain of ideovent.com, our old domain, which has lapsed (we are at ideovent.in now). A dead link on the case study of a named client is worse than no link, so it stays off the page until the site has a working address again, and then it goes back over https.",
       challenge: "Parents and students judge a coaching institute in about ten seconds, usually on a phone, usually before ever visiting. The site had to answer what is taught, by whom, and how to get in touch, without making anyone hunt.",
       solution: "A responsive institute site that reads and works on an entry-level Android phone, with course pages carrying what a parent asks before they pick up the phone, and an enquiry form one tap from the homepage rather than buried on a contact page.",
       results: [],
       noClaims: "An earlier version of this website credited this project with “60% more online inquiries” and “positive student and faculty feedback in the first month”. Neither was ever measured and neither has a source, so both are gone and nothing has replaced them." },
 
-    { id: "hrms-lite", title: "HRMS Lite, HR Management System", slug: "hrms-lite", category: "web", sector: "HR · internal tool", clientName: "HRMS Lite", featured: false, order: 5,
+    { id: "hrms-lite", title: "HRMS Lite, HR Management System", slug: "hrms-lite", category: "web", sector: "HR · internal tool", clientName: "HRMS Lite", featured: false, order: 6,
       summary: "An employee register and a daily attendance record in one place, with a dashboard over the top, for an employer too small to want a full HR platform. It sits behind a login.",
+      // "Client software we built": the custom software page's own words for it.
+      metaDescription: "Client software we built: an employee register and daily attendance in one place, with a dashboard, for an employer too small to want a full HR platform.",
       technologies: ["JavaScript", "React", "Separate API service", "Vercel"],
       coverImage: "", gallery: [],
       // No live link and no image, on purpose. See noImageReason. A screenshot
@@ -1198,8 +1242,9 @@ export const seed: ContentData = {
       ],
       noClaims: "No time-saved figure, no error-reduction figure and no cost comparison. We never watched the spreadsheets this replaced, so any such number would be invented. Payroll, leave and appraisals are not listed above because they are not in the product." },
 
-    { id: "lead-crm", title: "Lead CRM. Lead Management System", slug: "lead-crm", category: "web", sector: "Sales · internal tool", clientName: "Lead CRM", featured: false, order: 6,
+    { id: "lead-crm", title: "Lead CRM. Lead Management System", slug: "lead-crm", category: "web", sector: "Sales · internal tool", clientName: "Lead CRM", featured: false, order: 7,
       summary: "Enquiries captured in one place, owned by a named person, and moved through stages instead of living in a notebook. Like most CRMs, it is reachable only with an account.",
+      metaDescription: "Client software we built: enquiries captured in one place, owned by a named person and moved through stages instead of living in a notebook. Login only.",
       technologies: ["JavaScript", "React", "Separate API service", "Vercel"],
       coverImage: "", gallery: [],
       // No live link and no image, on purpose, see noImageReason, and
@@ -1219,7 +1264,7 @@ export const seed: ContentData = {
       noClaims: "No conversion rate, no response-time figure and no revenue claim. We do not see the client’s sales results, we never measured what happened before, and a CRM cannot take credit for a sale a person made. Stages, assignment, notes, reminders and reporting are deliberately not listed above. That is what a CRM usually has, not what this one has been confirmed to have." },
 
     /* ── Our own products ────────────────────────────────────────────────── */
-    { id: "onyx", title: "Onyx. Real-Time Desktop AI Copilot", slug: "onyx-realtime-ai-copilot", category: "product", sector: "Desktop app · Electron", clientName: "Ideovent product", featured: false, order: 7,
+    { id: "onyx", title: "Onyx. Real-Time Desktop AI Copilot", slug: "onyx-realtime-ai-copilot", category: "product", sector: "Desktop app · Electron", clientName: "Ideovent product", featured: false, order: 8,
       summary: "A cross-platform desktop copilot that sits above whatever you are doing, takes the current screen and the current system audio as one streaming request to a language model, and writes the answer back while the model is still producing it. Voice-activity detection runs on the machine itself.",
       technologies: ["Electron 33", "React 18", "Vite 5", "TypeScript", "Google Gemini", "ONNX Runtime", "Cloudflare Workers", "Razorpay"],
       coverImage: `${B}work/onyx/cover.webp`,
@@ -1239,7 +1284,7 @@ export const seed: ContentData = {
       noClaims: "No download count, no user number and no response-time figure. Nothing has been measured, and an unmeasured performance claim is the easiest thing on a page to disprove.",
       body: "" },
 
-    { id: "aura-orbit", title: "Aura Orbit, AI Habit Intelligence", slug: "aura-orbit", category: "product", sector: "Web app · Next.js", clientName: "Ideovent product", featured: false, order: 8,
+    { id: "aura-orbit", title: "Aura Orbit, AI Habit Intelligence", slug: "aura-orbit", category: "product", sector: "Web app · Next.js", clientName: "Ideovent product", featured: false, order: 9,
       summary: "Our own habit-intelligence web app. Routines and streaks are read by a Google Gemini-backed assistant that suggests refinements, inside a deliberately distraction-free workspace. Subscriptions run through Razorpay against a real gateway.",
       technologies: ["Next.js", "TypeScript", "Google Gemini", "Razorpay", "Vercel"],
       coverImage: `${B}work/aura-orbit.webp`, gallery: [], liveUrl: "https://goodhabits-teal.vercel.app",
@@ -1254,8 +1299,10 @@ export const seed: ContentData = {
       ],
       noClaims: "Aura Orbit’s own landing page carries counters we have not measured. They are not evidence of anything, they are not repeated here, and they should not be read as ours." },
 
-    { id: "ideovent-site", title: "Ideovent Technologies. Studio Site & CMS", slug: "ideovent-site", category: "product", sector: "React SPA + our own CMS", clientName: "Ideovent product", featured: false, order: 9,
+    { id: "ideovent-site", title: "Ideovent Technologies. Studio Site & CMS", slug: "ideovent-site", category: "product", sector: "React SPA + our own CMS", clientName: "Ideovent product", featured: false, order: 10,
       summary: "This site. A React and Vite studio site with its own admin CMS, where every user-facing string is an editable field rather than hard-coded copy, plus a Supabase-backed content store, an internship application flow, and QR certificate verification at /verify that anyone holding a certificate can check.",
+      // The title projectSeo() builds from `title` is 40 characters and already names the firm.
+      seoTitle: "Ideovent Technologies: Studio Site & Admin CMS in React",
       technologies: ["React", "TypeScript", "Vite", "Tailwind CSS", "Supabase"],
       coverImage: "", gallery: [],
       // 1 Oct 2026: ideovent.in is live (FACTS.md, 30 Sep correction, point 5).
@@ -1274,10 +1321,20 @@ export const seed: ContentData = {
       ],
       noClaims: "No visitor numbers, no ranking and no speed score: none has been measured on www.ideovent.in yet, so none is claimed here." },
 
-    /* ── The founder's work elsewhere: the employer is named, and this is
-     *    never presented as Ideovent client work. ────────────────────────── */
-    { id: "wtf-go", title: "WTF Go. Gym & Wellness Management SaaS", slug: "wtf-go", category: "employer work", sector: "Gym & wellness SaaS", clientName: "Witness The Fitness Pvt. Ltd., a partner’s own employment", featured: false, order: 10,
+    /* ── Mehdi Alam's work elsewhere: the employer is named, and this is
+     *    never presented as Ideovent client work. ──────────────────────────
+     * SHOWN FIRST since 2 Oct 2026 (Mehdi: "project me wtfgos.com ko phle
+     * dikhao"): order 0 puts it ahead of every other project in /work, in the
+     * Work menu and in the no-script lists, and `featured` gives it its own card
+     * at the top of the home page's work section. Wherever it appears it keeps
+     * its label: built by Mehdi Alam at Witness The Fitness Pvt. Ltd., his
+     * professional work, not an Ideovent client project (_assets/FACTS.md,
+     * ATTRIBUTION RULE). It is never drawn as a client card. */
+    { id: "wtf-go", title: "WTF Go. Gym & Wellness Management SaaS", slug: "wtf-go", category: "employer work", sector: "Gym & wellness SaaS", clientName: "Witness The Fitness Pvt. Ltd., a partner’s own employment", featured: true, order: 0,
       summary: "Built by Mehdi Alam, one of our partners, while employed as a full-stack developer at Witness The Fitness Pvt. Ltd. (April to July 2026). This is his professional work for that employer, not an Ideovent client project, and it is listed here as experience rather than as a case study we can sell. WTF Go is a multi-tenant operating system for gyms, studios and wellness businesses: memberships and billing, payments, CRM and leads, retention and renewals, personal training, waivers and e-sign, messaging, staff permissions, and per-location branded sites and member apps.",
+      // SEO audit, 2 Oct 2026: `summary` cut at a sentence gave a 137-character
+      // description. Same facts and attribution, 155 characters.
+      metaDescription: "Built by Mehdi Alam, one of our partners, while employed at Witness The Fitness Pvt. Ltd. (April to July 2026): WTF Go, a multi-tenant gym management SaaS.",
       technologies: ["React", "TypeScript", "Node.js", "Multi-tenant SaaS"],
       // The screenshot is NOT published. _assets/FACTS.md requires IP permission
       // before an employer's interface is published, and 06-portfolio/
@@ -1287,7 +1344,7 @@ export const seed: ContentData = {
       // [[WTFGO_SCREENSHOT_PERMISSION]].
       coverImage: "", gallery: [], liveUrl: "https://wtfgos.com",
       noImageReason:
-        "We have not published a screenshot of this one. The product and its interface belong to Witness The Fitness Pvt. Ltd., and naming the employer in text needs nobody’s permission while publishing their screens does. The site itself is public: the link is below.",
+        "We have not published a screenshot of this one. The product and its interface belong to Witness The Fitness Pvt. Ltd., and naming the employer in text needs nobody’s permission while publishing their screens does. The site itself is public, and the link to it is on this page.",
       challenge: "Gym operators run memberships, payments, leads, retention and staff across several disconnected tools, and the joins between them are where revenue leaks. The product’s goal was to put all of it behind one login for businesses that may have many locations.",
       solution: "A multi-tenant platform where memberships, billing, payments, CRM, retention, personal training, waivers, messaging and staff permissions share one data model, with per-location branded sites and member apps on top. Mehdi worked on this as an employee of Witness The Fitness Pvt. Ltd.; the product and its intellectual property belong to them.",
       results: [],
@@ -1455,7 +1512,7 @@ export const seed: ContentData = {
     // f6, 1 Oct 2026 (Mehdi): 50/50. Was "50% when you sign, 30% at the design-and-build stage, when you can see the work, and 20% before handover."
     { id: "f6", question: "How does payment work?", answer: `For a website bought outright: 50% when you sign, and the other 50% at launch, once you have checked the finished site. Invoices are due within 7 days. On a monthly plan: the ${ServicePrices.inr(ServicePrices.SETUP_FEE)} setup once, then the monthly fee for ${ServicePrices.TERM_MONTHS} months, by UPI AutoPay or card through Razorpay once online payment is live, or by UPI or bank transfer on WhatsApp. We are not registered under GST, so the price we quote is the full amount you pay.`, category: "services", order: 7 },
     { id: "f13", question: "Do you build apps and software too?", answer: "Yes. Web apps, portals, SaaS products, and Android and iPhone apps. We built HRMS Lite and Lead CRM for clients, and our own app Aura Orbit is live with Razorpay payments. Tell us the process or the idea. The first call is free.", category: "services", order: 8 },
-    { id: "f14", question: "Do you work with schools and coaching institutes?", answer: "Yes, it is one of the fields we know well. We built the website and admin panel for HighQ Classes, a coaching institute. We can show you a sample site made for your school or institute. We are also building EduFlow, software for schools and coaching, which is still in development.", category: "services", order: 9 },
+    { id: "f14", question: "Do you work with schools and coaching institutes?", answer: "Yes, it is one of the fields we know well. We built the website for HighQ Classes, a coaching institute. We can show you a sample site made for your school or institute. We are also building EduFlow, software for schools and coaching, which is still in development.", category: "services", order: 9 },
 
     { id: "f4", question: "What do I actually get from the internship?", answer: "Twelve weeks of structured curriculum, written feedback on every pull request from one of the partners, five shipped artefacts you own, and (if you pass the published 100-mark rubric) a certificate with a QR code anyone can verify on this site. What you do not get is a job or a placement. We have no placement cell and no hiring partners, and we will not tell you otherwise.", category: "internship", order: 5 },
     { id: "f5", question: "Is the internship certificate verifiable?", answer: "Yes. Every certificate has a unique ID and a QR code that resolves at /verify on this site. Try one before you apply: /verify/INT2025A74. Two people have earned one since 2024, which is exactly why it is worth checking.", category: "internship", order: 6 },

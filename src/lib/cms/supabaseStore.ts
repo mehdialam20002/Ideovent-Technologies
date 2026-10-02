@@ -1,7 +1,6 @@
 import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types";
 import { type Store, mergeWithSeed, clone } from "./store";
 import { supabase } from "./client";
-import { isCrmHost } from "@/lib/host";
 
 const SINGLETONS: SingletonKey[] = ["settings", "contact", "navigation", "home", "internship", "eduflow", "legal"];
 const TABLE = "content";
@@ -28,29 +27,18 @@ const SKIP_ON_IMPORT: CollectionKey[] = ["demoSiteOpens", "submissions", "applic
 const PAGE = 1000;
 
 /*
-  WHAT A PUBLIC PAGE DOES NOT LOAD (1 Oct 2026, SEO audit P0-4).
+  load() READS EVERYTHING, AND ONLY THE ADMIN AND THE CRM CALL IT (2 Oct 2026).
 
-  load() used to read the whole `content` table on every page view. Measured on
-  the live site that day: 2.9 MB gzip, 9.3 MB of JSON, 134 rows, 132 of them
-  demo sites, arriving about 6 s after the page on a phone and then parsed on
-  the main thread, for every visitor and for Googlebot. No public page reads
-  any of the collections below. The admin (/admin), the CRM (/crm and the CRM
-  host) and a demo (/site/...) still load everything, and each of those is
-  opened with a full page load (nothing on the public site links to them), so
-  the scope is decided once, from the address, when the store first loads.
-  Rows the database does not let `anon` read (submissions, applications,
-  grades, opens) were never returned to a visitor anyway; excluding them only
-  makes the request say so.
+  A visitor's page no longer comes through here. What each address reads is in
+  ./scope.ts, and ./publicRead.ts fetches just that without this SDK: a demo at
+  /site/<slug> reads its own row instead of the 2.85 MB table (measured live on
+  2 Oct 2026), a public page reads the keys it renders. This store is the admin's
+  and the CRM's read (every row the signed-in session may see) and the answer to
+  every save, so it keeps reading the whole table, paged.
+
+  The 1 Oct 2026 version decided a public scope here from the address; that rule
+  now lives in ./scope.ts, the one place that says what an address reads.
 */
-const NOT_ON_PUBLIC_PAGES: CollectionKey[] = [
-  "demoSites", "demoSiteSlots", "demoSiteOpens", "pitchPageNotes", "certificateGrades", "submissions", "applications",
-];
-
-function loadsEverything(): boolean {
-  if (typeof window === "undefined") return true;
-  if (isCrmHost()) return true;
-  return /^\/(admin|crm|site)(\/|$)/.test(window.location.pathname);
-}
 
 /**
  * Supabase store: all content lives in a single `content` table
@@ -73,11 +61,10 @@ export class SupabaseStore implements Store {
         stable, so no row is skipped or read twice between requests.
       */
       const data: unknown[] = [];
-      const everything = loadsEverything();
       for (let from = 0; ; from += PAGE) {
-        let query = supabase().from(TABLE).select("collection, doc_id, data");
-        if (!everything) query = query.not("collection", "in", `(${NOT_ON_PUBLIC_PAGES.join(",")})`);
-        const { data: page, error } = await query
+        const { data: page, error } = await supabase()
+          .from(TABLE)
+          .select("collection, doc_id, data")
           .order("collection")
           .order("doc_id")
           .range(from, from + PAGE - 1);

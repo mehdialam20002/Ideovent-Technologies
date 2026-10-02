@@ -15,6 +15,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { useCollection } from "@/lib/cms/context";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ProjectCover, employerCredit } from "@/components/ui/project-cover";
+import { EmployerWorkCard } from "@/components/ui/employer-work-card";
 import { Reveal } from "@/components/motion/Reveal";
 import { staggerContainer, fadeUp } from "@/lib/motion";
 import type { Project } from "@/lib/cms/types";
@@ -117,12 +118,22 @@ function WorkCard({ project: p }: { project: Project }) {
 
 export default function WorkShowcase() {
   const all = useCollection("projects");
-  const featured = all.filter((p) => p.featured);
+  /*
+    FIRST, MEHDI ALAM'S WORK ELSEWHERE (2 Oct 2026, Mehdi: "project me wtfgos.com
+    ko phle dikhao"). A featured project in the `employer work` category (WTF Go,
+    built by Mehdi Alam at Witness The Fitness Pvt. Ltd.) leads the section, in
+    the same card /work uses: the employer named above the product and "not an
+    Ideovent client project" under it. It is never the lead tile or a client card
+    below, which would present an employer's product as our client work.
+  */
+  const isEmployerWork = (p: Project) => (p.category || "").toLowerCase() === "employer work";
+  const elsewhere = all.filter((p) => p.featured && isEmployerWork(p));
+  const featured = all.filter((p) => p.featured && !isEmployerWork(p));
 
   // No featured projects means no section. A heading over an empty grid is the
   // same titled hole the emptied testimonials array would have left if its
   // consumer were not guarded.
-  if (!featured.length) return null;
+  if (!featured.length && !elsewhere.length) return null;
 
   // The lead is the first featured project that has a real screenshot: the whole
   // point of the wide asymmetric slot is that there is something worth looking
@@ -170,20 +181,32 @@ export default function WorkShowcase() {
             {/* HOMEPAGE-COPY-DECK-V2.md A5. The HighQ line names the one
                 coaching build without linking it: highqclasses.ideovent.com does
                 not open yet. On the day it does, give the project a liveUrl and
-                feature it after the four live sites (seed.ts `projects`). */}
+                feature it after the four live sites (seed.ts `projects`).
+                2 Oct 2026: "the website and admin panel" became "the website":
+                _assets/FACTS.md and the HighQ case study record the website
+                only (FAQ f14 said the same and was corrected the same day). And
+                "HighQ's address is being moved, so for now we show it on a call"
+                became what the case study says: the old address was on our
+                lapsed ideovent.com domain, and no new one is on record. */}
             <div className="max-w-md md:pb-2">
               <p className="text-sm text-muted-foreground text-pretty">
                 Each site card shows the real address. Open it in another tab and judge it
                 for yourself. Below them is the software we built for teams.
               </p>
               <p className="mt-3 text-sm text-muted-foreground text-pretty">
-                Run a school or coaching institute? We built the website and admin panel for
-                HighQ Classes, and we can show you a sample site made for yours. HighQ's
-                address is being moved, so for now we show it on a call.
+                Run a school or coaching institute? We built the website for HighQ Classes,
+                and we can show you a sample site made for yours. HighQ's old address was on
+                ideovent.com, our lapsed domain, so it has no live link for now.
               </p>
             </div>
           </div>
         </Reveal>
+
+        {elsewhere.map((p) => (
+          <Reveal key={p.id} className="mt-12 md:mt-16">
+            <EmployerWorkCard project={p} />
+          </Reveal>
+        ))}
 
         {lead && (
           <Reveal className="mt-12 md:mt-16">

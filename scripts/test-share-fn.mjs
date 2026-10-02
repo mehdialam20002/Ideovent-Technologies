@@ -133,6 +133,36 @@ console.log("\nSubpages of a multi-page demo\n");
     (v) => v !== null && !/[<>"'`]/.test(v));
 }
 
+console.log("\nThe file it reads (2 Oct 2026: the SPA shell, not the homepage)\n");
+{
+  /* Since 2 Oct 2026 the built index.html is the homepage, with its canonical,
+     and the SPA fallback is /spa-shell.html (scripts/prerender-heads.mjs). The
+     function must ask for the shell, and if it ever ends up with a document that
+     carries a canonical anyway (a build from before, a mistake), drop it: a
+     school's demo card must not name the homepage as its canonical page. */
+  const asked = [];
+  const homepage = realIndex.replace(/<title>/i, '<link data-rh="true" rel="canonical" href="https://www.ideovent.in/" />\n    <title>');
+  globalThis.fetch = async (u) => {
+    asked.push(new URL(String(u)).pathname);
+    return { ok: true, status: 200, text: async () => homepage };
+  };
+  const { html } = await run("/api/share?kind=site&slug=st-xaviers-high-school");
+  check("it asks for /spa-shell.html first", asked[0], (v) => v === "/spa-shell.html");
+  check("no canonical survives into the card", (html.match(/rel=["']canonical["']/gi) || []).length, (v) => v === 0);
+  check("og:url is still the demo's", parseMeta(html, ["property", "og:url"]),
+    (v) => v === "https://ideovent.vercel.app/site/st-xaviers-high-school");
+
+  asked.length = 0;
+  globalThis.fetch = async (u) => {
+    const p = new URL(String(u)).pathname;
+    asked.push(p);
+    return p === "/spa-shell.html" ? { ok: false, status: 404, text: async () => "" } : { ok: true, status: 200, text: async () => realIndex };
+  };
+  const old = await run("/api/share?kind=site&slug=st-xaviers-high-school");
+  check("a build without the shell still gets a card, from /index.html", `${asked.join(" -> ")} | ${parseMeta(old.html, ["property", "og:title"])}`,
+    (v) => v === "/spa-shell.html -> /index.html | St Xaviers High School");
+}
+
 console.log("");
 if (fails.length) {
   console.log(`${fails.length} FAILURE(S): ${fails.join("; ")}`);

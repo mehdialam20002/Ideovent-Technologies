@@ -21,6 +21,7 @@ import { SEO as SEO_PRICES } from "@/lib/pricing";
 import { serviceSeo } from "@/lib/seo/pages";
 import { faqPageNode, serviceNode, serviceOffers } from "@/lib/seo/schema";
 import { FaqList } from "@/components/ui/faq-list";
+import WebsitesStrip from "./websites/WebsitesStrip";
 
 /*
   WORK_STEPS IS DELETED, NOT REWRITTEN.
@@ -254,6 +255,17 @@ export default function ServiceDetail() {
                 ))}
               </dl>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* The /websites pages (2 Oct 2026), under the price on the website page:
+          the same service, written for a clinic, a school, a coaching
+          institute, and the monthly plan on its own. */}
+      {service.slug === "website-development" && (
+        <section className="pb-12 md:pb-16">
+          <div className="container-page">
+            <WebsitesStrip />
           </div>
         </section>
       )}

@@ -255,11 +255,13 @@ if (!slugInSync) {
   if (at >= 0) headers[at] = rule;
   else headers.push(rule);
 
-  // The share rewrite must sit BEFORE the SPA catch-all (the rewrite to
-  // /index.html, "/((?!assets/).*)"), or the catch-all swallows it.
+  // The share rewrite must sit BEFORE the SPA catch-all ("/((?!assets/).*)",
+  // to /spa-shell.html since 2 Oct 2026, /index.html before), or the catch-all
+  // swallows it.
   if (rwAt >= 0) rewrites[rwAt] = shareRewrite;
   else {
-    const catchAll = rewrites.findIndex((r) => r.destination === "/index.html");
+    const SPA_FALLBACKS = ["/spa-shell.html", "/index.html"];
+    const catchAll = rewrites.findIndex((r) => SPA_FALLBACKS.includes(r.destination));
     rewrites.splice(catchAll < 0 ? rewrites.length : catchAll, 0, shareRewrite);
   }
 }

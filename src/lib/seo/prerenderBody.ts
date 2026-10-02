@@ -12,6 +12,8 @@ import {
   seoIndiaLine, servicePrice, termLine, usdRange,
 } from "../pricing";
 import type { PageSeo } from "./pages";
+import { websitesNoscript } from "../../pages/websites/noscript";
+import { formatPostDate } from "../postDate";
 
 export interface BodyContext {
   services: Service[];
@@ -109,7 +111,9 @@ function pageBody(path: string, ctx: BodyContext): string {
         esc(ctx.responsePromise),
       ]);
     default:
-      return "";
+      // The /websites pages (2 Oct 2026) build their own copy from their content
+      // module; "" for every other path.
+      return websitesNoscript(path, ctx.whatsappNumber, new Set(ctx.posts.map((po) => po.slug)));
   }
 }
 
@@ -129,20 +133,33 @@ export function noscriptBlock(path: string, seo: PageSeo, ctx: BodyContext): str
     }
   } else if (section === "blog" && slug) {
     const po = ctx.posts.find((x) => x.slug === slug);
-    if (po) main = `${p(po.excerpt)}${cleanHtml(ctx.postBodies.get(String(po.id)) || "")}`;
+    if (po) {
+      // The byline the page prints: the date only when the record has a real one
+      // (seed.ts), in the words and format BlogDetail.tsx uses.
+      const byline = [po.author ? `By ${po.author}.` : "", po.publishDate ? `Published ${formatPostDate(po.publishDate)}.` : ""]
+        .filter(Boolean).join(" ");
+      main = `${p(byline)}${p(po.excerpt)}${cleanHtml(ctx.postBodies.get(String(po.id)) || "")}`;
+    }
   } else if (ctx.legalBodies[section] && !slug) {
     main = cleanHtml(ctx.legalBodies[section].body);
   } else {
     main = `${p(seo.description)}${pageBody(path, ctx)}`;
   }
-  const nav = ul([a("/services", "Services"), a("/services/seo", "Local SEO"), a("/work", "Work"), a("/pricing", "Pricing"),
-    a("/about", "About"), a("/blog", "Blog"), a("/faq", "FAQ"), a("/contact", "Contact")]);
+  // "Websites" (2 Oct 2026): the hub of the /websites pages, so a crawler that
+  // runs no script reaches them from every page, as the footer row does.
+  const nav = ul([a("/services", "Services"), a("/websites", "Websites"), a("/services/seo", "Local SEO"), a("/work", "Work"),
+    a("/pricing", "Pricing"), a("/about", "About"), a("/blog", "Blog"), a("/faq", "FAQ"), a("/contact", "Contact")]);
+  // The rest of the sitemap's pages that the nav above does not reach (SEO audit,
+  // 2 Oct 2026: no other page's no-script copy linked /internship, /verify or
+  // /privacy), as the rendered footer lists them. Draft policies stay out.
+  const more = ul([a("/eduflow", "EduFlow, in development"), a("/internship", "LaunchPad internship"),
+    a("/verify", "Verify a certificate"), a("/privacy", "Privacy Policy")]);
   return [
     '<noscript data-prerendered="true"><div class="container-page py-10">',
     `<p>${a("/", "Ideovent Technologies")}: a web and software studio in Saket, New Delhi.</p>`,
     `<nav aria-label="Site">${nav}</nav>`,
     `<main><h1>${esc(seo.h1)}</h1>${main}</main>`,
-    `<footer>${p(`Ideovent Technologies, Saket, New Delhi. Phone and WhatsApp ${ctx.phoneDisplay}. ${ctx.businessHours}.`)}</footer>`,
+    `<footer>${p(`Ideovent Technologies, Saket, New Delhi. Phone and WhatsApp ${ctx.phoneDisplay}. ${ctx.businessHours}.`)}${more}</footer>`,
     "</div></noscript>",
   ].join("");
 }
