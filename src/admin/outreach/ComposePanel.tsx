@@ -1,7 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowRight, Ban, Check, Copy, Mail, MessageCircle, Monitor, MoreHorizontal, PhoneCall, Reply } from "lucide-react";
-import type { DemoSite } from "@/lib/cms/types";
-import { useCms } from "@/lib/cms/context";
 import { demoStatus } from "@/lib/demo/record";
 import { LANGUAGE_LABELS, carriesPreview, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";
 import { previewFor } from "@/lib/outreach/preview";
@@ -24,7 +22,7 @@ import { isIndianMobile, sameContact } from "@/lib/outreach/store";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { firstWhatsappToday } from "./derive";
-import { DemoPicker, leadDemo } from "./DemoPicker";
+import { DemoPicker, leadDemo, useLeadDemoSites } from "./DemoPicker";
 import { callDoneChanges, looksLikeNote, otherLeadsNamed, rankTemplates, repliedChanges, startingObservation } from "./compose";
 import { PLAIN_STAGE_LABELS, plainStageOf, stageName, suggestFor } from "./stages";
 import { blanksIn, fillBlanks, listBlanks, piecesOf } from "./placeholders";
@@ -124,8 +122,7 @@ const ENGAGED = new Set<OutreachLead["status"]>(["replied", "demo_opened", "call
  */
 export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name: string; open: () => void } }) {
   const { leads, events, settings, saveLead, addEvent } = useOutreach();
-  const { data } = useCms();
-  const demo = leadDemo(lead, (data.demoSites as DemoSite[]) || []);
+  const demo = leadDemo(lead, useLeadDemoSites());
 
   const hasMail = Boolean(lead.email);
   const waNumber = leadWhatsappNumber(lead);

@@ -2510,6 +2510,11 @@ export type CollectionKey =
  * if you add to it, add the same string to the LATEST migration under
  * supabase/migrations/ (0002 for certificateGrades, 0003 for pitchPageNotes,
  * 0004 for demoSiteSlots and demoSiteOpens).
+ *
+ * The latest policy is 0013's (2 Oct 2026). It also keeps demoSites and pitchPages
+ * out of every list (a visitor reads one by its link, through public_row_by_slug):
+ * a new migration that rewrites "read public content" must start from 0013's and
+ * keep those two, or the whole pipeline of prospects is one request away again.
  */
 export const PRIVATE_COLLECTIONS: CollectionKey[] = [
   "submissions",

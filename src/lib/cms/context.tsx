@@ -3,7 +3,7 @@ import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types"
 import { getStore, sortByOrder } from "./store";
 import { ContentLoader, covers, getLoader, type ContentSnapshot } from "./loader";
 import { publicReader } from "./publicRead";
-import { currentPath, needsFor, type ContentKey } from "./scope";
+import { ROW_COLLECTIONS, currentPath, needsFor, type ContentKey, type RowCollection } from "./scope";
 
 interface CmsActions {
   saveDoc: (col: CollectionKey, doc: BaseDoc & Record<string, any>) => Promise<void>;
@@ -146,6 +146,9 @@ export function useCms(): CmsContextValue {
  * The safety net under ./scope.ts: a hook that reads a key asks for it, so a page
  * whose route row is missing that key still gets it (one request later). In
  * development the console says which route and key, so the table can be fixed.
+ *
+ * Never for a demo or a pitch page: those are read one at a time by the slug in
+ * the address (0013), and a visitor's page never asks for either collection whole.
  */
 function useAskFor(key: ContentKey): void {
   const { loader } = useInternal();
@@ -153,6 +156,7 @@ function useAskFor(key: ContentKey): void {
   useEffect(() => {
     const route = needsFor(path);
     if (route.all || route.row?.collection === key || route.keys.includes(key)) return;
+    if (ROW_COLLECTIONS.includes(key as RowCollection)) return;
     if (import.meta.env.DEV) {
       console.info(`Ideovent CMS: ${path} also reads "${key}". Add it to that route in src/lib/cms/scope.ts so it arrives with the first request.`);
     }

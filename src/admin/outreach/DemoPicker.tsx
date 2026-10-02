@@ -23,6 +23,27 @@ export function leadDemo(lead: OutreachLead, sites: DemoSite[]): DemoSite | unde
 }
 
 /**
+ * The demo records a lead is matched against: the CMS's, and for anyone but Mehdi
+ * the demos linked to their own leads (crm_lead_demos, 0011), drafts included;
+ * those win, as in the CRM's own list (src/crm/useCrmData.ts, withTeamDemos).
+ * Since 0013 the CMS read of anyone but Mehdi carries no demo at all (a demo is
+ * read one at a time, by its link), so without the second list a member's lead
+ * would show no demo and its message no {offer}. Mehdi's list is empty: for him
+ * nothing changes.
+ */
+export function useLeadDemoSites(): DemoSite[] {
+  const { data } = useCms();
+  const { teamDemos } = useOutreach();
+  const cms = data.demoSites as DemoSite[] | undefined;
+  return useMemo(() => {
+    const list = cms || [];
+    if (!teamDemos.length) return list;
+    const ids = new Set(teamDemos.map((d) => d.id));
+    return [...list.filter((d) => !ids.has(d.id)), ...teamDemos];
+  }, [cms, teamDemos]);
+}
+
+/**
  * The template a lead's demo starts from: for a dental lead (or an "Other"
  * lead whose name says dental) the one dentalTemplateFor picks from its name,
  * notes, observation and tags (the CSV import keeps the sheet's segment, e.g.
@@ -54,9 +75,17 @@ export function dentalDefault(lead: Pick<OutreachLead, "kind" | "instituteName" 
  */
 export function DemoPicker({ lead }: { lead: OutreachLead }) {
   const { data, actions } = useCms();
-  const { saveLead, addEvent } = useOutreach();
-  const sites = ((data.demoSites as DemoSite[]) || []).filter((s) => !(s as DemoSite & { isExample?: boolean }).isExample);
+  const { saveLead, addEvent, me } = useOutreach();
+  const sites = useLeadDemoSites().filter((s) => !(s as DemoSite & { isExample?: boolean }).isExample);
   const pitches = (data.pitchPages as PitchPage[]) || [];
+  /*
+    The pitch pages to choose from. Since 0013 only Mehdi's read lists them: anyone
+    else's CMS read holds just the seed's example pages, marked live, which are not
+    pages to send (their links 404 once a real pitch page is live). So anyone but
+    Mehdi is offered none, and a lead's own pitch page always shows as chosen.
+  */
+  const pitchChoices = me.role === "owner" ? pitches : pitches.filter((p) => !p.isExample);
+  const ownPitchListed = !lead.pitchSlug || pitchChoices.some((p) => p.slug === lead.pitchSlug);
   const slots = (data as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || [];
   const demo = leadDemo(lead, sites);
   const demoState = demo ? demoStatus(demo) : null;
@@ -224,7 +253,8 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
               <select id="pitch-pick" className={inputCls} value={lead.pitchSlug || ""}
                 onChange={(e) => void saveLead({ ...lead, pitchSlug: e.target.value || undefined })}>
                 <option value="">None</option>
-                {pitches.map((p) => (
+                {!ownPitchListed && <option value={lead.pitchSlug}>/{lead.pitchSlug}</option>}
+                {pitchChoices.map((p) => (
                   <option key={p.id} value={p.slug}>{p.instituteName} (/{p.slug}, {p.status})</option>
                 ))}
               </select>

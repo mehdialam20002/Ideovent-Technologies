@@ -1,12 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { Check, PhoneCall } from "lucide-react";
-import type { DemoSite } from "@/lib/cms/types";
-import { useCms } from "@/lib/cms/context";
 import { demoLinkFor } from "@/lib/outreach/engine";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { cn } from "@/lib/utils";
 import { useOutreach } from "./useOutreach";
-import { leadDemo } from "./DemoPicker";
+import { leadDemo, useLeadDemoSites } from "./DemoPicker";
 import { callDoneChanges } from "./compose";
 import { callScriptFor, type ScriptLanguage } from "./callScript";
 import { piecesOf } from "./placeholders";
@@ -27,9 +25,9 @@ import { KIND_LABEL, btnSecondary, cardCls, summaryCls } from "./ui";
  */
 export function CallScriptCard({ lead }: { lead: OutreachLead }) {
   const { addEvent, saveLead } = useOutreach();
-  const { data } = useCms();
+  const sites = useLeadDemoSites();
   // The same rule as the messages (engine.ts checkSend): a demo on the lead, or its demo link, means the sample is made.
-  const hasDemo = Boolean(leadDemo(lead, (data.demoSites as DemoSite[]) || []) || demoLinkFor(lead.demoSlug));
+  const hasDemo = Boolean(leadDemo(lead, sites) || demoLinkFor(lead.demoSlug));
   // The playbook: polite English to dentists and principals, Hinglish to Hindi-first owners.
   const [lang, setLang] = useState<ScriptLanguage>(() =>
     lead.language === "hinglish" || lead.language === "hi" ? "hinglish" : lead.language === "en" ? "en" : lead.kind === "coaching" ? "hinglish" : "en",
