@@ -112,9 +112,18 @@ export const DEFAULT_SIGNATURE = `Mehdi Alam, Ideovent Technologies, Saket, New 
 export const EMAIL_OPT_OUT_EN = "If you would rather not hear from me, reply REMOVE and I will not write again.";
 export const EMAIL_OPT_OUT_HINGLISH =
   "Agar aap mujhse aage mail nahi chahte, to bas REMOVE likh kar reply kar dijiye, main dobara nahi likhunga.";
+/**
+ * The same line from anyone but Mehdi (spec 10.7, team wording "we_leave_it_here"):
+ * "likhunga" is a man's word, so the team writes as "hum". Used only once Mehdi
+ * approved it; until then a member is not offered a Hinglish cold e-mail at all.
+ */
+export const EMAIL_OPT_OUT_HINGLISH_TEAM =
+  "Agar aap humse aage mail nahi chahte, to bas REMOVE likh kar reply kar dijiye, hum dobara nahi likhenge.";
 
-export function emailOptOutLine(language: TemplateLanguage): string {
-  return language === "en" ? EMAIL_OPT_OUT_EN : EMAIL_OPT_OUT_HINGLISH;
+/** The REMOVE line in a language; `team` for anyone but Mehdi (the English one is true from anyone). */
+export function emailOptOutLine(language: TemplateLanguage, team = false): string {
+  if (language === "en") return EMAIL_OPT_OUT_EN;
+  return team ? EMAIL_OPT_OUT_HINGLISH_TEAM : EMAIL_OPT_OUT_HINGLISH;
 }
 
 /**
@@ -1005,6 +1014,11 @@ export interface RenderContext {
   demo?: DemoFacts;
   /** The sender's own call times, in place of the computed {callSlots}. */
   callSlots?: string;
+  /**
+   * Anyone but Mehdi (spec 10.7): the REMOVE line in the team's words. Pass
+   * the sender's own senderName, senderPhone and signature with it.
+   */
+  team?: boolean;
 }
 
 export interface RenderResult {
@@ -1165,7 +1179,7 @@ export function render(
   if (template.channel === "email") {
     const signature = (ctx.signature ?? "").trim() || DEFAULT_SIGNATURE;
     if (!body.includes(signature)) body = `${body}\n\n${HAS_SIGN_OFF.test(signature) ? "" : `${SIGN_OFF}\n`}${signature}`;
-    if (carriesOptOut(template.stage) && !body.includes("REMOVE")) body = `${body}\n\n${emailOptOutLine(language)}`;
+    if (carriesOptOut(template.stage) && !body.includes("REMOVE")) body = `${body}\n\n${emailOptOutLine(language, ctx.team)}`;
     if (/\battach/i.test(said)) warnings.push("Attach the proposal PDF in your mail app before pressing Send.");
   }
 
@@ -1328,6 +1342,43 @@ export interface SendCheckExtra {
    * own text is checked, so a template with a [placeholder] stays blocked.
    */
   text?: { subject?: string; body: string };
+  /**
+   * Anyone but Mehdi (spec 10.7): quiet hours and Sunday block the send
+   * instead of warning. Mehdi decides for himself, as before.
+   */
+  strict?: boolean;
+  /**
+   * The sender's own first-WhatsApp limit a day (crm_me waDailyLimit), in
+   * place of the settings' limit: 0 means no first WhatsApp message at all
+   * (the trainee preset), null no limit. Left out: the settings decide (Mehdi).
+   */
+  whatsappLimit?: number | null;
+  /**
+   * A member's company number (spec 5.2): WhatsApp waits until Mehdi has set
+   * it and ticked "Number checked" after their test message arrived from it.
+   */
+  sender?: { phone?: string | null; checked: boolean };
+}
+
+/** The refusals of the team's checks, word for word (the e2e suites look for them). */
+export const SEND_OFF_FOR_YOU = "First WhatsApp messages are off for you for now. E-mail, or ask Mehdi.";
+export const SEND_NO_COMPANY_NUMBER = "Mehdi has not set your company number yet. E-mail works; ask him to add it.";
+export const SEND_NUMBER_NOT_CHECKED = "Send Mehdi the test message first: Me > Set up this phone.";
+
+/**
+ * A lead from a Meta form who did NOT tick its box "Ideovent may contact me on
+ * WhatsApp and phone about this enquiry" (metaConsent "no"). The privacy
+ * policy promises "we call you or message you on WhatsApp only if you ticked
+ * that box" (meta-leads-spec 12; DPDP Act 2023), so for everyone, Mehdi
+ * included: no WhatsApp message (first or follow-up) and no call. E-mail
+ * stays open. "yes", "none" (the form had no box) and every lead that did not
+ * come from Meta are not touched. The same sentence wherever it stops something.
+ */
+export const NO_META_CONSENT = "They did not tick the box on the Facebook or Instagram form that allows WhatsApp and calls. E-mail them only.";
+
+/** True when this lead's Meta form consent tick was left unticked: no WhatsApp, no call (NO_META_CONSENT). */
+export function metaConsentRefused(lead: { metaConsent?: string } | null | undefined): boolean {
+  return lead?.metaConsent === "no";
 }
 
 function hhmm(s: string | undefined, fallback: number): number {
@@ -1383,6 +1434,9 @@ export function dailyWhatsappLimit(settings: Partial<OutreachSettings> | null | 
  *
  * Pass `extra.text` (the text on screen, after edits): a [placeholder] left in
  * it, or a link typed into a message that must not carry one, blocks the send.
+ *
+ * A lead from a Meta form who left its WhatsApp-and-phone box unticked
+ * (metaConsent "no") gets no WhatsApp at any stage, from anyone: NO_META_CONSENT.
  */
 export function checkSend(
   lead: Partial<OutreachLead> & Pick<OutreachLead, "instituteName">,
@@ -1401,7 +1455,9 @@ export function checkSend(
   const onScreen = extra.text ? `${extra.text.subject ?? ""}\n${extra.text.body}` : undefined;
   const typed = onScreen !== undefined && signature ? onScreen.split(signature).join("") : onScreen;
   const typedLink = typed !== undefined && URL_RE.test(typed);
-  const cap = dailyWhatsappLimit(settings);
+  // The sender's own limit (anyone but Mehdi) or, left out, the settings' (null or above 0).
+  const own = extra.whatsappLimit;
+  const cap = own === undefined ? dailyWhatsappLimit(settings) : own === null ? null : Math.max(0, Math.floor(Number(own)) || 0);
   const hasDemo = Boolean(demoLinkFor(lead.demoSlug));
 
   // Who they are
@@ -1418,6 +1474,8 @@ export function checkSend(
     blockers.push("No valid e-mail address for this lead.");
   }
   if (channel === "whatsapp" && !leadWhatsappNumber(lead)) blockers.push("No valid phone or WhatsApp number for this lead.");
+  // A Meta form's WhatsApp-and-phone box left unticked: no WhatsApp at any stage, from anyone (DPDP). E-mail is open.
+  if (channel === "whatsapp" && metaConsentRefused(lead)) blockers.push(NO_META_CONSENT);
 
   // Links: none in a first message on either channel; their sample's link goes after they say yes.
   // The one exception (1 Oct 2026): a first message whose template has the picture link may carry
@@ -1461,20 +1519,29 @@ export function checkSend(
   const holes = unfilledPlaceholders(onScreen ?? `${text}\n${observationText(lead.observation, template.language)}`);
   if (holes.length) blockers.push(`Fill in ${holes.join(" and ")} before sending.`);
 
-  // Volume: only when Mehdi has set a daily limit (blank means no limit).
-  if (channel === "whatsapp" && cap !== null && sentTodayCount >= cap) {
+  // Volume: only when Mehdi has set a daily limit (blank means no limit). A member's own limit of 0: none at all.
+  if (channel === "whatsapp" && cap === 0) {
+    if (template.stage === "first") blockers.push(SEND_OFF_FOR_YOU);
+  } else if (channel === "whatsapp" && cap !== null && sentTodayCount >= cap) {
     if (template.stage === "first") blockers.push(`Daily WhatsApp limit reached (${sentTodayCount} of ${cap} first messages today). Call or e-mail instead.`);
     else warnings.push(`${sentTodayCount} first WhatsApp messages already sent today (limit ${cap}).`);
   }
+  // A member's WhatsApp goes from the company number Mehdi checked, or not at all (spec 5.2).
+  if (channel === "whatsapp" && extra.sender) {
+    if (!(extra.sender.phone ?? "").trim()) blockers.push(SEND_NO_COMPANY_NUMBER);
+    else if (!extra.sender.checked) blockers.push(SEND_NUMBER_NOT_CHECKED);
+  }
 
   // Timing: 10:00 to 21:00 India time (TRAI), quiet hours from settings; no first contact on Sunday.
+  // Mehdi is warned; anyone else (strict) is stopped.
   if (inQuietHours(now, settings?.quietStart, settings?.quietEnd)) {
     const from = settings?.quietEnd || DEFAULT_QUIET_END;
     const to = settings?.quietStart || DEFAULT_QUIET_START;
-    warnings.push(`It is quiet hours in India (${to} to ${from}). Better to send between ${from} and ${to}.`);
+    if (extra.strict) blockers.push(`It is quiet hours in India (${to} to ${from}). Nothing goes out now: send between ${from} and ${to}.`);
+    else warnings.push(`It is quiet hours in India (${to} to ${from}). Better to send between ${from} and ${to}.`);
   }
   const { day } = istParts(now);
-  if (day === 0) warnings.push("It is Sunday in India: no first contact or follow-up on a Sunday.");
+  if (day === 0) (extra.strict ? blockers : warnings).push("It is Sunday in India: no first contact or follow-up on a Sunday.");
   // Dental clinics work Saturdays, so the Saturday e-mail warning is for schools and coaching only.
   else if (day === 6 && channel === "email" && lead.kind !== "dental") warnings.push("It is Saturday: school and coaching offices read e-mail on working days.");
 

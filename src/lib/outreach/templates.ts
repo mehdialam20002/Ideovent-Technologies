@@ -73,6 +73,7 @@
  */
 
 import type { LeadStatus } from "./types";
+import type { MemberWordingKey } from "./team";
 
 export type TemplateChannel = "email" | "whatsapp";
 
@@ -1094,4 +1095,141 @@ export function fieldsUsed(t: Pick<MessageTemplate, "subject" | "body">): string
     if (!out.includes(m[1])) out.push(m[1]);
   }
   return out;
+}
+
+/* ── Team wording (spec 10.7): what anyone but Mehdi sends, behind his approval ── */
+
+/**
+ * WHAT AN INTERN SENDS IS TRUE FROM THEM. Two kinds of the approved sentences
+ * are not: Mehdi's own work in the first person ("I made", "I have written",
+ * "maine ... likha", "what I saw") and first-person verbs that are masculine in
+ * Hinglish and Hindi ("chhod raha hoon", "chahta hoon", "likhunga"), which a
+ * woman intern would not say. Each has a "we" version here, gender-neutral in
+ * Hinglish too ("hum ... chhod rahe hain"), grouped under the five switches
+ * Mehdi turns on in Settings > Messages > Team wording (memberWording):
+ *   we_pitch_note     the pitch-page first message: the note "I" wrote, what "I" saw;
+ *   we_sample_made    the sample in the first person: made, written about, offered
+ *                     ("So I would like to make", "main ... banana chahta hoon",
+ *                     "Shall I make it for you?");
+ *   we_leave_it_here  leaving it there ("main yahin chhod raha hoon") and the REMOVE
+ *                     line of a Hinglish cold e-mail ("main dobara nahi likhunga";
+ *                     engine.ts words it for the team);
+ *   we_call_lines     the call script's cold opening and fix (callScript.ts);
+ *   member_after_yes  the message after a written yes, without Mehdi's call times.
+ * memberVersion() gives anyone but Mehdi a template with the "we" sentences in
+ * place, or nothing while a group it needs is not approved. Mehdi's own
+ * templates never change: scripts/test-crm-wording.mjs pins every one.
+ */
+export interface WordingSwap {
+  key: MemberWordingKey;
+  /** The approved sentence, exactly as a template carries it. */
+  owner: string;
+  /** What anyone but Mehdi sends in its place. */
+  member: string;
+}
+
+/** The solution line of the twin that offers to make a sample, in the team's words (SOLUTION's "offer"). */
+const TEAM_OFFER: Record<TemplateLanguage, Record<"new" | "fix", (noun: string) => string>> = {
+  hinglish: {
+    new: (n) => `Isliye hum aapke ${n} ke naam se ek sample website banana chahte hain:`,
+    fix: (n) => `Isliye hum aapke ${n} ka ek naya sample banana chahte hain:`,
+  },
+  en: { new: (n) => `So we would like to make a sample website for your ${n}:`, fix: (n) => `So we would like to make a new sample website for your ${n}:` },
+  hi: { new: (n) => `इसलिए हम आपके ${n} के नाम से एक सैंपल वेबसाइट बनाना चाहते हैं:`, fix: (n) => `इसलिए हम आपके ${n} का एक नया सैंपल बनाना चाहते हैं:` },
+};
+/** The nouns firstSet puts in the solution line. */
+const SOLUTION_NOUNS = ["clinic", "school", "institute", "{kindNoun}"];
+/** OFFER_ASK's question, in the team's words. */
+const TEAM_OFFER_QUESTION: Record<TemplateLanguage, [string, string]> = {
+  hinglish: ["Kya main ye sample bana doon?", "Kya hum ye sample bana dein?"],
+  en: ["Shall I make it for you?", "Shall we make it for you?"],
+  hi: ["क्या मैं ये सैंपल बना दूँ?", "क्या हम ये सैंपल बना दें?"],
+};
+/** CALL_ASK without Mehdi's call times: the last line of the after-a-phone-yes message, already approved. */
+const TEAM_AFTER_YES_ASK: Record<TemplateLanguage, string> = {
+  hinglish: "Dekh kar bata dijiye kya badalna hai.",
+  en: "Have a look and tell me what you would change.",
+  hi: "देख कर बता दीजिए क्या बदलना है।",
+};
+const LANGUAGES: TemplateLanguage[] = ["hinglish", "en", "hi"];
+const offerLines = (noun: string): WordingSwap[] =>
+  LANGUAGES.flatMap((l) => (["new", "fix"] as const).map((p) => ({ key: "we_sample_made" as const, owner: SOLUTION[l].offer[p](noun), member: TEAM_OFFER[l][p](noun) })));
+
+/** Every approved sentence that has a "we" version, and the version. */
+export const MEMBER_SWAPS: readonly WordingSwap[] = [
+  { key: "we_pitch_note", owner: "Isliye maine aapke liye ek chhota note likha hai", member: "Isliye humne aapke liye ek chhota note likha hai" },
+  { key: "we_pitch_note", owner: "So I have written a short note for you", member: "So we have written a short note for you" },
+  { key: "we_pitch_note", owner: "• What I saw on your site", member: "• What we saw on your site" },
+  { key: "we_sample_made", owner: "a quick note on the sample I made for {instituteName}.", member: "a quick note on the sample we made for {instituteName}." },
+  { key: "we_sample_made", owner: "A few days ago I wrote about the sample page for your {kindNoun}.", member: "A few days ago we wrote about the sample page for your {kindNoun}." },
+  { key: "we_sample_made", owner: "A few days ago I offered to make a sample page for your {kindNoun}.", member: "A few days ago we offered to make a sample page for your {kindNoun}." },
+  { key: "we_sample_made", owner: "a quick note on my e-mail about a sample website for {instituteName}.", member: "a quick note on our e-mail about a sample website for {instituteName}." },
+  { key: "we_sample_made", owner: "Shall I make one for you?", member: "Shall we make one for you?" },
+  { key: "we_sample_made", owner: "Kya main aapke liye ek bana doon?", member: "Kya hum aapke liye ek bana dein?" },
+  { key: "we_sample_made", owner: "Shall I make the sample website for you?", member: "Shall we make the sample website for you?" },
+  { key: "we_sample_made", owner: "Kya main aapke liye sample website bana doon?", member: "Kya hum aapke liye sample website bana dein?" },
+  ...SOLUTION_NOUNS.flatMap(offerLines),
+  ...LANGUAGES.map((l): WordingSwap => ({ key: "we_sample_made", owner: TEAM_OFFER_QUESTION[l][0], member: TEAM_OFFER_QUESTION[l][1] })),
+  { key: "we_leave_it_here", owner: "Main yahin chhod raha hoon.", member: "Hum ise yahin chhod rahe hain." },
+  { key: "we_leave_it_here", owner: "main yahin chhod raha hoon.", member: "hum ise yahin chhod rahe hain." },
+  ...LANGUAGES.map((l): WordingSwap => ({ key: "member_after_yes", owner: CALL_ASK[l], member: TEAM_AFTER_YES_ASK[l] })),
+  { key: "member_after_yes", owner: "It is only a page on what I saw on your site", member: "It is only a page on what we saw on your site" },
+];
+
+/** The same, as Mehdi reads them before he approves: each offer line once, with {place} for the noun. */
+export const MEMBER_SWAPS_SHOWN: readonly WordingSwap[] = [
+  ...MEMBER_SWAPS.filter((s) => !SOLUTION_NOUNS.flatMap(offerLines).some((o) => o.owner === s.owner)),
+  ...offerLines("{place}"),
+];
+
+/** The e-mails that carry the REMOVE line (engine.ts carriesOptOut; the wording test keeps the two equal). */
+export const COLD_EMAIL_STAGES: readonly TemplateStage[] = ["first", "follow_up_1", "follow_up_2", "follow_up_3"];
+
+/** Mehdi's alone: the after-call summary and the proposal carry the price (access.ts MONEY_STAGES). */
+const MEHDIS_STAGES: readonly TemplateStage[] = ["after_call", "proposal"];
+
+/**
+ * The groups whose sentences a template carries. A Hinglish (or Hindi) cold
+ * e-mail also carries the REMOVE line, "main dobara nahi likhunga", which
+ * render() words for the team (engine.ts EMAIL_OPT_OUT_HINGLISH_TEAM).
+ */
+export function memberWordingKeysOf(t: Pick<MessageTemplate, "subject" | "body" | "channel" | "language" | "stage">): MemberWordingKey[] {
+  const text = `${t.subject ?? ""}\n${t.body}`;
+  const keys = new Set<MemberWordingKey>();
+  for (const s of MEMBER_SWAPS) if (text.includes(s.owner)) keys.add(s.key);
+  if (t.channel === "email" && t.language !== "en" && COLD_EMAIL_STAGES.includes(t.stage)) keys.add("we_leave_it_here");
+  return [...keys];
+}
+
+const TEAM_YES_NOTE = "Only after they said yes, within the hour. A call with Mehdi goes through Hand to Mehdi: never offer a time yourself.";
+/** The picker's words for the team's version: no call times, the note "we" wrote. */
+const LABEL_SWAPS: readonly (readonly [string, string])[] = [
+  [" and two call times", ""],
+  ["the note I wrote", "the note we wrote"],
+  [YES_NOTE, TEAM_YES_NOTE],
+];
+const swapAll = (text: string, pairs: readonly (readonly [string, string])[]) => pairs.reduce((s, [from, to]) => s.split(from).join(to), text);
+
+/**
+ * A template as anyone but Mehdi may send it (spec 10.7). Null for the
+ * after-call summary and the proposal (the price is Mehdi's), for a retired
+ * one, and while a group of sentences it carries waits for his approval;
+ * otherwise the same template (same id) with the team's "we" sentences in
+ * place. Never a message with {callSlots}: Mehdi's call times are his to offer.
+ */
+export function memberVersion(t: MessageTemplate, approved: Partial<Record<MemberWordingKey, boolean>> | null | undefined): MessageTemplate | null {
+  if (MEHDIS_STAGES.includes(t.stage) || t.retired) return null;
+  const keys = memberWordingKeysOf(t);
+  if (keys.some((k) => !approved?.[k])) return null;
+  const pairs = MEMBER_SWAPS.map((s) => [s.owner, s.member] as const);
+  const out: MessageTemplate = keys.length
+    ? {
+        ...t,
+        body: swapAll(t.body, pairs),
+        ...(t.subject !== undefined ? { subject: swapAll(t.subject, pairs) } : {}),
+        label: swapAll(t.label, LABEL_SWAPS),
+        ...(t.note !== undefined ? { note: swapAll(t.note, LABEL_SWAPS) } : {}),
+      }
+    : t;
+  return /\{callSlots\}/.test(`${out.subject ?? ""}\n${out.body}`) ? null : out;
 }

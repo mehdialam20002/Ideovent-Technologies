@@ -132,7 +132,8 @@ export interface MemberStats {
   lastSeenAt?: string;
 }
 
-export type NotificationKind = "assigned" | "moved_away" | "handoff" | "review" | "info" | "demo_ready" | "resolved";
+/** lead_in ("New lead") and intake ("Lead Ads": the Meta intake needs Mehdi) since 0012, Meta Lead Ads. */
+export type NotificationKind = "assigned" | "moved_away" | "handoff" | "review" | "info" | "demo_ready" | "resolved" | "lead_in" | "intake";
 
 export interface CrmNotification {
   id: number;
@@ -144,10 +145,15 @@ export interface CrmNotification {
   readAt?: string;
 }
 
-export type RequestKind = "demo" | "correction" | "question" | "handoff" | "give_back";
+/**
+ * meta_form (0012): a Meta form came with the phone number or e-mail of a lead
+ * already in the CRM. Asked by nobody; its body holds the form's answers, for
+ * Mehdi alone (whoever sent it may not be that lead).
+ */
+export type RequestKind = "demo" | "correction" | "question" | "handoff" | "give_back" | "meta_form";
 export type RequestOutcome = "done" | "no_action" | "accepted" | "not_real";
 
-/** An Ask Mehdi or a hand-over: open until Mehdi (or the admin it went to) resolves it. */
+/** An Ask Mehdi, a hand-over, or a Meta form's answers (meta_form): open until Mehdi (or the admin it went to) resolves it. */
 export interface CrmRequest {
   id: number;
   leadId: string;

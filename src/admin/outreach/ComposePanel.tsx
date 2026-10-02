@@ -1,7 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, ArrowRight, Ban, Check, Copy, Mail, MessageCircle, Monitor, MoreHorizontal, PhoneCall, Reply } from "lucide-react";
-import type { DemoSite } from "@/lib/cms/types";
-import { useCms } from "@/lib/cms/context";
+import { AlertTriangle, ArrowRight, ArrowRightLeft, Ban, Check, Copy, Mail, MessageCircle, Monitor, MoreHorizontal, PhoneCall, Reply } from "lucide-react";
 import { demoStatus } from "@/lib/demo/record";
 import { LANGUAGE_LABELS, carriesPreview, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";
 import { previewFor } from "@/lib/outreach/preview";
@@ -15,22 +13,31 @@ import {
   leadWhatsappNumber,
   mailtoUrl,
   dailyWhatsappLimit,
+  metaConsentRefused,
+  NO_META_CONSENT,
+  observationText,
   observationsFor,
   render,
+  SEND_NO_COMPANY_NUMBER,
+  SEND_NUMBER_NOT_CHECKED,
   whatsappUrl,
   whatsappWebUrl,
 } from "@/lib/outreach/engine";
 import { isIndianMobile, sameContact } from "@/lib/outreach/store";
+import { blank, can, crmErrorText, isStaff } from "@/lib/outreach/access";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { firstWhatsappToday } from "./derive";
-import { DemoPicker, leadDemo } from "./DemoPicker";
+import { DemoPicker, leadDemo, useLeadDemoSites } from "./DemoPicker";
 import { callDoneChanges, looksLikeNote, otherLeadsNamed, rankTemplates, repliedChanges, startingObservation } from "./compose";
-import { PLAIN_STAGE_LABELS, plainStageOf, stageName, suggestFor } from "./stages";
+import { PLAIN_STAGE_LABELS, offered, plainStageOf, stageName, suggestFor } from "./stages";
 import { blanksIn, fillBlanks, listBlanks, piecesOf } from "./placeholders";
 import { StageStrip, type StageChoice } from "./StageStrip";
 import { MessageBox } from "./MessageBox";
 import { windowText } from "./callScript";
+import { CALLS_ONLY_ENGAGED, approvedWording, callRefusal, composeStages, isMemberSender, isTeamSender, teamCheckExtra, teamOffer, teamRenderContext, teamSender } from "./teamCompose";
+import { HandoffNow } from "@/crm/lead/HandoffNow";
+import { HandoffDialog } from "@/crm/lead/HandoffDialog";
 import { btnGhost, inputCls, prettyPhone, summaryCls } from "./ui";
 import { cn } from "@/lib/utils";
 
@@ -121,11 +128,40 @@ const ENGAGED = new Set<OutreachLead["status"]>(["replied", "demo_opened", "call
  * with the picture and the text; it records the send unless Open in WhatsApp
  * already did) and Download. The twin that offers to make a sample has no
  * picture, since the picture says the sample is built, and the box says so.
+ *
+ * ANYONE BUT MEHDI (spec 10.7; teamCompose.ts). The messages carry their own
+ * name, company phone and signature; only the templates whose sentences are
+ * true from them are offered (the "we" versions Mehdi approved); a member sees
+ * the four member stages, and on After they say yes the hand-over to Mehdi;
+ * quiet hours and Sunday block; their own first-WhatsApp limit holds (0 = none)
+ * and a member's WhatsApp waits for the company number Mehdi checked; no call
+ * times; without "May cold-call" no call to a lead that has not replied. Every
+ * change is a patch (spec 9.3) and every sent line carries its stage, so the
+ * database counts first messages and refuses the money stages. Mehdi's own
+ * screen is exactly as before.
+ *
+ * NO TICK, NO WHATSAPP OR CALL (DPDP; meta-leads-spec 12). A lead from a Meta
+ * form who left its box "Ideovent may contact me on WhatsApp and phone"
+ * unticked gets e-mail only, from everyone, Mehdi included: the compose starts
+ * on Email, every WhatsApp send is blocked (checkSend, NO_META_CONSENT) and the
+ * call buttons say the same sentence instead.
  */
 export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name: string; open: () => void } }) {
-  const { leads, events, settings, saveLead, addEvent } = useOutreach();
-  const { data } = useCms();
-  const demo = leadDemo(lead, (data.demoSites as DemoSite[]) || []);
+  const { leads, events, settings, patchLead, addEvent, me } = useOutreach();
+  const demo = leadDemo(lead, useLeadDemoSites());
+  // The team (spec 10.7): undefined / null / {} for Mehdi, so his screen is as before.
+  const team = isTeamSender(me);
+  const member = isMemberSender(me);
+  const offer = teamOffer(me, settings);
+  const stages = composeStages(me);
+  // Why no call now ("" when they may): the Meta tick left empty, or a cold call without "May cold-call".
+  const callWhy = callRefusal(me, lead, events);
+  const callable = !callWhy;
+  const noTick = metaConsentRefused(lead);
+  const [handing, setHanding] = useState(false);
+  // A member's Call done: "They are interested?" then offers the hand-over.
+  const [called, setCalled] = useState(false);
+  const [recordErr, setRecordErr] = useState<string | null>(null);
 
   const hasMail = Boolean(lead.email);
   const waNumber = leadWhatsappNumber(lead);
@@ -134,6 +170,8 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   // the first message went: an e-mailed lead opened on WhatsApp showed a
   // blocked "first message" there), else WhatsApp when there is a number.
   const [channel, setChannel] = useState<TemplateChannel>(() => {
+    // No Meta tick: e-mail is the only way to them, so start there.
+    if (noTick && hasMail) return "email";
     const last = events
       .filter((e) => e.leadId === lead.id && e.type === "sent" && (e.channel === "email" || e.channel === "whatsapp"))
       .sort((a, b) => (a.at < b.at ? 1 : -1))[0]?.channel;
@@ -175,14 +213,18 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
     }
   }
 
-  const waToday = firstWhatsappToday(events);
-  const waLimit = dailyWhatsappLimit(settings);
+  // Mehdi counts every first WhatsApp today against his settings' limit, as before; anyone else their own against theirs.
+  const waToday = team ? firstWhatsappToday(events, new Date(), me.memberId) : firstWhatsappToday(events);
+  const waLimit = team ? me.waDailyLimit ?? null : dailyWhatsappLimit(settings);
   // Only a landline and no email: the way in is a phone call.
   const landlineOnly = !hasMail && hasWa && !isIndianMobile(waNumber);
   // The stage: the lead's own (its status, then the no-reply sends on this channel) unless Mehdi picked one.
-  const suggestion = suggestFor(lead, events, channel);
+  // Anyone who may not send the price never lands on After the call or Proposal.
+  const suggestion = suggestFor(lead, events, channel, { member: Boolean(me.role) && !can(me, "stage.money") });
   const current: StageChoice = choice ?? { plain: plainStageOf(suggestion.stage), stage: suggestion.stage };
-  const ranked = current.stage ? rankTemplates({ lead, channel, stage: current.stage, settings, waToday, observation: observation.trim() }) : [];
+  const ranked = current.stage ? rankTemplates({ lead, channel, stage: current.stage, settings, waToday, observation: observation.trim(), offer }) : [];
+  // Messages at this stage a team member does not get yet: their "we" wording waits for Mehdi's approval.
+  const waiting = offer && current.stage ? offered(channel, current.stage, lead.kind).length - offered(channel, current.stage, lead.kind, offer).length : 0;
   const template = ranked.find((t) => t.id === templateId) || ranked[0];
   const short = ranked.slice(0, 3);
   if (template && !short.includes(template)) short.push(template);
@@ -192,10 +234,15 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   // facts go with it, so {offer} names only what this lead's demo really has.
   // {callSlots}: the two call times the engine proposes, unless Mehdi typed his own.
   const editKey = `${lead.id}|${channel}|${template?.id || ""}`;
-  const usesSlots = Boolean(template && fieldsUsed(template).includes("callSlots"));
+  // No call times from anyone but Mehdi: a team member's templates never carry {callSlots} (templates.ts memberVersion).
+  const usesSlots = !team && Boolean(template && fieldsUsed(template).includes("callSlots"));
   const ownSlots = slotState && slotState.key === editKey ? slotState.text : "";
+  // Anyone but Mehdi writes as themselves: their name, company phone and signature, and the team's REMOVE line.
+  const teamCtx = teamRenderContext(me);
   const rendered = template
-    ? render(template, lead, { signature: settings.signature, observation: observation.trim(), demo: demoFacts(demo), callSlots: ownSlots || undefined })
+    ? render(template, lead, teamCtx
+      ? { ...teamCtx, observation: observation.trim(), demo: demoFacts(demo) }
+      : { signature: settings.signature, observation: observation.trim(), demo: demoFacts(demo), callSlots: ownSlots || undefined })
     : null;
   const proposedSlots = template && usesSlots ? formatCallSlots(callSlots(template.kind !== "any" ? template.kind : lead.kind), template.language) : "";
   const base = `${rendered?.subject || ""}\n${rendered?.body || ""}`;
@@ -231,12 +278,22 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   const duplicateOf = leads.find((l) => l.id !== lead.id && (sameContact(l, { phone: lead.phone, email: lead.email }) || sameContact(l, { phone: lead.whatsapp })));
   // The engine checks the text on screen, the one that is sent (edits and filled blanks in it): a
   // [blank] left in it, or a link typed into a message that must not carry one, blocks the send.
+  // Anyone but Mehdi: their own signature is the one left out of the link check; strict timing, their limit, their number.
+  const checkSettings = teamCtx ? { ...settings, signature: teamCtx.signature } : settings;
   const check = template
-    ? checkSend({ ...lead, observation: observation.trim() }, template, channel, settings, waToday, new Date(), { duplicateOf, text: { subject, body } })
+    ? checkSend({ ...lead, observation: observation.trim() }, template, channel, checkSettings, waToday, new Date(), { duplicateOf, text: { subject, body }, ...teamCheckExtra(me) })
     : { ok: false, blockers: [`There is no ${channel === "email" ? "e-mail" : "WhatsApp"} message at this stage. Pick another stage${channel === "whatsapp" ? " or switch to Email" : ""}.`], warnings: [] as string[] };
   const text = `${subject}\n${body}`;
   const unfilled = blanksIn(text);
   const blockers = [...check.blockers];
+  // A member's WhatsApp waits for the company number Mehdi checked, whether or not a message fits this stage.
+  if (channel === "whatsapp" && member) {
+    const sender = teamCheckExtra(me).sender;
+    const why = sender && !(sender.phone || "").trim() ? SEND_NO_COMPANY_NUMBER : sender && !sender.checked ? SEND_NUMBER_NOT_CHECKED : "";
+    if (why && !blockers.includes(why)) blockers.push(why);
+  }
+  // No Meta tick: no WhatsApp, whether or not a message fits this stage (checkSend says it when one does).
+  if (channel === "whatsapp" && noTick && !blockers.includes(NO_META_CONSENT)) blockers.push(NO_META_CONSENT);
   // Said once: the engine's own "Fill in [..]" when it gave one, this screen's otherwise.
   if (unfilled.length && !blockers.some((b) => /fill in \[/i.test(b))) blockers.push(`Fill in ${listBlanks(unfilled)} before sending.`);
   const leftover = [...new Set(text.match(/\{[A-Za-z]\w*\}/g) || [])];
@@ -251,7 +308,9 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   if (channel === "whatsapp" && !hasWa) blockers.push("This lead has no WhatsApp or phone number. Add one with Edit.");
   if (channel === "whatsapp" && hasWa && !isIndianMobile(waNumber)) warnings.push("This number does not look like an Indian mobile, so WhatsApp may not reach it.");
   if (/\/site\/[a-z0-9-]+/i.test(text) && demo && demoStatus(demo) !== "sent") {
-    blockers.push("The demo is not marked sent, so its link shows a 404. Tap Mark sent in step 1 first.");
+    blockers.push(team
+      ? "The demo's link is off, so it shows a 404. Tap Turn on the link in step 1 first."
+      : "The demo is not marked sent, so its link shows a 404. Tap Mark sent in step 1 first.");
   }
   const others = otherLeadsNamed(text, lead, leads);
   if (others.length) {
@@ -286,47 +345,74 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
     // popup lost) would then have sent the follow-up instead of this message.
     setChoice({ plain: plainStageOf(template.stage), stage: template.stage });
     setTemplateId(template.id);
+    setRecordErr(null);
     const now = new Date();
     const due = followUpDate(template.stage, now);
-    await addEvent({
-      leadId: lead.id,
-      type: "sent",
-      channel,
-      templateId: template.id,
-      detail: `${channel === "whatsapp" ? "WhatsApp" : "Email"} opened in ${how} (${stageName(template.stage)}): ${template.label}${subject ? `, "${subject}"` : ""}`,
-    });
-    await saveLead({
-      ...lead,
-      status: lead.status === "new" ? "contacted" : lead.status,
-      lastContactedAt: now.toISOString(),
-      nextActionAt: Number.isNaN(due.getTime()) ? lead.nextActionAt : due.toISOString(),
-      ...(obsTouched ? { observation: observation.trim() || undefined } : {}),
-      language: lead.language || template.language,
-    });
+    // The observation is a fill-once field for a member (spec 10.7): an empty one is filled; a different one
+    // goes into the history instead, never over what is there. Mehdi and admins change it as before.
+    const obs = observation.trim();
+    const rewritesObs = !team || isStaff(me);
+    const obsPatch: Partial<OutreachLead> = !obsTouched ? {} : rewritesObs ? { observation: obs || undefined } : obs && blank(lead.observation) ? { observation: obs } : {};
+    const obsNote = obsTouched && !rewritesObs && obs && !blank(lead.observation) && obs !== (lead.observation || "").trim();
+    try {
+      await addEvent({
+        leadId: lead.id,
+        type: "sent",
+        channel,
+        templateId: template.id,
+        // The stage travels with every sent line: the database counts first messages by it and refuses the money stages.
+        stage: template.stage,
+        detail: `${channel === "whatsapp" ? "WhatsApp" : "Email"} opened in ${how} (${stageName(template.stage)}): ${template.label}${subject ? `, "${subject}"` : ""}`,
+      });
+      await patchLead(lead.id, {
+        ...(lead.status === "new" ? { status: "contacted" as const } : {}),
+        lastContactedAt: now.toISOString(),
+        ...(Number.isNaN(due.getTime()) ? {} : { nextActionAt: due.toISOString() }),
+        ...obsPatch,
+        ...(lead.language ? {} : { language: template.language }),
+      });
+      if (obsNote) {
+        await addEvent({ leadId: lead.id, type: "note", detail: `Observation said in this message (the saved one is unchanged): ${observationText(obs, "en") || obs}` });
+      }
+    } catch (e) {
+      setRecordErr(`The send was not recorded: ${crmErrorText(e)}`);
+    }
     setSentNow(true);
     setSentKey(editKey);
   };
 
   /* ── What happened (the small menu under Send) ─────────────────────── */
   // Both move the lead to a new stage, so a stage pinned by the last send is let go.
-  const replied = async () => {
-    const c = repliedChanges(lead);
+  const after = async (fn: () => Promise<unknown>) => {
+    setRecordErr(null);
+    try {
+      await fn();
+    } catch (e) {
+      setRecordErr(crmErrorText(e));
+    }
+  };
+  const replied = () => after(async () => {
+    const c = repliedChanges(lead, new Date(), { member });
     await addEvent(c.event);
-    await saveLead(c.lead);
+    await patchLead(lead.id, c.patch);
     setChoice(null);
     setTemplateId("");
-  };
-  const callDone = async () => {
-    const c = callDoneChanges(lead);
+  });
+  // A member's call never sets stage Call (the database refuses it): "They are interested" is a hand-over.
+  const callDone = () => after(async () => {
+    const c = callDoneChanges(lead, new Date(), { member });
     await addEvent(c.event);
-    await saveLead(c.lead);
+    await patchLead(lead.id, c.patch);
     setChoice(null);
     setTemplateId("");
-  };
-  const doNotContact = async () => {
+    if (member) setCalled(true);
+  });
+  const doNotContact = () => {
     if (!confirm(`Mark ${lead.instituteName} as not interested? Every send button for them will be blocked.`)) return;
-    await addEvent({ leadId: lead.id, type: "status", detail: "Not interested: do not contact again." });
-    await saveLead({ ...lead, status: "do_not_contact", nextActionAt: undefined });
+    return after(async () => {
+      await addEvent({ leadId: lead.id, type: "status", detail: "Not interested: do not contact again." });
+      await patchLead(lead.id, { status: "do_not_contact", nextActionAt: undefined });
+    });
   };
 
   const sendLink = (href: string, how: string, label: string, Icon: typeof Mail, primary: boolean, testid: string, alsoOnClick?: () => void) => {
@@ -387,10 +473,10 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
           <div className="inline-flex rounded-full bg-muted p-1" role="tablist" aria-label="Channel">
             {([
               ["email", "Email", Mail, hasMail],
-              ["whatsapp", "WhatsApp", MessageCircle, hasWa],
+              ["whatsapp", "WhatsApp", MessageCircle, hasWa && !noTick],
             ] as const).map(([c, label, Icon, has]) => (
               <button key={c} type="button" role="tab" aria-selected={channel === c} onClick={() => pickChannel(c)}
-                title={has ? undefined : `No ${c === "email" ? "email address" : "number"} for this lead`}
+                title={has ? undefined : c === "whatsapp" && noTick ? NO_META_CONSENT : `No ${c === "email" ? "email address" : "number"} for this lead`}
                 className={cn("inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium", channel === c ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground", !has && "line-through decoration-1")}>
                 <Icon className="h-4 w-4" aria-hidden="true" /> {label}
               </button>
@@ -398,18 +484,27 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
           </div>
         }
       >
-        <StageStrip channel={channel} kind={lead.kind} current={current} suggested={suggestion}
+        <StageStrip channel={channel} kind={lead.kind} current={current} suggested={suggestion} stages={stages} offer={offer} team={team}
           onPick={(c) => {
             setChoice(c);
             setTemplateId("");
           }} />
 
         <div className="mt-5">
+          {/* The hand-over point (spec 10.7): a member hands the lead to Mehdi at the yes. */}
+          {member && current.plain === "after_yes" && (lead.status === "replied" || lead.status === "demo_opened") && (
+            <HandoffNow lead={lead} mayLink={Boolean(approvedWording(settings).member_after_yes)} className="mb-4" />
+          )}
           <p className="mb-1.5 text-sm font-medium" data-testid="stage-now">
             {current.stage ? stageLabel(current.stage, channel) : PLAIN_STAGE_LABELS[current.plain]}
             <span className="font-normal text-muted-foreground">{choice ? ", picked by you" : ", where this lead is now"}</span>
           </p>
           <TemplateList items={short} selected={template?.id} suggested={ranked[0]?.id} onPick={setTemplateId} />
+          {waiting > 0 && (
+            <p className="mt-1.5 text-xs text-muted-foreground" data-testid="wording-waiting">
+              {waiting === 1 ? "1 more message at this stage waits" : `${waiting} more messages at this stage wait`} for Mehdi to approve the team's wording.
+            </p>
+          )}
           {ranked.length > short.length && (
             <details className="mt-1">
               <summary className={summaryCls}>More templates for this stage ({ranked.length})</summary>
@@ -480,11 +575,21 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
             ))}
           </ul>
         )}
+        {/* Which number a team member's WhatsApp leaves from (spec 10.7): their company number, once Mehdi checked it. */}
+        {team && !isEmail && teamSender(me)?.phone && (
+          <p className="mb-2 text-center text-xs text-muted-foreground" data-testid="sends-from">
+            Sends from WhatsApp Business, {prettyPhone(teamSender(me)?.phone)}
+          </p>
+        )}
         {isEmail && landlineOnly ? (
-          <a href={`tel:${waNumber}`} data-testid="call-landline"
-            className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-            <PhoneCall className="h-5 w-5" aria-hidden="true" /> Call {prettyPhone(waNumber)}
-          </a>
+          callable ? (
+            <a href={`tel:${waNumber}`} data-testid="call-landline"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <PhoneCall className="h-5 w-5" aria-hidden="true" /> Call {prettyPhone(waNumber)}
+            </a>
+          ) : (
+            <p role="note" className="rounded-xl bg-muted/50 px-3 py-3 text-center text-sm" data-testid={callWhy === CALLS_ONLY_ENGAGED ? "calls-engaged-only" : "calls-no-consent"}>{callWhy}</p>
+          )
         ) : isEmail ? (
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="min-w-0 flex-1">
@@ -513,11 +618,25 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
         )}
         <p className="mt-2 text-center text-xs text-muted-foreground">
           {isEmail && landlineOnly
-            ? "Their number is a landline and there is no email: call them, then use Call done below."
+            ? callable ? "Their number is a landline and there is no email: call them, then use Call done below." : ""
             : "The text is typed for you. You press Send there."}
           <span role="status" className="sr-only">{copied === "text" ? "E-mail text copied." : copied === "body" ? "The full e-mail text was also copied." : ""}</span>
-          {!isEmail && (waLimit !== null ? ` First WhatsApp messages today: ${waToday} of ${waLimit}.` : ` ${waToday} first WhatsApp ${waToday === 1 ? "message" : "messages"} sent today.`)}
+          {!isEmail && (waLimit === 0
+            ? " First WhatsApp messages are off for you for now."
+            : waLimit !== null ? ` First WhatsApp messages today: ${waToday} of ${waLimit}.` : ` ${waToday} first WhatsApp ${waToday === 1 ? "message" : "messages"} sent today.`)}
         </p>
+        {recordErr && <p role="alert" className="mt-2 text-center text-sm text-destructive" data-testid="record-error">{recordErr}</p>}
+
+        {/* A member's call that went well is a hand-over: Mehdi sets the price and the call. */}
+        {member && called && (
+          <div role="note" className="mt-3 rounded-xl border border-primary/40 bg-primary/5 p-3 text-sm" data-testid="call-done-member">
+            <p>Call logged. They are interested? Hand the lead to Mehdi now: he sends the price and sets the call.</p>
+            <button type="button" className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground" onClick={() => setHanding(true)}>
+              <ArrowRightLeft className="h-4 w-4" aria-hidden="true" /> Hand to Mehdi
+            </button>
+          </div>
+        )}
+        {member && <HandoffDialog lead={lead} open={handing} onClose={() => setHanding(false)} />}
 
         {sentNow && next && (
           <button type="button" onClick={next.open} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-primary/40 px-4 text-sm font-medium text-primary hover:bg-primary/5">
@@ -532,7 +651,11 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
           <div className="mx-auto mt-1 max-w-sm rounded-xl border border-border/70 bg-card p-1">
             {!isEmail && sendLink(links.secondary, "WhatsApp Web", "Open in WhatsApp Web", Monitor, false, "open-whatsapp-web")}
             <button type="button" className={menuItem} onClick={() => void replied()}><Reply className="h-5 w-5" aria-hidden="true" /> They replied</button>
-            <button type="button" className={menuItem} onClick={() => void callDone()}><PhoneCall className="h-5 w-5" aria-hidden="true" /> Call done</button>
+            {callable ? (
+              <button type="button" className={menuItem} onClick={() => void callDone()}><PhoneCall className="h-5 w-5" aria-hidden="true" /> Call done</button>
+            ) : (
+              <p className="px-3 py-2 text-xs text-muted-foreground" data-testid={callWhy === CALLS_ONLY_ENGAGED ? "calls-engaged-only-menu" : "calls-no-consent-menu"}>{callWhy}</p>
+            )}
             <button type="button" className={cn(menuItem, "text-destructive")} onClick={() => void doNotContact()}><Ban className="h-5 w-5" aria-hidden="true" /> Not interested</button>
           </div>
         </details>

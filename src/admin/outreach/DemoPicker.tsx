@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
-import { Check, ExternalLink, Files, Link2Off, Pencil, Search, Send } from "lucide-react";
+import { Check, ExternalLink, Files, HelpCircle, Link2Off, Pencil, Search, Send } from "lucide-react";
 import type { DemoSite, DemoSiteSlot, PitchPage } from "@/lib/cms/types";
 import { useCms } from "@/lib/cms/context";
 import { demoStatus, demoPreviewPath } from "@/lib/demo/record";
+import { teamPreviewUrl } from "@/lib/demo/opens";
 import { TEMPLATES, loadTemplate, templateMeta, type TemplateId } from "@/lib/demo/templates";
 import { fromTemplate, type DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
 import { dentalTemplateFor, looksDental } from "@/lib/demo/templates/dentalPick";
 import { DuplicateTemplateDialog } from "@/admin/DuplicateTemplateDialog";
 import { MainSiteLink } from "@/crm/MainSiteLink";
+import { AskOwnerDialog } from "@/crm/lead/AskOwnerDialog";
 import { demoLinkFor, pitchLinkFor } from "@/lib/outreach/engine";
+import { can, crmErrorText } from "@/lib/outreach/access";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { demosForPicker, markDemoSent } from "./demoActions";
@@ -20,6 +23,23 @@ type Mode = "template" | "existing" | "pitch";
 /** The demo record behind a lead: by id, else by slug (imported leads carry only the slug). */
 export function leadDemo(lead: OutreachLead, sites: DemoSite[]): DemoSite | undefined {
   return (lead.demoId && sites.find((s) => s.id === lead.demoId)) || (lead.demoSlug ? sites.find((s) => s.slug === lead.demoSlug) : undefined);
+}
+
+/**
+ * The demo records a lead can point at: the CMS's and, for anyone but Mehdi,
+ * those linked to their own leads with drafts included (crm_lead_demos; the
+ * CMS shows a member only the live ones). Mehdi's list is the CMS's, as before.
+ */
+export function useLeadDemoSites(): DemoSite[] {
+  const { data } = useCms();
+  const { teamDemos } = useOutreach();
+  const cms = data.demoSites as DemoSite[] | undefined;
+  return useMemo(() => {
+    const list = cms || [];
+    if (!teamDemos.length) return list;
+    const ids = new Set(teamDemos.map((d) => d.id));
+    return [...list.filter((d) => !ids.has(d.id)), ...teamDemos];
+  }, [cms, teamDemos]);
 }
 
 /**
@@ -53,8 +73,14 @@ export function dentalDefault(lead: Pick<OutreachLead, "kind" | "instituteName" 
  * own subdomain.
  */
 export function DemoPicker({ lead }: { lead: OutreachLead }) {
+  const { me } = useOutreach();
+  // Making, linking and changing demos is Mehdi's (spec 4.1); anyone else turns on the link Mehdi made.
+  return me.role && !can(me, "demos.manage") ? <TeamDemoStep lead={lead} /> : <OwnerDemoPicker lead={lead} />;
+}
+
+function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
   const { data, actions } = useCms();
-  const { saveLead, addEvent } = useOutreach();
+  const { patchLead, addEvent } = useOutreach();
   const sites = ((data.demoSites as DemoSite[]) || []).filter((s) => !(s as DemoSite & { isExample?: boolean }).isExample);
   const pitches = (data.pitchPages as PitchPage[]) || [];
   const slots = (data as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || [];
@@ -82,7 +108,7 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
   const templates = TEMPLATES.filter((t) => lead.kind === "other" || t.kind === lead.kind);
 
   const link = async (site: DemoSite) => {
-    await saveLead({ ...lead, demoId: site.id, demoSlug: site.slug });
+    await patchLead(lead.id, { demoId: site.id, demoSlug: site.slug });
     await addEvent({ leadId: lead.id, type: "note", detail: `Demo linked: /site/${site.slug}` });
     setQ("");
     setOpen(false);
@@ -96,7 +122,7 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
       if (!template) throw new Error(`There is no template called ${id}.`);
       const copy = fromTemplate(template, { sites: (data.demoSites as DemoSite[]) || [], pitchPages: pitches }, who);
       await actions.saveDoc("demoSites", copy);
-      await saveLead({ ...lead, demoId: copy.id, demoSlug: copy.slug });
+      await patchLead(lead.id, { demoId: copy.id, demoSlug: copy.slug });
       await addEvent({ leadId: lead.id, type: "note", detail: `Demo created from template ${templateMeta(id)?.label || id}: /site/${copy.slug}` });
       setAsking(null);
       setOpen(false);
@@ -114,7 +140,7 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
   };
 
   const unlink = async () => {
-    await saveLead({ ...lead, demoId: undefined, demoSlug: undefined });
+    await patchLead(lead.id, { demoId: undefined, demoSlug: undefined });
     setOpen(true);
   };
 
@@ -222,7 +248,7 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
             <div className="mt-3">
               <label htmlFor="pitch-pick" className="block text-sm font-medium">Pitch page</label>
               <select id="pitch-pick" className={inputCls} value={lead.pitchSlug || ""}
-                onChange={(e) => void saveLead({ ...lead, pitchSlug: e.target.value || undefined })}>
+                onChange={(e) => void patchLead(lead.id, { pitchSlug: e.target.value || undefined })}>
                 <option value="">None</option>
                 {pitches.map((p) => (
                   <option key={p.id} value={p.slug}>{p.instituteName} (/{p.slug}, {p.status})</option>
@@ -259,6 +285,80 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
           onSubmit={(who) => void create(asking, who)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * STEP 1 FOR ANYONE BUT MEHDI (spec 10.7). Mehdi makes and links the demos;
+ * a team member sees the demo linked to their lead and turns its public link
+ * on when it is still a draft (crm_publish_lead_demo: draft to sent, the slot
+ * written, a history line), then the message with the link. With no demo yet:
+ * Ask Mehdi for one; when he links it the lead is due now and they are told.
+ * The preview opens the public page marked as a team visit (?team=1), so it
+ * never counts as the prospect's open.
+ */
+function TeamDemoStep({ lead }: { lead: OutreachLead }) {
+  const { publishLeadDemo } = useOutreach();
+  const sites = useLeadDemoSites();
+  const demo = leadDemo(lead, sites);
+  const state = demo ? demoStatus(demo) : null;
+  const slug = demo?.slug || lead.demoSlug;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+
+  const turnOn = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await publishLeadDemo(lead.id, [lead.contactName, lead.instituteName].filter(Boolean).join(", "));
+    } catch (e) {
+      setErr(crmErrorText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div data-testid="team-demo-step">
+      {slug ? (
+        <div data-testid="linked-demo" className="min-w-0">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <span className="font-medium">{demo?.instituteName || slug}</span>
+            {state === "sent" && <span className="text-xs text-success">Live: the link works</span>}
+            {state && state !== "sent" && state !== "closed" && <span className="text-xs text-warning">The link is off until you turn it on</span>}
+            {state === "closed" && <span className="text-xs text-destructive">Mehdi closed this demo: ask him before you send it</span>}
+          </p>
+          <p className="mt-0.5 break-all text-xs text-muted-foreground">{demoLinkFor(slug)}</p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {demo && state !== "sent" && state !== "closed" && (
+              <button type="button" className={btnPrimary} disabled={busy} onClick={() => void turnOn()} data-testid="demo-turn-on">
+                <Send className="h-4 w-4" aria-hidden="true" /> {busy ? "Turning it on..." : "Turn on the link"}
+              </button>
+            )}
+            {state === "sent" && (
+              <a href={teamPreviewUrl(demoLinkFor(slug))} target="_blank" rel="noopener noreferrer" className={btnGhost} data-testid="demo-open">
+                <ExternalLink className="h-4 w-4" aria-hidden="true" /> Open
+              </a>
+            )}
+          </div>
+        </div>
+      ) : lead.pitchSlug ? (
+        <div className="min-w-0">
+          <p className="text-sm font-medium">Pitch page</p>
+          <p className="mt-0.5 break-all text-xs text-muted-foreground">{pitchLinkFor(lead.pitchSlug)}</p>
+        </div>
+      ) : (
+        <div>
+          <p className="text-sm text-muted-foreground">No demo yet. Mehdi makes the demos: ask him for one, and this lead comes back to you when it is linked.</p>
+          <button type="button" className={btnSecondary + " mt-2"} onClick={() => setAsking(true)} data-testid="demo-ask">
+            <HelpCircle className="h-4 w-4" aria-hidden="true" /> Ask Mehdi for a demo
+          </button>
+        </div>
+      )}
+      {err && <p role="alert" className="mt-2 text-sm text-destructive">{err}</p>}
+      <AskOwnerDialog lead={lead} open={asking} onClose={() => setAsking(false)} topic="demo" text={`A demo for ${lead.instituteName}, please.`} />
     </div>
   );
 }

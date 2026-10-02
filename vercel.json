@@ -9,8 +9,20 @@
     },
     "api/leads-search.js": {
       "maxDuration": 30
+    },
+    "api/meta/webhook.js": {
+      "maxDuration": 30
+    },
+    "api/meta/catchup.js": {
+      "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/meta/catchup",
+      "schedule": "45 3 * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/:path*",
@@ -126,6 +138,14 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/meta/connect",
+      "destination": "/api/meta/webhook?route=connect"
+    },
+    {
+      "source": "/api/meta/relay",
+      "destination": "/api/meta/webhook?route=relay"
+    },
     {
       "source": "/site/:slug",
       "has": [

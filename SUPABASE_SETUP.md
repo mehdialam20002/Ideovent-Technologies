@@ -86,8 +86,11 @@ What changes, and what does not:
   Forgotten passwords are reset from CRM > Team.
 - The site's public forms (contact, internship, demo opens) are now for visitors only, and a demo
   open carries the server's time.
+- Nothing is sent to a lead on Do not contact, and a lead from a Meta form who did not tick its
+  "WhatsApp and phone" box is e-mailed only: the database refuses a WhatsApp message or a call to
+  them from anyone, you included, as the privacy policy promises.
 
-Testing it locally: `node scripts/test-crm-rls.mjs` runs 298 checks on a real PostgreSQL (PGlite,
+Testing it locally: `node scripts/test-crm-rls.mjs` runs 348 checks on a real PostgreSQL (PGlite,
 in Node; it needs the dev dependency `@electric-sql/pglite`, or `PGLITE_FROM` pointing at a folder
 that has it). `CRM_RLS_NEGATIVE=select`, `guard` or `events` breaks one rule on purpose, and the run
 must then fail. `CRM_GRANTS=legacy` runs it with the table grants Supabase gave before 30 Oct 2026.
@@ -97,3 +100,52 @@ policies and recreate 0007's four admin-only policies on each outreach table; dr
 `crm_leads_guard`, `crm_leads_after`, `crm_events_guard` and `crm_events_after`, and
 `crm_demo_open_guard` on `public.content`; recreate 0005's "insert leads anon" policy. The new
 tables and columns can stay; the old CRM ignores them.
+
+## 0012: Meta Lead Ads
+
+[`supabase/migrations/0012_meta_leads.sql`](supabase/migrations/0012_meta_leads.sql) lets leads from the
+Ideovent Facebook and Instagram instant forms arrive in the CRM by themselves. Run it AFTER 0011: without
+0011 it stops at its first statement and changes nothing. A brand-new project gets it inside
+[`supabase/SETUP_ALL.sql`](supabase/SETUP_ALL.sql), which now carries 0001 to 0012.
+
+What it adds:
+
+- Three tables, which only you can read: `meta_settings` (one row: two SHA-256 fingerprints, the Page,
+  where new Meta leads go, the daily limit), `meta_leads` (one row per Meta lead id, so a lead never
+  arrives twice and a lead you delete stays deleted) and `meta_ingest_log` (ids and outcomes). None of
+  them holds a name, a phone number, an e-mail or an answer.
+- The functions the webhook and the daily catch-up call with the public anon key. Each one first checks
+  an ingest token worked out from `META_APP_SECRET` in Vercel; the database keeps only its SHA-256,
+  stored when you press Connect in CRM > Settings > Meta Lead Ads. No secret, token or password is
+  stored in Supabase.
+- Two new bell kinds: "New lead" and "Lead Ads" (the intake needs you).
+- One new request kind, `meta_form`. Anyone can type someone else's number into a form, so when a form
+  comes with the phone number or e-mail of a lead already in the CRM, that lead only gets a plain line
+  ("Someone sent the Instagram lead form with this lead's phone number"), and the form's answers wait
+  for you under Today > Waiting on you. A team member never reads them.
+
+A Meta lead is an ordinary CRM lead under 0011's rules: added by you, New, due now, in the Unassigned
+pool unless you choose otherwise on the Meta page. A team member sees it only when it is assigned to them.
+
+In this order, once the release with Meta leads is live:
+
+1. **Apply it.** Supabase > SQL Editor > New query > paste all of `0012_meta_leads.sql` > **Run**. It is
+   safe to run again.
+2. **Prove the rules.** New query > paste all of [`supabase/tests/meta_leads_rls.sql`](supabase/tests/meta_leads_rls.sql)
+   > **Run**. It must end with `ALL META INTAKE CHECKS PASSED`. It works in one transaction that rolls
+   back, so your real settings and leads are untouched.
+3. **Connect Meta**, step by step: `09-crm/META-LEADS-RUNBOOK.md` (outside this repository).
+
+The Security Advisor lists the seven intake functions as callable by anon (lints 0028 and 0029), as it
+lists 0010's `record_payment_event`. That is expected: each refuses any caller without the ingest token.
+
+Testing it locally: `node scripts/test-meta-rls.mjs` runs the SQL on PGlite (it needs
+`@electric-sql/pglite`, or `PGLITE_FROM`; `META_RLS_NEGATIVE=token` or `select` breaks a rule on purpose
+and the run must then fail). `node scripts/test-meta-webhook.mjs` tests the functions with Graph and
+Supabase faked (`META_WEBHOOK_NEGATIVE=1` must fail), and `node scripts/test-meta-intake.mjs` sends a
+signed notification through the real webhook to the real SQL.
+
+To undo (not expected): drop the ten `public.meta_*` functions, the `private.meta_*` helpers, the three
+meta tables and the index `outreach_leads_meta_lead_idx`. Meta leads already in the CRM stay as ordinary
+leads. Put 0011's bell check back only after deleting the bells of kinds `lead_in` and `intake`, and
+0011's request check only after deleting the requests of kind `meta_form`.

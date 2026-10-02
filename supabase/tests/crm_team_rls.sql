@@ -152,6 +152,14 @@ begin
     if sqlstate <> '22023' then raise exception 'FAIL: a list in a history line was refused for the wrong reason: %', sqlerrm; end if;
   end;
   begin
+    -- The dashboard counts "éto Won" as a win (its word break is ASCII only), whatever this database's locale says.
+    insert into public.outreach_events (id, lead_id, data) values ('zz_rls_E8', 'zz_rls_L1', '{"type":"status","detail":"Status: Contacted éto Won"}');
+    raise exception 'FAIL: a member wrote a "... éto Won" line (the dashboard would count it as a win)';
+  exception when others then
+    if sqlerrm like 'FAIL:%' then raise; end if;
+    if sqlstate <> '42501' then raise exception 'FAIL: the "éto Won" line was refused for the wrong reason: %', sqlerrm; end if;
+  end;
+  begin
     perform public.crm_patch_lead('zz_rls_L1', '{"whatsapp":"+91 00000 00003"}'::jsonb);
     raise exception 'FAIL: a member filled in another lead''s number (written another way)';
   exception when others then

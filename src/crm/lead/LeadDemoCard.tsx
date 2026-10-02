@@ -2,8 +2,10 @@ import { useMemo, useState } from "react";
 import { Check, Copy, ExternalLink, Send } from "lucide-react";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { demoPreviewPath, demoStatus } from "@/lib/demo/record";
+import { teamPreviewUrl } from "@/lib/demo/opens";
 import { mainSiteUrl } from "@/lib/host";
 import { demoLinkFor } from "@/lib/outreach/engine";
+import { can, crmErrorText } from "@/lib/outreach/access";
 import { useCms } from "@/lib/cms/context";
 import { markDemoSent } from "@/admin/outreach/demoActions";
 import { fmtDateTime } from "@/admin/outreach/ui";
@@ -17,9 +19,14 @@ const DAY = 86_400_000;
  * The lead's demo in numbers: status (the link only works once it is sent),
  * opens in all, opens since the last contact, the last open, and a 14-day
  * strip of opens so a burst is visible at a glance.
+ *
+ * Anyone but Mehdi (spec 10.7) turns a draft's link on through the database
+ * (crm_publish_lead_demo; they cannot write the CMS), and opens the public page
+ * marked as a team visit, so their look never counts as the prospect's open.
  */
 export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
-  const { demoForLead, opens, slots, addEvent, now } = useCrmData();
+  const { demoForLead, opens, slots, addEvent, now, me, publishLeadDemo } = useCrmData();
+  const manages = !me.role || can(me, "demos.manage");
   const { actions } = useCms();
   const demo = demoForLead(lead);
   const [copied, setCopied] = useState(false);
@@ -48,7 +55,9 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
       <section className={cn(crm.panel, crm.panelPad)} aria-label="Demo">
         <p className={crm.label}>Demo</p>
         <p className="mt-2 text-[13px] text-muted-foreground">
-          {lead.demoSlug ? `Linked to /site/${lead.demoSlug}, but that demo is not in the CMS any more.` : "No demo yet. Make or pick one in step 1, Demo."}
+          {lead.demoSlug
+            ? `Linked to /site/${lead.demoSlug}, but that demo is not in the CMS any more.`
+            : manages ? "No demo yet. Make or pick one in step 1, Demo." : "No demo yet. Ask Mehdi for one in step 1, Demo."}
         </p>
       </section>
     );
@@ -65,11 +74,16 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
   };
   const markSent = async () => {
     setErr(null);
+    const sentTo = [lead.contactName, lead.instituteName].filter(Boolean).join(", ");
     try {
-      await markDemoSent(actions.saveDoc, demo, slots, [lead.contactName, lead.instituteName].filter(Boolean).join(", "));
+      if (!manages) {
+        await publishLeadDemo(lead.id, sentTo);
+        return;
+      }
+      await markDemoSent(actions.saveDoc, demo, slots, sentTo);
       await addEvent({ leadId: lead.id, type: "note", detail: `Demo /site/${demo.slug} marked sent` });
     } catch (e) {
-      setErr((e as Error).message || "Not marked sent.");
+      setErr(manages ? (e as Error).message || "Not marked sent." : crmErrorText(e));
     }
   };
 
@@ -99,13 +113,20 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
       <p className="text-[11px] text-muted-foreground">Opens per day, last 14 days</p>
       <div className="flex flex-wrap gap-1.5">
         {status !== "sent" && status !== "closed" && (
-          <button type="button" className={crm.btnPrimary} onClick={() => void markSent()}><Send className="h-4 w-4" aria-hidden="true" /> Mark sent</button>
+          <button type="button" className={crm.btnPrimary} onClick={() => void markSent()} data-testid="lead-demo-turn-on">
+            <Send className="h-4 w-4" aria-hidden="true" /> {manages ? "Mark sent" : "Turn on the link"}
+          </button>
         )}
         <button type="button" className={crm.btn} onClick={() => void copy()}>
           {copied ? <Check className="h-4 w-4 text-success" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />} {copied ? "Copied" : "Copy link"}
         </button>
-        {/* The preview is on the main site: relative today, absolute from the CRM's own subdomain. */}
-        <a className={crm.btn} href={mainSiteUrl(demoPreviewPath(demo.slug))} target="_blank" rel="noopener noreferrer" data-testid="lead-demo-open"><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
+        {/* The preview is on the main site: relative today, absolute from the CRM's own subdomain. Anyone but
+            Mehdi opens the public page as a team visit (/admin is his), once its link is live. */}
+        {manages ? (
+          <a className={crm.btn} href={mainSiteUrl(demoPreviewPath(demo.slug))} target="_blank" rel="noopener noreferrer" data-testid="lead-demo-open"><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
+        ) : status === "sent" ? (
+          <a className={crm.btn} href={teamPreviewUrl(demoLinkFor(demo.slug))} target="_blank" rel="noopener noreferrer" data-testid="lead-demo-open"><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
+        ) : null}
       </div>
       {err && <p role="alert" className="text-[12px] text-destructive">{err}</p>}
     </section>

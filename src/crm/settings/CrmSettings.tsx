@@ -1,4 +1,5 @@
 import { SettingsTab } from "@/admin/outreach/SettingsTab";
+import { MetaSettingsCard } from "../meta/MetaSettingsCard";
 import { PageHeader } from "../ui";
 import { CleanObservations } from "./CleanObservations";
 import { TeamWording } from "./TeamWording";
@@ -19,6 +20,8 @@ export default function CrmSettings() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader title="Settings" subtitle="Saved with your outreach data, not in the website CMS." />
+      {/* Meta Lead Ads (2 Oct 2026): its own page, Settings > Meta Lead Ads. */}
+      <MetaSettingsCard />
       <SettingsTab />
       <TeamWording />
       <div className="pt-2">

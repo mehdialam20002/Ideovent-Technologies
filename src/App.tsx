@@ -56,6 +56,8 @@ const CrmDemos = lazy(() => import("@/crm/demos/CrmDemos"));
 const CrmFinder = lazy(() => import("@/crm/finder/CrmFinder"));
 const CrmImport = lazy(() => import("@/crm/import/CrmImport"));
 const CrmSettings = lazy(() => import("@/crm/settings/CrmSettings"));
+/* Settings > Meta Lead Ads (2 Oct 2026, meta-leads-spec 6.1): Facebook and Instagram form leads coming in by themselves. */
+const MetaLeadsPage = lazy(() => import("@/crm/meta/MetaLeadsPage"));
 /* The team (1 Oct 2026, spec 10.1): a person's own page, and the gates by role. */
 const CrmMePage = lazy(() => import("@/crm/me/CrmMePage"));
 const RoleGate = lazy(() => import("@/crm/auth/RoleGate"));
@@ -117,6 +119,7 @@ const CRM_SCREENS = (
     <Route path="finder" element={<RoleGate action="finder"><CrmFinder /></RoleGate>} />
     <Route path="import" element={<RoleGate action="lead.import"><CrmImport /></RoleGate>} />
     <Route path="settings" element={<RoleGate action="settings"><CrmSettings /></RoleGate>} />
+    <Route path="settings/meta" element={<RoleGate action="settings"><MetaLeadsPage /></RoleGate>} />
   </>
 );
 

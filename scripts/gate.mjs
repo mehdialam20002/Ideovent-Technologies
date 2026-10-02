@@ -64,9 +64,19 @@ const GATES = [
     why: "the database rules: an intern reads and changes only the leads Mehdi gave them, and never money" },
   { name: "crm access", cmd: "node", args: ["scripts/test-crm-access.mjs"],
     why: "the same rules in the local store and the screens, and their constants still equal the SQL" },
-  // Next, once scripts/test-crm-wording.mjs exists (lead page and compose, part 2):
-  // { name: "crm wording", cmd: "node", args: ["scripts/test-crm-wording.mjs"],
-  //   why: "a message an intern sends never claims Mehdi's own work, offers call times or quotes a price" },
+  // The lead page and compose (part 2): what a member sends is true from them, and Mehdi's own text never changes.
+  { name: "crm wording", cmd: "node", args: ["scripts/test-crm-wording.mjs"],
+    why: "a message an intern sends never claims Mehdi's own work, offers call times or quotes a price" },
+  // Meta Lead Ads (0012). "meta rls" and "meta intake" run the real SQL in PGlite, like "crm rls":
+  // they need @electric-sql/pglite, or PGLITE_FROM=<a folder that has it>.
+  { name: "meta webhook", cmd: "node", args: ["scripts/test-meta-webhook.mjs"],
+    why: "a forged or replayed notification reaches nothing, and no secret, token or lead's detail is logged" },
+  { name: "meta import", cmd: "node", args: ["scripts/test-meta-import.mjs"],
+    why: "Meta's own downloads import as leads, once, and every other sheet imports exactly as before" },
+  { name: "meta rls", cmd: "node", args: ["scripts/test-meta-rls.mjs"],
+    why: "the intake functions refuse without the token, and a member never reads a Meta lead that is not theirs" },
+  { name: "meta intake", cmd: "node", args: ["scripts/test-meta-intake.mjs"],
+    why: "a signed webhook against the real SQL: the lead arrives once, a forged one never" },
   { name: "build", cmd: "npm", args: ["run", "build"],
     why: "the deploy runs this, so it fails here or it fails on Vercel" },
   { name: "gutters", cmd: "node", args: ["scripts/measure-gutters.mjs", `http://localhost:${PORT}`],

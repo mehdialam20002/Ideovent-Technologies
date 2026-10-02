@@ -466,12 +466,20 @@ await crm.locator('select[aria-label="City"]').selectOption("Gaya");
 await settle(crm, 400);
 const gaya = leads.filter((l) => l.city === "Gaya").map((l) => l.instituteName).sort();
 check(/city=Gaya/.test(crm.url()) && JSON.stringify((await names()).sort()) === JSON.stringify(gaya), `the City filter shows exactly the ${gaya.length} Gaya leads`, `${await rowCount()} rows`);
+/* Since the team (crm-team-spec 10.4 and 13.4) "Assigned" lists the people and Unassigned; the seed's
+   free-text labels ("Aman", "Mehdi") are filtered by "Old label". */
+const assignedTop = await crm.$$eval('select[aria-label="Assigned"] > option', (os) => os.map((o) => o.textContent.trim()));
+check(assignedTop.includes("Mehdi Alam") && assignedTop.includes("Unassigned") && !assignedTop.includes("Aman"),
+  "the Assigned filter lists the people and Unassigned, not the old free-text labels", JSON.stringify(assignedTop));
+const oldOpts = await crm.$$eval('select[aria-label="Old label"] option', (os) => os.map((o) => o.value));
+check(oldOpts.includes("Aman") && oldOpts.includes("Mehdi"), "the Old label filter lists the seed's old labels, Aman and Mehdi", JSON.stringify(oldOpts));
 await crm.locator('select[aria-label="City"]').selectOption("Patna");
-await crm.locator('select[aria-label="Assigned"]').selectOption("Aman");
+await crm.locator('select[aria-label="Old label"]').selectOption("Aman");
 await settle(crm, 400);
 const patnaAman = leads.filter((l) => l.city === "Patna" && l.assignedTo === "Aman").map((l) => l.instituteName).sort();
-check(patnaAman.length > 0 && JSON.stringify((await names()).sort()) === JSON.stringify(patnaAman), `City plus Assigned filters combine (${patnaAman.length} Patna leads assigned to Aman)`, JSON.stringify(await names()));
-await crm.locator('select[aria-label="Assigned"]').selectOption("");
+check(patnaAman.length > 0 && /old=Aman/.test(crm.url()) && JSON.stringify((await names()).sort()) === JSON.stringify(patnaAman),
+  `City plus Old label filters combine (${patnaAman.length} Patna leads labelled Aman)`, JSON.stringify(await names()));
+await crm.locator('select[aria-label="Old label"]').selectOption("");
 await crm.locator('select[aria-label="City"]').selectOption("");
 await settle(crm, 300);
 

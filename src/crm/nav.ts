@@ -29,6 +29,8 @@ export const CRM = {
   finder: `${CRM_BASE}/finder`,
   import: `${CRM_BASE}/import`,
   settings: `${CRM_BASE}/settings`,
+  /** Settings > Meta Lead Ads: leads from Facebook and Instagram forms (meta-leads-spec 6.1). Mehdi only. */
+  metaLeads: `${CRM_BASE}/settings/meta`,
   /** The team: people, performance, access, activity (owner manages, admins read). */
   team: `${CRM_BASE}/team`,
   /** A person's own page: profile, targets, Set up this phone, password, sign out. */
@@ -53,7 +55,11 @@ export interface CrmNavItem {
   badge?: "due" | "hot" | "unlinkedDemos" | "unassigned";
 }
 
-/** Mehdi's eight screens, as before the team: the rail e2e-crm-host checks link by link. */
+/**
+ * Mehdi's eight screens, as before the team (his rail in legacy mode). With the
+ * team, Team joins them between Pipeline and Demos: the nine links
+ * scripts/e2e-crm-host.mjs checks one by one.
+ */
 export const CRM_NAV: CrmNavItem[] = [
   { to: CRM.root, label: "Dashboard", icon: LayoutDashboard, end: true, primary: true },
   { to: CRM.today, label: "Today", icon: CalendarCheck, primary: true, badge: "due" },
@@ -112,11 +118,10 @@ export interface CrmNavSet {
  *   member  My day, Today, My leads, Pipeline, Me
  * Without 0011 (legacy) Mehdi's CRM is exactly as before: no Team, no bell.
  *
- * PART 1 OF THE TEAM BUILD: Mehdi's Team link sits under the rail's list (and
- * after Back to admin in the phone's More menu), so his rail keeps the eight
- * links scripts/e2e-crm-host.mjs checks one by one. Part 2 (the team e2e,
- * which moves that check to nine links) puts it in the list, between Pipeline
- * and Demos: `rail: [...CRM_NAV.slice(0, 4), TEAM_ITEM, ...CRM_NAV.slice(4)]`.
+ * Mehdi's Team link is in the rail's list, between Pipeline and Demos (part 2
+ * of the team build moved it there from under the list, and e2e-crm-host.mjs
+ * from eight links to nine). His phone keeps its four tabs, and Team stays
+ * after Back to admin in the More menu.
  */
 export function crmNav(me: Pick<CrmMe, "role" | "legacy">): CrmNavSet {
   const none = { railFooter: [], more: [], moreFooter: [], backToAdmin: false, bell: !me.legacy };
@@ -124,8 +129,7 @@ export function crmNav(me: Pick<CrmMe, "role" | "legacy">): CrmNavSet {
     const team = me.legacy ? [] : [TEAM_ITEM];
     return {
       ...none,
-      rail: CRM_NAV,
-      railFooter: team,
+      rail: [...CRM_NAV.slice(0, 4), ...team, ...CRM_NAV.slice(4)],
       tabs: CRM_NAV.filter((i) => i.primary),
       more: CRM_NAV.filter((i) => !i.primary),
       moreFooter: team,

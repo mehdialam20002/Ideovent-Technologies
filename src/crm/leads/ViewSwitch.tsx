@@ -6,7 +6,7 @@ import { CRM } from "../nav";
 import { CRM_SCOPE_LABELS, useCrmData, type CrmScope } from "../useCrmData";
 
 /** Filter params both screens share; the table's view and sort stay on the table. */
-const SHARED = ["q", "kind", "city", "source", "assignee", "old", "demo", "hot", "overdue"];
+const SHARED = ["q", "kind", "city", "source", "assignee", "old", "demo", "hot", "overdue", "campaign"];
 
 const SCOPE_TITLE: Record<CrmScope, string> = {
   mine: "Leads you work (Mehdi: also the Unassigned pool)",

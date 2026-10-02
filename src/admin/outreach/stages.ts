@@ -83,14 +83,26 @@ export function isRetired(t: MessageTemplate): boolean {
   return Boolean(x.retired || x.hidden || x.suggest === false);
 }
 
-/** Templates Mehdi can pick for this channel, stage and kind (never a retired one). */
-export function offered(channel: TemplateChannel, stage: TemplateStage, kind: OutreachLead["kind"] | undefined): MessageTemplate[] {
-  return templatesFor({ channel, stage, kind: kind || undefined }).filter((t) => !isRetired(t));
+/**
+ * What a sender may send of a template: the template itself (Mehdi), or for
+ * anyone else its team version, or null when it is not theirs to send
+ * (templates.ts memberVersion: money stages, wording not approved yet).
+ */
+export type TemplateOffer = (t: MessageTemplate) => MessageTemplate | null;
+
+/** Templates the sender can pick for this channel, stage and kind (never a retired one). `offer`: anyone but Mehdi. */
+export function offered(channel: TemplateChannel, stage: TemplateStage, kind: OutreachLead["kind"] | undefined, offer?: TemplateOffer): MessageTemplate[] {
+  const all = templatesFor({ channel, stage, kind: kind || undefined }).filter((t) => !isRetired(t));
+  return offer ? all.map(offer).filter((t): t is MessageTemplate => Boolean(t)) : all;
 }
 
-/** The engine's stages that have at least one message on this channel for this kind. */
-export function stagesWithMessages(channel: TemplateChannel, kind: OutreachLead["kind"] | undefined): TemplateStage[] {
-  return engineStages().filter((s) => offered(channel, s, kind).length > 0);
+/**
+ * The engine's stages that have at least one message on this channel for this
+ * kind. With `offer`, the ones this sender may send (the ladder itself, ladderFor,
+ * stays the same for everyone: the cadence does not change with the sender).
+ */
+export function stagesWithMessages(channel: TemplateChannel, kind: OutreachLead["kind"] | undefined, offer?: TemplateOffer): TemplateStage[] {
+  return engineStages().filter((s) => offered(channel, s, kind, offer).length > 0);
 }
 
 /**
@@ -137,8 +149,14 @@ export function stageName(stage: TemplateStage): string {
 
 const days = (stages: TemplateStage[]) => stages.map(dayOf).filter((d): d is number => d !== null);
 
-/** One line under the stage buttons: when this stage is used, and the rule that holds in it. */
-export function stageHint(plain: PlainStage, channel: TemplateChannel, kind: OutreachLead["kind"] | undefined): string {
+/**
+ * One line under the stage buttons: when this stage is used, and the rule that
+ * holds in it. `team`: anyone but Mehdi, who hands a yes to him (spec 10.7).
+ */
+export function stageHint(plain: PlainStage, channel: TemplateChannel, kind: OutreachLead["kind"] | undefined, team = false): string {
+  if (team && plain === "after_yes") {
+    return "They said yes: hand the lead to Mehdi now, and he sends the call times. A yes given on a call: the sample link within five minutes, with no call times.";
+  }
   const ladder = ladderFor(channel, kind);
   const fu = days(ladder.filter((s) => plainStageOf(s) === "follow_up"));
   const close = days(ladder.filter((s) => plainStageOf(s) === "closing"));
@@ -171,6 +189,9 @@ export interface StageSuggestion {
   done?: string;
 }
 
+/** A lead at Call or Proposal, seen by a member: the call and the price are Mehdi's. */
+export const MEHDIS_NOW = "This lead is at the call or the proposal: Mehdi sends what comes next. If they write to you, hand it to him.";
+
 /**
  * The stage this lead is at on this channel. A reply, a call or a proposal
  * decides it; otherwise the no-reply sends already made on this channel (a
@@ -178,8 +199,12 @@ export interface StageSuggestion {
  * message; one, the first follow-up; and so on. Past the end of the ladder the
  * answer says so, instead of offering one more message than the rules allow.
  */
-export function suggestFor(lead: OutreachLead, events: OutreachEvent[], channel: TemplateChannel): StageSuggestion {
+export function suggestFor(lead: OutreachLead, events: OutreachEvent[], channel: TemplateChannel, opts: { member?: boolean } = {}): StageSuggestion {
   if (lead.status === "replied" || lead.status === "demo_opened") return { stage: stageFor("after_yes") };
+  // After the call and Proposal carry the price: never a member's stage (spec 10.7). Such a lead is Mehdi's to send to.
+  if (opts.member && (lead.status === "call" || lead.status === "proposal")) {
+    return { stage: stageFor("after_yes"), done: MEHDIS_NOW };
+  }
   if (lead.status === "call") return { stage: stageFor("after_call") };
   if (lead.status === "proposal") return { stage: stageFor("proposal") };
   const cold = events.filter((e) => {

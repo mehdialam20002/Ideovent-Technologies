@@ -1,6 +1,18 @@
-import { CALL_WINDOWS, greetingFor, observationText, timeOfDay } from "@/lib/outreach/engine";
+import { CALL_WINDOWS, DEFAULT_SENDER_NAME, greetingFor, observationText, timeOfDay } from "@/lib/outreach/engine";
 import type { LeadKind, OutreachLead } from "@/lib/outreach/types";
 import { startingObservation } from "./compose";
+
+/*
+ * THE TEAM'S CALL (spec 10.7, 1 Oct 2026). The script speaks in the caller's
+ * own name (`sender`; Mehdi's text is byte-identical to before). A member's
+ * script stops after the fix: the trust (the timeline after the advance), the
+ * price, the next step and the summary are Mehdi's (SOP-10), so its last step
+ * says to hand the lead to him. Four of its lines claim Mehdi's own work or are
+ * masculine in Hinglish ("I made", "banana chahta hoon", "dikhata hoon",
+ * "bana sakta hoon ... dikha dunga"); a member gets their "we" versions once
+ * Mehdi approves "we_call_lines" in Settings, and until then those lines are
+ * left out of the member's script (the cold opening, the fix's words).
+ */
 
 /**
  * THE CALL SCRIPT on the lead page (30 Sep 2026). The approved call flow, from
@@ -25,7 +37,8 @@ import { startingObservation } from "./compose";
 export type ScriptLanguage = "en" | "hinglish";
 
 export interface CallStep {
-  id: "problem" | "cost" | "fix" | "trust" | "price" | "next" | "summary";
+  /** "handover": a member's last step, in place of trust, price, next and summary. */
+  id: "problem" | "cost" | "fix" | "trust" | "price" | "next" | "summary" | "handover";
   title: string;
   /** What to do, for Mehdi. */
   how: string;
@@ -42,11 +55,50 @@ export interface CallScript {
   when: string;
   /** For a call at a time they chose (after their yes). */
   opening: string;
-  /** For a call they did not ask for: say why first, ask for 30 seconds. */
+  /** For a call they did not ask for: say why first, ask for 30 seconds. Empty for a member until Mehdi approves its words. */
   coldOpening: string;
   questions: string[];
   steps: CallStep[];
+  /** A member's script: lines left out because their team wording waits for Mehdi's approval. */
+  withheld?: number;
 }
+
+/** Who is calling: the name the opening says. Mehdi unless given. */
+export interface ScriptSender {
+  name: string;
+  firstName: string;
+}
+
+export const MEHDI_SENDER: ScriptSender = { name: DEFAULT_SENDER_NAME, firstName: DEFAULT_SENDER_NAME.split(/\s+/)[0] };
+
+/**
+ * The call lines with a "we" version (team wording "we_call_lines"): Mehdi's
+ * line and the team's, for a place word ("clinic", "school", "institute").
+ */
+export const CALL_LINES: Record<"madeEn" | "offerEn" | "offerHi" | "showHi" | "makeEn" | "makeHi", (place: string) => [string, string]> = {
+  madeEn: (p) => [`I made a sample website for your ${p}.`, `We made a sample website for your ${p}.`],
+  offerEn: (p) => [
+    `I would like to make a short sample page for your ${p}, to show what a website could look like.`,
+    `We would like to make a short sample page for your ${p}, to show what a website could look like.`,
+  ],
+  offerHi: (p) => [
+    `main aapke ${p} ke liye ek chhota sample page banana chahta hoon, taaki aap dekh sakein ki website kaisi dikh sakti hai.`,
+    `hum aapke ${p} ke liye ek chhota sample page banana chahte hain, taaki aap dekh sakein ki website kaisi dikh sakti hai.`,
+  ],
+  showHi: () => ["Aapne kaha [unki baat]. Sample mein sirf wahi hissa dikhata hoon.", "Aapne kaha [unki baat]. Sample mein sirf wahi hissa dekhte hain."],
+  makeEn: () => [
+    "You said [what they said]. I can make a sample that fixes just that, and show it to you.",
+    "You said [what they said]. We can make a sample that fixes just that, and show it to you.",
+  ],
+  makeHi: () => [
+    "Aapne kaha [unki baat]. Main ek sample bana sakta hoon jo sirf yahi theek kare, aur aapko dikha dunga.",
+    "Aapne kaha [unki baat]. Hum ek sample bana sakte hain jo sirf yahi theek kare, aur aapko dikha denge.",
+  ],
+};
+
+/** How a line is said: Mehdi's own, the team's "we" version, or left out (not approved yet). */
+type Voice = "owner" | "we" | "withheld";
+const said = (pair: readonly [string, string], voice: Voice): string | undefined => (voice === "owner" ? pair[0] : voice === "we" ? pair[1] : undefined);
 
 type Words = { place: string; viewer: string; viewers: string; later: string; laterHi: string };
 
@@ -79,28 +131,25 @@ export function windowText(kind: string | undefined | null): string {
   return `${days}, ${clock(w.window[0])} to ${clock(w.window[1])}`;
 }
 
-function openings(lead: OutreachLead, lang: ScriptLanguage, hasDemo: boolean, now: Date): { opening: string; cold: string } {
+function openings(lead: OutreachLead, lang: ScriptLanguage, hasDemo: boolean, now: Date, sender: ScriptSender, voice: Voice): { opening: string; cold: string } {
   const w = wordsFor(lead.kind);
   const g = scriptGreeting(lead, lang);
   const name = lead.instituteName.trim();
   const who = (lead.contactName || "").trim() || name;
   if (lang === "en") {
     const about = hasDemo ? `the sample page for ${name}` : `a website for ${name}`;
-    const why = hasDemo
-      ? `I made a sample website for your ${w.place}.`
-      : `I would like to make a short sample page for your ${w.place}, to show what a website could look like.`;
+    const why = said(hasDemo ? CALL_LINES.madeEn(w.place) : CALL_LINES.offerEn(w.place), voice);
     return {
-      opening: `Good ${timeOfDay(now)} ${g}, this is Mehdi Alam from Ideovent Technologies, Saket. You gave me this time for a 10-minute call about ${about}. Is it still a good time?`,
-      cold: `Good ${timeOfDay(now)}, is this ${who}? I am Mehdi Alam from Ideovent Technologies in Saket. The reason for my call: ${why} Can I take 30 seconds, or shall I call ${w.later}?`,
+      opening: `Good ${timeOfDay(now)} ${g}, this is ${sender.name} from Ideovent Technologies, Saket. You gave me this time for a 10-minute call about ${about}. Is it still a good time?`,
+      cold: why === undefined ? "" : `Good ${timeOfDay(now)}, is this ${who}? I am ${sender.name} from Ideovent Technologies in Saket. The reason for my call: ${why} Can I take 30 seconds, or shall I call ${w.later}?`,
     };
   }
   const about = hasDemo ? `${name} ke sample page` : `${name} ki website`;
-  const why = hasDemo
-    ? `humne aapke ${w.place} ke liye ek sample website banayi hai.`
-    : `main aapke ${w.place} ke liye ek chhota sample page banana chahta hoon, taaki aap dekh sakein ki website kaisi dikh sakti hai.`;
+  // "humne ... banayi hai" is already the team's own words: no approval needed for it.
+  const why = hasDemo ? `humne aapke ${w.place} ke liye ek sample website banayi hai.` : said(CALL_LINES.offerHi(w.place), voice);
   return {
-    opening: `Namaste ${g}, main Mehdi, Ideovent Technologies (Saket, Delhi) se. Aapne ${about} ki baat ke liye ye time diya tha. Kya abhi 10 minute baat ho sakti hai?`,
-    cold: `Namaste, kya ${who} se baat ho rahi hai? Main Mehdi Alam, Ideovent Technologies, Saket se. Call ki wajah: ${why} 30 second de sakte hain, ya ${w.laterHi} call karun?`,
+    opening: `Namaste ${g}, main ${sender.firstName}, Ideovent Technologies (Saket, Delhi) se. Aapne ${about} ki baat ke liye ye time diya tha. Kya abhi 10 minute baat ho sakti hai?`,
+    cold: why === undefined ? "" : `Namaste, kya ${who} se baat ho rahi hai? Main ${sender.name}, Ideovent Technologies, Saket se. Call ki wajah: ${why} 30 second de sakte hain, ya ${w.laterHi} call karun?`,
   };
 }
 
@@ -209,12 +258,34 @@ const PRICE_OPTIONS = [
 ];
 const PORTAL = "Student records, fee receipts or attendance are the portal line, from Rs 40,000. Only if they ask.";
 
+export interface ScriptOptions {
+  hasDemo: boolean;
+  language: ScriptLanguage;
+  now?: Date;
+  /** Who calls; Mehdi when left out (his text is the same as before). */
+  sender?: ScriptSender;
+  /**
+   * Anyone but Mehdi: `wording` is Mehdi's approval of the team's call lines
+   * ("we_call_lines"); without it those lines are left out. `member`: the
+   * script stops after the fix and hands the lead over (the price is Mehdi's).
+   */
+  team?: { wording: boolean; member: boolean };
+}
+
+/** A member's last step: the price and the start date are Mehdi's (SOP-10). */
+const HANDOVER_STEP: CallStep = {
+  id: "handover",
+  title: "Hand it to Mehdi",
+  how: "Next: hand this lead to Mehdi for the price and the start date. Tap Hand to Mehdi with what they told you. Never quote a price, a payment or a date yourself.",
+};
+
 /** The whole script for one lead, in the language of the call. */
-export function callScriptFor(lead: OutreachLead, opts: { hasDemo: boolean; language: ScriptLanguage; now?: Date }): CallScript {
+export function callScriptFor(lead: OutreachLead, opts: ScriptOptions): CallScript {
   const kind: LeadKind = WORDS[lead.kind] ? lead.kind : "other";
   const w = wordsFor(kind);
   const en = opts.language === "en";
-  const { opening, cold } = openings(lead, opts.language, opts.hasDemo, opts.now ?? new Date());
+  const voice: Voice = !opts.team ? "owner" : opts.team.wording ? "we" : "withheld";
+  const { opening, cold } = openings(lead, opts.language, opts.hasDemo, opts.now ?? new Date(), opts.sender ?? MEHDI_SENDER, voice);
   const obsId = startingObservation(lead);
   const obs = obsId ? observationText(obsId, en ? "en" : "hinglish") : "";
 
@@ -238,8 +309,8 @@ export function callScriptFor(lead: OutreachLead, opts: { hasDemo: boolean; lang
         ? "Show only the parts of the sample that fix what they just said. Leave the rest out, even if it looks good."
         : "Offer to fix only what they just said. Leave the rest out, even if you noticed more.",
       say: opts.hasDemo
-        ? en ? "You said [what they said]. Let me show you just that part of the sample." : "Aapne kaha [unki baat]. Sample mein sirf wahi hissa dikhata hoon."
-        : en ? "You said [what they said]. I can make a sample that fixes just that, and show it to you." : "Aapne kaha [unki baat]. Main ek sample bana sakta hoon jo sirf yahi theek kare, aur aapko dikha dunga.",
+        ? en ? "You said [what they said]. Let me show you just that part of the sample." : said(CALL_LINES.showHi(""), voice)
+        : said(en ? CALL_LINES.makeEn("") : CALL_LINES.makeHi(""), voice),
     },
     {
       id: "trust",
@@ -274,12 +345,17 @@ export function callScriptFor(lead: OutreachLead, opts: { hasDemo: boolean; lang
     },
   ];
 
+  // A member hands over after the fix: the trust (the timeline after the advance), the price, the next step and the summary are Mehdi's.
+  const member = Boolean(opts.team?.member);
+  const shown = member ? [...steps.slice(0, 3), HANDOVER_STEP] : steps;
+  const withheld = voice === "withheld" ? Number(!cold) + Number(shown.some((s) => s.id === "fix" && s.say === undefined)) : 0;
   return {
     viewer: w.viewer,
     when: `${WHEN[kind]} ${ALWAYS}`,
     opening,
     coldOpening: cold,
     questions: QUESTIONS[kind][opts.language],
-    steps,
+    steps: shown,
+    ...(opts.team ? { withheld } : {}),
   };
 }

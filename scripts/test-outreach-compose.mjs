@@ -20,6 +20,12 @@
  *     carries its kind's picture link before the ask, and the compose shows
  *     the picture under it with Copy image, Share and Download, each with a
  *     hint; the offer twin and the e-mails carry none.
+ *   - the team (spec 10.7): a member is ranked only templates true from them
+ *     (the "we" versions once Mehdi approves them), never the after-call
+ *     summary; four stages, never After the call or Proposal; their Call done
+ *     never sets stage Call; their call script speaks in their name and hands
+ *     over before the price; the compose saves patches and every sent line
+ *     carries its stage. Mehdi's own answers stay as they were.
  * Bundled with esbuild like test-outreach-engine.mjs; nothing mocked. Fictional leads only.
  *
  *   node scripts/test-outreach-compose.mjs
@@ -51,8 +57,12 @@ const out = join(tmpdir(), `ideovent-test-outreach-compose-${process.pid}.mjs`);
 const bundled = await build({
   stdin: {
     contents: `export * from "@/admin/outreach/compose";
-export { OBSERVATIONS, observationsFor, checkSend, render, whatsappUrl, mailtoUrl, previewFor } from "@/lib/outreach/engine";
-export { STAGE_LABELS, stagesFor, getTemplate, carriesPreview } from "@/lib/outreach/templates";`,
+export { OBSERVATIONS, observationsFor, checkSend, render, whatsappUrl, mailtoUrl, previewFor, NO_META_CONSENT } from "@/lib/outreach/engine";
+export { STAGE_LABELS, stagesFor, getTemplate, carriesPreview, memberVersion, memberWordingKeysOf } from "@/lib/outreach/templates";
+export { suggestFor } from "@/admin/outreach/stages";
+export { callScriptFor, MEHDI_SENDER } from "@/admin/outreach/callScript";
+export { teamOffer, teamSender, composeStages, teamCheckExtra, callRefusal, mayCall, CALLS_ONLY_ENGAGED } from "@/admin/outreach/teamCompose";
+export { memberStages } from "@/lib/outreach/access";`,
     resolveDir: ROOT,
     loader: "ts",
   },
@@ -228,6 +238,73 @@ for (const o of C.OBSERVATIONS.filter((x) => (x.kinds || []).includes("dental"))
   const offer = C.getTemplate("wa_first_new_dental_en_offer");
   check(!C.carriesPreview(offer) && C.carriesPreview(C.getTemplate("wa_first_new_dental_en")) && !C.carriesPreview(C.getTemplate("em_first_new_dental_en")),
     "the picture goes with the WhatsApp that says the sample is made, not with its offer twin or an e-mail");
+}
+
+/* The team (spec 10.7, 13.2): what a member is offered, the stages they see, what their Call done
+   writes, and the call script in their own name; Mehdi's own answers stay as they were. */
+{
+  const member = { legacy: false, memberId: "m_asha", role: "member", displayName: "Asha Verma", senderName: "Asha Verma", senderPhone: "+919810000001",
+    senderChecked: true, viewAll: false, canAddLeads: false, mayColdCall: false, waDailyLimit: 25, newLeadCap: 40, targets: {}, mustChangePassword: false };
+  const owner = { ...member, memberId: "m_owner", role: "owner", displayName: "Mehdi Alam", senderName: "Mehdi Alam" };
+  const off = C.teamOffer(member, {});
+  const on = C.teamOffer(member, { memberWording: { we_pitch_note: true, we_sample_made: true, we_leave_it_here: true, we_call_lines: true, member_after_yes: true } });
+  check(C.teamOffer(owner, {}) === undefined && C.teamOffer({ ...owner, legacy: true }, {}) === undefined, "Mehdi's compose offers every template as it is (no team filter)");
+  const pitch = school("hinglish", { pitchSlug: "example-note" });
+  const rankedOff = C.rankTemplates({ lead: pitch, channel: "whatsapp", stage: "first", settings, waToday: 0, observation: "not_mobile", offer: off });
+  check(!rankedOff.some((t) => C.memberWordingKeysOf(t).length), `nothing approved: a member is ranked no template whose words wait for approval (${rankedOff.map((t) => t.id).join(", ")})`);
+  const rankedOn = C.rankTemplates({ lead: pitch, channel: "whatsapp", stage: "first", settings, waToday: 0, observation: "not_mobile", offer: on });
+  const pitchFirst = rankedOn.find((t) => t.id === "wa_first_pitch_any_hinglish");
+  check(Boolean(pitchFirst) && /Isliye humne aapke liye ek chhota note likha hai/.test(pitchFirst.body) && !/maine/i.test(pitchFirst.body), "approved: the member's pitch message says 'humne', not 'maine'");
+  check(C.getTemplate("wa_first_pitch_any_hinglish").body.includes("Isliye maine aapke liye"), "and Mehdi's own pitch message still says 'maine'");
+  check(C.rankTemplates({ lead: school("en"), channel: "email", stage: "after_call", settings, waToday: 0, observation: "", offer: on }).length === 0, "a member is never ranked the after-call summary, approved or not");
+  check(JSON.stringify(C.composeStages(member)) === JSON.stringify(C.memberStages()) && C.composeStages(owner).length === 6, "a member's compose has the four member stages, Mehdi's all six");
+  for (const status of ["call", "proposal"]) {
+    const s = C.suggestFor(school("en", { status }), [], "email", { member: true });
+    check(!["after_call", "proposal"].includes(s.stage), `suggestFor never takes a member to After the call or Proposal (lead at ${status}: ${s.stage})`);
+  }
+  const m = C.callDoneChanges(clinic({ status: "replied" }), new Date("2026-09-29T09:00:00.000Z"), { member: true });
+  check(!("status" in m.patch) && m.event.channel === "call", "a member's Call done writes the call and the next action, never stage Call");
+  check(C.callDoneChanges(clinic({ status: "replied" })).patch.status === "call", "Mehdi's Call done still moves the lead to Call");
+  const sender = C.teamSender(member);
+  const asha = C.callScriptFor(clinic(), { hasDemo: true, language: "en", sender, team: { wording: true, member: true } });
+  check(/this is Asha Verma from Ideovent/.test(asha.opening) && !/Mehdi/.test(asha.opening + asha.coldOpening), "the call script opens in the member's own name");
+  check(asha.steps.at(-1).id === "handover" && !asha.steps.some((s) => s.id === "price" || s.id === "trust"), "the member's script stops after the fix and hands over before the price");
+  check(JSON.stringify(C.callScriptFor(clinic(), { hasDemo: true, language: "en", sender: C.MEHDI_SENDER })) === JSON.stringify(C.callScriptFor(clinic(), { hasDemo: true, language: "en" })),
+    "Mehdi's call script is the same with his name passed in");
+  const panel = readFileSync(join(SRC, "admin/outreach/ComposePanel.tsx"), "utf8");
+  check(!/saveLead\(/.test(panel) && /patchLead\(lead\.id,/.test(panel), "the compose saves a lead as a patch (spec 9.3), never a whole-lead upsert");
+  check(/stage: template\.stage,/.test(panel), "every sent line carries its stage");
+}
+
+/* The Meta form's consent tick (DPDP; meta-leads-spec 12): left unticked, nobody calls or WhatsApps the lead,
+   Mehdi included, and the reason shows where the call would be; e-mail stays open. */
+{
+  const member = { legacy: false, memberId: "m_asha", role: "member", displayName: "Asha Verma", senderName: "Asha Verma", senderPhone: "+919810000001",
+    senderChecked: true, viewAll: false, canAddLeads: false, mayColdCall: false, waDailyLimit: 25, newLeadCap: 40, targets: {}, mustChangePassword: false };
+  const owner = { ...member, memberId: "m_owner", role: "owner", displayName: "Mehdi Alam", senderName: "Mehdi Alam", mayColdCall: true, waDailyLimit: null };
+  const meta = (consent, over = {}) => clinic({ id: "d_meta", source: "Instagram Lead Ads", metaLeadId: "9000000000000001", metaPlatform: "ig", metaConsent: consent, ...over });
+  const people = [["Mehdi", owner], ["Mehdi before the team (legacy)", { ...owner, legacy: true }], ["a member who may cold-call", { ...member, mayColdCall: true }], ["a member", member]];
+  for (const [who, me] of people) {
+    check(C.callRefusal(me, meta("no"), []) === C.NO_META_CONSENT && !C.mayCall(me, meta("no"), []), `consent: unticked, ${who} may not call, and is told why`);
+    check(C.callRefusal(me, meta("no", { status: "replied" }), []) === C.NO_META_CONSENT, `consent: unticked, ${who} may not call even after they replied`);
+  }
+  check(C.callRefusal(owner, meta("yes"), []) === "" && C.callRefusal(owner, meta("none"), []) === "" && C.callRefusal(owner, clinic(), []) === "",
+    "consent: ticked, no box on the form, or not a Meta lead: Mehdi calls as before");
+  check(C.callRefusal(member, meta("yes"), []) === C.CALLS_ONLY_ENGAGED && C.callRefusal(member, meta("yes", { status: "replied" }), []) === "",
+    "consent: ticked, a member's calls follow the cold-call rule as before");
+  const at = new Date("2026-09-29T09:00:00.000Z"); // Tuesday 14:30 India time
+  const wa = C.getTemplate("wa_first_new_dental_en");
+  const em = C.getTemplate("em_first_new_dental_en");
+  for (const [who, me] of [["Mehdi", owner], ["a member", member]]) {
+    const extra = C.teamCheckExtra(me);
+    check(Boolean(wa) && C.checkSend(meta("no"), wa, "whatsapp", settings, 0, at, extra).blockers.includes(C.NO_META_CONSENT), `consent: unticked, ${who}'s WhatsApp is blocked with the reason`);
+    check(Boolean(em) && !C.checkSend(meta("no"), em, "email", settings, 0, at, extra).blockers.includes(C.NO_META_CONSENT), `consent: unticked, ${who}'s e-mail stays open`);
+  }
+  const panel = readFileSync(join(SRC, "admin/outreach/ComposePanel.tsx"), "utf8");
+  const card = readFileSync(join(SRC, "admin/outreach/CallScriptCard.tsx"), "utf8");
+  const facts = readFileSync(join(SRC, "crm/lead/LeadFacts.tsx"), "utf8");
+  check(/callRefusal\(me, lead, events\)/.test(panel) && /callRefusal\(me, lead, events\)/.test(card) && /mayCall\(me, lead,/.test(facts) && /metaConsentRefused\(lead\)/.test(facts),
+    "the compose, the call script and the facts card ask the same call rule; the facts card keeps the numbers as text");
 }
 
 console.log(`test-outreach-compose: ${pass} passed, ${fail} failed${NEGATIVE ? " (NEGATIVE CONTROL: failures expected)" : ""}`);

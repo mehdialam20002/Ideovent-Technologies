@@ -12,9 +12,12 @@ import { inWorkingHours } from "./callTime";
 
 /**
  * WAITING ON YOU (spec 10.6), at the top of Mehdi's Today: every open request
- * (Ask Mehdi and hand-overs), oldest first. An admin sees the ones sent to
- * them. Each shows who asked, the lead, what they wrote and how long it has
- * waited; past 2 hours during working hours it turns amber. Done or No action
+ * (Ask Mehdi and hand-overs, and the answers of a Meta form that came with a
+ * lead's phone number or e-mail: meta_form, asked by nobody, kept off the
+ * lead because whoever sent it may be someone else), oldest first. An admin
+ * sees the ones sent to them. Each shows who asked, the lead, what they wrote
+ * and how long it has waited; past 2 hours during working hours it turns
+ * amber. Done or No action
  * closes an ask; Accepted or Not a real lead a hand-over (Accepted is the
  * number an intern is judged on). The asker is told, with the note if any.
  * Reading the bell never closes one, and linking a demo closes a demo request
@@ -27,6 +30,7 @@ export const KIND_TEXT: Record<RequestKind, string> = {
   question: "Question",
   handoff: "Hand-over",
   give_back: "Given back",
+  meta_form: "Meta form again",
 };
 
 export const OUTCOME_TEXT: Record<RequestOutcome, string> = {
@@ -88,7 +92,7 @@ export function WaitingOnYou({ className }: { className?: string }) {
         <span>Waiting on you</span>
         <span className={cn("font-normal text-muted-foreground", crm.num)}>{waitingOnYou.length}</span>
         <span className="text-[12px] font-normal text-muted-foreground">
-          {me.role === "owner" ? "Hand-overs and questions from the team, oldest first." : "Sent to you, oldest first."}
+          {me.role === "owner" ? "Hand-overs and questions from the team, and Meta forms sent again, oldest first." : "Sent to you, oldest first."}
         </span>
       </h2>
       <p aria-live="polite" role={msg?.error ? "alert" : "status"} className={cn("px-3 text-[13px] md:px-4", msg ? "py-2" : "sr-only", msg?.error ? "text-destructive" : "text-muted-foreground")}>
@@ -102,7 +106,7 @@ export function WaitingOnYou({ className }: { className?: string }) {
             <li key={r.id} data-request-id={r.id} data-kind={r.kind} className={cn("border-b border-border/60 px-3 py-3 last:border-b-0 md:px-4", busy === r.id && "opacity-60")}>
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12px] text-muted-foreground">
                 <span className={cn("rounded-full px-1.5 py-px text-[11px] font-medium", r.kind === "handoff" ? "bg-primary/10 text-primary" : "bg-muted text-foreground")}>{KIND_TEXT[r.kind]}</span>
-                <span>from <span className="font-medium text-foreground">{nameOf(r.askedBy, "Someone")}</span></span>
+                {r.kind !== "meta_form" && <span>from <span className="font-medium text-foreground">{nameOf(r.askedBy, "Someone")}</span></span>}
                 <span className={cn(crm.num, late && "rounded bg-amber-500/15 px-1 font-medium text-amber-800 dark:text-amber-300")} data-late={late || undefined}
                   title={late ? "Waiting more than 2 hours in working hours" : undefined}>
                   {ago(r.createdAt, now)}
@@ -112,6 +116,9 @@ export function WaitingOnYou({ className }: { className?: string }) {
                 {name}
               </Link>
               {r.body && <p className="mt-0.5 whitespace-pre-line break-words text-[13px]">{r.body}</p>}
+              {r.kind === "meta_form" && (
+                <p className="mt-0.5 text-[12px] text-muted-foreground">Not shown on the lead: whoever sent the form may not be this lead.</p>
+              )}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {answersFor(r.kind).map((o, i) => (
                   <button key={o} type="button" disabled={busy === r.id} onClick={() => void answer(r, o)}
@@ -120,7 +127,7 @@ export function WaitingOnYou({ className }: { className?: string }) {
                   </button>
                 ))}
                 <input type="text" value={notes[r.id] || ""} maxLength={500} placeholder="Note (optional)"
-                  aria-label={`Note to ${nameOf(r.askedBy, "the asker")} on ${name} (optional)`}
+                  aria-label={r.kind === "meta_form" ? `Note on ${name} (optional)` : `Note to ${nameOf(r.askedBy, "the asker")} on ${name} (optional)`}
                   onChange={(e) => setNotes((n) => ({ ...n, [r.id]: e.target.value }))}
                   className={cn(crm.input, "h-8 min-w-0 flex-1 basis-40 max-md:h-10")} />
               </div>

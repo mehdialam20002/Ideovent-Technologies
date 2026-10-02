@@ -3,7 +3,7 @@ import { OBSERVATIONS, checkSend, demoLinkFor, type SendCheck } from "@/lib/outr
 import { templatesFor, type MessageTemplate, type TemplateChannel, type TemplateStage } from "@/lib/outreach/templates";
 import type { EventInput, OutreachEvent, OutreachLead, OutreachSettings } from "@/lib/outreach/types";
 import { dueFollowUps, hotLeads, isHotOpen, isOpenLead, opensSinceContact } from "./derive";
-import { isRetired, ladderFor, stageFor } from "./stages";
+import { isRetired, ladderFor, stageFor, type TemplateOffer } from "./stages";
 import { dueLabel } from "./ui";
 
 /**
@@ -44,6 +44,8 @@ export interface RankInput {
   settings: OutreachSettings;
   waToday: number;
   observation: string;
+  /** Anyone but Mehdi: what they may send of each template (stages.ts TemplateOffer; teamCompose.ts). */
+  offer?: TemplateOffer;
 }
 
 /**
@@ -54,7 +56,7 @@ export interface RankInput {
  * whose only "website" is a Practo or Facebook page is new_website), else a
  * lead with a website gets "fix your website", one without "we built you a site".
  */
-export function rankTemplates({ lead, channel, stage, settings, waToday, observation }: RankInput): MessageTemplate[] {
+export function rankTemplates({ lead, channel, stage, settings, waToday, observation, offer }: RankInput): MessageTemplate[] {
   const lang = lead.language || "en";
   const pitch = lead.pitch || (lead.website ? "fix_website" : "new_website");
   const probe = { ...lead, observation };
@@ -69,6 +71,8 @@ export function rankTemplates({ lead, channel, stage, settings, waToday, observa
     (t.sample === sampleFit ? 1 : 0);
   return templatesFor({ channel, stage, kind: lead.kind })
     .filter((t) => !isRetired(t))
+    .map((t) => (offer ? offer(t) : t))
+    .filter((t): t is MessageTemplate => Boolean(t))
     .map((t, i) => ({ t, s: score(t), i }))
     .sort((a, b) => b.s - a.s || a.i - b.i)
     .map((x) => x.t);
@@ -140,7 +144,9 @@ export function canSend(r: RankInput, t: MessageTemplate): SendCheck {
  * (First message, After they say yes, Follow-up, After the call, Proposal).
  * `urgent` colours it.
  */
-export function nextStep(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, now = new Date()): { text: string; urgent: boolean } {
+export function nextStep(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, now = new Date(), opts: { member?: boolean } = {}): { text: string; urgent: boolean } {
+  // A member hands a yes to Mehdi (spec 10.7): the sample and the call times are his to send.
+  if (opts.member && lead.status === "replied") return { text: "They said yes: hand the lead to Mehdi now", urgent: true };
   if (!isOpenLead(lead)) return { text: lead.status === "won" ? "Client" : "Nothing to do", urgent: false };
   if (lead.lastContactedAt && isHotOpen(opensSinceContact(lead, opens)[0]?.at, now)) return { text: "Demo opened: call or message today", urgent: true };
   const due = lead.nextActionAt ? dueLabel(lead.nextActionAt, now) : "";
@@ -168,22 +174,41 @@ export function nextStep(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, 
  * a reply event and status Replied, due now, so the lead moves to After they
  * say yes. The playbook: answer within the hour.
  */
-export function repliedChanges(lead: OutreachLead, now = new Date()): { event: EventInput; lead: OutreachLead } {
+export function repliedChanges(lead: OutreachLead, now = new Date(), opts: { member?: boolean } = {}): { event: EventInput; patch: Partial<OutreachLead> } {
   return {
-    event: { leadId: lead.id, type: "replied", detail: "They replied. Next: After they say yes, send the sample link and two call times." },
-    lead: { ...lead, status: "replied", nextActionAt: now.toISOString() },
+    event: {
+      leadId: lead.id,
+      type: "replied",
+      // A member hands a yes to Mehdi (spec 10.7): the sample and the call times are his to send in P1.
+      detail: opts.member
+        ? "They replied. Next: if it is a yes, hand the lead to Mehdi now."
+        : "They replied. Next: After they say yes, send the sample link and two call times.",
+    },
+    patch: { status: "replied", nextActionAt: now.toISOString() },
   };
 }
 
 /**
  * What "Call done" writes (the compose menu and the call script card): a call
  * event, status Call, and the next action due today, because the approved
- * flow sends the after-call summary the same day.
+ * flow sends the after-call summary the same day. Both answers are patches
+ * (only these keys change, merged on the server: spec 9.3).
+ *
+ * A MEMBER (spec 10.7) never sets stage Call (the database refuses it: a call
+ * with Mehdi is a hand-over). Their call line says to hand the lead over if
+ * they are interested, and the lead stays due now until they do (or set the
+ * next follow-up).
  */
-export function callDoneChanges(lead: OutreachLead, now = new Date()): { event: EventInput; lead: OutreachLead } {
+export function callDoneChanges(lead: OutreachLead, now = new Date(), opts: { member?: boolean } = {}): { event: EventInput; patch: Partial<OutreachLead> } {
+  if (opts.member) {
+    return {
+      event: { leadId: lead.id, type: "call", channel: "call", detail: "Call done. Next: if they are interested, hand the lead to Mehdi." },
+      patch: { lastContactedAt: now.toISOString(), nextActionAt: now.toISOString() },
+    };
+  }
   return {
     event: { leadId: lead.id, type: "call", channel: "call", detail: "Call done. Next: After the call, send the summary today." },
-    lead: { ...lead, status: "call", lastContactedAt: now.toISOString(), nextActionAt: now.toISOString() },
+    patch: { status: "call", lastContactedAt: now.toISOString(), nextActionAt: now.toISOString() },
   };
 }
 

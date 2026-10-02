@@ -3,6 +3,7 @@ import { LEAD_STATUSES, type LeadStatus, type OutreachChannel, type OutreachEven
 import type { CrmRole } from "@/lib/outreach/team";
 import { endOfToday, isHotOpen, isOpenLead, isUntouched, opensSinceContact } from "@/admin/outreach/derive";
 import { demoLinkFor } from "@/lib/outreach/engine";
+import { campaignOf, isMetaLead } from "@/lib/meta/fields";
 import { groupEvents, hasReplied, startOfDay, wasContacted } from "../metrics";
 
 /**
@@ -164,9 +165,15 @@ export interface LeadFilters {
   demo: "" | "yes" | "no";
   hot: boolean;
   overdue: boolean;
+  /**
+   * A Meta lead's campaign (fields.js campaignOf: its name, else "Campaign <id>"),
+   * or NONE for a Meta lead with no campaign (organic, or a test). Leads that did
+   * not come from Meta never match a campaign (meta-leads-spec 6.2).
+   */
+  campaign: string;
 }
 
-export const EMPTY_FILTERS: LeadFilters = { q: "", status: [], kind: "", city: "", source: "", assignee: "", old: "", demo: "", hot: false, overdue: false };
+export const EMPTY_FILTERS: LeadFilters = { q: "", status: [], kind: "", city: "", source: "", assignee: "", old: "", demo: "", hot: false, overdue: false, campaign: "" };
 
 /** "Not set" in a filter select means the field is empty. */
 export const NONE = "__none";
@@ -187,6 +194,7 @@ export function readFilters(p: URLSearchParams): LeadFilters {
     demo: demo === "yes" || demo === "no" ? demo : "",
     hot: p.get("hot") === "1",
     overdue: p.get("overdue") === "1",
+    campaign: p.get("campaign") || "",
   };
 }
 
@@ -204,11 +212,20 @@ export function writeFilters(p: URLSearchParams, f: Partial<LeadFilters>): URLSe
   if (f.demo !== undefined) set("demo", f.demo);
   if (f.hot !== undefined) set("hot", f.hot ? "1" : "");
   if (f.overdue !== undefined) set("overdue", f.overdue ? "1" : "");
+  if (f.campaign !== undefined) set("campaign", f.campaign);
   return next;
 }
 
 export function activeFilterCount(f: LeadFilters): number {
-  return [f.status.length > 0, f.kind, f.city, f.source, f.assignee, f.old, f.demo, f.hot, f.overdue].filter(Boolean).length;
+  return [f.status.length > 0, f.kind, f.city, f.source, f.assignee, f.old, f.demo, f.hot, f.overdue, f.campaign].filter(Boolean).length;
+}
+
+/** The Campaign filter: Meta leads only; NONE is a Meta lead with no campaign (organic, or a test). */
+export function matchesCampaign(l: OutreachLead, want: string): boolean {
+  if (!want) return true;
+  if (!isMetaLead(l)) return false;
+  const c = campaignOf(l);
+  return want === NONE ? !c : norm(c) === norm(want);
 }
 
 const norm = (s?: string) => (s || "").trim().toLowerCase();
@@ -248,9 +265,10 @@ export function matchesFilters(r: LeadRow, f: LeadFilters, opts: { ignoreStatus?
   if (f.demo === "no" && (r.demo || l.demoSlug)) return false;
   if (f.hot && !r.hot) return false;
   if (f.overdue && r.due !== "overdue") return false;
+  if (!matchesCampaign(l, f.campaign)) return false;
   const q = norm(f.q);
   if (q) {
-    const hay = [l.instituteName, l.contactName, l.city, l.phone, l.whatsapp, l.email, l.website, l.demoSlug, l.notes, ...(l.tags || [])]
+    const hay = [l.instituteName, l.contactName, l.city, l.phone, l.whatsapp, l.email, l.website, l.demoSlug, l.notes, l.metaCampaignName, l.metaFormName, ...(l.tags || [])]
       .map(norm)
       .join(" ");
     const digits = q.replace(/\D/g, "");
@@ -359,10 +377,17 @@ const CSV_COLS: [string, (r: LeadRow) => string | number | undefined][] = [
   ["Notes", (r) => r.lead.notes],
 ];
 
-function cell(v: string | number | undefined): string {
+/**
+ * One CSV cell. A cell starting with = + - @, a tab or a carriage return would
+ * run as a formula in Excel or Sheets, and since Meta Lead Ads (2 Oct 2026)
+ * strangers type some of these values ("-1+cmd|..." starts with a digit after
+ * the minus and used to pass). It gets a ' in front, unless the whole cell is
+ * a phone-like number (+919000000001). The import takes the ' off again
+ * (src/lib/meta/metaCsv.ts unguardCells), so an export imports back unchanged.
+ */
+export function cell(v: string | number | undefined): string {
   const s = v === undefined || v === null ? "" : String(v);
-  // Leading = + - @ would run as a formula in Excel or Sheets.
-  const safe = /^[=+\-@]/.test(s) && !/^[+-]?\d/.test(s) ? `'${s}` : s;
+  const safe = /^[=+\-@\t\r]/.test(s) && !/^\+?\d[\d\s-]*$/.test(s) ? `'${s}` : s;
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 

@@ -56,6 +56,15 @@
  *      the three static pages carry the card tags, noindex and the Haan button,
  *      their JPEGs are 600 px wide or more and 300 KB or less, and "w" is
  *      reserved from pitch slugs.
+ *  15. (section 16 below) Anyone but Mehdi (spec 10.7): quiet hours and
+ *      Sunday stop the send (Mehdi is only warned), their own first-WhatsApp
+ *      limit holds and 0 means none, a member's WhatsApp waits for the company
+ *      number Mehdi checked, and a message renders in their own name, phone
+ *      and signature with the team's REMOVE line (Mehdi's unchanged).
+ *  16. (section 17 below) A lead from a Meta form who left its WhatsApp-and-
+ *      phone box unticked: every WhatsApp (first, follow-up, after a yes) is
+ *      blocked with NO_META_CONSENT, for Mehdi and a member alike; e-mail stays
+ *      open; "yes", "none" and other leads are untouched.
  *
  * NEGATIVE CONTROL
  *
@@ -70,8 +79,8 @@
  * lost, a coaching first WhatsApp flattened back into one paragraph, "ji" after
  * "Dr. Mehta" in the summary, a cost range promised by an implant centre's
  * message, principals called at 11 am, a clinic's message carrying the school's
- * picture link). The run must then FAIL on each; it exits 0 only when every
- * expected failure was seen.
+ * picture link, an unticked Meta consent box read as ticked). The run must then
+ * FAIL on each; it exits 0 only when every expected failure was seen.
  *
  * Bundled with esbuild exactly like scripts/test-from-template.mjs; nothing mocked.
  * Every lead here is fictional (example.org, "Example ..." names).
@@ -160,9 +169,10 @@ if (NEGATIVE) {
     ...real.RETIRED_TEMPLATES.filter((t) => (!f.channel || t.channel === f.channel) && (!f.stage || t.stage === f.stage)),
   ];
   M.observationsFor = () => real.OBSERVATIONS.slice();
-  // ...do-not-contact is forgotten, the old cap of 10 is back, and [placeholders] no longer block.
+  // ...do-not-contact is forgotten, the old cap of 10 is back, [placeholders] no longer block, and an unticked Meta box is read as ticked.
   M.checkSend = (lead, t, ch, settings, count, ...rest) => {
-    const r = real.checkSend(lead.status === "do_not_contact" ? { ...lead, status: "contacted" } : lead, t, ch,
+    const l = lead.status === "do_not_contact" ? { ...lead, status: "contacted" } : lead;
+    const r = real.checkSend(l.metaConsent === "no" ? { ...l, metaConsent: "yes" } : l, t, ch,
       settings && !(settings.whatsappDailyLimit > 0) ? { ...settings, whatsappDailyLimit: 10 } : settings, count, ...rest);
     const blockers = r.blockers.filter((b) => !/^Fill in/.test(b));
     return { ...r, blockers, ok: blockers.length === 0 };
@@ -1318,6 +1328,69 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   check(!vercel.rewrites.some((r) => /^\/w\b/.test(r.source)), "no rewrite is aimed at /w: Vercel serves the static files");
 }
 
+/* ── 16. Anyone but Mehdi (spec 10.7, 13.2): strict timing, their own limit, their checked number, their name ── */
+{
+  const t = T.find((x) => x.id === "wa_first_new_school_en");
+  const em = T.find((x) => x.id === "em_first_new_school_en");
+  const fu = T.find((x) => x.id === "wa_fu1_en");
+  const lead = leadOf("school");
+  const QUIET = new Date("2026-09-29T16:00:00.000Z"); // Tuesday 21:30 India time
+  const SUNDAY = new Date("2026-10-04T06:30:00.000Z"); // Sunday 12:00 India time
+  const ownerQuiet = M.checkSend(lead, t, "whatsapp", SETTINGS, 0, QUIET, {});
+  check(!ownerQuiet.blockers.some((b) => /quiet hours/.test(b)) && ownerQuiet.warnings.some((w) => /quiet hours/.test(w)), "team: Mehdi in quiet hours is warned, as before");
+  check(M.checkSend(lead, t, "whatsapp", SETTINGS, 0, QUIET, { strict: true }).blockers.some((b) => /quiet hours/.test(b)), "team: anyone else in quiet hours is stopped (strict)");
+  const ownerSun = M.checkSend(lead, t, "whatsapp", SETTINGS, 0, SUNDAY, {});
+  check(!ownerSun.blockers.some((b) => /Sunday/.test(b)) && ownerSun.warnings.some((w) => /Sunday/.test(w)), "team: Mehdi on a Sunday is warned, as before");
+  check(M.checkSend(lead, t, "whatsapp", SETTINGS, 0, SUNDAY, { strict: true }).blockers.some((b) => /Sunday/.test(b)), "team: anyone else on a Sunday is stopped (strict)");
+  check(M.checkSend(lead, t, "whatsapp", SETTINGS, 0, NOW, { whatsappLimit: 0 }).blockers.includes(M.SEND_OFF_FOR_YOU), "team: a limit of 0 stops every first WhatsApp message");
+  const later = { ...lead, status: "contacted", lastContactedAt: "2026-09-24T09:00:00.000Z" };
+  check(!M.checkSend(later, fu, "whatsapp", SETTINGS, 0, NOW, { whatsappLimit: 0 }).blockers.includes(M.SEND_OFF_FOR_YOU), "team: a limit of 0 leaves the follow-up alone");
+  check(!M.checkSend(lead, em, "email", SETTINGS, 0, NOW, { whatsappLimit: 0 }).blockers.includes(M.SEND_OFF_FOR_YOU), "team: a limit of 0 leaves e-mail alone");
+  check(M.checkSend(lead, t, "whatsapp", SETTINGS, 5, NOW, { whatsappLimit: 5 }).blockers.some((b) => /Daily WhatsApp limit reached \(5 of 5/.test(b)), "team: their own limit of 5, reached, stops the sixth");
+  check(!M.checkSend(lead, t, "whatsapp", { ...SETTINGS, whatsappDailyLimit: 3 }, 9, NOW, { whatsappLimit: null }).blockers.some((b) => /limit/i.test(b)), "team: their own 'no limit' (an admin) wins over the settings' limit");
+  check(M.checkSend(lead, t, "whatsapp", SETTINGS, 0, NOW, { sender: { phone: "+919810000001", checked: false } }).blockers.includes(M.SEND_NUMBER_NOT_CHECKED), "team: a member's company number not checked yet stops WhatsApp");
+  check(M.checkSend(lead, t, "whatsapp", SETTINGS, 0, NOW, { sender: { phone: "", checked: false } }).blockers.includes(M.SEND_NO_COMPANY_NUMBER), "team: a member with no company number cannot send WhatsApp");
+  check(!M.checkSend(lead, em, "email", SETTINGS, 0, NOW, { sender: { phone: "", checked: false } }).blockers.some((b) => b === M.SEND_NO_COMPANY_NUMBER || b === M.SEND_NUMBER_NOT_CHECKED), "team: e-mail does not wait for the company number");
+  const open = M.checkSend(lead, t, "whatsapp", SETTINGS, 0, NOW, { sender: { phone: "+919810000001", checked: true }, strict: true, whatsappLimit: 25 });
+  check(!open.blockers.some((b) => /quiet|Sunday|limit|company number|test message|off for you/i.test(b)), "team: a checked member, inside the hours and under the limit, is not stopped by the team's rules");
+  // Their own name, phone and signature; the team's REMOVE line on a Hinglish cold e-mail.
+  const hm = T.find((x) => x.id === "em_first_new_school_hinglish");
+  const asMember = { senderName: "Asha Verma", senderPhone: "+919810000001", signature: "Asha Verma, Ideovent Technologies, Saket, New Delhi\n+91 98100 00001", team: true, now: NOW };
+  const r = M.render(hm, leadOf("school"), asMember);
+  check(r.body.includes("Asha Verma, Ideovent Technologies") && !/Mehdi/.test(r.body), "team: rendered as a member, signed in their name, not Mehdi's");
+  check(r.body.endsWith(M.EMAIL_OPT_OUT_HINGLISH_TEAM) && !r.body.includes(M.EMAIL_OPT_OUT_HINGLISH), "team: a member's Hinglish cold e-mail ends with the team's REMOVE line");
+  check(/Main Asha, Ideovent Technologies/.test(M.render(T.find((x) => x.id === "wa_first_new_school_hinglish"), leadOf("school"), asMember).body), "team: {senderFirstName} is the member's own");
+  check(M.render(em, leadOf("school"), asMember).body.endsWith(M.EMAIL_OPT_OUT_EN), "team: the English REMOVE line is the same for everyone");
+  check(M.render(hm, leadOf("school"), { now: NOW }).body.endsWith(M.EMAIL_OPT_OUT_HINGLISH), "team: Mehdi's own Hinglish e-mail keeps his REMOVE line");
+}
+
+/* ── 17. The Meta form's consent tick (DPDP; meta-leads-spec 12): unticked, no WhatsApp at any stage, from anyone ── */
+{
+  const first = T.find((x) => x.id === "wa_first_new_school_en");
+  const fu = T.find((x) => x.id === "wa_fu1_en");
+  const yes = M.getTemplate("wa_after_reply_any_en");
+  const em = T.find((x) => x.id === "em_first_new_school_en");
+  const meta = (consent, over = {}) => leadOf("school", { source: "Instagram Lead Ads", metaLeadId: "9000000000000001", metaPlatform: "ig", metaConsent: consent, ...over });
+  const later = (consent) => meta(consent, { status: "contacted", lastContactedAt: "2026-09-24T09:00:00.000Z" });
+  const replied = (consent) => meta(consent, { status: "replied", lastContactedAt: "2026-09-28T09:00:00.000Z" });
+  const member = { strict: true, whatsappLimit: 25, sender: { phone: "+919810000001", checked: true } };
+  check(typeof M.NO_META_CONSENT === "string" && /did not tick/.test(M.NO_META_CONSENT) && /e-mail/i.test(M.NO_META_CONSENT) && !/—/.test(M.NO_META_CONSENT),
+    "consent: the refusal is one plain sentence that says why and what is left (e-mail), with no dash", M.NO_META_CONSENT);
+  check(M.metaConsentRefused(meta("no")) && !M.metaConsentRefused(meta("yes")) && !M.metaConsentRefused(meta("none")) && !M.metaConsentRefused(leadOf("school")) && !M.metaConsentRefused(null),
+    "consent: only an unticked box ('no') refuses; 'yes', 'none' (the form had no box) and other leads do not");
+  for (const [who, extra] of [["Mehdi", {}], ["a member", member]]) {
+    check(M.checkSend(meta("no"), first, "whatsapp", SETTINGS, 0, NOW, extra).blockers.includes(M.NO_META_CONSENT), `consent: unticked, ${who}'s first WhatsApp is blocked`);
+    check(M.checkSend(later("no"), fu, "whatsapp", SETTINGS, 0, NOW, extra).blockers.includes(M.NO_META_CONSENT), `consent: unticked, ${who}'s WhatsApp follow-up is blocked`);
+    check(M.checkSend(replied("no"), yes, "whatsapp", SETTINGS, 0, NOW, extra).blockers.includes(M.NO_META_CONSENT), `consent: unticked, even after they replied, ${who}'s WhatsApp is blocked`);
+    const mail = M.checkSend(meta("no"), em, "email", SETTINGS, 0, NOW, extra);
+    check(!mail.blockers.includes(M.NO_META_CONSENT), `consent: unticked, ${who}'s e-mail stays open`, mail.blockers);
+    for (const c of ["yes", "none", undefined]) {
+      check(!M.checkSend(meta(c), first, "whatsapp", SETTINGS, 0, NOW, extra).blockers.includes(M.NO_META_CONSENT), `consent: ${c ?? "no consent field"}, ${who}'s WhatsApp is not blocked by it`);
+    }
+  }
+  check(!M.checkSend(leadOf("school"), first, "whatsapp", SETTINGS, 0, NOW, {}).blockers.includes(M.NO_META_CONSENT), "consent: a lead that did not come from Meta is untouched");
+}
+
 /* ── Verdict ─────────────────────────────────────────────────────────────── */
 
 if (NEGATIVE) {
@@ -1331,6 +1404,7 @@ if (NEGATIVE) {
     /specialist clinic: the kids clinic/, /\{addressAs\} "Dr\. Mehta"/, /implant centre is never offered a cost range/, /schools are called after school/,
     /wa_first_new_coaching_hinglish: five parts/, /approved sample: coaching, no website/,
     /has exactly one link, its kind's picture page, in its own part just before the ask/,
+    /consent: unticked, Mehdi's first WhatsApp is blocked/, /consent: unticked, a member's WhatsApp follow-up is blocked/,
   ];
   const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
   console.log(`\nNEGATIVE CONTROL: ${failures.length} failures seen.`);

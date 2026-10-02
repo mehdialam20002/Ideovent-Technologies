@@ -110,9 +110,12 @@ function snoozeDate(days: number, now: Date): Date {
   return d;
 }
 
-/** The reply line and due date "They replied" writes (compose.ts repliedChanges), whichever shape it answers in. */
-function replied(lead: OutreachLead): { event: EventInput; nextActionAt?: string } {
-  const c = repliedChanges(lead) as unknown as { event: EventInput; patch?: Partial<OutreachLead>; lead?: Partial<OutreachLead> };
+/**
+ * The reply line and due date "They replied" writes (compose.ts repliedChanges), whichever shape it answers in.
+ * A member's line says to hand a yes to Mehdi (spec 10.7), never to send call times.
+ */
+function replied(lead: OutreachLead, member = false): { event: EventInput; nextActionAt?: string } {
+  const c = repliedChanges(lead, new Date(), { member }) as unknown as { event: EventInput; patch?: Partial<OutreachLead>; lead?: Partial<OutreachLead> };
   return { event: c.event, nextActionAt: (c.patch ?? c.lead)?.nextActionAt };
 }
 
@@ -148,7 +151,7 @@ export function TodayQueue({ sections, empty, compact = false }: { sections: Tod
 
   const markReplied = useCallback((lead: OutreachLead) => {
     // The same reply event and due date the lead page's "They replied" writes.
-    const c = replied(lead);
+    const c = replied(lead, isMember);
     const next = isMember
       ? "Next: if they said yes, open the lead and hand it to Mehdi now."
       : "Next: After they say yes, send the sample link within the hour.";

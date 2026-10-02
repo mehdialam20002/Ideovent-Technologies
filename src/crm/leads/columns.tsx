@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Flame, Mail, MessageCircle, Phone } from "lucide-react";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS, type LeadStatus, type OutreachLead } from "@/lib/outreach/types";
 import { maskEmail, maskPhone } from "@/lib/outreach/access";
+import { isMetaLead } from "@/lib/meta/fields";
+import { SourceBadge } from "../meta/SourceBadge";
 import { dueLabel, fmtDate, KIND_LABEL, prettyPhone } from "@/admin/outreach/ui";
 import { cn } from "@/lib/utils";
 import { crm, STATUS_HEX } from "../ui";
@@ -132,12 +134,14 @@ const dash = <span className="text-muted-foreground">-</span>;
 export const COLUMNS: Column[] = [
   {
     id: "name", label: "Institute", fixed: true, className: "min-w-[14rem] max-w-[20rem]",
-    /* The first inner span is the name alone (the e2e suites read it); the chip sits on the second line. */
+    /* The first inner span is the name alone (the e2e suites read it); the chips sit on the second line
+       (a Meta lead's Instagram / Facebook chip first: meta-leads-spec 6.2). */
     cell: (r) => (
       <span className="block min-w-0">
         <span className="block truncate font-medium">{r.lead.instituteName}</span>
-        {(r.lead.contactName || r.untouched) && (
+        {(r.lead.contactName || r.untouched || isMetaLead(r.lead)) && (
           <span className="block truncate text-[12px] leading-tight text-muted-foreground">
+            <SourceBadge lead={r.lead} className="mr-1.5" />
             {r.lead.contactName}
             {r.untouched && <UntouchedChip />}
           </span>
@@ -154,7 +158,15 @@ export const COLUMNS: Column[] = [
   },
   { id: "city", label: "City", cell: (r) => r.lead.city || dash },
   { id: "kind", label: "Kind", cell: (r) => KIND_LABEL[r.lead.kind] || r.lead.kind },
-  { id: "source", label: "Source", defaultHidden: true, cell: (r) => r.lead.source || dash },
+  {
+    id: "source", label: "Source", defaultHidden: true,
+    cell: (r) =>
+      isMetaLead(r.lead) ? (
+        <span className="inline-flex items-center gap-1.5"><SourceBadge lead={r.lead} />{r.lead.source}</span>
+      ) : (
+        r.lead.source || dash
+      ),
+  },
   {
     id: "contact", label: "Phone / Email", defaultHidden: true, className: "max-w-[14rem]",
     cell: (r, c) => <span className="block truncate">{contactText(r.lead, c.mask) || dash}</span>,

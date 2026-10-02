@@ -109,8 +109,10 @@ const LEADS = [
 }));
 const SEED = { leads: LEADS, events: [], settings: null };
 
-/* Paths that exist only on the CRM host, never on the main site. */
-const CRM_SCREENS = ["/", "/today", "/leads", "/pipeline", "/demos", "/finder", "/import", "/settings"];
+/* Paths that exist only on the CRM host, never on the main site. Mehdi's rail, in order: since the
+   team (crm-team-spec 10.1 and 13.4) Team sits between Pipeline and Demos, so nine links. Local mode
+   always has the team; on Supabase before 0011 (legacy) the rail is the other eight. */
+const CRM_SCREENS = ["/", "/today", "/leads", "/pipeline", "/team", "/demos", "/finder", "/import", "/settings"];
 const PHONE_TABS = ["/", "/today", "/leads", "/pipeline"];
 /* ── Browser ───────────────────────────────────────────────────────────── */
 async function launch() {
@@ -273,14 +275,14 @@ async function crmHostLinks(where) {
 const dash = await crmHostLinks("dashboard");
 const rail = dash.filter((a) => a.where === "rail").map((a) => a.href);
 const railNav = await page.locator('aside[aria-label="CRM"] nav a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-check(JSON.stringify(railNav) === JSON.stringify(CRM_SCREENS), "the rail's eight links are the CRM screens at the root", JSON.stringify(railNav));
+check(JSON.stringify(railNav) === JSON.stringify(CRM_SCREENS), "the rail's nine links are the CRM screens at the root, Team between Pipeline and Demos", JSON.stringify(railNav));
 check(rail.every((h) => h.startsWith("/") && !h.startsWith("/crm")), "every rail link is a path on this host", JSON.stringify(rail));
 const tabs = await page.locator('nav[aria-label="CRM tabs"] a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
 check(JSON.stringify(tabs) === JSON.stringify(PHONE_TABS), "the phone tab bar links are /, /today, /leads, /pipeline", JSON.stringify(tabs));
 const newLead = await page.getByRole("link", { name: /new lead/i }).first().getAttribute("href").catch(() => null);
 check(newLead === "/leads/new", "New lead is /leads/new", newLead);
 /* Click through every rail link: each screen opens on the CRM host, without /crm, and renders. */
-for (const label of ["Today", "Leads", "Pipeline", "Demos", "Lead finder", "Import", "Settings", "Dashboard"]) {
+for (const label of ["Today", "Leads", "Pipeline", "Team", "Demos", "Lead finder", "Import", "Settings", "Dashboard"]) {
   const link = page.locator('aside[aria-label="CRM"] nav a', { hasText: label }).first();
   const href = await link.getAttribute("href").catch(() => null);
   await link.click().catch(() => {});
@@ -307,6 +309,7 @@ await page.locator("#crm-more").waitFor({ timeout: 5000 }).catch(() => {});
 const more = await page.locator("#crm-more a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
 check(JSON.stringify(more.slice(0, 4)) === JSON.stringify(["/demos", "/finder", "/import", "/settings"]), "the phone More menu links are the other four screens at the root", JSON.stringify(more));
 check(more[4] === `${MAIN_ORIGIN}/admin`, `the phone More menu's Back to admin is ${MAIN_ORIGIN}/admin`, more[4]);
+check(more[5] === "/team" && more.length === 6, "and Team comes after Back to admin, at the root", JSON.stringify(more));
 await page.locator("#crm-more a", { hasText: "Settings" }).click().catch(() => {});
 await waitPath(page, "/settings", 10000);
 check(url().origin === CRM && url().pathname === "/settings", "More > Settings opens /settings on the CRM host", page.url());
@@ -378,7 +381,7 @@ await tab2.getByTestId("crm-dashboard").waitFor({ timeout: 30000 }).catch(() => 
 check(url(tab2).pathname === "/crm" && (await tab2.getByTestId("crm-dashboard").isVisible().catch(() => false)), "/crm on localhost is the CRM dashboard", tab2.url());
 const localRail = await tab2.locator('aside[aria-label="CRM"] nav a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
 const expectLocal = CRM_SCREENS.map((p) => (p === "/" ? "/crm" : `/crm${p}`));
-check(JSON.stringify(localRail) === JSON.stringify(expectLocal), "the rail links are /crm, /crm/today ... /crm/settings, as before", JSON.stringify(localRail));
+check(JSON.stringify(localRail) === JSON.stringify(expectLocal), "the rail links keep /crm, as before: /crm, /crm/today ... /crm/team ... /crm/settings", JSON.stringify(localRail));
 await tab2.locator('aside[aria-label="CRM"] nav a', { hasText: "Pipeline" }).click().catch(() => {});
 await waitPath(tab2, "/crm/pipeline", 10000);
 check(url(tab2).origin === LOCAL && url(tab2).pathname === "/crm/pipeline", "rail Pipeline opens /crm/pipeline on localhost", tab2.url());
