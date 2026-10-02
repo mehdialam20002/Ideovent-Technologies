@@ -26,9 +26,14 @@ export function leadDemo(lead: OutreachLead, sites: DemoSite[]): DemoSite | unde
 }
 
 /**
- * The demo records a lead can point at: the CMS's and, for anyone but Mehdi,
- * those linked to their own leads with drafts included (crm_lead_demos; the
- * CMS shows a member only the live ones). Mehdi's list is the CMS's, as before.
+ * The demo records a lead is matched against: the CMS's, and for anyone but Mehdi
+ * the demos linked to their own leads (crm_lead_demos, 0011), drafts included;
+ * those win, as in the CRM's own list (src/crm/useCrmData.ts, withTeamDemos).
+ * Before 0013 the CMS showed a member only the live demos; since 0013 the CMS
+ * read of anyone but Mehdi carries no demo at all (a demo is read one at a time,
+ * by its link), so without the second list a member's lead would show no demo
+ * and its message no {offer}. Mehdi's list is the CMS's (his second list is
+ * empty): for him nothing changes.
  */
 export function useLeadDemoSites(): DemoSite[] {
   const { data } = useCms();
@@ -80,9 +85,17 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
 
 function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
   const { data, actions } = useCms();
-  const { patchLead, addEvent } = useOutreach();
-  const sites = ((data.demoSites as DemoSite[]) || []).filter((s) => !(s as DemoSite & { isExample?: boolean }).isExample);
+  const { patchLead, addEvent, me } = useOutreach();
+  const sites = useLeadDemoSites().filter((s) => !(s as DemoSite & { isExample?: boolean }).isExample);
   const pitches = (data.pitchPages as PitchPage[]) || [];
+  /*
+    The pitch pages to choose from. Since 0013 only Mehdi's read lists them: anyone
+    else's CMS read holds just the seed's example pages, marked live, which are not
+    pages to send (their links 404 once a real pitch page is live). So anyone but
+    Mehdi is offered none, and a lead's own pitch page always shows as chosen.
+  */
+  const pitchChoices = me.role === "owner" ? pitches : pitches.filter((p) => !p.isExample);
+  const ownPitchListed = !lead.pitchSlug || pitchChoices.some((p) => p.slug === lead.pitchSlug);
   const slots = (data as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || [];
   const demo = leadDemo(lead, sites);
   const demoState = demo ? demoStatus(demo) : null;
@@ -250,7 +263,8 @@ function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
               <select id="pitch-pick" className={inputCls} value={lead.pitchSlug || ""}
                 onChange={(e) => void patchLead(lead.id, { pitchSlug: e.target.value || undefined })}>
                 <option value="">None</option>
-                {pitches.map((p) => (
+                {!ownPitchListed && <option value={lead.pitchSlug}>/{lead.pitchSlug}</option>}
+                {pitchChoices.map((p) => (
                   <option key={p.id} value={p.slug}>{p.instituteName} (/{p.slug}, {p.status})</option>
                 ))}
               </select>

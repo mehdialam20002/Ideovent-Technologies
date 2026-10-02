@@ -15,15 +15,33 @@
  *      Supabase SDK chunk, and asks for no demo and no pitch page
  *   2. a link to another page reads only what that page adds
  *   3. a demo reads its own row (not every demo), renders, and records one open
- *   4. an unknown demo and an unknown /<slug> show the 404 page
+ *   4. an unknown demo, a draft and an unknown /<slug> show the 404 page
  *   5. a pitch page reads its own row; the seeded example opens only while no
  *      pitch page is stored, as the full read decided
  *   6. the admin, signed in, still reads everything with its session, a save is
  *      written and read back, and the visitor's page then shows the saved text
  *   7. the CRM still reads everything
  *
+ * Sections 3 to 5 run twice (supabase/migrations/0013, a demo or a pitch page by
+ * its link only): once against a database where 0013 has run (the row comes from
+ * public_row_by_slug, and the table lists no demo and no pitch page to a visitor;
+ * the network log must then hold no request for a whole collection of either),
+ * and once against one where it has not (the function is a 404, PGRST202, and the
+ * page reads the row as it did before).
+ *
+ * E2E_PORT picks the preview's port; E2E_CACHE_DIR puts Vite's cache somewhere
+ * other than node_modules/.vite (on a machine where node_modules is shared). A
+ * request to any other Supabase host is refused and fails the run: nothing here
+ * may ever reach a real project.
+ *
  * PROVING IT CAN FAIL: build main as it was on 1 Oct 2026 (373ae22) with the same
- * two values and point this at it. Sections 1, 3 and 5 must fail.
+ * two values and point this at it. Sections 1, 3 and 5 must fail. Built from the
+ * branch before 0013 (493c473), the "0013 run" passes of sections 3 and 5 must fail.
+ * The same without a second checkout: E2E_NEGATIVE=rpc builds this tree with the
+ * reader as it was before 0013 (src/lib/cms/publicRead.ts sure from the start that
+ * the functions are missing, so every demo and pitch row comes from the table). The
+ * "0013 run" passes of sections 3 to 5, the network-log check and the check that the
+ * function is asked first must then fail, and the run exits 1.
  */
 import { chromium } from "playwright-core";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -36,17 +54,36 @@ const ROOT = resolve(here, "..");
 const FAKE_URL = "https://e2e-scope.supabase.co";
 const FAKE_KEY = "e2e-scope-anon-key";
 const PORT = Number(process.env.E2E_PORT || 5199);
+const CACHE_DIR = process.env.E2E_CACHE_DIR || undefined;
+const NEGATIVE = process.env.E2E_NEGATIVE || "";
+if (NEGATIVE && NEGATIVE !== "rpc") throw new Error(`E2E_NEGATIVE=${NEGATIVE}: the only negative control is rpc`);
+
+/* E2E_NEGATIVE=rpc: the reader before 0013, put in at build time (the files on disk are not touched). */
+const READER_MEMORY = 'let functions: "unknown" | "present" | "missing" = "unknown";';
+let readerReplaced = false;
+const readerBefore0013 = {
+  name: "e2e-negative-reader-before-0013",
+  enforce: "pre",
+  transform(code, id) {
+    if (!/[\\/]src[\\/]lib[\\/]cms[\\/]publicRead\.ts$/.test(id.split("?")[0])) return null;
+    if (!code.includes(READER_MEMORY)) throw new Error("negative control: the reader's memory line was not found in publicRead.ts");
+    readerReplaced = true;
+    return code.replace(READER_MEMORY, READER_MEMORY.replace('= "unknown"', '= "missing"'));
+  },
+};
 
 let BASE = (process.argv.slice(2).find((a) => /^https?:\/\//.test(a)) || "").replace(/\/$/, "");
+if (BASE && NEGATIVE) throw new Error("E2E_NEGATIVE builds the site itself: give no baseUrl with it");
 let stopServer = async () => {};
 if (!BASE) {
   process.env.VITE_SUPABASE_URL = FAKE_URL;
   process.env.VITE_SUPABASE_ANON_KEY = FAKE_KEY;
   const { build, preview } = await import("vite");
   const outDir = mkdtempSync(join(tmpdir(), "ideovent-e2e-cms-scope-"));
-  console.log(`building with the fake Supabase into ${outDir}`);
-  await build({ root: ROOT, logLevel: "warn", build: { outDir, emptyOutDir: true } });
-  const server = await preview({ root: ROOT, logLevel: "warn", build: { outDir }, preview: { port: PORT, strictPort: true, host: "127.0.0.1" } });
+  console.log(`building with the fake Supabase into ${outDir}${NEGATIVE ? " (negative control: the reader before 0013)" : ""}`);
+  await build({ root: ROOT, cacheDir: CACHE_DIR, logLevel: "warn", plugins: NEGATIVE ? [readerBefore0013] : [], build: { outDir, emptyOutDir: true } });
+  if (NEGATIVE && !readerReplaced) throw new Error("negative control: the build never passed src/lib/cms/publicRead.ts through the replacement");
+  const server = await preview({ root: ROOT, cacheDir: CACHE_DIR, logLevel: "warn", build: { outDir }, preview: { port: PORT, strictPort: true, host: "127.0.0.1" } });
   BASE = `http://127.0.0.1:${PORT}`;
   stopServer = async () => {
     await new Promise((r) => server.httpServer.close(r));
@@ -95,13 +132,34 @@ const CORS = {
   "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "Content-Range",
 };
 let LOG = [];
+/** Requests to a Supabase host that is not the fake one: refused, and none may happen. */
+const STRAY = [];
+/** Every visitor's page opened while 0013 is in, with its requests (the "no list" check). */
+const VISITS_0013 = [];
+/** Whether supabase/migrations/0013 has run on the fake database. Sections 3 to 5 run both ways. */
+let RPC = true;
+const BY_LINK = ["demoSites", "pitchPages"];
 
 function visible(row, admin) {
   if (admin) return true;
   if (PRIVATE.includes(row.collection)) return false;
+  // 0013: a visitor lists no demo and no pitch page at all. Before it, 0005's status rule.
+  if (RPC && BY_LINK.includes(row.collection)) return false;
   if (row.collection === "pitchPages" && row.data?.status !== "live") return false;
   if (row.collection === "demoSites" && row.data?.status !== "sent") return false;
   return true;
+}
+/** 0013's two functions, as the SQL writes them: one sent demo or live pitch page by slug, or whether any exists. */
+function callFunction(fn, q) {
+  const col = q.get("p_collection");
+  const open = (r) => (r.collection === "demoSites" && r.data?.status === "sent") || (r.collection === "pitchPages" && r.data?.status === "live");
+  const mine = (r) => BY_LINK.includes(col) && r.collection === col && open(r);
+  if (fn === "public_has_rows") return TABLE.some(mine);
+  const slug = (q.get("p_slug") || "").trim().toLowerCase();
+  if (!slug || slug.length > 120) return [];
+  return TABLE.filter((r) => mine(r) && String(r.data?.slug || "").trim().toLowerCase() === slug)
+    .slice(0, 1)
+    .map(({ collection, doc_id, data }) => ({ collection, doc_id, data }));
 }
 /** Split a PostgREST term list on the commas at depth 0 (outside parentheses and quotes). */
 function splitTop(s) {
@@ -179,6 +237,15 @@ async function fakeSupabase(route) {
   const admin = auth === `Bearer ${ADMIN_JWT}`;
   entry.admin = admin;
   if (url.pathname === "/rest/v1/rpc/crm_me") return json(200, admin ? OWNER_ME : { role: null, reason: "signed_out" });
+  if (url.pathname === "/rest/v1/rpc/public_row_by_slug" || url.pathname === "/rest/v1/rpc/public_has_rows") {
+    const fn = url.pathname.slice("/rest/v1/rpc/".length);
+    if (!RPC) {
+      const args = [...url.searchParams.keys()].filter((k) => k !== "apikey").sort().join(", ");
+      return json(404, { code: "PGRST202", details: null, hint: null, message: `Could not find the function public.${fn}(${args}) in the schema cache` });
+    }
+    if (req.method() !== "GET" && req.method() !== "POST") return json(405, {});
+    return json(200, callFunction(fn, url.searchParams));
+  }
   if (url.pathname !== "/rest/v1/content") return req.method() === "GET" ? json(200, []) : json(201, []);
   if (req.method() === "GET") {
     try {
@@ -223,7 +290,13 @@ async function open(path, { admin = false } = {}) {
   page.on("request", (r) => { if (r.resourceType() === "script") scripts.push(r.url()); });
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
   page.on("pageerror", (e) => errors.push(String(e)));
-  await page.route(/e2e-scope\.supabase\.co/, fakeSupabase);
+  // The fake answers its own host; any other Supabase host is refused, and the run fails below.
+  await page.route(/supabase\.(co|in)\b/, (route) => {
+    const url = route.request().url();
+    if (new URL(url).host === new URL(FAKE_URL).host) return fakeSupabase(route);
+    STRAY.push(url);
+    return route.abort();
+  });
   await page.route(/emailjs|fonts\.g(oogleapis|static)\.com/, (r) => r.abort());
   if (admin) {
     await page.addInitScript(([k, s]) => localStorage.setItem(k, s), ["sb-e2e-scope-auth-token", JSON.stringify(SESSION)]);
@@ -231,9 +304,13 @@ async function open(path, { admin = false } = {}) {
   LOG = [];
   await page.goto(BASE + path, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
+  if (RPC && !admin) VISITS_0013.push({ path, log: LOG });
   return { ctx, page, scripts, errors };
 }
 const contentGets = () => LOG.filter((e) => e.method === "GET" && e.path === "/rest/v1/content");
+const functionGets = (fn) => LOG.filter((e) => e.method === "GET" && e.path === `/rest/v1/rpc/${fn}`);
+/** A request for a whole collection of demos or pitch pages, or for one of them from the table. */
+const listsByLink = (e) => e.method === "GET" && e.path === "/rest/v1/content" && /demoSites|pitchPages/.test(asked(e));
 const sdkLoaded = (scripts) => scripts.some((u) => /supabase/i.test(u.split("/").pop() || ""));
 const asked = (e) => `${e.q.get("collection") || ""} ${e.q.get("or") || ""}`;
 const realErrors = (errs) => errs.filter((e) => !/favicon|ERR_FAILED|ERR_BLOCKED|ERR_ABORTED|Failed to load resource|React DevTools/i.test(e));
@@ -287,46 +364,9 @@ console.log("\n2. moving between pages");
   await ctx.close();
 }
 
-/* 3 and 4. A demo reads its own row ─────────────────────────────────────── */
-console.log("\n3. a demo");
-{
-  const { ctx, page, scripts, errors } = await open("/site/riverbend-public-school");
-  const gets = contentGets();
-  ok(gets.length === 1 && /demoSites/.test(asked(gets[0])) && /slug\.ilike\.riverbend-public-school/.test(asked(gets[0])), `one request for the demo's own row (${gets.length}: ${gets[0] && asked(gets[0])})`);
-  ok(gets.every((g) => !g.q.get("collection") || g.q.get("collection") !== "eq.demoSites"), "it never asks for every demo");
-  ok(await shows(page, "Riverbend Public School"), "the demo renders under the institute's name");
-  const opens = LOG.filter((e) => e.method === "POST" && (e.wrote || []).some((w) => w.startsWith("demoSiteOpens:")));
-  ok(opens.length === 1, `the open is recorded once (${opens.length})`);
-  ok(!sdkLoaded(scripts), "the Supabase SDK chunk is not downloaded on a demo");
-  ok(realErrors(errors).length === 0, `no console errors on the demo ${realErrors(errors).slice(0, 2).join(" | ")}`);
-  await ctx.close();
-}
-{
-  const { ctx, page } = await open("/site/RIVERBEND-PUBLIC-SCHOOL");
-  ok(await shows(page, "Riverbend Public School"), "the slug matches case-insensitively, as resolveDemoSite does");
-  await ctx.close();
-}
-console.log("\n4. what must 404");
-for (const path of ["/site/no-such-demo", "/site/riverbend-draft", "/no-such-page-e2e"]) {
-  const { ctx, page } = await open(path);
-  const opens = LOG.filter((e) => e.method === "POST");
-  ok((await notFound(page)) && opens.length === 0, `${path}: the 404 page, and nothing recorded`);
-  await ctx.close();
-}
-
-/* 5. Pitch pages ────────────────────────────────────────────────────────── */
-console.log("\n5. pitch pages");
-{
-  const { ctx, page } = await open("/pitch/example-public-school");
-  const gets = contentGets();
-  const probe = gets.find((g) => g.q.get("select") === "doc_id");
-  ok(gets.some((g) => /pitchPages/.test(asked(g)) && /slug\.ilike\.example-public-school/.test(asked(g))), "the pitch page asks for its own row");
-  const seen = await shows(page, "Example Public School");
-  ok(!!probe && seen, `no stored pitch pages: one probe, and the seeded example opens (probe ${!!probe}, page ${seen ? "shows it" : `title "${await page.title()}"`})`);
-  await ctx.close();
-}
-{
-  // A stored live pitch page: a copy of the seeded example under another (fictional) name.
+/* 3 to 5. A demo and a pitch page, each its own row: with 0013 run, then before it ── */
+// The stored live pitch page of section 5: a copy of the seeded example under another (fictional) name.
+const LAKESIDE = await (async () => {
   const { build: esbuild } = await import("esbuild");
   const { existsSync } = await import("node:fs");
   const SRC = join(ROOT, "src");
@@ -339,16 +379,85 @@ console.log("\n5. pitch pages");
   });
   const { seed } = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString("base64")}`);
   const example = seed.pitchPages.find((p) => p.slug === "example-public-school");
-  const LAKESIDE = { ...example, id: "e2e-pp-lakeside", slug: "lakeside-academy", instituteName: "Lakeside Academy", status: "live" };
-  TABLE.push({ collection: "pitchPages", doc_id: LAKESIDE.id, data: LAKESIDE });
-  const a = await open("/pitch/example-public-school");
-  ok(await notFound(a.page), "with a pitch page stored, the seeded example is gone (the full read's rule)");
-  await a.ctx.close();
-  const b = await open("/lakeside-academy");
-  const gets = contentGets();
-  ok((await shows(b.page, "Lakeside Academy")) && !gets.some((g) => g.q.get("select") === "doc_id"), "the bare /<slug> opens the stored pitch page from its own row, with no probe");
-  await b.ctx.close();
+  return { ...example, id: "e2e-pp-lakeside", slug: "lakeside-academy", instituteName: "Lakeside Academy", status: "live" };
+})();
+
+for (const rpc of [true, false]) {
+  RPC = rpc;
   TABLE = freshTable();
+  const tag = rpc ? "0013 run: public_row_by_slug" : "before 0013: the function is a 404, the read as before";
+
+  console.log(`\n3. a demo (${tag})`);
+  {
+    const { ctx, page, scripts, errors } = await open("/site/riverbend-public-school");
+    const gets = contentGets();
+    const fns = functionGets("public_row_by_slug");
+    if (rpc) {
+      ok(gets.length === 1 && gets[0].q.get("collection") === "in.(contact,settings,socials)", `the table is asked for the three <Seo> keys only (${gets.map(asked).join(" | ")})`);
+      ok(fns.length === 1 && fns[0].q.get("p_collection") === "demoSites" && fns[0].q.get("p_slug") === "riverbend-public-school",
+        `the demo's own row is asked of public_row_by_slug, by its slug (${fns.length})`);
+      ok([...gets, ...fns].every((g) => g.q.get("apikey") === FAKE_KEY && !g.headers.apikey && !g.headers.authorization), "both carry the key in the query and no custom header (no preflight)");
+    } else {
+      ok(fns.length === 1 && gets.some((g) => /and\(collection\.eq\.demoSites,data->>slug\.ilike\.riverbend-public-school\)/.test(g.q.get("or") || "")),
+        `the function answers 404, and the demo's own row is read as before 0013, by its slug (${gets.map(asked).join(" | ")})`);
+    }
+    ok(gets.every((g) => !/^(eq\.demoSites|in\.\(.*demoSites.*\))$/.test(g.q.get("collection") || "")), "it never asks for every demo");
+    ok(await shows(page, "Riverbend Public School"), "the demo renders under the institute's name");
+    const opens = LOG.filter((e) => e.method === "POST" && (e.wrote || []).some((w) => w.startsWith("demoSiteOpens:")));
+    ok(opens.length === 1, `the open is recorded once (${opens.length})`);
+    ok(!sdkLoaded(scripts), "the Supabase SDK chunk is not downloaded on a demo");
+    ok(realErrors(errors).length === 0, `no console errors on the demo ${realErrors(errors).slice(0, 2).join(" | ")}`);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open("/site/RIVERBEND-PUBLIC-SCHOOL");
+    ok(await shows(page, "Riverbend Public School"), "the slug matches case-insensitively, as resolveDemoSite does");
+    await ctx.close();
+  }
+
+  console.log(`\n4. what must 404 (${tag})`);
+  for (const path of ["/site/no-such-demo", "/site/riverbend-draft", "/no-such-page-e2e"]) {
+    const { ctx, page } = await open(path);
+    const opens = LOG.filter((e) => e.method === "POST");
+    ok((await notFound(page)) && opens.length === 0, `${path}: the 404 page, and nothing recorded`);
+    await ctx.close();
+  }
+
+  console.log(`\n5. pitch pages (${tag})`);
+  {
+    const { ctx, page } = await open("/pitch/example-public-school");
+    const gets = contentGets();
+    const ownRow = rpc
+      ? functionGets("public_row_by_slug").some((g) => g.q.get("p_collection") === "pitchPages" && g.q.get("p_slug") === "example-public-school")
+      : gets.some((g) => /pitchPages/.test(asked(g)) && /slug\.ilike\.example-public-school/.test(asked(g)));
+    const probe = rpc ? functionGets("public_has_rows").find((g) => g.q.get("p_collection") === "pitchPages") : gets.find((g) => g.q.get("select") === "doc_id");
+    ok(ownRow, "the pitch page asks for its own row");
+    const seen = await shows(page, "Example Public School");
+    ok(!!probe && seen, `no stored pitch pages: one probe (${rpc ? "public_has_rows" : "the table"}), and the seeded example opens (probe ${!!probe}, page ${seen ? "shows it" : `title "${await page.title()}"`})`);
+    await ctx.close();
+  }
+  {
+    TABLE.push({ collection: "pitchPages", doc_id: LAKESIDE.id, data: LAKESIDE });
+    const a = await open("/pitch/example-public-school");
+    ok(await notFound(a.page), "with a pitch page stored, the seeded example is gone (the full read's rule)");
+    await a.ctx.close();
+    const b = await open("/lakeside-academy");
+    const probes = [...contentGets().filter((g) => g.q.get("select") === "doc_id"), ...functionGets("public_has_rows")];
+    ok((await shows(b.page, "Lakeside Academy")) && !probes.length, "the bare /<slug> opens the stored pitch page from its own row, with no probe");
+    await b.ctx.close();
+    TABLE = freshTable();
+  }
+}
+RPC = true;
+
+console.log("\n3 to 5. the network log, with 0013 run");
+{
+  const lists = VISITS_0013.flatMap((v) => v.log.filter(listsByLink).map((e) => `${v.path}: ${asked(e)}`));
+  ok(VISITS_0013.length >= 15 && !lists.length,
+    `${VISITS_0013.length} visitor pages, and not one request lists a whole collection of demos or pitch pages, or reads one from the table (${lists.slice(0, 3).join(" | ")})`);
+  const fnCalls = VISITS_0013.flatMap((v) => v.log.filter((e) => e.path.startsWith("/rest/v1/rpc/public_")));
+  ok(fnCalls.length >= 6 && fnCalls.every((e) => e.method === "GET" && e.q.get("apikey") === FAKE_KEY && !e.headers.authorization),
+    `each demo or pitch-page row came from 0013's functions, by a GET with the key in the query (${fnCalls.length} calls)`);
 }
 
 /* 6. The admin, signed in ───────────────────────────────────────────────── */
@@ -387,7 +496,10 @@ console.log("\n7. the CRM");
   await ctx.close();
 }
 
+ok(!STRAY.length, `no request went to a Supabase host other than the fake one (${STRAY.slice(0, 2).join(" | ")})`);
+
 await browser.close();
 await stopServer();
-console.log(fails.length ? `\n${fails.length} FAILURE(S)` : "\nevery per-route read check passes");
+console.log(fails.length ? `\n${fails.length} FAILURE(S)${NEGATIVE ? " (negative control: the reader before 0013; failures are expected)" : ""}` : "\nevery per-route read check passes");
+if (NEGATIVE && !fails.length) console.log("NEGATIVE CONTROL DID NOT FAIL: the checks do not reach the reader");
 process.exit(fails.length ? 1 : 0);

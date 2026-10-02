@@ -72,6 +72,9 @@ const GATES = [
   // @electric-sql/pglite, or PGLITE_FROM=<a folder that has it> in the environment.
   { name: "crm rls", cmd: "node", args: ["scripts/test-crm-rls.mjs"],
     why: "the database rules: an intern reads and changes only the leads Mehdi gave them, and never money" },
+  // 0013, demos and pitch pages by their link only: the same PGlite (or PGLITE_FROM) as "crm rls".
+  { name: "rows rls", cmd: "node", args: ["scripts/test-rows-rls.mjs"],
+    why: "the database rules: a visitor opens one demo or pitch page by its link, and nobody lists the prospects" },
   { name: "crm access", cmd: "node", args: ["scripts/test-crm-access.mjs"],
     why: "the same rules in the local store and the screens, and their constants still equal the SQL" },
   // The lead page and compose (part 2): what a member sends is true from them, and Mehdi's own text never changes.
