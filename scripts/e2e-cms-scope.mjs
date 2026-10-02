@@ -87,6 +87,8 @@ const EXP = Math.floor(Date.now() / 1000) + 3600;
 const ADMIN_JWT = `${b64url({ alg: "HS256", typ: "JWT" })}.${b64url({ sub: "e2e-admin", email: ADMIN_EMAIL, role: "authenticated", aud: "authenticated", exp: EXP })}.e2e`;
 const USER = { id: "e2e-admin", aud: "authenticated", role: "authenticated", email: ADMIN_EMAIL, app_metadata: { provider: "email" }, user_metadata: {}, created_at: "2026-10-02T00:00:00Z" };
 const SESSION = { access_token: ADMIN_JWT, token_type: "bearer", expires_in: 3600, expires_at: EXP, refresh_token: "e2e-refresh", user: USER };
+/* /admin is owner-only (ProtectedRoute's OwnerOnly asks crm_me). The admin's session is Mehdi's, so crm_me answers as SETUP_ALL.sql does for the owner. */
+const OWNER_ME = { memberId: "e2e-owner", role: "owner", email: ADMIN_EMAIL, displayName: "E2e-admin", viewAll: true, canAddLeads: true, mayColdCall: true, waDailyLimit: null, newLeadCap: 1000, targets: {}, senderChecked: true, mustChangePassword: false };
 const PRIVATE = ["submissions", "applications", "certificateGrades", "pitchPageNotes", "demoSiteSlots", "demoSiteOpens"];
 const CORS = {
   "access-control-allow-origin": "*", "access-control-allow-headers": "*",
@@ -176,6 +178,7 @@ async function fakeSupabase(route) {
   const auth = h.authorization || "";
   const admin = auth === `Bearer ${ADMIN_JWT}`;
   entry.admin = admin;
+  if (url.pathname === "/rest/v1/rpc/crm_me") return json(200, admin ? OWNER_ME : { role: null, reason: "signed_out" });
   if (url.pathname !== "/rest/v1/content") return req.method() === "GET" ? json(200, []) : json(201, []);
   if (req.method() === "GET") {
     try {
