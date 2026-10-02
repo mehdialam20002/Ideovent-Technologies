@@ -1081,7 +1081,10 @@ section("12. vercel.json: the functions, the cron, and no redirect in the way");
   check("the cron's path is a real function, reached with no rewrite", fns.includes("api/meta/catchup.js"));
   const rw = vj.rewrites || [];
   const at = (src) => rw.findIndex((r) => r.source === src);
-  const spa = rw.findIndex((r) => r.destination === "/index.html");
+  // The site's catch-all: the first rewrite to a shell page. Since the SEO release (2 Oct 2026) it is /spa-shell.html,
+  // and since the SEO polish (3 Oct 2026) /blog, /work and /services slugs go to /spa-shell-cms.html just before it.
+  const SHELLS = ["/spa-shell.html", "/spa-shell-cms.html", "/index.html"];
+  const spa = rw.findIndex((r) => SHELLS.includes(r.destination));
   check("/api/meta/connect and /api/meta/relay are rewritten to the webhook's function, before the site's catch-all",
     rw[at("/api/meta/connect")]?.destination === "/api/meta/webhook?route=connect" && rw[at("/api/meta/relay")]?.destination === "/api/meta/webhook?route=relay"
       && at("/api/meta/connect") >= 0 && at("/api/meta/relay") >= 0 && at("/api/meta/connect") < spa && at("/api/meta/relay") < spa, rw.slice(0, 3));

@@ -17,7 +17,7 @@
  * Pure: no React, no storage, no network.
  */
 import type { PlainStage } from "@/admin/outreach/stages";
-import type { TemplateStage } from "./templates";
+import { getTemplate, type TemplateStage } from "./templates";
 import type {
   LeadKind,
   LeadLanguage,
@@ -371,11 +371,35 @@ export function can(me: CrmMe | null | undefined, action: CrmAction): boolean {
  * The cold-call gate: the prospect replied, opened a demo, or is past that
  * stage (Replied, Demo opened, or a call or proposal with Mehdi). Without
  * "May cold-call" a member calls only these (TRAI, spec 11.4).
+ *
+ * An open after a cold link is not engagement (3 Oct 2026, with the link in
+ * the first message, hotfix-send-links-1002 D9): when the last message that
+ * carried their demo link was a first message sent cold (linkWentCold), the
+ * open says only that a stranger tapped a link we sent unasked, not that they
+ * want a call, so it does not open the gate. useOutreach leaves such a lead at
+ * Contacted for the same reason; a reply still opens it at once.
  */
 export function isEngaged(lead: Partial<OutreachLead> | null | undefined, events: OutreachEvent[] | null | undefined): boolean {
   if (!lead) return false;
   if (lead.status && ["replied", "demo_opened", "call", "proposal", "won"].includes(lead.status)) return true;
-  return (events || []).some((e) => e.leadId === lead.id && (e.type === "replied" || e.type === "demo_opened"));
+  const own = (events || []).filter((e) => e.leadId === lead.id);
+  if (own.some((e) => e.type === "replied")) return true;
+  return own.some((e) => e.type === "demo_opened") && !linkWentCold(lead.id || "", own);
+}
+
+/**
+ * True when the LATEST message that carried this lead's demo link was a cold
+ * first message (a twin with their sample's link, templates.ts link "demo"),
+ * not the link after a yes. The one rule for "an open after a cold link"
+ * (lib/outreach/linkChoice.ts re-exports it for the compose screen and
+ * useOutreach); here because the cold-call gate needs it and access.ts must
+ * stay free of linkChoice's demo-record imports.
+ */
+export function linkWentCold(leadId: string, events: Pick<OutreachEvent, "leadId" | "type" | "templateId" | "at">[]): boolean {
+  const last = events
+    .filter((e) => e.leadId === leadId && e.type === "sent" && Boolean(getTemplate(e.templateId)?.body.includes("{demoLink}")))
+    .sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+  return getTemplate(last?.templateId)?.link === "demo";
 }
 
 /** The compose stages a member is offered: never After the call or Proposal (money is Mehdi's). */

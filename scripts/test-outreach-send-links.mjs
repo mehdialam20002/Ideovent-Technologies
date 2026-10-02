@@ -611,7 +611,9 @@ const ctOf = (z) => (z ? decodeURIComponent(z.href.slice(z.href.indexOf("?ct=") 
   const LOADING = no("loading", "Checking the demo...");
   const EXPIRED = no("expired", "This lead's demo expired on 2026-09-20. Change Expires on in Edit demo before you send its link.");
   const OWNER_DRAFT = { state: "draft", ok: true, needsPublish: true, reason: "" };
-  const MEMBER_DRAFT = no("draft", "This lead's demo is still a draft, so its link shows a 404. Ask Mehdi to mark it sent.");
+  // Since the merge with the CRM team (3 Oct 2026): their step 1 has Turn on the link, so the reason is the team's own words.
+  const MEMBER_DRAFT = no("draft", "The demo's link is off, so it shows a 404. Tap Turn on the link in step 1 first.");
+  check(M.MEMBER_DRAFT_REASON === MEMBER_DRAFT.reason, "demoReach: a team member's draft reason is the CRM team's own line (Tap Turn on the link in step 1 first)");
   const same = (a, b) => Boolean(a) && ["state", "ok", "needsPublish", "reason"].every((k) => a[k] === b[k]);
   for (const [name, got, want] of [
     ["none", R({ lead: { demoSlug: "" }, demo: dm() }), no("none", "No demo yet: make one in step 1, then the message can carry its link.")],
@@ -717,8 +719,15 @@ const ctOf = (z) => (z ? decodeURIComponent(z.href.slice(z.href.indexOf("?ct=") 
   check(Boolean(pto) && at('window.open("about:blank", "_blank")') > 0 && at("await demoLink.publish()") > at('window.open("about:blank", "_blank")') &&
     at("await demoLink.publish()") < at("tab.location.replace(href)") && at("await demoLink.publish()") < at("recordSend(how)"),
   "publishThenOpen: the blank tab opens inside the click, the demo goes on the website, and only then is the tab navigated and the send recorded");
-  check(/const linkOff = !hasLinkTwin \? ""\s*: !demoLink\.reach\.ok \? demoLink\.reach\.reason\s*: !demoLink\.owner \? TEAM_LINK_REASON\s*: coldWhy;/.test(panel),
-    "linkOff: the reach reason first, then the team line, then the cold-link reason");
+  check(/const linkOff = !hasLinkTwin \? ""\s*: team \? TEAM_LINK_REASON\s*: !demoLink\.reach\.ok \? demoLink\.reach\.reason\s*: !demoLink\.owner \? TEAM_LINK_REASON\s*: coldWhy;/.test(panel),
+    "linkOff: a team sender (me loaded, not Mehdi) reads the team line; else the reach reason, then the team line, then the cold-link reason");
+  // The CRM team (3 Oct 2026): the version that goes passes the team's wording, like the list it was picked from.
+  check(/const variant = picked \? sendVariant\(picked, \{ withLink: hasLinkTwin && linkChoice === "with", linkWent \}\) : undefined;/.test(panel) &&
+    panel.includes("const template = variant && offer && variant !== picked ? offer(variant) ?? picked : variant;"),
+  "the twin that goes passes the team's offer (memberVersion) for anyone but Mehdi, and falls back to the base, never to Mehdi's words");
+  check(panel.includes("const linkWent = team ? linkWentOn(lead.id, channel, events.filter((e) => e.actorId === me.memberId)) : linkWentHere;") &&
+    /else if \(template && offersLink\(template\) && linkWentHere && !linkWent\) \{/.test(panel),
+  "anyone but Mehdi gets the follow-up for after the link only after their own first message with it (their own thread), and a link that went from Mehdi there is a warning");
   check(panel.includes('(template?.link === "demo" || needsPublish ? blockers : warnings).push(coldWhy)'), "the cold-link reason blocks the twin and any send that would publish the demo, and only warns on a demo already live");
   check(/if \(foreign\.length\) warnings\.push\(/.test(panel), "another demo's link is a warning, not a blocker");
   check(/if \(needsPublish\) \{\s*e\.preventDefault\(\);\s*void publishThenOpen\(href, how\);/.test(panel), "a send that carries a draft demo's link goes through publishThenOpen");
@@ -731,12 +740,18 @@ const ctOf = (z) => (z ? decodeURIComponent(z.href.slice(z.href.indexOf("?ct=") 
     "copyMail: the buttons go off before the clipboard write, and only copied text puts the demo on the website");
   check(/if \(needsPublish\) blockers\.push\(`\$\{named\} /.test(panel) && /else warnings\.push\(named\);/.test(panel), "a demo in another name blocks a send that would publish it, and only warns on a demo already live");
   check(/return blocked \|\| !href \|\| publishing \?/.test(panel) && /disabled=\{blocked \|\| publishing\}/.test(panel), "every send button is off while blocked or while the demo is being put on the website");
+  // Merged (3 Oct 2026) with sec-rows-2026-10-02 and crm-meta-2026-10-02: these lines were left alone for those merges;
+  // now the templates import is still one line, and the panel's demo comes from sec-rows' hook, as useDemoLink's does.
   const lines = panel.split("\n");
-  check(lines[5] === 'import { LANGUAGE_LABELS, carriesPreview, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";', "ComposePanel line 6 is as it was (the other branches' import lines)");
-  check(panel.split("  const demo = leadDemo(lead, (data.demoSites as DemoSite[]) || []);").length === 2, "ComposePanel's own demo lookup line is as it was (sec-rows rewrites it)");
+  check(lines.filter((l) => l === 'import { LANGUAGE_LABELS, carriesPreview, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";').length === 1,
+    "ComposePanel's templates import line is as it was (merged with the other branches' import lines)");
+  check(panel.split("  const demo = leadDemo(lead, useLeadDemoSites());").length === 2 && !panel.includes("data.demoSites"),
+    "ComposePanel's own demo is read through useLeadDemoSites() (sec-rows, 0013), never the CMS list directly");
   const hook = read("admin/outreach/useDemoLink.ts");
   check(!/publishLeadDemo/.test(hook) && /return \{ demo, reach, owner, publish \};/.test(hook) && /canPublish: owner/.test(hook) && /if \(!owner \|\| !demo \|\| !reach\.ok \|\| !reach\.needsPublish\) return;/.test(hook),
     "useDemoLink: returns owner, publishes only on Mehdi's send, never calls publishLeadDemo");
+  check(/const sites = useLeadDemoSites\(\);/.test(hook) && !/teamDemos/.test(hook) && !/data\.demoSites/.test(hook),
+    "useDemoLink: its demo records are useLeadDemoSites()'s (the CMS's plus a team member's crm_lead_demos), the same as ComposePanel's");
   const sw = read("admin/outreach/LinkChoice.tsx");
   check(["link-choice", "link-choice-without", "link-choice-with", "link-choice-hint", "link-choice-reason"].every((tid) => sw.includes(`data-testid="${tid}"`)) && sw.includes('"ideovent_crm_wa_first_link"'),
     "LinkChoice: its test ids and the storage key of the remembered WhatsApp version");

@@ -17,6 +17,9 @@
  *      first-person form in Hinglish or Hindi ("chhod raha hoon", "chahta
  *      hoon", "dikha dunga", "likhunga", Hindi "chahta hoon"), {callSlots}, a
  *      price, Mehdi's name or number, or an after-call or proposal template.
+ *      The same for the versions the compose swaps in for the link in the
+ *      first message (templates.ts LINK_TEMPLATES, 3 Oct 2026), each of which
+ *      needs no wording key its base does not.
  *   2. With every key OFF: no template or script line a key covers is offered
  *      (and each key, switched on alone, brings back only its own).
  *   3. The member's identity: {senderFirstName} is theirs, the e-mail signature
@@ -300,6 +303,46 @@ for (const t of M.OUTREACH_TEMPLATES.filter((x) => M.MONEY_STAGES.includes(x.sta
   check(!M.offered("whatsapp", "after_reply", "dental", offer).some((t) => /\{callSlots\}/.test(t.body)), "nothing approved: no after-yes message with call times");
 }
 
+/* ── 2b. The versions the compose swaps in, for the link in the first message (3 Oct 2026) ── */
+
+/* ComposePanel sends a twin in its base's place (a first message with their sample's link, or a follow-up for after
+   the link: templates.ts LINK_TEMPLATES, linkChoice.ts sendVariant) and runs it through the same team offer as the base
+   (teamOffer, memberVersion). A twin needs no wording key its base does not, so a base a member is offered always has
+   its twin offered, never Mehdi's own words; and with every key approved, what a twin says is true from them. */
+{
+  const twins = M.LINK_TEMPLATES || [];
+  check(twins.length > 0 && twins.every((t) => Boolean(t.twinOf)), `twins: the link templates are here, each naming its base (${twins.length})`);
+  for (const t of twins) {
+    const base = M.getTemplate(t.twinOf);
+    const tk = M.memberWordingKeysOf(t);
+    const bk = base ? M.memberWordingKeysOf(base) : [];
+    check(Boolean(base) && tk.every((k) => bk.includes(k)), `twin ${t.id}: needs no wording key its base ${t.twinOf} does not (${tk.join(", ") || "none"} of ${bk.join(", ") || "none"})`);
+    check((M.memberVersion(t, {}) === null) === tk.length > 0, `twin ${t.id}: with nothing approved it is ${tk.length ? "hidden" : "offered as it is"}`);
+  }
+  let twinRendered = 0;
+  for (const me of [ASHA, BILAL]) {
+    const offer = M.teamOffer(me, ALL_ON);
+    const ctx = M.teamRenderContext(me);
+    const first = me.senderName.split(" ")[0];
+    for (const t of twins) {
+      const v = offer(t);
+      check(Boolean(v) && v.id === t.id, `member (${first}): every key approved, twin ${t.id} is offered, with its own id`);
+      if (!v) continue;
+      for (const kind of kindsOf(t)) {
+        for (const lead of shapes(kind).filter((l) => l.demoSlug)) {
+          const text = textOf(M.render(v, lead, { ...ctx, observation: lead.observation, now: NOW }));
+          twinRendered++;
+          const bad = untrue(text);
+          check(!bad, `member (${first}): twin ${t.id} for a ${kind} lead says "${bad}" (untrue from them)`);
+          check(!MEHDIS.test(text), `member (${first}): twin ${t.id} names Mehdi or his number`);
+          check(!PRICE.test(text), `member (${first}): twin ${t.id} quotes a price or payment`);
+        }
+      }
+    }
+  }
+  check(twinRendered > 300, `twins: a wide set was rendered as a member (${twinRendered})`);
+}
+
 /* ── 3. The call script: their own name, the "we" lines, and a hand-over before the price ── */
 
 for (const me of [ASHA, BILAL]) {
@@ -360,6 +403,9 @@ for (const status of ["call", "proposal"]) {
   for (const channel of ["whatsapp", "email"]) {
     check(!/two times|two call times/.test(M.stageHint("after_yes", channel, "school", true)) && /hand the lead to Mehdi/.test(M.stageHint("after_yes", channel, "school", true)), `stage hint (${channel}): a member's After they say yes says to hand over`);
     check(/two times for a 10-minute call/.test(M.stageHint("after_yes", channel, "school")), `stage hint (${channel}): Mehdi's is as before`);
+    // The first message (3 Oct 2026): With link is Mehdi's alone, so a team sender's hint never names the switch; his does.
+    check(!/With link/.test(M.stageHint("first", channel, "dental", true)) && /With link/.test(M.stageHint("first", channel, "dental")),
+      `stage hint (${channel}): a team sender's first message names no With link switch, Mehdi's does`);
   }
   check(/hand the lead to Mehdi/.test(M.nextStep(lead, [], NOW, { member: true }).text) && /send the sample link/.test(M.nextStep(lead, [], NOW).text), "next step on a replied lead: a member hands it over; Mehdi sends the sample link, as before");
 }

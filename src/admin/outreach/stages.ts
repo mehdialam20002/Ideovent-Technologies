@@ -163,8 +163,16 @@ export function stageHint(plain: PlainStage, channel: TemplateChannel, kind: Out
   const close = days(ladder.filter((s) => plainStageOf(s) === "closing"));
   switch (plain) {
     case "first":
+      // Anyone but Mehdi (the CRM team, 3 Oct 2026): With link is his alone, so their hint is the one from before the
+      // switch, word for word: the picture link on WhatsApp where the kind has one, and their sample's link after a yes.
+      if (team) {
+        return channel === "whatsapp" && previewFor(kind)
+          ? "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, the picture link, one question and an easy no. Their own sample's link goes after a yes."
+          : "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, one question and an easy no. No link.";
+      }
       // On WhatsApp a clinic, school or coaching institute also gets its picture, or With link their sample's own link
-      // (2 Oct 2026): the one link a first message may carry. The hint has no `me`, so it names the switch, not a promise.
+      // (2 Oct 2026): the one link a first message may carry. Mehdi's hint names the switch, not a promise (the demo may
+      // still be missing or closed, and the switch then says why it is off).
       if (channel === "email") {
         return "To someone who has not heard from you, in short parts: the one problem you checked today, what it costs them, the sample in three points, With link the link to their sample, one question and an easy no. With no demo yet, no link: it offers to make one.";
       }

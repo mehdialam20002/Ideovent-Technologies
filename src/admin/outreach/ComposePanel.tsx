@@ -167,7 +167,14 @@ const ENGAGED = new Set<OutreachLead["status"]>(["replied", "demo_opened", "call
  * times; without "May cold-call" no call to a lead that has not replied. Every
  * change is a patch (spec 9.3) and every sent line carries its stage, so the
  * database counts first messages and refuses the money stages. Mehdi's own
- * screen is exactly as before.
+ * screen is exactly as before. With the link in the first message (3 Oct
+ * 2026): With link stays Mehdi's (TEAM_LINK_REASON); a follow-up for after
+ * the link goes in its base's place only after their own first message with
+ * the link (it points back to "my message above", which must be in their
+ * thread), and passes the same team wording as the list; a draft demo's link
+ * blocks their send until they tap Turn on the link in step 1 (their send
+ * never publishes); and an open after a cold link is not a reply, so it does
+ * not open their calls (access.ts isEngaged).
  *
  * NO TICK, NO WHATSAPP OR CALL (DPDP; meta-leads-spec 12). A lead from a Meta
  * form who left its box "Ideovent may contact me on WhatsApp and phone"
@@ -271,15 +278,26 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   const short = ranked.slice(0, 3);
   if (picked && !short.includes(picked)) short.push(picked);
   const hasLinkTwin = Boolean(linkTwinOf(picked));
-  // Why With link is off: the link would not open (this comes first, so while `me` is still pending Mehdi reads
+  // Why With link is off: for a team sender (anyone but Mehdi, once `me` has loaded) the team line, since With link
+  // is Mehdi's alone whatever the demo; else the link would not open (so while `me` is still pending Mehdi reads
   // "Checking the demo..." or "No demo yet", never the team line), the sender is not Mehdi, or it must not go cold.
   const linkOff = !hasLinkTwin ? ""
+    : team ? TEAM_LINK_REASON
     : !demoLink.reach.ok ? demoLink.reach.reason
     : !demoLink.owner ? TEAM_LINK_REASON
     : coldWhy;
   const linkChoice: LinkChoiceValue = linkOff ? "without" : channel === "email" ? emailLinkChoice : waLinkChoice;
-  const linkWent = linkWentOn(lead.id, channel, events);
-  const template = picked ? sendVariant(picked, { withLink: hasLinkTwin && linkChoice === "with", linkWent }) : undefined;
+  // The follow-up for after the link points back to "my message above" / "my first e-mail": true only in the sender's own
+  // thread. Anyone but Mehdi writes from their own number and mailbox, and With link is Mehdi's, so for them only their
+  // own sends count (actorId, stamped by the server); a link that went from Mehdi on this channel is a warning below.
+  const linkWentHere = linkWentOn(lead.id, channel, events);
+  const linkWent = team ? linkWentOn(lead.id, channel, events.filter((e) => e.actorId === me.memberId)) : linkWentHere;
+  const variant = picked ? sendVariant(picked, { withLink: hasLinkTwin && linkChoice === "with", linkWent }) : undefined;
+  // Anyone but Mehdi (spec 10.7): the version that goes passes the same team wording as the list (teamOffer,
+  // templates.ts memberVersion), so a follow-up for after the link never carries Mehdi's first person ("the sample
+  // I made", "main yahin chhod raha hoon"). A twin's wording keys are its base's or fewer (test-crm-wording.mjs),
+  // so an offered base always has an offered twin; were one ever missing, the base goes, never Mehdi's words.
+  const template = variant && offer && variant !== picked ? offer(variant) ?? picked : variant;
 
   // The render is ALWAYS for this lead; the observation is passed explicitly
   // (even when empty) so a research note on the lead never slips in. The demo's
@@ -391,6 +409,9 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   const elsewhere: TemplateChannel = channel === "email" ? "whatsapp" : "email";
   if (template && offersLink(template) && linkWentOn(lead.id, elsewhere, events)) {
     warnings.push(`Their sample's link already went ${elsewhere === "email" ? "by e-mail" : "on WhatsApp"}, and this message offers it again.${template.stage === "first" && hasLinkTwin && !linkOff ? " With link sends it here instead." : ""}`);
+  } else if (template && offersLink(template) && linkWentHere && !linkWent) {
+    // Anyone but Mehdi: the link went on this channel too, from Mehdi's own number or mailbox, so not in their thread.
+    warnings.push(`Their sample's link already went ${channel === "email" ? "by e-mail" : "on WhatsApp"} from Mehdi, and this message offers it again.`);
   }
   if (template?.sample === "offer" && template.stage !== "first" && linkWent) {
     warnings.push("Your first message here carried their sample's link, and this one offers to make a sample. Pick the follow-up for a sample made.");

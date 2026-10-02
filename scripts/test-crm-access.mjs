@@ -20,7 +20,8 @@
  *      the window); guardNewLead (ownership, starts New, links stripped,
  *      duplicates across the team, the New cap); stampEvent (money, 4 KB, types);
  *      planDistribution and planRules on the SQL test's own cases, plus the
- *      preview counts; isEngaged; masking; crmErrorText; cadenceDone when
+ *      preview counts; isEngaged (an open after a cold link does not count,
+ *      3 Oct 2026) and linkWentCold; masking; crmErrorText; cadenceDone when
  *      derive.ts has it (work package D).
  *   3. LocalOutreachStore acting as Mehdi, an admin, members, See all, a
  *      switched-off person and a stranger: who sees what, every refusal with
@@ -536,6 +537,22 @@ check(M.planRules([{ ...pool(1), assigneeId: "x" }, { ...pool(3), status: "conta
 check(!M.isEngaged(mine, []) && M.isEngaged(mine, [{ leadId: "A", type: "replied" }]) && M.isEngaged({ ...mine, status: "demo_opened" }, []),
   "isEngaged: a reply, a demo open or that stage (the cold-call gate)");
 check(!M.isEngaged(mine, [{ leadId: "B", type: "replied" }]), "isEngaged: another lead's reply does not count");
+/* An open after a cold link is not engagement (3 Oct 2026, the link in the first message, send-links D9): when the last
+   message that carried their demo link was a cold first message (a twin with link "demo"), the open does not open the gate. */
+{
+  const at = (d) => `2026-10-0${d}T09:00:00.000Z`;
+  const cold = { leadId: "A", type: "sent", channel: "email", templateId: "em_first_new_dental_en_link", stage: "first", at: at(1) };
+  const open = { leadId: "A", type: "demo_opened", at: at(2) };
+  const warm = { leadId: "A", type: "sent", channel: "whatsapp", templateId: "wa_after_reply_dental_en", stage: "after_reply", at: at(4) };
+  const pointBack = { leadId: "A", type: "sent", channel: "email", templateId: "em_fu1_dental_en_after_link", stage: "follow_up_1", at: at(3) };
+  check(M.isEngaged(mine, [open]) && !M.isEngaged(mine, [cold, open]), "isEngaged: a demo open counts, unless the last link they got went cold in a first message");
+  check(M.isEngaged(mine, [cold, open, { leadId: "A", type: "replied", at: at(3) }]), "isEngaged: after a cold link, a reply still opens the gate");
+  check(!M.isEngaged(mine, [cold, open, pointBack]), "isEngaged: a follow-up that only points back to the link changes nothing");
+  check(M.isEngaged(mine, [cold, open, warm, { leadId: "A", type: "demo_opened", at: at(5) }]), "isEngaged: once the link went again after a yes, an open counts");
+  check(M.isEngaged(mine, [{ ...cold, leadId: "B" }, open]), "isEngaged: another lead's cold link does not touch this lead's open");
+  check(M.linkWentCold("A", [cold]) && !M.linkWentCold("A", [cold, warm]) && !M.linkWentCold("A", [pointBack]) && !M.linkWentCold("A", []) && !M.linkWentCold("B", [cold]),
+    "linkWentCold: the latest message that carried the link decides; a point-back follow-up or another lead's send never does");
+}
 check(M.maskPhone("+919810012345") === "+91 98100 •••45" && M.maskEmail("office@school.example") === "of•••@school.example",
   "masking: +91 98100 •••45 and of•••@school.example", [M.maskPhone("+919810012345"), M.maskEmail("office@school.example")]);
 check(M.maskPhone("") === "" && M.maskEmail(undefined) === "" && !M.maskPhone("+14155550123").includes("55501"), "masking: empty stays empty; another country's number is masked too");

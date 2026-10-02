@@ -37,13 +37,11 @@ export function linkWentOn(
   return events.some((e) => e.leadId === leadId && e.type === "sent" && e.channel === channel && getTemplate(e.templateId)?.link === "demo");
 }
 
-/** True when the LATEST message that carried the demo link was a cold first message (not the link after a yes). */
-export function linkWentCold(leadId: string, events: Pick<OutreachEvent, "leadId" | "type" | "templateId" | "at">[]): boolean {
-  const last = events
-    .filter((e) => e.leadId === leadId && e.type === "sent" && Boolean(getTemplate(e.templateId)?.body.includes("{demoLink}")))
-    .sort((a, b) => (a.at < b.at ? 1 : -1))[0];
-  return getTemplate(last?.templateId)?.link === "demo";
-}
+/**
+ * True when the LATEST message that carried the demo link was a cold first message (not the link after a yes).
+ * One rule in one place: access.ts holds it, because the team's cold-call gate (isEngaged) reads it too.
+ */
+export { linkWentCold } from "./access";
 
 /**
  * True when the text carries this lead's own demo link, matched by its PATH, /site/<slug>, as a whole
@@ -91,19 +89,23 @@ export interface DemoReach {
   reason: string;
 }
 
+/** A draft demo on a team member's send: the CRM team's own words for it (their step 1 turns the link on). */
+export const MEMBER_DRAFT_REASON = "The demo's link is off, so it shows a 404. Tap Turn on the link in step 1 first.";
+
 /**
  * Will the lead's demo link open for them? From the demo record the CRM can read (useDemoLink). In
  * order: no demo, still loading (whether or not a record was found: while the CMS loads its data is
  * the seed, with example demos, and `me` is pending until the CRM data has loaded), no record for the
  * link, a record now at another link, a Free slot, closed, expired, live, a draft. Only a draft is
- * ever put on the website by a send, and only by Mehdi's (canPublish): anyone else's draft blocks.
+ * ever put on the website by a send, and only by Mehdi's (canPublish): anyone else's draft blocks,
+ * and they turn its link on themselves in step 1 (CRM team, "Turn on the link": crm_publish_lead_demo).
  */
 export function demoReach({ lead, demo, loading = false, canPublish = true, now = new Date() }: {
   lead: Pick<OutreachLead, "demoSlug">;
   demo?: Pick<DemoSite, "slug" | "status" | "expiresAt"> | null;
   /** The CMS or the CRM data is still loading. */
   loading?: boolean;
-  /** May this sender's send put a draft on the website? Mehdi (owner) only, in this hotfix. */
+  /** May this sender's send put a draft on the website? Mehdi (owner) only: the team turns a link on in step 1. */
   canPublish?: boolean;
   now?: Date;
 }): DemoReach {
@@ -128,7 +130,8 @@ export function demoReach({ lead, demo, loading = false, canPublish = true, now 
   }
   if (status === "sent") return { state: "live", ok: true, needsPublish: false, reason: "" };
   if (canPublish) return { state: "draft", ok: true, needsPublish: true, reason: "" };
-  return no("draft", "This lead's demo is still a draft, so its link shows a 404. Ask Mehdi to mark it sent.");
+  // Anyone else (the CRM team): their step 1 has "Turn on the link" (DemoPicker's TeamDemoStep), so the words are the team's own.
+  return no("draft", MEMBER_DRAFT_REASON);
 }
 
 /**

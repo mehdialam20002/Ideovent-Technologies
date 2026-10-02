@@ -137,7 +137,9 @@ console.log("\n0. The migration file\n");
 }
 const HEADER_12 = /^-- ┌[─ ]*0012_meta_leads\.sql[─ ]*┐$/m;
 check(HEADER_12.test(SETUP_FULL) && SETUP_FULL.includes(M12.trim()), "SETUP_ALL.sql carries 0012 exactly as the migration file, under its header");
-check(SETUP_FULL.search(HEADER_12) > CUT && /0001 to 0012/.test(SETUP_FULL.slice(0, 600)), "...after 0011, and its first lines say 0001 to 0012");
+// The first lines name the last migration carried: 0012, or a later one (0013 since the merge with sec-rows-2026-10-02).
+const SETUP_UP_TO = Number((SETUP_FULL.slice(0, 600).match(/0001 to (\d{4})\b/) || [])[1] || 0);
+check(SETUP_FULL.search(HEADER_12) > CUT && SETUP_UP_TO >= 12, `...after 0011, and its first lines say 0001 to 0012 or later (they say 0001 to ${String(SETUP_UP_TO).padStart(4, "0")})`);
 const code12 = M12.replace(/--[^\n]*/g, "");
 check(!/\bexecute\b(?!\s+on\s+function)/i.test(code12) && !/\bformat\s*\([^)]*%I/i.test(code12),
   "0012 has no dynamic SQL (no EXECUTE statement, no format(%I) identifiers): stranger text only travels as values");

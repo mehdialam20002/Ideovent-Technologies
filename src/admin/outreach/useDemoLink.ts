@@ -3,7 +3,7 @@ import { getStore } from "@/lib/cms/store";
 import type { DemoSite, DemoSiteSlot } from "@/lib/cms/types";
 import { coldLinkReason, demoNamedFor, demoReach, type DemoReach } from "@/lib/outreach/linkChoice";
 import type { OutreachLead } from "@/lib/outreach/types";
-import { leadDemo } from "./DemoPicker";
+import { leadDemo, useLeadDemoSites } from "./DemoPicker";
 import { markDemoSent } from "./demoActions";
 import { useOutreach } from "./useOutreach";
 
@@ -13,12 +13,14 @@ import { useOutreach } from "./useOutreach";
  * website, which is the one Mark sent runs (DemoPicker): markDemoSent writes the CMS (status "sent",
  * the private slot with who it went to and when), then the history note "Demo /site/<slug> marked
  * sent". Anyone else's send never publishes: a draft blocks it (demoReach canPublish false), and the
- * team's own way to turn a link on is crm-meta's. It never sets expiresAt: no existing path does.
+ * team turns a link on in step 1 (DemoPicker's TeamDemoStep, "Turn on the link", which runs the
+ * database's crm_publish_lead_demo, never this hook). It never sets expiresAt: no existing path does.
  *
- * WHICH RECORDS: the CMS's, plus for anyone but Mehdi the demos linked to their own leads (teamDemos,
- * crm_lead_demos), which win. That is exactly what sec-rows-2026-10-02's useLeadDemoSites()
- * (DemoPicker.tsx) returns: once that branch is merged, replace the `sites` line with it, and
- * ComposePanel's own `demo` (the record {offer} reads) is then the same record as this one.
+ * WHICH RECORDS (3 Oct 2026, with the CRM team and 0013): useLeadDemoSites() (DemoPicker.tsx), the
+ * CMS's records plus, for anyone but Mehdi, the demos linked to their own leads (crm_lead_demos,
+ * drafts included), which win. Since 0013 a member's CMS read carries no demo at all,
+ * so that second list is the only way their lead finds its demo. ComposePanel's own `demo` (the record
+ * {offer} reads) comes from the same hook, so the two are one record.
  *
  * THE DEMO AS IT IS NOW (3 Oct 2026, review). Edit demo opens in another tab, and this screen keeps the
  * copy it read when it loaded, so the publish reads the demo again first and writes over THAT record:
@@ -33,11 +35,10 @@ import { useOutreach } from "./useOutreach";
  */
 export function useDemoLink(lead: OutreachLead): { demo?: DemoSite; reach: DemoReach; owner: boolean; publish: () => Promise<void> } {
   const { data, actions, loading: cmsLoading } = useCms();
-  const { me, teamDemos, addEvent, loading: crmLoading } = useOutreach();
+  const { me, addEvent, loading: crmLoading } = useOutreach();
   // Legacy (no 0011) and local mode's default actor are the owner too; `me` is pending until the CRM data loads.
   const owner = me.role === "owner";
-  const cms = (data.demoSites as DemoSite[]) || [];
-  const sites = !teamDemos.length ? cms : [...cms.filter((d) => !teamDemos.some((t) => t.id === d.id)), ...teamDemos];
+  const sites = useLeadDemoSites();
   const slots = (data as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || [];
   const demo = leadDemo(lead, sites);
   const reach = demoReach({ lead, demo, loading: cmsLoading || crmLoading || !me.role, canPublish: owner });
