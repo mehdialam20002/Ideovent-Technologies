@@ -12,12 +12,15 @@
  *
  * THE RULES (30 Sep 2026: Mehdi's approved wording, 04-sales-kit/APPROVED-MESSAGES-2026-09-30.md,
  * and the research behind it, OUTREACH-APPROACH-PLAYBOOK-2026-09-30.md):
- *   - no link in any first message, on either channel: their sample's link goes after a yes.
- *     The one exception (1 Oct 2026, Mehdi approved it for this one purpose): a WhatsApp
- *     first message that says the sample is made, to a clinic, a school or a coaching
- *     institute, carries exactly one link, its kind's picture page ({previewLink},
- *     preview.ts), which WhatsApp shows as the picture card. Nothing else, and no other
- *     message, may carry it (checkSend);
+ *   - a first message carries at most ONE link (2 Oct 2026, Mehdi: "mail pe to first msz pe hi link
+ *     send krwa do", and for WhatsApp "dono templete bana do"):
+ *       * a twin with their sample's link (templates.ts link: "demo"; never listed, the compose screen
+ *         swaps it in) carries their sample's own address, {demoLink}, once, on either channel, and
+ *         needs a demo that is on the website or is put there by the send (linkChoice.ts demoReach);
+ *       * else a WhatsApp first message that says the sample is made, to a clinic, a school or a
+ *         coaching institute, carries its kind's picture page, {previewLink}, once (1 Oct 2026);
+ *       * every other first message carries none: their sample's link goes after a yes.
+ *     Nothing else, and no other message, may carry the picture link (checkSend);
  *   - one message, then wait: ONE WhatsApp follow-up four days later, and up to
  *     three e-mail follow-ups (day 4, 9 and 16), sent as replies in the same thread;
  *   - quiet hours end at 10:00 India time (TRAI's 10:00 to 21:00 window), and a
@@ -31,7 +34,8 @@
  *   - everything a message says about the demo is true of that demo ({offer}
  *     names only what it has; a message that says a sample is made needs one).
  * There is no WhatsApp daily limit unless Mehdi sets one (28 Sep 2026), and
- * e-mail opens in the mail app only (no Gmail compose link).
+ * e-mail opens in Zoho Mail in the browser (mailLinks.ts zohoComposeLink, 2 Oct 2026) or in
+ * the mail app (mailtoUrl), never Gmail compose.
  *
  * MERGE FIELDS render() fills (templates.ts MERGE_FIELDS lists them all):
  *   {greeting}        after "Namaste" / "Good afternoon" / "Dear": the contact's name and
@@ -80,6 +84,7 @@ import {
 } from "./templates";
 import { MAIN_ORIGIN } from "@/lib/host";
 import { dentalTemplateFor } from "@/lib/demo/templates/dentalPick";
+import { safeMailAddress } from "./mailLinks";
 
 /** The picture pages, for callers that read the engine (preview.ts holds them). */
 export { PREVIEW_ORIGIN, PREVIEW_PAGES, previewFor, previewImageUrlFor, previewLinkFor } from "./preview";
@@ -277,6 +282,17 @@ export const OBSERVATIONS: Observation[] = [
       "Maine aapki site phone pe kholi to khulne mein kaafi der lagi.",
     ],
   },
+  /* 3 Oct 2026: a listed website that would not open at all (the Lead Finder's "broken" check: an error
+     page, no answer in time, a domain that does not resolve, a bad certificate). They HAVE a site, so the
+     message is about their site, never "no website of its own" (leads.ts siteDown). */
+  {
+    id: "site_down",
+    label: "Site did not open at all",
+    en: "It would not load at all.",
+    hinglish: "Wo khul nahi rahi.",
+    type: "site",
+    previous: ["Your website did not open when I tried it."],
+  },
   /* Dental clinics only (28 Sep 2026). */
   {
     id: "no_online_booking",
@@ -407,9 +423,18 @@ export function getObservation(id: string | undefined | null): Observation | und
   return id ? OBSERVATIONS.find((o) => o.id === id) : undefined;
 }
 
-/** The observation a saved value means: its id, its sentence, or a sentence it had before 30 Sep 2026. */
+/**
+ * The Lead Finder's own sentence for a site that would not open, as leads.ts saved it before 3 Oct 2026
+ * ("Your website did not open properly when I tried it: the page is missing (404 Not Found)."): site_down
+ * when what the check saw was an error page, no answer, a dead domain, a bad certificate or a redirect that
+ * goes nowhere (api/_lib/siteAudit.js); never a parked, blank or "coming soon" page, which does open.
+ */
+const FINDER_SITE_DOWN = /^Your website did not open (?:properly )?when I tried it: (?:the page is missing|the site shows a server error|the site refuses visitors|the site did not answer|the domain \S+ does not resolve|the site's security certificate is invalid|the site could not be reached|the site redirects (?:in a loop|to an address that is not a public website)|that address is not a public website)\b/;
+
+/** The observation a saved value means: its id, its sentence, a sentence it had before 30 Sep 2026, or the Lead Finder's "did not open". */
 function knownObservation(raw: string): Observation | undefined {
-  return getObservation(raw) ?? OBSERVATIONS.find((o) => o.en === raw || o.hinglish === raw || o.previous?.includes(raw));
+  return getObservation(raw) ?? OBSERVATIONS.find((o) => o.en === raw || o.hinglish === raw || o.previous?.includes(raw))
+    ?? (FINDER_SITE_DOWN.test(raw) ? getObservation("site_down") : undefined);
 }
 
 /**
@@ -441,6 +466,7 @@ export function observationText(observation: string | undefined, language: Templ
  * load (site), else something missing (info). The approved dental example's
  * "Wo theek se khul nahi rahi, aur timings kahin nahi dikhi." reads as site, the
  * approved coaching example's "NEET batch ki timing aur fees kahin nahi mili." as info.
+ * "Wo khuli hi nahi" and "khulti hi nahi" read as site too (3 Oct 2026).
  */
 export function problemType(observation: string | undefined | null): ProblemType {
   const raw = (observation ?? "").trim();
@@ -449,7 +475,7 @@ export function problemType(observation: string | undefined | null): ProblemType
   if (/not secure|\bhttp\b(?!s)/i.test(raw)) return "trust";
   if (/\bform\b/i.test(raw)) return "form";
   if (/\b20\d\d-\d\d\b|\bpuran[aie]\b|\bold\b|outdated/i.test(raw)) return "old";
-  if (/(nahi|na) khul|\bkhul(ti|ta|te|i|a)? nahi|khulne mein|(\bnot|n't) (open|load)|\bload|\bslow|der lag|scroll/i.test(raw)) return "site";
+  if (/(nahi|na) khul|\bkhul(ti|ta|te|i|a)? nahi|\bkhul\w* hi nahi|khulne mein|(\bnot|n't) (open|load)|\bload|\bslow|der lag|scroll/i.test(raw)) return "site";
   return "info";
 }
 
@@ -553,20 +579,35 @@ export interface DemoFacts {
   sessionLabel?: string;
   /** The kind of template the demo was made from (DemoSite.kind): for an "other" business, {offer} names what it has. */
   kind?: "school" | "coaching" | "dental";
+  /**
+   * A course on the demo shows no fee: its fee is empty or not an amount ("On request") and its detail names
+   * none (c1's one-year Class 12 batch: "The fee for this batch is set in March"). {offer} then never says
+   * every course's fees are written (3 Oct 2026). Unset when the record carries no courses.
+   */
+  unpricedCourse?: boolean;
 }
+
+/** A course whose fee a visitor can read: an amount in its fee, or one in its detail ("₹9,500 for all 22 tests"). */
+const coursePriced = (c: { fee?: string; detail?: string }): boolean =>
+  /^\s*\d/.test(c.fee ?? "") || /(?:₹|\bRs\.?|\bINR)\s?\d/i.test(c.detail ?? "");
 
 /** The facts render() needs from a demo record (a DemoSite, or anything shaped like one). */
 export function demoFacts(
-  demo: { templateId?: string; sessionLabel?: string; kind?: string; contact?: { phone?: string; whatsapp?: string } } | null | undefined,
+  demo: {
+    templateId?: string; sessionLabel?: string; kind?: string; contact?: { phone?: string; whatsapp?: string };
+    courses?: { fee?: string; detail?: string }[];
+  } | null | undefined,
 ): DemoFacts | undefined {
   if (!demo) return undefined;
   const kind = demo.kind === "school" || demo.kind === "coaching" || demo.kind === "dental" ? demo.kind : undefined;
+  const courses = Array.isArray(demo.courses) && demo.courses.length ? demo.courses : undefined;
   return {
     templateId: (demo.templateId ?? "").trim() || undefined,
     phone: Boolean((demo.contact?.phone ?? "").trim()),
     whatsapp: Boolean((demo.contact?.whatsapp ?? "").trim()),
     sessionLabel: (demo.sessionLabel ?? "").trim() || undefined,
     ...(kind ? { kind } : {}),
+    ...(courses ? { unpricedCourse: !courses.every(coursePriced) } : {}),
   };
 }
 
@@ -680,7 +721,14 @@ const bullets = (items: string[]): string => items.map((x) => `• ${x}`).join("
  * Without it the bullet is one every demo has: a site that opens fast on a
  * phone, or one-tap appointment booking. An implant centre is never offered a
  * cost range: the implant demo (d4) prices no implant ("Cost after consultation
- * and X-ray"); the braces demo (d5) prices each kind of braces. School, their
+ * and X-ray"). Nor is a braces clinic (3 Oct 2026): the braces demo (d5) gives a
+ * starting price for metal, ceramic and self-ligating braces but none for lingual
+ * braces or aligners ("Cost after consultation and X-ray"), so it is offered cost
+ * information for each kind, never a range for each. Two more checked against
+ * the demos (3 Oct 2026): a coaching demo with a course that shows no fee (c1's
+ * one-year Class 12 batch, "set in March") is offered clear fee details, never
+ * every course's fees written; the smile studio (d3) shows its treatments but
+ * not its timings on the first screen, so it has them in one place. School, their
  * site: the session the demo shows, else the computed one. About their own site,
  * the first bullet answers the problem checked: a site that opens fast on a
  * phone when theirs does not ("site"), a secure site when Chrome calls theirs
@@ -706,8 +754,8 @@ export function offerFor({ kind, language: L, pitch, specialty = "general", demo
     }
     if (specialty === "ortho") {
       return bullets(fix
-        ? [LEAD, say("How braces work, and the cost range for each kind", "Braces ka process aur har tarah ke kharche ki range"), BOOK]
-        : [say("How braces work, step by step", "Braces ka process, step by step"), say("The cost range for each kind of braces", "Har tarah ke braces ke kharche ki range"), BOOK]);
+        ? [LEAD, say("How braces work, and cost information for each kind", "Braces ka process aur har tarah ke kharche ki jaankari"), BOOK]
+        : [say("How braces work, step by step", "Braces ka process, step by step"), say("Cost information for each kind of braces", "Har tarah ke braces ke kharche ki jaankari"), BOOK]);
     }
     if (specialty === "kids") {
       const visit = say("What happens at a child's first visit", "Bachche ki pehli visit mein kya hota hai");
@@ -724,7 +772,11 @@ export function offerFor({ kind, language: L, pitch, specialty = "general", demo
       : phone ? say("One tap to call or book", "Ek tap mein call ya booking")
       : wa ? say("One tap to WhatsApp or book", "Ek tap mein WhatsApp ya booking")
       : say("One tap to book an appointment", "Ek tap mein appointment booking");
-    return bullets([LEAD, say("Timings and treatments on the first screen", "Timings aur treatments pehli screen par"), tap]);
+    // d3's first screen names its treatments, not its timings (they are on its contact page): "in one place".
+    const upFront = /^d3-/i.test((demo?.templateId ?? "").trim())
+      ? say("Timings and treatments in one place", "Timings aur treatments ek jagah")
+      : say("Timings and treatments on the first screen", "Timings aur treatments pehli screen par");
+    return bullets([LEAD, upFront, tap]);
   }
   if (k === "school") {
     // The demo's enquiry form opens WhatsApp to the school's number; with no number there is no form.
@@ -756,7 +808,9 @@ export function offerFor({ kind, language: L, pitch, specialty = "general", demo
       : phone ? say("A site that opens fast on a phone, with one-tap calling", "Phone par jaldi khulne wali site, ek tap mein call")
       : FAST;
     const batches = say("All batches and timings in one place", "Saare batches aur timings ek jagah");
-    const fees = say("Every course's fees, clearly written", "Har course ki fees saaf likhi");
+    // A course with no fee on the demo (its record's courses; without them, c1's template has one): clear fee details.
+    const unpriced = demo?.unpricedCourse ?? /^c1-/i.test((demo?.templateId ?? "").trim());
+    const fees = unpriced ? say("Clear fee details", "Fees ki saaf jaankari") : say("Every course's fees, clearly written", "Har course ki fees saaf likhi");
     if (problem === "trust") return bullets([SECURE, batches, fees]);
     return bullets(problem === "site" ? [last, batches, fees] : [batches, fees, last]);
   }
@@ -1014,7 +1068,9 @@ export interface RenderResult {
 }
 
 const LINK_FIELDS = ["demoLink", "pitchLink"];
-const URL_RE = /\bhttps?:\/\/\S+|\bwww\.\S+|\b[a-z0-9-]+\.(?:vercel\.app|com|in|org|net)\/\S*/i;
+// A link typed without https or www counts too: an address on the usual domains, or a short link ("bit.ly/abc",
+// "wa.me/91...", 3 Oct 2026), so a hand-typed short link cannot slip past the one-link rule of a first message.
+const URL_RE = /\bhttps?:\/\/\S+|\bwww\.\S+|\b[a-z0-9-]+\.(?:vercel\.app|com|in|org|net)\/\S*|\b(?:bit\.ly|goo\.gl|t\.co|t\.ly|wa\.me|cutt\.ly|rb\.gy|is\.gd|ow\.ly|s\.id|tiny\.cc|shorturl\.at|rebrand\.ly|bl\.ink|youtu\.be|forms\.gle)\/\S*/i;
 
 /** True when a text carries a link or a link merge field ({demoLink}, {pitchLink}, {previewLink}). */
 export function containsLink(text: string): boolean {
@@ -1022,30 +1078,40 @@ export function containsLink(text: string): boolean {
 }
 
 /**
- * A text less one copy of its picture link, the address exactly as previewLinkFor
- * writes it: followed by a space, a line end, the end of the text or a stop, never
- * by more address ("/w/dentalx" or "/w/dental/x" is another link and stays).
+ * A text less one copy of the one address a first message may carry (the picture
+ * page, or in a twin their sample's own link), exactly as previewLinkFor or
+ * demoLinkFor writes it, as a whole address: followed by a space, a line end, the
+ * end of the text or a stop, never by more address ("/w/dentalx", "/w/dental/x"
+ * or "/site/abc-2" is another link and stays).
  */
-function lessPreviewLink(text: string, preview: string): string {
-  if (!preview) return text;
-  const at = new RegExp(`${preview.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}(?=$|[\\s.,;:!?)\\]])`);
+function lessAllowedLink(text: string, allowed: string): string {
+  if (!allowed) return text;
+  const at = new RegExp(`${allowed.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}(?=$|[\\s.,;:!?)\\]])`);
   return text.replace(at, "");
 }
 
 /**
- * The links in a first message's text other than its one picture link: [] is
- * what may go. `preview` is previewLinkFor(the kind), "" when the message
- * carries none (an e-mail, the "offer" twin, the pitch-page message, any other
- * business): then every link in it is listed.
+ * The links in a first message's text other than its one allowed address: []
+ * is what may go. `allowed` is previewLinkFor(the kind) for a message with the
+ * picture link, demoLinkFor(the lead's slug) for a twin with their sample's link,
+ * "" when the message carries none (the "offer" twin, the pitch-page message, a
+ * first e-mail without the link, any other business): then every link in it is listed.
  */
-export function extraLinks(text: string, preview: string): string[] {
-  const rest = lessPreviewLink(text, preview);
+export function extraLinks(text: string, allowed: string): string[] {
+  const rest = lessAllowedLink(text, allowed);
   return rest.match(new RegExp(URL_RE.source, "gi")) ?? [];
 }
 
-/** The lead's pitch: its own (the sheet, the Lead Finder), else "their site" when it has one, else "no website". */
-export function effectivePitch(lead: Partial<Pick<OutreachLead, "pitch" | "website">>): "new_website" | "fix_website" {
-  return lead.pitch ?? ((lead.website ?? "").trim() ? "fix_website" : "new_website");
+/**
+ * The lead's pitch: its own (the sheet, the Lead Finder), else "their site" when it has one, else "no website".
+ * One exception (3 Oct 2026): a lead with a website whose observation is that it would not open (site_down,
+ * which is how the Lead Finder filed a dead site as "no website" before that day) is about their site, so the
+ * message that says they have no website of their own is blocked for it.
+ */
+export function effectivePitch(lead: Partial<Pick<OutreachLead, "pitch" | "website" | "observation">>): "new_website" | "fix_website" {
+  const site = Boolean((lead.website ?? "").trim());
+  if (site && knownObservation((lead.observation ?? "").trim())?.id === "site_down") return "fix_website";
+  return lead.pitch ?? (site ? "fix_website" : "new_website");
 }
 
 /** {contactName} with no name, as the templates before 30 Sep 2026 had it (the retired ones still use it). */
@@ -1141,7 +1207,7 @@ export function render(
   if (used.has("observation") && obsKnown?.id === "no_website" && template.pitch === "fix_website") {
     warnings.push("The observation says they have no website, but this message is about fixing their website: pick a 'new website' message.");
   }
-  if (!template.allowsLink && [...used].some((f) => LINK_FIELDS.includes(f))) {
+  if (!template.allowsLink && template.link !== "demo" && [...used].some((f) => LINK_FIELDS.includes(f))) {
     warnings.push("This template must not carry a link, but it uses a link field.");
   }
   if (used.has("previewLink") && template.stage !== "first") warnings.push("Only a first message may carry the picture link.");
@@ -1224,23 +1290,35 @@ export interface MailtoInput {
   body?: string;
 }
 
+/** The longest e-mail subject a send may carry (checkSend blocks a longer one; 3 Oct 2026). */
+export const MAX_SUBJECT = 200;
+
 /**
- * The e-mail, typed and ready, in this computer's default mail app. The only
- * way an e-mail opens: the Gmail compose link was removed on 30 Sep 2026
- * (Mehdi, 28 Sep: "open in Gmail wala option hata do, sirf open with mail app").
+ * encodeURIComponent that cannot throw (3 Oct 2026): a lone surrogate (half an emoji, as a text cut in the
+ * middle of one) becomes U+FFFD instead of a URIError that would take the compose screen down with it.
+ */
+const encodeText = (s: string): string =>
+  encodeURIComponent(s.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "\uFFFD"));
+
+/**
+ * The e-mail, typed and ready, in this computer's default mail app. One of the
+ * two ways an e-mail opens; the other is Zoho Mail's compose page (mailLinks.ts),
+ * Mehdi's mailbox being web-only on Zoho's free plan (2 Oct 2026). The Gmail
+ * compose link was removed on 30 Sep 2026 (Mehdi, 28 Sep: "open in Gmail wala
+ * option hata do, sirf open with mail app").
  */
 export function mailtoUrl({ to, subject = "", body = "" }: MailtoInput): string {
-  return `mailto:${encodeURIComponent(to.trim()).replace(/%40/g, "@")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `mailto:${encodeText(to.trim()).replace(/%40/g, "@")}?subject=${encodeText(subject)}&body=${encodeText(body)}`;
 }
 
 /** WhatsApp (app on a phone, or the web chooser): https://wa.me/<digits>?text=... */
 export function whatsappUrl(phone: string, text: string): string {
-  return `https://wa.me/${whatsappDigits(phone)}?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/${whatsappDigits(phone)}?text=${encodeText(text)}`;
 }
 
 /** WhatsApp Web directly: https://web.whatsapp.com/send?phone=<digits>&text=... */
 export function whatsappWebUrl(phone: string, text: string): string {
-  return `https://web.whatsapp.com/send?phone=${whatsappDigits(phone)}&text=${encodeURIComponent(text)}`;
+  return `https://web.whatsapp.com/send?phone=${whatsappDigits(phone)}&text=${encodeText(text)}`;
 }
 
 /** The number a WhatsApp message goes to: the lead's WhatsApp, else its phone. */
@@ -1255,8 +1333,9 @@ export interface SendLinks {
 }
 
 /**
- * Every link that can open this rendered message for this lead. E-mail opens
- * in the mail app only (mailto:), never Gmail compose (Mehdi, 28 Sep 2026:
+ * Every link that can open this rendered message for this lead. For an e-mail,
+ * the mailto: link; Open in Zoho Mail is built in the compose screen from the
+ * same text (mailLinks.ts, 2 Oct 2026). Never Gmail compose (Mehdi, 28 Sep 2026:
  * "open in Gmail wala option hata do, sirf open with mail app").
  */
 export function sendLinks(
@@ -1414,24 +1493,41 @@ export function checkSend(
 
   // Right channel, reachable
   if (template.channel !== channel) blockers.push(`This is a ${template.channel} template, not ${channel}.`);
-  if (channel === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((lead.email ?? "").trim())) {
-    blockers.push("No valid e-mail address for this lead.");
+  if (channel === "email") {
+    const address = (lead.email ?? "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) blockers.push("No valid e-mail address for this lead.");
+    else if (!safeMailAddress(address)) blockers.push("This e-mail address cannot go into a mail link as it is: before the @ only letters, digits and . _ + ' -, after it a plain domain. Fix it under Edit.");
+    // A subject is one short line; past this, the mail links (mailLinks.ts drops the body first, never the subject) grow too long.
+    const subjectLength = (extra.text?.subject ?? "").length;
+    if (subjectLength > MAX_SUBJECT) blockers.push(`The subject is ${subjectLength} characters long. Keep it to one short line, at most ${MAX_SUBJECT} characters.`);
   }
   if (channel === "whatsapp" && !leadWhatsappNumber(lead)) blockers.push("No valid phone or WhatsApp number for this lead.");
 
-  // Links: none in a first message on either channel; their sample's link goes after they say yes.
-  // The one exception (1 Oct 2026): a first message whose template has the picture link may carry
-  // that link, its kind's picture page, once. Nothing else: not a second copy, not another kind's
-  // page, not the address typed into an e-mail or into the twin that offers to make a sample.
+  // Links (2 Oct 2026): a first message carries at most one link. A twin with their sample's link
+  // (template.link "demo") carries that address once; a WhatsApp "sample made" message to a clinic,
+  // school or coaching institute its kind's picture page once; every other first message none.
+  // Nothing else: not a second copy, not another kind's page, not another demo's address.
   const withPreview = template.stage === "first" && carriesPreview(template);
-  const preview = withPreview ? previewLinkFor(kindKey(template.kind !== "any" ? template.kind : lead.kind)) : "";
-  const ownText = withPreview ? text.replace("{previewLink}", "") : text;
-  if (template.stage === "first" && (template.allowsLink || containsLink(ownText) || (typed !== undefined && extraLinks(typed, preview).length > 0))) {
-    blockers.push(withPreview
-      ? "A first message must not carry a link, except its one picture link. Send their sample's link after they say yes."
-      : "A first message must not carry a link. Send the link after they say yes.");
+  const withDemo = template.stage === "first" && template.link === "demo";
+  const allowed = withPreview
+    ? previewLinkFor(kindKey(template.kind !== "any" ? template.kind : lead.kind))
+    : withDemo ? demoLinkFor(lead.demoSlug) : "";
+  const ownText = withPreview ? text.replace("{previewLink}", "") : withDemo ? text.replace("{demoLink}", "") : text;
+  if (template.stage === "first" && (template.allowsLink || containsLink(ownText) || (withDemo && !/\{demoLink\}/.test(text)) ||
+      (typed !== undefined && extraLinks(typed, allowed).length > 0))) {
+    blockers.push(withDemo
+      ? "A first message may carry only their sample's own link, once."
+      : withPreview
+        ? "A first message must not carry a link, except its one picture link. Send their sample's link after they say yes."
+        : "A first message must not carry a link. Send the link after they say yes.");
+  } else if (withDemo && typed !== undefined && allowed && lessAllowedLink(typed, allowed) === typed) {
+    blockers.push("This message has lost their sample's link: put it back, or pick Without link.");
   } else if (template.stage !== "first" && !template.allowsLink && (containsLink(text) || typedLink)) {
     blockers.push("This template is marked no-link but contains a link.");
+  }
+  // One link means one: a web address in the e-mail signature would be a second (the signature is left out above).
+  if (withDemo && channel === "email" && signature && URL_RE.test(signature)) {
+    warnings.push("Your signature carries a web address, so this e-mail would carry two links. Take it out of the signature in Settings: a cold e-mail carries one.");
   }
   if (/\{demoLink\}/.test(text) && !hasDemo) blockers.push("Pick or create a demo first: this message carries the demo link.");
   if (/\{pitchLink\}/.test(text) && !pitchLinkFor(lead.pitchSlug)) blockers.push("Set the pitch page first: this message carries its link.");
@@ -1453,7 +1549,7 @@ export function checkSend(
   if (template.stage === "first" && template.pitch === "new_website" && effectivePitch(lead) === "fix_website") {
     blockers.push("This message says they have no website of their own, and this lead has one. Send the message about their site, with what you saw on it.");
   }
-  if (template.stage === "first" && template.pitch === "fix_website" && lead.pitch === "new_website") {
+  if (template.stage === "first" && template.pitch === "fix_website" && lead.pitch === "new_website" && effectivePitch(lead) === "new_website") {
     warnings.push("This message is about their website, and this lead is marked as having none of its own. Check before sending.");
   }
 

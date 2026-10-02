@@ -372,7 +372,9 @@ await page.getByText("2 leads added.").waitFor({ timeout: 5000 });
 leads = await leadsNow();
 const broken = leads.find((l) => l.placeId === "P_BROKEN");
 check(!!broken && !!leads.find((l) => l.placeId === "P_OK"), "bulk add saves both selected");
-check(broken?.pitch === "new_website" && /did not open/.test(broken?.observation || ""), "a broken site pitches new_website with a plain observation", "obs: " + broken?.observation);
+// 3 Oct 2026: a listed site that would not open (here a 404) is still their site, so the lead is about their
+// site with the site_down observation, never "no website of its own" (leads.ts siteDown).
+check(broken?.pitch === "fix_website" && broken?.observation === "site_down", "a site that would not open pitches their site, with the site_down observation", `pitch: ${broken?.pitch}, obs: ${broken?.observation}`);
 check(leads.length === 5, `no duplicate leads were made (${leads.length} in the store)`);
 
 /* ── 10. Phone width: cards, no sideways scroll ───────────────────────── */

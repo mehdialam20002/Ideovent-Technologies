@@ -4,8 +4,9 @@
  *
  *   node scripts/e2e-outreach.mjs [baseUrl]      default http://localhost:5199
  *   SHOT_DIR=<folder> node scripts/e2e-outreach.mjs   also saves 390 and 1440 px screenshots
- *   E2E_NEGATIVE=1 node scripts/e2e-outreach.mjs ...   breaks three modules in flight; the stage,
- *                                                      blank and call-script checks must fail (exit 1)
+ *   E2E_NEGATIVE=1 node scripts/e2e-outreach.mjs ...   breaks five modules in flight; the stage, blank,
+ *                                                      call-script, public-before-Zoho and With link
+ *                                                      checks must fail (exit 1)
  *
  * The flow Mehdi actually does, in a real browser against the dev server:
  *   add a lead (and see the duplicate warning on a second one), create a demo
@@ -22,19 +23,30 @@
  *   stops after its one follow-up; a message with a [blank] is highlighted and
  *   cannot be sent until the blank is filled; the Call script card walks the
  *   approved seven steps in the words of the lead's kind, and its Call done
- *   moves the message to After the call. The first e-mail carries no link.
+ *   moves the message to After the call.
  *   Then (1 Oct 2026) the picture: a first WhatsApp that says the sample is
  *   made carries one link, its kind's picture page (/w/school, /w/dental), and
  *   the compose shows the picture under it with Copy image (a PNG on the
  *   clipboard), Share (the picture and the text) and Download, each with a
  *   one-line hint; a clinic with no demo yet and any other business get no
  *   picture and no link.
+ *   Then (2 Oct 2026) the link in the first message: the first e-mail of a lead
+ *   whose demo is made starts With link and carries exactly one link, its own
+ *   sample's, and goes through Open in Zoho Mail; a lead whose demo record is
+ *   missing has With link off with the reason; a draft demo is put on the
+ *   website BEFORE Zoho's compose page loads ("public on send"), and the
+ *   follow-up after it points back to the link; on WhatsApp the switch starts
+ *   Without link, With link swaps the picture for their sample's link, and the
+ *   next lead starts on the version sent last; an open after a cold link leaves
+ *   the lead Contacted; Settings takes only a Zoho Mail address.
  *
- * E-mail opens in the mail app only (Open in Gmail was removed 28 Sep 2026):
- * no Gmail link or Gmail wording may appear anywhere on the lead page or in
- * Settings, and the one e-mail button is a mailto: link.
+ * E-mail opens in Zoho Mail in the browser or in the mail app (2 Oct 2026;
+ * Open in Gmail was removed 28 Sep 2026): no Gmail link or Gmail wording may
+ * appear anywhere on the lead page or in Settings; the e-mail buttons are Open
+ * in Zoho Mail (Zoho's compose page, mail.zoho.in/zm/comp.do), Open in mail
+ * app (a mailto: link) and Copy e-mail text.
  *
- * Nothing leaves the machine: requests to mail.google.com, wa.me and
+ * Nothing leaves the machine: requests to mail.google.com, Zoho Mail, wa.me and
  * web.whatsapp.com are answered locally by the test, a mailto: click is
  * recorded and never handed to a mail app, the clipboard is recorded in the
  * page, and the URL the button would have opened is what gets checked. The run uses a fresh browser
@@ -102,19 +114,55 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 1000
 
 /* Never reach a real mail service or WhatsApp. Record what would have opened. */
 const opened = [];
-for (const pattern of ["https://mail.google.com/**", "https://wa.me/**", "https://web.whatsapp.com/**", "https://api.whatsapp.com/**"]) {
+for (const pattern of ["https://mail.google.com/**", "https://wa.me/**", "https://web.whatsapp.com/**", "https://api.whatsapp.com/**", "https://accounts.zoho.in/**", "https://accounts.zoho.com/**"]) {
   await context.route(pattern, (route) => {
     opened.push(route.request().url());
     return route.fulfill({ status: 200, contentType: "text/html", body: "<p>intercepted by e2e-outreach</p>" });
   });
 }
+/* Zoho Mail's compose page (2 Oct 2026): recorded with the CMS status, AT THE MOMENT OF THE REQUEST, of the
+   demo under test (zohoSlug), so "public before Zoho opens" is read from what the page had written by then. */
+const zohoSeen = [];
+let zohoSlug = "";
+for (const pattern of ["https://mail.zoho.in/**", "https://mail.zoho.com/**"]) {
+  await context.route(pattern, async (route) => {
+    const url = route.request().url();
+    opened.push(url);
+    const status = zohoSlug
+      ? await page.evaluate(([ck, slug]) => (JSON.parse(localStorage.getItem(ck) || "{}").demoSites || []).find((d) => d.slug === slug)?.status || "", [CMS_KEY, zohoSlug]).catch(() => "?")
+      : "";
+    zohoSeen.push({ url, status });
+    return route.fulfill({ status: 200, contentType: "text/html", body: "<p>intercepted by e2e-outreach (Zoho Mail)</p>" });
+  });
+}
+/* The Zoho link's ct parameter, decoded: the mailto: it carries. */
+const zohoCt = (href) => {
+  try {
+    return new URL(href).searchParams.get("ct") || "";
+  } catch {
+    return "";
+  }
+};
+/* That mailto: read the way Zoho's own parser reads it: the address before "?" as it is, each value decoded once. */
+const zohoParts = (mailto) => {
+  const rest = mailto.replace(/^mailto:/i, "");
+  const q = rest.indexOf("?");
+  const got = { to: q < 0 ? rest : rest.slice(0, q), subject: "", body: "" };
+  for (const pair of (q < 0 ? "" : rest.slice(q + 1)).split("&").filter(Boolean)) {
+    const i = pair.indexOf("=");
+    got[(i < 0 ? pair : pair.slice(0, i)).toLowerCase()] = decodeURIComponent(i < 0 ? "" : pair.slice(i + 1));
+  }
+  return got;
+};
 /* Local mode only: nothing may reach Supabase or EmailJS. */
 await context.route(/\.supabase\.co|api\.emailjs\.com/, (route) => route.abort());
-/* PROVING THE STAGE, BLANK AND CALL SCRIPT CHECKS CAN FAIL (30 Sep 2026):
+/* PROVING THE STAGE, BLANK, CALL SCRIPT AND LINK CHECKS CAN FAIL (30 Sep and 2 Oct 2026):
      E2E_NEGATIVE=1 node scripts/e2e-outreach.mjs http://localhost:5451
-   serves three modules broken in flight (no file is touched): a lead that said yes is no longer put
-   on After they say yes, no [blank] is ever found in a message, and the dental call script speaks
-   to a customer instead of a patient. Section 14's checks on each must then fail, and the run exits 1. */
+   serves five modules broken in flight (no file is touched): a lead that said yes is no longer put
+   on After they say yes, no [blank] is ever found in a message, the dental call script speaks to a
+   customer instead of a patient, a send never writes the draft demo as sent (the write call becomes a
+   comma expression, so the demo stays a draft), and With link never swaps the twin in. The checks on
+   each must then fail, and the run exits 1. */
 const NEGATIVE = Boolean(process.env.E2E_NEGATIVE);
 const broken = new Set();
 if (NEGATIVE) {
@@ -122,6 +170,8 @@ if (NEGATIVE) {
     ["stage", /\/src\/admin\/outreach\/stages\.ts/, /if \(lead\.status === "replied" \|\| lead\.status === "demo_opened"\) return \{\s*stage: stageFor\("after_yes"\)\s*\};/, ""],
     ["blanks", /\/src\/admin\/outreach\/placeholders\.ts/, /new RegExp\(PLACEHOLDER_RE\.source, "g"\)/, "/(?!)/g"],
     ["script", /\/src\/admin\/outreach\/callScript\.ts/, /viewer: "patient"/, 'viewer: "customer"'],
+    ["publish", /\/src\/admin\/outreach\/useDemoLink\.ts/, /await markDemoSent\(/, "void ("],
+    ["variant", /\/src\/lib\/outreach\/linkChoice\.ts/, /o\.withLink \? linkTwinOf\(picked\) : undefined/, "undefined"],
   ];
   for (const [tag, url, from, to] of SABOTAGE) {
     await context.route(url, async (route) => {
@@ -172,7 +222,10 @@ await context.addInitScript(() => {
 const page = await context.newPage();
 context.on("page", async (p) => {
   if (p === page) return;
-  // New tabs opened by the send links: note the URL, then close.
+  // New tabs opened by the send links: note the URL, then close. A send that puts a draft demo on the
+  // website first opens its tab blank and navigates it after the write (2 Oct 2026): wait for that, since
+  // closing the tab while it is blank would cancel the send under test.
+  await p.waitForURL((u) => u.href !== "about:blank", { timeout: 5000 }).catch(() => {});
   try {
     await p.waitForLoadState("domcontentloaded", { timeout: 5000 });
   } catch {
@@ -267,34 +320,59 @@ const mailParts = (href) => {
   return { to: decodeURIComponent(u.pathname), subject: u.searchParams.get("subject") || "", body: u.searchParams.get("body") || "" };
 };
 await noGmail("the lead page");
+/* 2 Oct 2026 ("mail pe to first msz pe hi link send krwa do"): the first e-mail of a lead whose demo is made
+   starts With link and carries exactly one link, the one step 1 shows. Its first button is Open in Zoho Mail
+   ("ek option dedo open in zoho mail"); Open in mail app and Copy e-mail text stay beside it. */
+const linkedUrl = ((await page.getByTestId("linked-demo").innerText()).match(/https?:\/\/\S+\/site\/[a-z0-9-]+/i) || [""])[0];
+check((await compose.getByTestId("link-choice").count()) === 1 && (await compose.getByTestId("link-choice-with").getAttribute("aria-checked")) === "true",
+  "the first e-mail shows the sample link switch, on With link", `${await compose.getByTestId("link-choice").count()} switch(es)`);
+check(/E-mail always starts With link/.test(await compose.getByTestId("link-choice-hint").innerText().catch(() => "")), "and its hint says the e-mail always starts With link");
+const mailOrder = await compose.locator('[data-testid="open-zoho"], [data-testid="open-mailto"], [data-testid="copy-email"]').evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+check(JSON.stringify(mailOrder) === JSON.stringify(["open-zoho", "open-mailto", "copy-email"]), "the e-mail buttons are Open in Zoho Mail, Open in mail app and Copy e-mail text, in that order", JSON.stringify(mailOrder));
+const zohoBtn = compose.getByTestId("open-zoho");
 const mailBtn = compose.getByTestId("open-mailto");
-const mailTag = await mailBtn.evaluate((el) => el.tagName);
+const zohoHref = (await zohoBtn.getAttribute("href")) || "";
 const mailHref = (await mailBtn.getAttribute("href")) || "";
-if (mailTag !== "A") {
+if ((await zohoBtn.evaluate((el) => el.tagName)) !== "A" || (await mailBtn.evaluate((el) => el.tagName)) !== "A") {
   const blockers = await compose.locator('[aria-label="Blocked"]').innerText().catch(() => "");
-  fail("Open in mail app is disabled for a fresh lead with an email: " + blockers);
+  fail("the e-mail buttons are disabled for a fresh lead with an email: " + blockers);
 } else {
-  check((await mailBtn.innerText()).trim() === "Open in mail app", "the one e-mail button reads Open in mail app", "button text: " + (await mailBtn.innerText()));
+  const subjectOnScreen = await compose.locator("#msg-subject").inputValue();
+  const bodyOnScreen = await compose.getByLabel("Message text").inputValue();
+  check((await zohoBtn.innerText()).trim() === "Open in Zoho Mail", "the first e-mail button reads Open in Zoho Mail", "button text: " + (await zohoBtn.innerText()));
+  check(zohoHref.startsWith("https://mail.zoho.in/zm/comp.do?ct="), "Open in Zoho Mail opens Zoho India's compose page", zohoHref.slice(0, 80));
+  const zp = zohoParts(zohoCt(zohoHref));
+  check(zohoCt(zohoHref).startsWith(`mailto:${LEAD.email}?`) && zp.to === LEAD.email && zp.subject === subjectOnScreen && zp.body === bodyOnScreen,
+    "its ct is the mailto: of the lead's address, with the subject and the body on screen", zohoCt(zohoHref).slice(0, 120));
+  check((await mailBtn.innerText()).trim() === "Open in mail app", "the mail app button still reads Open in mail app", "button text: " + (await mailBtn.innerText()));
   check(mailHref.startsWith("mailto:" + LEAD.email + "?"), "Open in mail app is a mailto: link to the lead", "bad mailto href: " + mailHref.slice(0, 80));
   const m = mailParts(mailHref);
   check(m.to === LEAD.email, "the mailto: link is addressed to the lead");
-  check(m.subject.length > 3 && m.subject === (await compose.locator("#msg-subject").inputValue()), "the mailto: link carries the subject on screen", "subject: " + m.subject);
-  check(m.body === (await compose.getByLabel("Message text").inputValue()), "the mailto: link carries the body on screen");
+  check(m.subject.length > 3 && m.subject === subjectOnScreen, "the mailto: link carries the subject on screen", "subject: " + m.subject);
+  check(m.body === bodyOnScreen, "the mailto: link carries the body on screen");
   check(/REMOVE/.test(m.body), "the email body carries the REMOVE opt-out line");
   check(/Mehdi Alam/.test(m.body), "the email body carries the signature");
   check(!/[–—]/.test(m.body + m.subject), "the email has no en or em dash");
-  check(!/https?:\/\/|\/site\//.test(m.body + m.subject), "the first e-mail carries no link (the link goes after they say yes)", m.body.slice(0, 160));
+  const mailUrls = `${m.subject}\n${m.body}`.match(/https?:\/\/\S+|www\.\S+/g) || [];
+  check(Boolean(linkedUrl) && JSON.stringify(mailUrls) === JSON.stringify([linkedUrl]) && m.body.includes(`\n${linkedUrl}\n`),
+    "With link carries the demo link: the first e-mail carries exactly one link, the sample's shown in step 1, on its own line", `${mailUrls.join(", ") || "no link"} | step 1: ${linkedUrl}`);
   const copyBtn = compose.getByTestId("copy-email");
-  check((await copyBtn.count()) === 1 && /copy e-mail text/i.test(await copyBtn.innerText()), "a Copy e-mail text button sits beside it");
+  check((await copyBtn.count()) === 1 && /copy e-mail text/i.test(await copyBtn.innerText()), "a Copy e-mail text button sits beside them");
   await copyBtn.click();
   await page.waitForTimeout(200);
   const copied = await page.evaluate(() => window.__copied.at(-1) || "");
   check(copied === `Subject: ${m.subject}\n\n${m.body}`, "Copy e-mail text copies the subject and the body", "copied: " + copied.slice(0, 80));
   check((await page.getByTestId("long-mail-note").count()) === 0, "a short e-mail shows no long-link note");
-  await mailBtn.click();
-  await page.waitForTimeout(800);
-  const clicked = await page.evaluate(() => window.__mailto.at(-1) || "");
-  check(clicked === mailHref, "clicking Open in mail app follows that mailto: link (recorded, not handed to a mail app)", "clicked: " + clicked.slice(0, 80));
+  check(/also copies the text/.test(await compose.getByTestId("zoho-note").innerText().catch(() => "")), "a one-line note says Open in Zoho Mail also copies the text");
+  /* The send goes through Zoho Mail. Open in mail app is checked as a link but not clicked: a second e-mail
+     send would count twice on Today and move the lead's e-mail stage on. */
+  const before = opened.length;
+  await zohoBtn.click();
+  await page.waitForTimeout(1500);
+  const zohoOpened = opened.slice(before).find((x) => x.startsWith("https://mail.zoho.in/zm/comp.do"));
+  check(Boolean(zohoOpened) && zohoCt(zohoOpened) === zohoCt(zohoHref), "clicking Open in Zoho Mail opens that compose page (intercepted), with the same e-mail", (zohoOpened || "nothing opened").slice(0, 80));
+  check((await page.evaluate(() => window.__copied.at(-1) || "")) === bodyOnScreen, "and copies the body too, in case Zoho joins the lines");
+  check(/text was copied too/i.test(await compose.getByTestId("zoho-note").innerText().catch(() => "")), "the note then says the text was copied too");
   check(!opened.some((x) => x.includes("mail.google.com")), "nothing opened Gmail");
 }
 await page.waitForTimeout(500);
@@ -303,8 +381,9 @@ await unfold(page, "history-details");
 const pipeText = await page.getByRole("radiogroup", { name: "Lead status" }).locator('[aria-checked="true"]').innerText();
 check(/contacted/i.test(pipeText), "after the send the status is Contacted", "status after email send: " + pipeText);
 const hist1 = await page.getByTestId("history").innerText();
-check(/Email opened in email app/i.test(hist1), "the history records the email send as opened in the email app", "history: " + hist1);
-check(/Email opened in email app \(First message\)/.test(hist1), "and names the stage it was sent at (First message)", "history: " + hist1);
+check(/Email opened in Zoho Mail/i.test(hist1), "the history records the email send as opened in Zoho Mail", "history: " + hist1);
+check(/Email opened in Zoho Mail \(First message\)/.test(hist1), "and names the stage it was sent at (First message)", "history: " + hist1);
+check(/with their sample's link/.test(hist1), "and the version that went: the one with their sample's link", "history: " + hist1);
 check((await page.locator("#lead-next").inputValue()) !== "", "a next follow-up date is set from the ladder");
 
 /* ── 4. Compose a WhatsApp ─────────────────────────────────────────────── */
@@ -378,6 +457,17 @@ if (!demoId) {
   await page.waitForTimeout(800);
   const hot = await page.locator('section[aria-labelledby="hot-h"]').innerText();
   check(hot.includes(LEAD.name), "a demo open after the last contact puts the lead under Hot", "hot section: " + hot);
+  /* 2 Oct 2026: the last link this lead got went in its first e-mail, so the open is not a yes. The lead stays
+     Contacted; the history still says the demo was opened. */
+  await page.goto(BASE + "/crm/leads/" + (await leadIdByName(LEAD.name)), { waitUntil: "domcontentloaded" });
+  await page.getByTestId("lead-name").waitFor({ timeout: 10000 });
+  await page.waitForTimeout(600);
+  await unfold(page, "status-details");
+  await unfold(page, "history-details");
+  const statusAfterOpen = await page.getByRole("radiogroup", { name: "Lead status" }).locator('[aria-checked="true"]').innerText().catch(() => "");
+  const histAfterOpen = await page.getByTestId("history").innerText().catch(() => "");
+  check(/contacted/i.test(statusAfterOpen) && /Demo opened/.test(histAfterOpen),
+    "an open after a cold link leaves the lead Contacted (not Demo opened), and the history still has the Demo opened line", `status ${statusAfterOpen} | history ${histAfterOpen.slice(0, 200)}`);
 }
 
 /* ── 7. Duplicate warning on a second lead with the same number ───────── */
@@ -464,7 +554,20 @@ await noGmail("Settings");
 const helpLine = (await page.getByTestId("mail-app-help").innerText().catch(() => "")).replace(/\s+/g, " ");
 check(/default e-mail app/i.test(helpLine) && /Gmail or Zoho Mail/.test(helpLine) && /Chrome's default for e-mail links/.test(helpLine),
   "Settings says the mail app is the computer's default, and how to use Gmail or Zoho Mail in Chrome", helpLine || "no help line");
+check(/Open in Zoho Mail/.test(helpLine) && /in this browser/.test(helpLine), "and that Open in Zoho Mail opens a new e-mail in Zoho Mail in this browser", helpLine || "no help line");
 check(!/[–—]/.test(helpLine), "the help line has no en or em dash");
+/* The Zoho Mail address (2 Oct 2026): Zoho India by default; only a Zoho Mail address is taken. */
+const zohoField = page.getByTestId("set-zoho");
+const saveBtn = page.getByRole("button", { name: /save settings/i });
+check((await zohoField.inputValue().catch(() => "")) === "https://mail.zoho.in", "Settings shows the Zoho Mail address, https://mail.zoho.in by default", await zohoField.inputValue().catch(() => "no field"));
+await zohoField.fill("https://evil.example");
+await page.waitForTimeout(150);
+check((await page.getByTestId("set-zoho-error").count()) === 1 && (await saveBtn.isDisabled()), "an address that is not Zoho Mail is refused, and Save stays off",
+  `error shown ${await page.getByTestId("set-zoho-error").count()}, save disabled ${await saveBtn.isDisabled()}`);
+check(!/[–—]/.test(await page.getByTestId("set-zoho-error").innerText().catch(() => "")), "that line has no en or em dash");
+await zohoField.fill("mail.zoho.com");
+await page.waitForTimeout(150);
+check((await page.getByTestId("set-zoho-error").count()) === 0 && !(await saveBtn.isDisabled()), "another Zoho data centre, typed without https, is taken");
 const alertControls = (await page.getByLabel(/alert me when a lead opens/i).count()) + (await page.getByText(/demo-open alerts/i).count());
 check(alertControls === 0, "Settings has no demo-open alert switch or alert section any more", alertControls + " alert control(s) found");
 const openNote = (await page.getByTestId("demo-open-note").innerText().catch(() => "")).replace(/\s+/g, " ");
@@ -477,6 +580,7 @@ check(await page.getByRole("status").filter({ hasText: /saved/i }).isVisible().c
 const keptSettings = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}").settings || {}, OUTREACH_KEY);
 check(keptSettings.alertOnDemoOpen === false && keptSettings.alertEmail === OLD_ALERT_EMAIL, "a save carries the old alert fields through untouched",
   JSON.stringify({ alertOnDemoOpen: keptSettings.alertOnDemoOpen, alertEmail: keptSettings.alertEmail }));
+check(keptSettings.zohoMailUrl === "https://mail.zoho.com", "the Zoho address is saved as https://mail.zoho.com", JSON.stringify(keptSettings.zohoMailUrl));
 const cmsAlertsAfter = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}").settings?.demoOpenAlerts, CMS_KEY);
 check(cmsAlertsAfter === cmsAlertsBefore, "saving Settings no longer writes the public settings.demoOpenAlerts flag", `before ${cmsAlertsBefore}, after ${cmsAlertsAfter}`);
 await page.goto(BASE + "/crm/leads/" + (await leadIdByName(LEAD.name)), { waitUntil: "domcontentloaded" });
@@ -490,10 +594,20 @@ check((await page.getByTestId("compose").locator('[data-stage="follow_up"]').get
 check(/reply in the same thread/i.test(await page.getByTestId("thread-hint").innerText().catch(() => "")), "an e-mail follow-up says to send it as a reply in the same thread");
 const fuHref = (await page.getByTestId("open-mailto").getAttribute("href").catch(() => "")) || "";
 check(fuHref.startsWith("mailto:" + LEAD.email + "?") && !/authuser|mail\.google/.test(fuHref), "with an old Gmail account saved, the follow-up still opens as a plain mailto: to the lead", "href: " + fuHref.slice(0, 120) + " blockers: " + (await page.getByTestId("compose").locator('[aria-label="Blocked"]').innerText().catch(() => "none")));
+const fuZoho = (await page.getByTestId("open-zoho").getAttribute("href").catch(() => "")) || "";
+check(fuZoho.startsWith("https://mail.zoho.com/zm/comp.do?ct=") && zohoParts(zohoCt(fuZoho)).to === LEAD.email, "with mail.zoho.com saved, Open in Zoho Mail opens Zoho's compose page there", fuZoho.slice(0, 80));
+check(/in Zoho Mail, press Reply there/.test(await page.getByTestId("thread-hint").innerText().catch(() => "")), "the thread hint says to reply in Zoho Mail");
 const sendTo = await page.getByTestId("send-to").innerText();
 const warnText = await page.getByTestId("compose").locator('[aria-label="Warnings"]').innerText().catch(() => "");
 check(!/old-setting@gmail\.example/.test(sendTo) && !/free mailbox/i.test(warnText), "the old Gmail account shows nowhere (no from line, no free-mailbox warning)", `send-to: ${sendTo} | warnings: ${warnText}`);
 await noGmail("the lead page with an old Gmail setting");
+/* Back to Zoho India: a blank box saves the default. */
+await page.goto(BASE + "/crm/settings", { waitUntil: "domcontentloaded" });
+await page.getByTestId("set-zoho").waitFor({ timeout: 10000 });
+await page.getByTestId("set-zoho").fill("");
+await page.getByRole("button", { name: /save settings/i }).click();
+await page.getByRole("status").filter({ hasText: /saved/i }).waitFor({ timeout: 5000 }).catch(() => {});
+check((await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}").settings?.zohoMailUrl, OUTREACH_KEY)) === "https://mail.zoho.in", "a blank Zoho address saves Zoho India, the default");
 
 /* ── 12. Every lead's message is that lead's own (28 Sep 2026 bug) ──────
    Mehdi saw the name of the last of 30 imported leads in every
@@ -503,8 +617,9 @@ await noGmail("the lead page with an old Gmail setting");
    and the browser's back and forward move), after composing and editing on
    the first one. Each mailto: and WhatsApp link must decode to that lead's own
    name, address, number and observation, and never another lead's name or
-   contact. The first e-mail carries no link at all (approved 30 Sep 2026: the
-   link goes only after a yes). */
+   contact. These leads carry a demo link with no demo record behind it, so
+   With link is off (the link would open a 404) and the first e-mail carries
+   no link at all (2 Oct 2026). */
 const WALK = ["Amberfield", "Bluestone", "Cedar Ridge", "Driftwood", "Elmhurst", "Foxglove"].map((n, i) => ({
   id: `ol_e2ewalk${i}`,
   instituteName: `${n} Public School E2E`,
@@ -563,6 +678,14 @@ for (let i = 0; i < WALK.length; i++) {
   const wHref = (await w.evaluate((el) => el.tagName)) === "A" ? (await w.getAttribute("href")) || "" : "";
   const wText = wHref ? decodeURIComponent(wHref.split("?text=")[1] || "") : "";
   const wBlock = wHref ? "" : await c.locator('[aria-label="Blocked"]').innerText().catch(() => "");
+  if (i === 1) {
+    /* 2 Oct 2026: a demo link with no demo record behind it would open a 404, so With link is off and says why. */
+    const withBtn = c.getByTestId("link-choice-with");
+    const reason = await c.getByTestId("link-choice-reason").innerText().catch(() => "");
+    check((await withBtn.count()) === 1 && (await withBtn.isDisabled()) && /would open a 404/.test(reason) && reason.includes(`/site/${lead.demoSlug}`) &&
+      (await c.getByTestId("link-choice-without").getAttribute("aria-checked")) === "true",
+    "a lead whose demo link has no demo record: With link is off, Without link is on, and the reason says the link would open a 404", reason || "no reason shown");
+  }
   const bad = [];
   if (!onScreen.includes(lead.instituteName)) bad.push(`screen shows "${onScreen}"`);
   if (!gu) bad.push("mail app blocked: " + gBlock.replace(/\n/g, " "));
@@ -637,7 +760,9 @@ async function tallShot(name, width) {
   await page.setViewportSize({ width, height: width < 600 ? 844 : 900 });
 }
 await page.goto(BASE + "/crm/leads/new", { waitUntil: "domcontentloaded" });
-await page.locator("#lf-name").waitFor({ timeout: 10000 });
+// The new-lead page is its own chunk, and a dev server under load can take more than 10 s to serve it the
+// first time (3 Oct 2026: one run timed out here with 0 failures before it): 30 s, as e2e-crm's PAGE_WAIT.
+await page.locator("#lf-name").waitFor({ timeout: 30000 });
 const kindLabels = (await page.getByTestId("lf-kind").locator("label").allInnerTexts()).map((t) => t.trim());
 check(JSON.stringify(kindLabels) === JSON.stringify(["School", "Coaching", "Dental clinic", "Other"]), "the new-lead form offers School, Coaching, Dental clinic and Other", JSON.stringify(kindLabels));
 await page.locator("#lf-name").fill(DENTAL.name);
@@ -991,6 +1116,225 @@ await page.evaluate((k) => {
   localStorage.setItem(k, JSON.stringify(d));
 }, OUTREACH_KEY);
 
+/* ── 15. Public on send (2 Oct 2026) ──────────────────────────────────────
+   A fresh school lead whose demo, made from a template, is NOT marked sent. Its first e-mail carries the
+   demo's link, so Open in Zoho Mail first puts the demo on the website (the same writes as Mark sent) and
+   only then lets Zoho's compose page load: the Zoho request must find the demo already sent. Then the
+   e-mail follow-up after it points back to the link and never offers it again. */
+const extraDemoIds = [];
+await page.setViewportSize({ width: 1280, height: 900 });
+const PUB = {
+  id: "ol_e2epublish", instituteName: "Example Publish Public School E2E", kind: "school", status: "new", city: "Patna",
+  contactName: "Mrs. Publish", email: "office@example-publish-e2e.example", phone: "+919810080011",
+  createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+};
+await page.evaluate(([k, lead]) => {
+  const d = JSON.parse(localStorage.getItem(k) || "{}");
+  d.leads = [...(d.leads || []).filter((l) => l.id !== lead.id), lead];
+  localStorage.setItem(k, JSON.stringify(d));
+}, [OUTREACH_KEY, PUB]);
+await page.goto(BASE + "/crm/leads/" + PUB.id, { waitUntil: "domcontentloaded" });
+await page.getByTestId("lead-name").waitFor({ timeout: 15000 });
+{
+  const pc = page.getByTestId("compose");
+  await pc.getByRole("tab", { name: /create demo/i }).click();
+  const pTpl = await pc.locator("#tpl-pick option").nth(1).getAttribute("value");
+  await pc.locator("#tpl-pick").selectOption(pTpl);
+  await pc.getByRole("button", { name: /create demo for/i }).click();
+  const pdlg = page.locator('[role="dialog"]');
+  await pdlg.waitFor({ timeout: 5000 });
+  await pdlg.getByRole("button", { name: /make the draft/i }).click();
+  await page.getByTestId("linked-demo").waitFor({ timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  const pubDemo = await page.evaluate(([ok, ck, id]) => {
+    const l = (JSON.parse(localStorage.getItem(ok) || "{}").leads || []).find((x) => x.id === id);
+    return (JSON.parse(localStorage.getItem(ck) || "{}").demoSites || []).find((d) => d.id === l?.demoId) || null;
+  }, [OUTREACH_KEY, CMS_KEY, PUB.id]);
+  if (pubDemo?.id) extraDemoIds.push(pubDemo.id);
+  zohoSlug = pubDemo?.slug || "";
+  check(pubDemo?.status === "draft" && /draft: link shows a 404 until marked sent/.test(await page.getByTestId("linked-demo").innerText().catch(() => "")),
+    "public on send: the demo made from a template is a draft, and step 1 says its link shows a 404 until marked sent", JSON.stringify({ status: pubDemo?.status, slug: pubDemo?.slug }));
+  await pc.getByRole("tab", { name: /^email/i }).click();
+  await page.waitForTimeout(400);
+  const pubNote = await pc.getByTestId("publish-note").innerText().catch(() => "");
+  check(/still a draft/.test(pubNote) && /Open in Zoho Mail/.test(pubNote) && /same as Mark sent/.test(pubNote) && !/[–—]/.test(pubNote),
+    "the first e-mail with the draft demo's link says the send puts the demo on the website first, the same as Mark sent", pubNote || "no note");
+  await tallShot("lead-public-on-send-1280.png", 1280);
+  await tallShot("lead-public-on-send-390.png", 390);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const pZoho = pc.getByTestId("open-zoho");
+  if ((await pZoho.evaluate((el) => el.tagName)) !== "A") {
+    fail("Open in Zoho Mail is blocked on the draft demo's first e-mail: " + (await pc.locator('[aria-label="Blocked"]').innerText().catch(() => "")));
+  } else {
+    const pBody = zohoParts(zohoCt((await pZoho.getAttribute("href")) || "")).body;
+    check(Boolean(zohoSlug) && pBody.includes(`/site/${zohoSlug}\n`), "and that e-mail carries the draft demo's own link", pBody.slice(0, 160));
+    // Closed in another tab after this page read it (3 Oct 2026): the send reads the demo again, so it puts nothing
+    // on the website, opens nothing, records nothing and says why.
+    const setPubStatus = (status) => page.evaluate(([ck, id, st]) => {
+      const d = JSON.parse(localStorage.getItem(ck) || "{}");
+      d.demoSites = (d.demoSites || []).map((s) => (s.id === id ? { ...s, status: st } : s));
+      localStorage.setItem(ck, JSON.stringify(d));
+    }, [CMS_KEY, pubDemo?.id, status]);
+    await setPubStatus("closed");
+    const zohoBeforeClosed = zohoSeen.length;
+    await pZoho.click();
+    await page.getByTestId("publish-error").waitFor({ timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    const closedMsg = await page.getByTestId("publish-error").innerText().catch(() => "");
+    const closedNow = await page.evaluate(([ok, ck, lid, did]) => ({
+      status: (JSON.parse(localStorage.getItem(ck) || "{}").demoSites || []).find((d) => d.id === did)?.status || "",
+      written: (JSON.parse(localStorage.getItem(ok) || "{}").events || []).filter((e) => e.leadId === lid && (e.type === "sent" || /marked sent/.test(e.detail || ""))).length,
+    }), [OUTREACH_KEY, CMS_KEY, PUB.id, pubDemo?.id]);
+    check(/changed since this page loaded/.test(closedMsg) && /closed/i.test(closedMsg) && closedNow.status === "closed" && closedNow.written === 0 && zohoSeen.length === zohoBeforeClosed,
+      "a demo closed in another tab after the page loaded: the send reads it again, puts nothing on the website, opens and records nothing, and says why",
+      JSON.stringify({ closedMsg, ...closedNow, zoho: zohoSeen.length - zohoBeforeClosed }));
+    // A draft again, as it was; the page reads the demos again (it sees an edit made elsewhere only on a new read).
+    await setPubStatus("draft");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByTestId("lead-name").waitFor({ timeout: 15000 });
+    await pc.getByRole("tab", { name: /^email/i }).click();
+    await page.waitForFunction(() => document.querySelector('[data-testid="open-zoho"]')?.tagName === "A", null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    // Edit demo opens in another tab (3 Oct 2026): an edit saved there after this page read the demo must survive
+    // the send, so the send writes the demo as it is now, not this page's older copy.
+    await page.evaluate(([ck, id]) => {
+      const d = JSON.parse(localStorage.getItem(ck) || "{}");
+      d.demoSites = (d.demoSites || []).map((s) => (s.id === id ? { ...s, tagline: "Edited in another tab E2E" } : s));
+      localStorage.setItem(ck, JSON.stringify(d));
+    }, [CMS_KEY, pubDemo?.id]);
+    const seenBefore = zohoSeen.length;
+    await pZoho.click();
+    await page.waitForFunction(() => /link is live/i.test(document.querySelector('[data-testid="linked-demo"]')?.textContent || ""), null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+    const hit = zohoSeen.slice(seenBefore).find((z) => z.url.startsWith("https://mail.zoho.in/zm/comp.do"));
+    check(Boolean(hit) && hit.status === "sent", "public before Zoho opens: Zoho's compose page was requested with the demo already sent", JSON.stringify(hit || "Zoho never opened"));
+    check(/link is live/i.test(await page.getByTestId("linked-demo").innerText().catch(() => "")), "afterwards step 1 says Sent: link is live");
+    const pubNow = await page.evaluate(([ck, id]) => (JSON.parse(localStorage.getItem(ck) || "{}").demoSites || []).find((d) => d.id === id) || null, [CMS_KEY, pubDemo?.id]);
+    check(pubNow?.status === "sent" && pubNow?.tagline === "Edited in another tab E2E",
+      "the send put the demo on the website as it was saved in another tab: that edit is kept", JSON.stringify({ status: pubNow?.status, tagline: pubNow?.tagline }));
+    const after = await page.evaluate(([ok, ck, lid, did]) => ({
+      slot: (JSON.parse(localStorage.getItem(ck) || "{}").demoSiteSlots || []).find((s) => s.id === did) || null,
+      events: (JSON.parse(localStorage.getItem(ok) || "{}").events || []).filter((e) => e.leadId === lid),
+    }), [OUTREACH_KEY, CMS_KEY, PUB.id, pubDemo?.id]);
+    check(Boolean(after.slot) && /Example Publish Public School E2E/.test(after.slot.sentTo || "") && !Number.isNaN(Date.parse(after.slot.sentAt || "")),
+      "the demo's private slot says who it went to and when, as Mark sent writes it", JSON.stringify(after.slot));
+    const markNote = after.events.find((e) => e.type === "note" && e.detail === `Demo /site/${zohoSlug} marked sent`);
+    const zSent = after.events.find((e) => e.type === "sent" && /^Email opened in Zoho Mail/.test(e.detail || ""));
+    check(Boolean(markNote) && Boolean(zSent) && Date.parse(markNote.at) <= Date.parse(zSent.at),
+      "the history has Demo /site/<slug> marked sent, then Email opened in Zoho Mail", JSON.stringify(after.events.map((e) => `${e.type}: ${e.detail}`)));
+    check(/_link$/.test(zSent?.templateId || ""), "and the send recorded is the version with their sample's link", zSent?.templateId || "no send");
+  }
+  zohoSlug = "";
+  /* Its follow-up points back to the link they got. */
+  await pc.locator('[data-stage="follow_up"]').click();
+  await page.waitForTimeout(400);
+  const fuText = await pc.getByLabel("Message text").inputValue().catch(() => "");
+  const fuRow = await pc.getByTestId("template-list").first().locator('[aria-checked="true"]').innerText().catch(() => "");
+  check(/first e-mail|pehle mail/.test(fuText) && !/send you the link|link bhej doon/.test(fuText), "the e-mail follow-up after a first e-mail with the link points back to it, and does not offer it again", fuText.slice(0, 200));
+  check(/after the link \([^)]+\)/.test(fuRow), "and the checked row names the follow-up for after the link", fuRow);
+}
+await page.evaluate(([k, id]) => {
+  const d = JSON.parse(localStorage.getItem(k) || "{}");
+  d.leads = (d.leads || []).filter((l) => l.id !== id);
+  d.events = (d.events || []).filter((e) => e.leadId !== id);
+  localStorage.setItem(k, JSON.stringify(d));
+}, [OUTREACH_KEY, PUB.id]);
+
+/* ── 16. The WhatsApp switch (2 Oct 2026, run last) ───────────────────────
+   "whatsapp me v option dedo ki first msz pe link bhejne wala and ek nhi bhejne wla dono templete bana do":
+   on a made lead the first WhatsApp starts Without link (today's message, with the picture link); With link
+   swaps the picture for their own sample's link; the version sent is the next lead's starting point in this
+   browser; and the follow-up after a WhatsApp with the link points back to it. */
+const SW = [0, 1].map((i) => {
+  const name = `Example Switch ${["Alder", "Birch"][i]} School E2E`;
+  const at = new Date(Date.now() - 864e5).toISOString();
+  return {
+    lead: {
+      id: `ol_e2eswitch${i}`, instituteName: name, kind: "school", status: "new", city: "Patna", contactName: `Mrs. ${["Alder", "Birch"][i]}`,
+      phone: `+91981009001${i}`, email: `switch${i}@example-switch-e2e.example`, demoId: `ds_e2eswitch${i}`, demoSlug: `example-switch-${i}-e2e`, createdAt: at, updatedAt: at,
+    },
+    demo: { id: `ds_e2eswitch${i}`, slug: `example-switch-${i}-e2e`, instituteName: name, kind: "school", market: "india", city: "Patna", status: "sent", createdAt: at, updatedAt: at },
+  };
+});
+extraDemoIds.push(...SW.map((s) => s.demo.id));
+await page.evaluate(([ok, ck, sw]) => {
+  const d = JSON.parse(localStorage.getItem(ok) || "{}");
+  d.leads = [...(d.leads || []).filter((l) => !String(l.id).startsWith("ol_e2eswitch")), ...sw.map((s) => s.lead)];
+  localStorage.setItem(ok, JSON.stringify(d));
+  const c = JSON.parse(localStorage.getItem(ck) || "{}");
+  c.demoSites = [...(c.demoSites || []).filter((x) => !String(x.id).startsWith("ds_e2eswitch")), ...sw.map((s) => s.demo)];
+  localStorage.setItem(ck, JSON.stringify(c));
+}, [OUTREACH_KEY, CMS_KEY, SW]);
+const URLS = /https?:\/\/\S+|www\.\S+/g;
+const openOnWhatsapp = async (lead) => {
+  await page.goto(BASE + "/crm/leads/" + lead.id, { waitUntil: "domcontentloaded" });
+  await page.getByTestId("lead-name").waitFor({ timeout: 15000 });
+  const c = page.getByTestId("compose");
+  await c.getByRole("tab", { name: /^whatsapp/i }).click();
+  await page.waitForTimeout(400);
+  return c;
+};
+{
+  const c = await openOnWhatsapp(SW[0].lead);
+  const swLink = ((await page.getByTestId("linked-demo").innerText()).match(/https?:\/\/\S+\/site\/[a-z0-9-]+/i) || [""])[0];
+  check((await c.getByTestId("link-choice-without").getAttribute("aria-checked")) === "true" && !(await c.getByTestId("link-choice-with").isDisabled()) &&
+    /reported more often/.test(await c.getByTestId("link-choice-hint").innerText().catch(() => "")),
+  "a made lead's first WhatsApp starts on Without link, With link can be picked, and the hint says a link from an unknown number gets reported more often");
+  const t0 = await c.getByLabel("Message text").inputValue();
+  check(JSON.stringify(t0.match(URLS) || []) === JSON.stringify(["https://www.ideovent.in/w/school"]) && (await c.getByTestId("creative").count()) === 1,
+    "Without link is today's message: its one link is the school's picture page, with the picture under it", (t0.match(URLS) || []).join(", "));
+  await c.getByTestId("link-choice-with").click();
+  await page.waitForTimeout(400);
+  const t1 = await c.getByLabel("Message text").inputValue();
+  check(Boolean(swLink) && JSON.stringify(t1.match(URLS) || []) === JSON.stringify([swLink]) && !/\/w\//.test(t1) && t1.includes(`\n${swLink}\n`),
+    "With link carries the demo link: on WhatsApp the text's one link is their sample's, alone on its line, in place of the picture link", `${(t1.match(URLS) || []).join(", ") || "no link"} | step 1: ${swLink}`);
+  check((await c.getByTestId("creative").count()) === 0 && /carries their sample's own link/.test(await c.getByTestId("creative-none").innerText().catch(() => "")),
+    "the picture card is gone, and a line says this message carries their sample's own link instead");
+  await tallShot("lead-link-switch-1280.png", 1280);
+  await tallShot("lead-link-switch-390.png", 390);
+  const tiny = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="link-choice"] button')].map((el) => el.getBoundingClientRect().height).filter((h) => h < 40));
+  check(tiny.length === 0, "the switch's buttons are at least 40 px tall at 390", JSON.stringify(tiny));
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const sWa = c.getByTestId("open-whatsapp");
+  if ((await sWa.evaluate((el) => el.tagName)) !== "A") {
+    fail("Open in WhatsApp is blocked on the With link message: " + (await c.locator('[aria-label="Blocked"]').innerText().catch(() => "")));
+  } else {
+    const href = (await sWa.getAttribute("href")) || "";
+    const wt = new URL(href).searchParams.get("text") || "";
+    check(wt === t1 && wt.includes(swLink), "the wa.me text is the With link message, their sample's link in it");
+    const before = opened.length;
+    await sWa.click();
+    await page.waitForTimeout(1200);
+    check(opened.slice(before).some((x) => x.startsWith("https://wa.me/") && (new URL(x).searchParams.get("text") || "").includes(swLink)), "clicking Open in WhatsApp opens wa.me with that text (intercepted)");
+    const sent = await page.evaluate(([k, id]) => (JSON.parse(localStorage.getItem(k) || "{}").events || []).find((e) => e.leadId === id && e.type === "sent") || null, [OUTREACH_KEY, SW[0].lead.id]);
+    check(/with their sample's link/.test(sent?.detail || "") && /_link$/.test(sent?.templateId || ""), "the history names the version that went: the one with their sample's link", JSON.stringify(sent && { detail: sent.detail, templateId: sent.templateId }));
+  }
+  check((await page.evaluate(() => localStorage.getItem("ideovent_crm_wa_first_link"))) === "with", "the WhatsApp version sent last is remembered in this browser: With link");
+}
+{
+  const c = await openOnWhatsapp(SW[1].lead);
+  const t = await c.getByLabel("Message text").inputValue();
+  check((await c.getByTestId("link-choice-with").getAttribute("aria-checked")) === "true" && t.includes(`/site/${SW[1].lead.demoSlug}\n`),
+    "the next made lead starts on With link, with its own sample's link", (t.match(URLS) || []).join(", "));
+}
+{
+  const c = await openOnWhatsapp(SW[0].lead);
+  const t = await c.getByLabel("Message text").inputValue();
+  check(/upar wale message|message above/.test(t) && !/dekhna ho|want to see it/.test(t) && !(t.match(URLS) || []).length,
+    "the WhatsApp follow-up after a first WhatsApp with the link points back to it, with no link and no offer to send it", t.slice(0, 200));
+}
+await page.evaluate(([ok, ck]) => {
+  localStorage.removeItem("ideovent_crm_wa_first_link");
+  const d = JSON.parse(localStorage.getItem(ok) || "{}");
+  d.leads = (d.leads || []).filter((l) => !String(l.id).startsWith("ol_e2eswitch"));
+  d.events = (d.events || []).filter((e) => !String(e.leadId).startsWith("ol_e2eswitch"));
+  localStorage.setItem(ok, JSON.stringify(d));
+  const c = JSON.parse(localStorage.getItem(ck) || "{}");
+  c.demoSites = (c.demoSites || []).filter((x) => !String(x.id).startsWith("ds_e2eswitch"));
+  localStorage.setItem(ck, JSON.stringify(c));
+}, [OUTREACH_KEY, CMS_KEY]);
+
 /* ── Leak check: leads never enter the CMS snapshot ───────────────────── */
 const inCms = await page.evaluate(([k, email]) => (localStorage.getItem(k) || "").includes(email), [CMS_KEY, LEAD.email]);
 check(!inCms, "the lead's email is not in the CMS snapshot (so not in Export)");
@@ -1004,7 +1348,7 @@ await page.evaluate(([ok, ck, ids]) => {
   data.demoSiteSlots = (data.demoSiteSlots || []).filter((x) => !drop.has(x.id));
   data.demoSiteOpens = (data.demoSiteOpens || []).filter((x) => x.id !== "e2e_open_1");
   localStorage.setItem(ck, JSON.stringify(data));
-}, [OUTREACH_KEY, CMS_KEY, [demoId, dentalDemo?.id]]);
+}, [OUTREACH_KEY, CMS_KEY, [demoId, dentalDemo?.id, ...extraDemoIds]]);
 
 const realErrors = consoleErrors.filter((e) => !/favicon|Failed to load resource|intercepted/i.test(e));
 check(realErrors.length === 0, "no console errors", "console errors: " + realErrors.slice(0, 5).join(" | "));
@@ -1015,13 +1359,15 @@ if (NEGATIVE) {
     stage: findings.some((f) => /opens on After they say yes/.test(f)),
     blanks: findings.some((f) => /\[blank\]/.test(f)),
     script: findings.some((f) => /as a patient sees it/.test(f)),
+    publish: findings.some((f) => /public before|already sent/.test(f)),
+    variant: findings.some((f) => /With link/.test(f)),
   };
   console.log(`\nnegative control: broken in flight: ${[...broken].join(", ") || "nothing"}; ${findings.length} check(s) failed`);
-  if (broken.size !== 3 || !bit.stage || !bit.blanks || !bit.script) {
+  if (broken.size !== 5 || !bit.stage || !bit.blanks || !bit.script || !bit.publish || !bit.variant) {
     console.log(`NEGATIVE CONTROL INVALID: not every sabotage was applied and caught ${JSON.stringify({ applied: [...broken], caught: bit })}`);
     process.exit(3);
   }
-  console.log("negative control holds: the stage, blank and call-script checks all failed, as they must");
+  console.log("negative control holds: the stage, blank, call-script, public-before-Zoho and With link checks all failed, as they must");
   process.exit(1);
 }
 console.log(findings.length ? "\n" + findings.length + " FAILED" : "\nALL PASSED");

@@ -612,7 +612,7 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
     // Specialist clinics: their own information; an implant centre never a cost range (its demo prices no implant).
     [["dental", "new_website", "hinglish", { specialty: "implant" }], list("Implant ka process, step by step", "Kharche ki jaankari", "Online appointment booking")],
     [["dental", "fix_website", "en", { specialty: "implant" }], list("A site that opens fast on a phone", "The implant process and cost information", "Online appointment booking")],
-    [["dental", "new_website", "hinglish", { specialty: "ortho" }], list("Braces ka process, step by step", "Har tarah ke braces ke kharche ki range", "Online appointment booking")],
+    [["dental", "new_website", "hinglish", { specialty: "ortho" }], list("Braces ka process, step by step", "Har tarah ke braces ke kharche ki jaankari", "Online appointment booking")],
     [["dental", "new_website", "hinglish", { specialty: "kids" }], list("Bachche ki pehli visit mein kya hota hai", "Timings aur treatments ek jagah", "Online appointment booking")],
     // Schools: the enquiry form only with the school's WhatsApp on the demo (it sends there; with none there is no form).
     [["school", "new_website", "hinglish", { demo: { whatsapp: true } }], list("Admission ka process aur zaroori dates", "Fees aur facilities ki jaankari", "Enquiry form, jo seedha aapke phone par aata hai")],
@@ -1125,7 +1125,7 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   `specialist clinic: the kids clinic hears its own impact line and bullets (${kids})`);
   const ortho = M.render(wNew, clinic({ contactName: "Dr. Bhatia", tags: ["DENTAL_ORTHO"] }), { now: NOW }).body;
   check(ortho.includes("Google par aapka orthodontic clinic dekha.") && ortho.includes("\n\nLog braces se pehle process aur kharche ki jaankari online dhoondhte hain. Ye na mile to wo aksar agle clinic ko call kar lete hain.\n\n") &&
-    ortho.includes(":\n• Braces ka process, step by step\n• Har tarah ke braces ke kharche ki range\n• Online appointment booking\n\n"), `specialist clinic: a braces clinic, no website (${ortho})`);
+    ortho.includes(":\n• Braces ka process, step by step\n• Har tarah ke braces ke kharche ki jaankari\n• Online appointment booking\n\n"), `specialist clinic: a braces clinic, no website (${ortho})`);
   const implantFix = M.render(wFix, clinic({ website: "https://example.org", observation: "no_implant_info", tags: ["DENTAL_IMPLANT"] }), { now: NOW }).body;
   check(implantFix.includes("Aapke implant centre ki website phone par kholi. Usme implant ka process aur kharche ki jaankari nahi mili.\n\nLog implant se pehle yahi jaankari online dhoondhte hain.") &&
     implantFix.includes(":\n• Phone par jaldi khulne wali site\n• Implant ka process aur kharche ki jaankari\n• Online appointment booking\n\n"), `specialist clinic: an implant centre's own site (${implantFix})`);
@@ -1155,7 +1155,8 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
 }
 
 {
-  // An implant centre is never offered a cost range: its demo (d4) prices no implant. The braces demo (d5) does.
+  // An implant centre is never offered a cost range: its demo (d4) prices no implant. Nor is a braces clinic
+  // (3 Oct 2026): its demo (d5) gives no price for lingual braces or aligners ("Cost after consultation and X-ray").
   for (const pitch of ["new_website", "fix_website"]) {
     for (const language of ["en", "hinglish", "hi"]) {
       for (const sample of ["made", "offer"]) {
@@ -1164,7 +1165,8 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
       }
     }
   }
-  check(/kharche ki range/.test(M.offerFor({ kind: "dental", specialty: "ortho", pitch: "new_website", language: "hinglish", now: NOW })), "a braces clinic keeps 'kharche ki range': its demo prices each kind of braces");
+  const orthoOffers = ["new_website", "fix_website"].flatMap((pitch) => ["en", "hinglish"].map((language) => M.offerFor({ kind: "dental", specialty: "ortho", pitch, language, now: NOW })));
+  check(orthoOffers.every((o) => !/range/i.test(o) && /jaankari|information/.test(o)), `a braces clinic is offered cost information for each kind, never a range: its demo prices no lingual braces or aligners (${orthoOffers.join(" | ")})`);
   const implantLead = (t) => leadFor(t, "dental", { tags: ["DENTAL_IMPLANT"], ...(t.pitch === "fix_website" ? { observation: "no_implant_info" } : {}) });
   const saysRange = T.filter((t) => (t.kind === "dental" || t.kind === "any") && !M.templateNotFor(t, "dental"))
     .filter((t) => /\brange\b|रेंज/i.test(M.render(t, implantLead(t), { now: NOW, demo: { templateId: "d4-implant-centre" } }).body));

@@ -2,20 +2,29 @@ import { useEffect, useState } from "react";
 import { Check, Save } from "lucide-react";
 import type { OutreachSettings } from "@/lib/outreach/types";
 import { DEFAULT_SIGNATURE } from "@/lib/outreach/store";
+import { ZOHO_MAIL_DEFAULT, zohoMailOrigin } from "@/lib/outreach/mailLinks";
 import { useOutreach } from "./useOutreach";
 import { Field, btnPrimary, cardCls, inputCls, textareaCls } from "./ui";
 
 /**
- * SETTINGS: the e-mail signature, an optional daily WhatsApp limit (blank,
- * the default, is no limit) and quiet hours, and whether new demos are added
- * to the CRM. Saved in the outreach store, not the CMS.
+ * SETTINGS: the e-mail signature, the Zoho Mail address, an optional daily
+ * WhatsApp limit (blank, the default, is no limit) and quiet hours, and
+ * whether new demos are added to the CRM. Saved in the outreach store, not
+ * the CMS.
  *
- * The "Gmail account for Open in Gmail" field is gone (28 Sep 2026: e-mail
- * opens in the mail app only). An old saved value (senderGmail) is carried
- * through a save untouched and read by nothing, so old settings still load.
- * One help line says where the mail app comes from: the computer's default
- * e-mail app, which can be Gmail or Zoho Mail in Chrome if Chrome is set to
- * handle e-mail links.
+ * The "Gmail account for Open in Gmail" field is gone (28 Sep 2026). An old
+ * saved value (senderGmail) is carried through a save untouched and read by
+ * nothing, so old settings still load.
+ *
+ * ZOHO MAIL (2 Oct 2026). Open in Zoho Mail opens a new e-mail, filled in, at
+ * the Zoho Mail address here (zohoMailUrl): https://mail.zoho.in, Zoho India,
+ * where contact@ideovent.in is, unless another Zoho data centre is typed.
+ * Anything that is not a Zoho Mail address is refused (mailLinks.ts
+ * zohoMailOrigin) and Save stays off, as it does for a bad WhatsApp limit; the
+ * box keeps its own text, so it can be cleared (blank saves the default). The
+ * help line says both e-mail buttons: Zoho Mail in this browser, and the mail
+ * app, the computer's default e-mail app, which can be Gmail or Zoho Mail in
+ * Chrome if Chrome is set to handle e-mail links.
  *
  * DEMO-OPEN E-MAILS ARE GONE (1 Oct 2026, Mehdi: "mai demo opened wala mail
  * nhi chahta"). src/lib/demo/opens.ts no longer sends one, so the "Alert me
@@ -43,10 +52,15 @@ export function SettingsTab() {
   const limitNum = limitText.trim() === "" ? 0 : Number(limitText.trim());
   const capOk = Number.isInteger(limitNum) && limitNum >= 0 && limitNum <= 10000;
 
+  /* The Zoho Mail box is text of its own, so it can be cleared; blank means Zoho India, the default. */
+  const [zohoText, setZohoText] = useState(settings.zohoMailUrl || ZOHO_MAIL_DEFAULT);
+  useEffect(() => setZohoText(settings.zohoMailUrl || ZOHO_MAIL_DEFAULT), [settings.zohoMailUrl]);
+  const zohoOk = zohoMailOrigin(zohoText) !== "";
+
   const save = async () => {
     setErr(null);
     try {
-      await saveSettings({ ...form, whatsappDailyLimit: limitNum > 0 ? limitNum : 0 });
+      await saveSettings({ ...form, whatsappDailyLimit: limitNum > 0 ? limitNum : 0, zohoMailUrl: zohoMailOrigin(zohoText) });
       setSaved(true);
     } catch (e) {
       setErr("Not saved: " + ((e as Error).message || "unknown error"));
@@ -58,13 +72,14 @@ export function SettingsTab() {
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
-        if (capOk) void save();
+        if (capOk && zohoOk) void save();
       }}
     >
       <section className={cardCls + " space-y-4"}>
         <h2 className="font-display text-lg font-semibold">Sender</h2>
         <p className="text-xs text-muted-foreground" data-testid="mail-app-help">
-          Open in mail app uses this computer's default e-mail app. To use Gmail or Zoho Mail in the browser, set it as
+          Open in Zoho Mail opens a new e-mail in Zoho Mail in this browser, filled in: stay signed in to Zoho there. Open in
+          mail app uses this computer's default e-mail app; to use Gmail or Zoho Mail in the browser for it, set it as
           Chrome's default for e-mail links.
         </p>
         <Field id="set-sig" label="Email signature" hint="Added under every email: your real name, company, city and phone.">
@@ -73,6 +88,11 @@ export function SettingsTab() {
         <button type="button" className="text-xs text-primary underline underline-offset-2" onClick={() => set("signature", DEFAULT_SIGNATURE)}>
           Use the default signature
         </button>
+        <Field id="set-zoho" label="Zoho Mail address" hint="Open in Zoho Mail opens a new e-mail here, filled in. https://mail.zoho.in is Zoho India, where contact@ideovent.in is.">
+          <input id="set-zoho" data-testid="set-zoho" type="text" inputMode="url" autoComplete="off" spellCheck={false} placeholder={ZOHO_MAIL_DEFAULT}
+            className={inputCls} value={zohoText} onChange={(e) => { setSaved(false); setZohoText(e.target.value); }} />
+        </Field>
+        {!zohoOk && <p className="text-xs text-destructive" data-testid="set-zoho-error">Type a Zoho Mail address such as https://mail.zoho.in.</p>}
       </section>
 
       <section className={cardCls + " space-y-4"}>
@@ -110,7 +130,7 @@ export function SettingsTab() {
 
       {err && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">{err}</p>}
       <div className="flex items-center gap-3">
-        <button type="submit" className={btnPrimary} disabled={!capOk}>
+        <button type="submit" className={btnPrimary} disabled={!capOk || !zohoOk}>
           <Save className="h-4 w-4" aria-hidden="true" /> Save settings
         </button>
         {saved && (

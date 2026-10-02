@@ -100,6 +100,26 @@ export function pitchFor(verdict: AuditVerdict | undefined): LeadPitch | undefin
   return undefined;
 }
 
+/* What the check saw when a listed website would not open at all: an error page (http_404, http_500 ...),
+   no answer in time, a domain that does not resolve, a bad certificate, a redirect that goes nowhere or to
+   an address that is not public (api/_lib/siteAudit.js). Not parked, placeholder, empty or bad_url: those
+   open (or are no web address at all), so they still count as no website of their own. */
+const DOWN_CODE = /^(http_\d{3}|timeout|dns|tls|unreachable|blocked)$/;
+
+/**
+ * A "broken" site that would not open at all (3 Oct 2026). They HAVE a website, so the lead is about their
+ * site, with the engine's site_down observation ("It would not load at all." / "Wo khul nahi rahi."): the
+ * message that says "no website of its own, only the Google listing" would be false for them.
+ */
+export function siteDown(audit: SiteAudit | undefined): boolean {
+  return audit?.verdict === "broken" && audit.evidence.some((e) => DOWN_CODE.test(e.code));
+}
+
+/** The lead's pitch from its audit: a site that would not open is their site; otherwise pitchFor. */
+export function pitchForAudit(audit: SiteAudit | undefined): LeadPitch | undefined {
+  return siteDown(audit) ? "fix_website" : pitchFor(audit?.verdict);
+}
+
 /*
   Audit evidence code -> an Outreach OBSERVATIONS id (src/lib/outreach/engine.ts),
   in the order tried: the first match is the observation said in the message.
@@ -134,6 +154,7 @@ const DENTAL_OBSERVATIONS: [string, string][] = [
 export function observationFor(audit: SiteAudit | undefined, kind?: LeadKind): string | undefined {
   if (!audit || audit.verdict === "ok" || audit.verdict === "unchecked") return undefined;
   if (audit.verdict === "none") return "no_website";
+  if (siteDown(audit)) return "site_down";
   for (const [re, id] of CODE_TO_OBSERVATION) {
     if (kind === "dental" && id === "no_fees_admission") continue;
     if (audit.evidence.some((e) => re.test(e.code))) return id;
@@ -202,7 +223,7 @@ export function leadFromPlace(
     status: "new",
     website: websiteFor(place, audit),
     observation: observationFor(audit, opts.kind),
-    pitch: pitchFor(audit?.verdict),
+    pitch: pitchForAudit(audit),
     phone: phones[0],
     email: emails[0],
     tags: opts.typeLabel ? [opts.typeLabel] : undefined,

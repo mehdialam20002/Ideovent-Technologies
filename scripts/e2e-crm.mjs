@@ -9,7 +9,8 @@
  *   2. the dashboard's numbers equal counts computed here from the seed;
  *   3. the leads table: sort, filter, search, saved views, bulk status, export;
  *   4. the pipeline: a drag changes the status and writes a status event;
- *   5. the lead page: compose per lead, every link built for THAT lead;
+ *   5. the lead page: compose per lead, every link built for THAT lead (the first
+ *      e-mail carries only that lead's own sample link, or none: 2 Oct 2026);
  *   6. the Demos tab lists a poster demo and a template duplicate with no lead,
  *      and Create lead / Link to lead work on them;
  *   7. a NEW duplicate (and a new poster demo) auto-creates a CRM lead, and a
@@ -19,7 +20,8 @@
  *   9. Clean saved observations clears only the leads left ticked;
  *  10. dental clinics (28 Sep 2026): the Kind filter, the breakdown, the
  *      pipeline card, a new dental lead with a d1..d7 demo and a dental
- *      e-mail, and Create lead from a dental demo;
+ *      e-mail that carries only its own sample link, and Create lead from a
+ *      dental demo;
  *  11. the CRM on its own subdomain (30 Sep 2026), with crm.localhost standing
  *      in for crm.ideovent.in: screens at the root, no /crm in any link, and
  *      every link to the admin or a demo absolute to the main site. On the
@@ -28,15 +30,17 @@
  *      leads at New, Contacted, Replied, Call and Proposal each open on their
  *      own stage, Today names the stage, the after-call [blanks] keep Send off
  *      until filled, and the Call script card speaks as a patient, a parent or
- *      a student sees it. The first e-mail carries no link (checked in 5).
+ *      a student sees it. The first e-mail carries only that lead's own sample
+ *      link, or none (checked in 5).
  *
- * E-mail opens in the mail app only (Open in Gmail was removed 28 Sep 2026):
- * the e-mail button is a mailto: link, and no Gmail link or wording may show,
- * even with an old "Gmail account" still in the saved settings.
+ * E-mail opens in Zoho Mail in the browser or in the mail app (2 Oct 2026;
+ * Open in Gmail was removed 28 Sep 2026): Open in mail app is a mailto: link,
+ * and no Gmail link or wording may show, even with an old "Gmail account"
+ * still in the saved settings.
  *
  * The seed is 40 fictional leads (`ol_e2e_NN`), their demos, opens and
  * events, written to a fresh browser profile's localStorage. Nothing leaves
- * the machine: WhatsApp URLs, Supabase, EmailJS, /api/poster and (section 11)
+ * the machine: WhatsApp URLs, Zoho Mail, Supabase, EmailJS, /api/poster and (section 11)
  * the main site's address are answered here, and a mailto: click is recorded
  * and never handed to a mail app.
  *
@@ -273,7 +277,10 @@ const browser = await launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
 
 const opened = [];
-for (const pattern of ["https://mail.google.com/**", "https://wa.me/**", "https://web.whatsapp.com/**", "https://api.whatsapp.com/**"]) {
+for (const pattern of [
+  "https://mail.google.com/**", "https://wa.me/**", "https://web.whatsapp.com/**", "https://api.whatsapp.com/**",
+  "https://mail.zoho.in/**", "https://mail.zoho.com/**", "https://accounts.zoho.in/**", "https://accounts.zoho.com/**",
+]) {
   await context.route(pattern, (route) => {
     opened.push(route.request().url());
     return route.fulfill({ status: 200, contentType: "text/html", body: "<p>intercepted by e2e-crm</p>" });
@@ -325,11 +332,13 @@ const watch = (p, name) => {
 };
 const page = await context.newPage();
 watch(page, "admin");
-/* Pages the send links open: note the URL and close them. Our own tabs are kept. */
+/* Pages the send links open: note the URL and close them. Our own tabs are kept. A send that puts a draft
+   demo on the website first opens its tab blank and navigates it after the write (2 Oct 2026): wait for it. */
 context.on("page", async (p) => {
+  await p.waitForURL((u) => u.href !== "about:blank", { timeout: 5000 }).catch(() => {});
   await p.waitForLoadState("domcontentloaded", { timeout: 5000 }).catch(() => {});
   const u = p.url();
-  if (!/mail\.google\.com|wa\.me|whatsapp\.com/.test(u)) return;
+  if (!/mail\.google\.com|zoho\.|wa\.me|whatsapp\.com/.test(u)) return;
   opened.push(u);
   await p.close().catch(() => {});
 });
@@ -595,7 +604,12 @@ function checkEmail(lead, r, tag) {
   check(u.subject.length > 3, `${tag}: the mailto: link carries a subject`, u.subject);
   check(!othersIn(body, lead).length, `${tag}: the email names no other lead`, othersIn(body, lead).join(", "));
   check(!/EDITMARK/.test(body) || body.includes(`EDITMARK-${lead.id}`), `${tag}: no text edited on another lead leaks into this email`);
-  check(!/https?:\/\/|\/site\//.test(body), `${tag}: the first e-mail carries no link (it goes after they say yes)`, body.slice(0, 160));
+  // 2 Oct 2026: a lead whose demo is made gets its first e-mail With link: exactly one link, that lead's own
+  // sample (/site/<its slug>), on its own line. A lead with no demo gets none.
+  const urls = body.match(/https?:\/\/\S+|www\.\S+/g) || [];
+  const paths = body.match(/\/site\/[a-z0-9-]+/gi) || [];
+  check(lead.demoSlug ? urls.length === 1 && urls[0].endsWith(`/site/${lead.demoSlug}`) && paths.length === 1 && body.includes(`${urls[0]}\n`) : urls.length === 0 && paths.length === 0,
+    `${tag}: the first e-mail carries ${lead.demoSlug ? `exactly one link, ${lead.instituteName}'s own sample` : "no link (no demo yet)"}`, urls.join(", ") || body.slice(0, 160));
   return body;
 }
 
@@ -965,6 +979,10 @@ check(Boolean(nm.href), "Open in mail app is open for the new dental lead", nm.b
 if (nm.href) {
   const parts = mailParts(nm.href);
   check(parts.to === NEW_DENTAL.email && parts.subject === (await nc.locator("#msg-subject").inputValue()), "its mailto: carries the clinic's address and the subject on screen", JSON.stringify({ to: parts.to, subject: parts.subject }));
+  // 2 Oct 2026: its demo is marked sent, so the first e-mail goes With link: one link, the clinic's own sample.
+  const nmUrls = `${parts.subject}\n${parts.body}`.match(/https?:\/\/\S+|www\.\S+/g) || [];
+  check(Boolean(nd2Demo?.slug) && nmUrls.length === 1 && nmUrls[0].endsWith(`/site/${nd2Demo.slug}`) && parts.body.includes(`${nmUrls[0]}\n`),
+    "the new dental lead's first e-mail carries exactly one link, its own sample's, on its own line", nmUrls.join(", ") || "no link");
   const tplId = (await nc.getByTestId("template-list").first().locator('[aria-checked="true"]').getAttribute("data-template-id").catch(() => "")) || "";
   check(/dental/.test(tplId), "the e-mail is a dental template", tplId || "none selected");
   await nc.getByTestId("copy-email").click();

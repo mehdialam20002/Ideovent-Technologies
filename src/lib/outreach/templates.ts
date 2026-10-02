@@ -35,23 +35,43 @@
  * first WhatsApps with the picture link.
  *
  * THE RULES OF 30 SEP 2026 STILL HOLD (APPROVED-MESSAGES-2026-09-30.md): no
- * link (but the one picture link above), price, emoji, "best", "free",
+ * link (but the one picture link above, or in a twin their sample's own link,
+ * THE LINK IN THE FIRST MESSAGE below), price, emoji, "best", "free",
  * "guaranteed" or urgency in a first message; the problem line is something
  * checked the same day, never a guess; one message, then wait.
  *
+ * THE LINK IN THE FIRST MESSAGE (2 Oct 2026). Mehdi: "mail pe to first msz pe
+ * hi link send krwa do", and for WhatsApp "first msz pe link bhejne wala and ek
+ * nhi bhejne wla dono templete bana do". Every first message that says the
+ * sample is made has a twin with their sample's own link ({demoLink}) in place
+ * of the picture link and the question about the link: LINK_LINE, the approved
+ * after-yes line word for word ("Ye raha sample:", then the link alone on its
+ * line), SAMPLE_TRUTH, the two honest lines, and LINK_ASK, one question and the
+ * easy no. The twins, and the follow-ups written for a lead whose first message
+ * carried the link (they point back to it and never offer it again), are in
+ * LINK_TEMPLATES: never listed or ranked; getTemplate() resolves them and the
+ * compose screen swaps them in (linkChoice.ts sendVariant). E-mail starts With
+ * link; WhatsApp on the version last sent in that browser, the first time
+ * Without link.
+ *
  * THE LADDER
- *   first        WhatsApp and e-mail, no link but the picture link. "Isliye humne ...
- *                sample website banayi hai:", the bullets, on WhatsApp "Ek jhalak yahan
- *                dekhiye: {previewLink}", then "Kya main aapke {kindNoun} ka sample link
- *                bhej doon?" (an e-mail: "Kya main aapko link bhej doon?") and the easy
- *                no. A lead with no demo yet gets the twin that OFFERS to make one
- *                (sample "offer"), with no picture: no message says a sample is made
- *                when it is not.
+ *   first        WhatsApp and e-mail, no link but the picture link, or, in its twin,
+ *                their sample's own link. "Isliye humne ... sample website banayi
+ *                hai:", the bullets, on WhatsApp "Ek jhalak yahan dekhiye:
+ *                {previewLink}", then "Kya main aapke {kindNoun} ka sample link bhej
+ *                doon?" (an e-mail: "Kya main aapko link bhej doon?") and the easy
+ *                no; the twin has "Ye raha sample:" and the link in their place. A
+ *                lead with no demo yet gets the twin that OFFERS to make one (sample
+ *                "offer"), with no picture and no link: no message says a sample is
+ *                made when it is not.
  *   after_reply  after a yes: the link on its own line, "Ye sirf demonstration hai ...", two call times.
  *   follow_up_1  WhatsApp: the ONE follow-up, on day 4, and the last WhatsApp.
  *                E-mail: day 4, as a reply in the same thread.
  *   follow_up_2  e-mail only, day 9: one new, true, useful point (never the first observation again).
  *   follow_up_3  e-mail only, day 16: the closing e-mail.
+ *                A lead whose first message on that channel carried the link gets
+ *                the follow-up written for it (afterLink): it points back to the
+ *                link and never offers it again.
  *   after_call   the same-day summary, with [package and price] and [date] to fill in:
  *                checkSend blocks the send while a [placeholder] is left.
  *   proposal     the proposal by e-mail, the WhatsApp note, and the day-3 follow-up.
@@ -65,8 +85,9 @@
  * number is on the demo (a template duplicate clears every contact). No client,
  * result, number or rating is claimed; no price is typed into a message (the
  * summary and the proposal leave [package and price] to the sender). No em
- * dashes. No web address is printed in a first message but the picture link,
- * and no template types one: {previewLink} fills it.
+ * dashes. No web address is printed in a first message but the picture link
+ * or, in a twin, their sample's own link; no template types one: {previewLink}
+ * and {demoLink} fill them.
  *
  * MERGE FIELDS: MERGE_FIELDS below. engine.ts render() fills them; its header
  * says what each one says in each language.
@@ -128,6 +149,16 @@ export interface MessageTemplate {
   promises?: "demo" | "pitch" | null;
   /** Kept only so an old history entry still resolves; never offered (templatesFor skips it). */
   retired?: boolean;
+  /**
+   * "demo": a first message that carries their sample's own link ({demoLink}), once,
+   * and no other link (2 Oct 2026). It keeps allowsLink false, which is about every
+   * other link; checkSend reads this field (engine.ts).
+   */
+  link?: "demo";
+  /** A follow-up written for a lead whose first message on this channel carried the link (2 Oct 2026). */
+  afterLink?: boolean;
+  /** The listed template this twin stands in for. A twin is never listed: the compose screen swaps it in. */
+  twinOf?: string;
 }
 
 export const MERGE_FIELDS = [
@@ -285,6 +316,32 @@ export const PREVIEW_ASK: Record<TemplateLanguage, string> = {
   hi: `क्या मैं आपके {kindNoun} का सैंपल लिंक भेज दूँ?\n${EASY_NO.hi}`,
 };
 
+/**
+ * The link part of a first message with their sample's link: the approved after-yes line, word for word
+ * (YES_WA below), then the link alone on its line, no full stop. The solution line right above it already
+ * says whose sample it is ("Isliye humne aapke clinic ke naam se ek sample website banayi hai:").
+ */
+export const LINK_LINE: Record<TemplateLanguage, string> = {
+  hinglish: "Ye raha sample:\n{demoLink}",
+  en: "Here is the sample:\n{demoLink}",
+  hi: "ये रहा सैंपल:\n{demoLink}",
+};
+
+/** The one question after their sample's link, then the approved easy no. */
+export const LINK_ASK: Record<TemplateLanguage, string> = {
+  hinglish: `Pasand aaye to kya 10 minute baat kar sakte hain?\n${EASY_NO.hinglish}`,
+  en: `If you like it, shall we talk for 10 minutes?\n${EASY_NO.en}`,
+  hi: `पसंद आए तो क्या 10 मिनट बात कर सकते हैं?\n${EASY_NO.hi}`,
+};
+
+/** The note on a message that carries their sample's link (Mehdi's only: the switch is off for anyone else). */
+const LINK_NOTE: Record<TemplateChannel, string> = {
+  email:
+    "Carries their sample's own link, once, and no other link. If the demo is still a draft, sending it (or Copy e-mail text) puts it on the website first, the same as Mark sent, so the link opens.",
+  whatsapp:
+    "Carries their sample's own link, once, and no other link. If the demo is still a draft, sending it puts it on the website first, the same as Mark sent, so the link opens.",
+};
+
 /** The note on a message with the picture link. */
 const PREVIEW_NOTE =
   "Its one link is the picture page for this kind, which WhatsApp shows as a picture card; their own sample's link goes after they say yes. To send the picture itself as well, use Copy image or Share under the message.";
@@ -401,6 +458,25 @@ const NUMBER_NOTE: Record<TemplateKind, string> = {
   any: "It names one-tap call or WhatsApp only when their number is on the demo.",
 };
 
+/**
+ * The two lines that travel with every demo link (the approved after-yes message, one thought a line).
+ * Declared here, above firstSet, because the first-message twins with their sample's link carry them too.
+ */
+const SAMPLE_TRUTH: Record<TemplateLanguage, string> = {
+  hinglish: "Ye sirf demonstration hai, aapki live site nahi.\nJo jaankari aapki taraf se nahi mili, wo abhi sample hai.",
+  en: "It is only a demonstration, not your live site.\nAnything we did not get from you is sample content for now.",
+  hi: "ये सिर्फ़ डेमो है, आपकी लाइव साइट नहीं।\nजो जानकारी आपकी तरफ़ से नहीं मिली, वो अभी सैंपल है।",
+};
+const YES_KIND_NOTE: Record<TemplateKind, string> = {
+  dental: "On a demo made from a template, the doctors, fees, timings, reviews and history are samples until the clinic sends its own; the message says so.",
+  school: "On a demo made from a template, the fees, dates and results are samples until the school sends its own; the message says so.",
+  coaching: "Before you send the link, take the template's results and toppers off the demo: a real institute's name must never sit next to toppers it did not give us.",
+  any: "What the demo carries from its template is sample content until they send their own; the message says so.",
+};
+
+/** The "with link" twin of every first message that says the sample is made (filled by firstSet, in registry order). */
+const FIRST_WITH_LINK: MessageTemplate[] = [];
+
 function firstSet(kind: TemplateKind, channel: TemplateChannel, language: TemplateLanguage, l: FirstLines): MessageTemplate[] {
   const head = channel === "email" ? MAIL_GREET[language] : parts(GREET[language], WHO[language]);
   const out: MessageTemplate[] = [];
@@ -419,7 +495,7 @@ function firstSet(kind: TemplateKind, channel: TemplateChannel, language: Templa
       preview ? PREVIEW_NOTE : `No link${channel === "email" ? " in this e-mail" : ""}: the link goes after they say yes.`,
       extra,
     ];
-    out.push({
+    const base: MessageTemplate = {
       id,
       channel,
       stage: "first",
@@ -434,7 +510,31 @@ function firstSet(kind: TemplateKind, channel: TemplateChannel, language: Templa
       sample,
       promises: sample === "made" ? "demo" : null,
       ...(kind === "any" ? ONLY_OTHER : {}),
-    });
+    };
+    out.push(base);
+    // Its twin with their sample's own link (2 Oct 2026): the same head, problem, impact and bullets, then the
+    // approved after-yes link line, the two honest lines and one question. Never listed: LINK_TEMPLATES.
+    if (sample === "made") {
+      FIRST_WITH_LINK.push({
+        ...base,
+        id: `${id}_link`,
+        label: `First message: ${fix ? "their site" : "no website"}, sample made, with their sample's link (${TAG[kind]})`,
+        note: [
+          WHEN[kind],
+          fix ? "Only with something you checked on their site today." : "Only when you searched today and found no website of their own; it says you saw them on Google.",
+          "Needs the demo: it carries its link.",
+          NUMBER_NOTE[kind],
+          l.madeNote,
+          LINK_NOTE[channel],
+          YES_KIND_NOTE[kind],
+          extra,
+        ].filter(Boolean).join(" "),
+        body: parts(head, problem, "{impact}", `${SOLUTION[language].made[fix ? "fix" : "new"](l.noun)}\n{offer}`,
+          LINK_LINE[language], SAMPLE_TRUTH[language], LINK_ASK[language]),
+        link: "demo",
+        twinOf: id,
+      });
+    }
   };
   add("new_website", "made", l.noSite);
   if (l.poorSite) add("fix_website", "made", l.poorSite, l.fixNote);
@@ -605,12 +705,6 @@ const PITCH_FIRST: MessageTemplate[] = [
 
 /* ── After they say yes: the link, the honest lines, two call times ───────── */
 
-/** The two lines that travel with every demo link (the approved after-yes message, one thought a line). */
-const SAMPLE_TRUTH: Record<TemplateLanguage, string> = {
-  hinglish: "Ye sirf demonstration hai, aapki live site nahi.\nJo jaankari aapki taraf se nahi mili, wo abhi sample hai.",
-  en: "It is only a demonstration, not your live site.\nAnything we did not get from you is sample content for now.",
-  hi: "ये सिर्फ़ डेमो है, आपकी लाइव साइट नहीं।\nजो जानकारी आपकी तरफ़ से नहीं मिली, वो अभी सैंपल है।",
-};
 /** One question with two times: {callSlots} is the next two working days in the kind's window. */
 const CALL_ASK: Record<TemplateLanguage, string> = {
   hinglish: "10 minute ki call ke liye {callSlots}?",
@@ -629,12 +723,6 @@ const YES_EMAIL: Record<"en" | "hinglish", string> = {
 };
 
 const YES_NOTE = "Only after they said yes, within the hour. The two call times follow their good window; change them if you like.";
-const YES_KIND_NOTE: Record<TemplateKind, string> = {
-  dental: "On a demo made from a template, the doctors, fees, timings, reviews and history are samples until the clinic sends its own; the message says so.",
-  school: "On a demo made from a template, the fees, dates and results are samples until the school sends its own; the message says so.",
-  coaching: "Before you send the link, take the template's results and toppers off the demo: a real institute's name must never sit next to toppers it did not give us.",
-  any: "What the demo carries from its template is sample content until they send their own; the message says so.",
-};
 const REPLY_NOTE = "Reply in their thread: open their e-mail and press Reply, so the subject stays theirs.";
 
 const yes = (id: string, channel: TemplateChannel, kind: TemplateKind, language: TemplateLanguage, body: string): MessageTemplate => ({
@@ -755,6 +843,25 @@ const WA_FOLLOW_UPS: MessageTemplate[] = [
   waFollowUp("wa_fu1_en_offer", "any", "en", "offer"),
 ];
 
+/* After a first WhatsApp that carried their sample's link (2 Oct 2026): it points back to the link and never offers it again. */
+const WA_FOLLOW_UP_AFTER_LINK: Record<"en" | "hinglish", string> = {
+  hinglish: parts("Namaste {greeting},",
+    "{senderFirstName}, Ideovent se. Kuch din pehle aapke {kindNoun} ka sample page bheja tha. Uska link upar wale message mein hai.",
+    "Main yahin chhod raha hoon. Kabhi baat karni ho to bas \"haan\" likh dijiye."),
+  en: parts("Good {timeOfDay} {greeting},",
+    "{senderFirstName} from Ideovent here. A few days ago I sent you the sample page for your {kindNoun}. Its link is in my message above.",
+    "I will leave it here. If you would like to talk about it later, just reply \"yes\"."),
+};
+const WA_FOLLOW_UPS_AFTER_LINK: MessageTemplate[] = WA_FOLLOW_UPS.filter((t) => t.sample === "made").map((t) => ({
+  ...t,
+  id: `${t.id}_after_link`,
+  label: `Follow-up: the one WhatsApp follow-up, day 4, after the link (${TAG[t.kind]})`,
+  note: `Four days after the first message, only if they have not replied. Their first message carried their sample's link: this one points back to it and does not send it again. It is the last WhatsApp: after it, e-mail, call or stop. ${WHEN[t.kind]}`,
+  body: WA_FOLLOW_UP_AFTER_LINK[t.language as "en" | "hinglish"],
+  afterLink: true,
+  twinOf: t.id,
+}));
+
 /* E-mail: short replies in the same thread, a blank line between the point and
    the question. Day 9 brings one new, true, useful point (their Google
    listing), never the observation of the first e-mail. Each opens with their
@@ -833,6 +940,41 @@ const EMAIL_FOLLOW_UPS: MessageTemplate[] = (["follow_up_1", "follow_up_2", "fol
     ),
   ),
 );
+
+/* After a first e-mail that carried their sample's link (2 Oct 2026): the approved day-4, day-9 and day-16
+   openers word for word, then a line that points back to the link ("in my first e-mail": true whether he
+   replies in the thread or not) and asks about the sample. Never the offer of the link again. */
+const EMAIL_FOLLOW_UP_AFTER_LINK: Record<FollowUpStage, Record<"en" | "hinglish", (who: Who) => string>> = {
+  follow_up_1: {
+    en: () => parts("{addressAs}, a quick note on the sample I made for {instituteName}. Its link is in my first e-mail.",
+      "If you like it, shall we talk for 10 minutes?"),
+    hinglish: () => parts("{addressAs}, aapke {kindNoun} ke liye jo sample banaya hai, uske baare mein ek chhoti si baat. Uska link mere pehle mail mein hai.",
+      "Pasand aaye to kya 10 minute baat kar sakte hain?"),
+  },
+  follow_up_2: {
+    en: (w) => parts("{addressAs}, one more thing that may help, whether or not you use the sample.", LISTING.en(w),
+      "The sample's link is in my first e-mail.\nShall we talk about the sample for 10 minutes?"),
+    hinglish: (w) => parts("{addressAs}, ek aur baat jo kaam aa sakti hai, sample lein ya na lein.", LISTING.hinglish(w),
+      "Sample ka link mere pehle mail mein hai.\nKya sample par 10 minute baat kar sakte hain?"),
+  },
+  follow_up_3: {
+    en: () => parts("{addressAs}, I will close this here.", "If you would like to talk about the sample later, just reply yes."),
+    hinglish: () => parts("{addressAs}, main yahin chhod raha hoon.", "Kabhi sample par baat karni ho to bas \"haan\" likh dijiye."),
+  },
+};
+const EMAIL_FOLLOW_UPS_AFTER_LINK: MessageTemplate[] = EMAIL_FOLLOW_UPS.filter((t) => t.sample === "made").map((t) => {
+  const stage = t.stage as FollowUpStage;
+  return {
+    ...t,
+    id: `${t.id}_after_link`,
+    label: `${FOLLOW_UP_DAY[stage].label}, after the link (${TAG[t.kind]})`,
+    note: `${SAME_THREAD_NOTE} ${FOLLOW_UP_DAY[stage].note} Their first e-mail carried their sample's link: this one points back to it and does not send it again.`,
+    subject: "Re: {instituteName} website",
+    body: EMAIL_FOLLOW_UP_AFTER_LINK[stage][t.language as "en" | "hinglish"](t.kind === "dental" ? { en: "Patients", hinglish: "wale patients" } : { en: "People", hinglish: "walon" }),
+    afterLink: true,
+    twinOf: t.id,
+  };
+});
 
 /* ── After the call: the approved same-day summary, as a list ─────────────── */
 
@@ -1039,13 +1181,29 @@ export const OUTREACH_TEMPLATES: MessageTemplate[] = [
   ...PROPOSALS,
 ];
 
+/** The twins the compose screen swaps in (2 Oct 2026). Never listed or ranked; getTemplate() resolves them. */
+export const LINK_TEMPLATES: MessageTemplate[] = [...FIRST_WITH_LINK, ...WA_FOLLOW_UPS_AFTER_LINK, ...EMAIL_FOLLOW_UPS_AFTER_LINK];
+
 /* ── Lookups ─────────────────────────────────────────────────────────────── */
 
-const BY_ID = new Map([...OUTREACH_TEMPLATES, ...RETIRED_TEMPLATES].map((t) => [t.id, t]));
+const BY_ID = new Map([...OUTREACH_TEMPLATES, ...RETIRED_TEMPLATES, ...LINK_TEMPLATES].map((t) => [t.id, t]));
+const TWIN_OF = new Map(LINK_TEMPLATES.map((t) => [t.twinOf as string, t]));
 
-/** A template by id, the retired ones included (a history entry may name one). */
+/** A template by id, the retired ones and the twins included (a history entry may name one). */
 export function getTemplate(id: string | undefined | null): MessageTemplate | undefined {
   return id ? BY_ID.get(id) : undefined;
+}
+
+/** The version of a first message that carries their sample's link. */
+export function linkTwinOf(t: Pick<MessageTemplate, "id"> | undefined | null): MessageTemplate | undefined {
+  const x = t ? TWIN_OF.get(t.id) : undefined;
+  return x?.link === "demo" ? x : undefined;
+}
+
+/** The version of a follow-up written for after a first message that carried the link. */
+export function afterLinkTwinOf(t: Pick<MessageTemplate, "id"> | undefined | null): MessageTemplate | undefined {
+  const x = t ? TWIN_OF.get(t.id) : undefined;
+  return x?.afterLink ? x : undefined;
 }
 
 export interface TemplateFilter {
