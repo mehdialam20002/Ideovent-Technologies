@@ -4,6 +4,14 @@
  *   npm run gate            assumes a dev server on 5199, starts one if absent
  *   npm run gate -- --no-browser   skips the two checks that need a browser
  *
+ * For a second checkout (a git worktree) that must not collide with the first:
+ *   GATE_PORT=5578          the browser gates use a dev server on that port instead
+ *   GATE_OUT_DIR=<folder>   the build gate runs package.json's own build chain with
+ *                           `vite build --outDir <folder>` and PRERENDER_DIST=<folder>,
+ *                           so the checkout's dist/ is left alone. The chain still
+ *                           regenerates public/sitemap.xml and public/robots.txt from
+ *                           VITE_PUBLIC_URL, exactly as `npm run build` does.
+ *
  * WHY THIS EXISTS
  *
  * The checks were correct and scattered, which meant in practice that the fast
@@ -22,11 +30,13 @@
  * "typecheck passed" reported with that command was meaningless.
  */
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { createConnection } from "node:net";
 
 const args = process.argv.slice(2);
 const noBrowser = args.includes("--no-browser");
-const PORT = 5199;
+const PORT = Number(process.env.GATE_PORT) || 5199;
+const OUT_DIR = process.env.GATE_OUT_DIR || "";
 
 function run(cmd, cmdArgs, opts = {}) {
   return new Promise((resolve) => {
@@ -77,6 +87,20 @@ const GATES = [
     browser: true, why: "a browser that saved once must still see every later deploy" },
 ];
 
+// GATE_OUT_DIR: the build gate becomes package.json's build chain itself (read at run
+// time, so it cannot drift from `npm run build`), with the one `vite build` in it pointed
+// at the folder and prerender-heads reading the same folder through PRERENDER_DIST.
+if (OUT_DIR) {
+  const chain = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.build;
+  const VITE_BUILD = /(^|&& )vite build(?= &&|$)/;
+  if (!VITE_BUILD.test(chain)) throw new Error(`GATE_OUT_DIR: package.json's build script no longer has a plain "vite build" step: ${chain}`);
+  const build = GATES.find((g) => g.name === "build");
+  build.cmd = chain.replace(VITE_BUILD, `$1vite build --outDir "${OUT_DIR}" --emptyOutDir`);
+  build.args = [];
+  build.env = { PRERENDER_DIST: OUT_DIR };
+  console.log(`build gate: into ${OUT_DIR}, not dist/`);
+}
+
 let server = null;
 const needBrowser = !noBrowser && GATES.some((g) => g.browser);
 
@@ -100,7 +124,7 @@ for (const g of GATES) {
   }
   process.stdout.write(`      ${g.name.padEnd(16)} ...`);
   const t0 = Date.now();
-  const { code, out } = await run(g.cmd, g.args);
+  const { code, out } = await run(g.cmd, g.args, g.env ? { env: { ...process.env, ...g.env } } : {});
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   if (code === 0) {
     console.log(`\rok    ${g.name.padEnd(16)} ${secs}s`);

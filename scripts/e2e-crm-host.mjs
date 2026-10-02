@@ -455,12 +455,25 @@ try {
 }
 /* The generated bare-slug rules follow the route table (sync-noindex-header.mjs --check owns them). */
 const generated = (r) => typeof r.source === "string" && /^\/:(pitchSlug|slug)\(/.test(r.source);
+/* The SPA catch-all is checked on its own below: its destination moved from
+   /index.html to /spa-shell.html on 2 Oct 2026 (scripts/prerender-heads.mjs). */
+const SPA_SOURCE = "/((?!assets/).*)";
+const SPA_FALLBACKS = ["/spa-shell.html", "/index.html"];
 if (head) {
+  /* A rule is the same rule if its source and its conditions are (2 Oct 2026):
+     a destination can move on purpose (the SPA fallback to /spa-shell.html, the
+     old /blogs/N posts to the pages that replaced them), and comparing whole
+     rules read every such change as a rule dropped until it was committed. A
+     header rule may change a value but must not lose a header. */
+  const ruleKey = (r) => JSON.stringify([r.source, r.has || null, r.missing || null]);
   for (const kind of ["redirects", "rewrites", "headers"]) {
-    const nowSet = new Set((vercel[kind] || []).map((r) => JSON.stringify(r)));
+    const now = new Map((vercel[kind] || []).map((r) => [ruleKey(r), r]));
     const kept = (head[kind] || []).filter((r) => !generated(r));
-    const missing = kept.filter((r) => !nowSet.has(JSON.stringify(r)));
-    check(!missing.length, `vercel.json keeps all ${kept.length} ${kind} it had at HEAD`, missing.map((r) => r.source).join(", "));
+    const missing = kept.filter((r) => !now.has(ruleKey(r)));
+    const lostHeader = kind !== "headers" ? [] : kept.filter((r) => now.has(ruleKey(r))
+      && (r.headers || []).some((h) => !(now.get(ruleKey(r)).headers || []).some((x) => x.key === h.key)));
+    check(!missing.length && !lostHeader.length, `vercel.json keeps all ${kept.length} ${kind} it had at HEAD`,
+      [...missing.map((r) => `dropped ${r.source}`), ...lostHeader.map((r) => `lost a header on ${r.source}`)].join(", "));
   }
 }
 const onCrm = (r) => Array.isArray(r.has) && r.has.some((h) => h.type === "host" && h.value === CRM_HOST_NAME);
@@ -468,8 +481,8 @@ const crmHeader = (vercel.headers || []).find((h) => h.source === "/(.*)" && onC
 check(Boolean(crmHeader?.headers?.some((x) => x.key === "X-Robots-Tag" && x.value === "noindex, nofollow")), `vercel.json: X-Robots-Tag "noindex, nofollow" on every path of ${CRM_HOST_NAME}`, JSON.stringify(crmHeader));
 const crmRobots = [...(vercel.redirects || []), ...(vercel.rewrites || [])].find((r) => r.source === "/robots.txt" && onCrm(r));
 check(crmRobots?.destination === "/robots-crm.txt", `vercel.json: /robots.txt on ${CRM_HOST_NAME} answers with /robots-crm.txt`, JSON.stringify(crmRobots));
-const spa = (vercel.rewrites || []).find((r) => r.destination === "/index.html");
-check(Boolean(spa) && !spa.has && !spa.missing, "vercel.json: the SPA fallback to index.html has no host condition, so the CRM host gets it too", JSON.stringify(spa));
+const spa = (vercel.rewrites || []).find((r) => r.source === SPA_SOURCE && SPA_FALLBACKS.includes(r.destination));
+check(Boolean(spa) && !spa.has && !spa.missing, "vercel.json: the SPA fallback (to the shell file) has no host condition, so the CRM host gets it too", JSON.stringify(spa));
 /* 1 Oct 2026: the old production alias answers every path with a 308 to the same path on
    www.ideovent.in. It is the one host-limited rule allowed that is not the CRM host's. */
 const OLD_ALIAS = "ideovent.vercel.app";

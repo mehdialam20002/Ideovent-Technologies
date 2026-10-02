@@ -587,7 +587,16 @@ export default function Navbar() {
                 <div
                   className={cn(
                     "grid gap-x-8 gap-y-6",
-                    openItem.panel.groups.length >= 4 ? "grid-cols-4" : openItem.panel.groups.length === 3 ? "grid-cols-3" : "grid-cols-2"
+                    // Five groups (the services' four categories plus Websites,
+                    // 2 Oct 2026): three columns at 1024px, where five would be
+                    // too narrow for the descriptions, and one row from 1280px.
+                    openItem.panel.groups.length >= 5
+                      ? "grid-cols-3 xl:grid-cols-5"
+                      : openItem.panel.groups.length === 4
+                        ? "grid-cols-4"
+                        : openItem.panel.groups.length === 3
+                          ? "grid-cols-3"
+                          : "grid-cols-2"
                   )}
                 >
                   {openItem.panel.groups.map((group) => {

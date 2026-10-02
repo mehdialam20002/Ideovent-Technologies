@@ -586,6 +586,13 @@ export interface Project extends BaseDoc {
    * 06-portfolio/case-studies opens with, so the two stay in step.
    */
   sector?: string;
+  /* Search fields (SEO audit, 2 Oct 2026). Optional, as on Service: without
+     them the case study's <title> is built from `title` and its description
+     is `summary` cut at a sentence. See src/lib/seo/pages.ts, projectSeo(). */
+  /** The complete <title>, brand included, 50 to 60 characters. Ignored on employer work. */
+  seoTitle?: string;
+  /** Meta description, 150 to 155 characters, saying only what the page itself says. */
+  metaDescription?: string;
 }
 
 export interface TeamMember extends BaseDoc {

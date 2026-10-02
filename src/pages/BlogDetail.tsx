@@ -16,12 +16,7 @@ import { sanitizeRich } from "@/lib/sanitize";
 import type { BlogPost } from "@/lib/cms/types";
 import { postSeo } from "@/lib/seo/pages";
 import { blogPostingNode } from "@/lib/seo/schema";
-
-function formatDate(value: string) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-}
+import { formatPostDate as formatDate } from "@/lib/postDate";
 
 /** Single article view for /blog/: slug. */
 export default function BlogDetail() {
@@ -42,11 +37,17 @@ export default function BlogDetail() {
     [posts, slug]
 );
 
+  /* "Keep reading": the three posts AFTER this one, wrapping round (2 Oct 2026).
+     It used to be the first three of the list on every page, so with five posts
+     the fourth and fifth were linked from nowhere: internal links are how a
+     crawler, and a reader, find a post. Now every post is linked from three. */
   const related = useMemo(() => {
     if (!post) return [] as BlogPost[];
-    const others = posts.filter((p) => p.id !== post.id && p.status !== "draft");
+    const live = posts.filter((p) => p.status !== "draft");
+    const at = live.findIndex((p) => p.id === post.id);
+    const others = at < 0 ? live : [...live.slice(at + 1), ...live.slice(0, at)];
     const shared = others.filter((p) => p.tags?.some((t) => post.tags?.includes(t)));
-    const pool = shared.length ? shared: others;
+    const pool = shared.length ? shared : others;
     return pool.slice(0, 3);
   }, [posts, post]);
 
@@ -132,10 +133,14 @@ export default function BlogDetail() {
               <span className="inline-flex items-center gap-1.5">
                 <PenLine className="h-3.5 w-3.5" aria-hidden="true" /> {post.author}
               </span>
-              {/* No date unless the record has a real one (see seed.ts). */}
+              {/* No date unless the record has a real one (see seed.ts). Labelled
+                  "Published", as Google's byline-date guidance asks, and in a
+                  <time> carrying the same value BlogPosting sends as
+                  datePublished. */}
               {post.publishDate && (
                 <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
-                  <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(post.publishDate)}
+                  <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> Published{" "}
+                  <time dateTime={post.publishDate}>{formatDate(post.publishDate)}</time>
                 </span>
               )}
             </div>
@@ -154,7 +159,9 @@ export default function BlogDetail() {
                 alt=""
                 width={1200}
                 height={675}
-                // eslint-disable-next-line react/no-unknown-property
+                // fetchpriority goes through as a plain attribute: React 18's types have
+                // no prop for it. (The eslint-disable that sat here named a rule this
+                // project does not install, which ESLint reports as an error itself.)
                 {...({ fetchpriority: "high" } as Record<string, string>)}
                 decoding="async"
                 className="aspect-[16/9] w-full object-cover"
@@ -204,13 +211,25 @@ export default function BlogDetail() {
                 "[&>h4]:mt-8 [&>h4]:mb-2 [&>h4]:font-display [&>h4]:text-lg [&>h4]:font-semibold [&>h4]:text-foreground",
                 "[&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary/80",
                 "[&_strong]:text-foreground [&_strong]:font-semibold",
-                "[&>ul]:my-5 [&>ul]:list-disc [&>ul]:pl-6 [&>ul>li]:my-2 [&>ul>li]:marker: text-primary",
-                "[&>ol]:my-5 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol>li]:my-2 [&>ol>li]:marker: text-muted-foreground",
+                // "marker:text-primary", one token. A space after the colon (26 Sep
+                // release) split it into a bare `text-primary` on this container,
+                // which coloured every list item instead of only the bullets.
+                "[&>ul]:my-5 [&>ul]:list-disc [&>ul]:pl-6 [&>ul>li]:my-2 [&>ul>li]:marker:text-primary",
+                "[&>ol]:my-5 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol>li]:my-2 [&>ol>li]:marker:text-muted-foreground",
                 "[&>blockquote]:my-6 [&>blockquote]:rounded-r-2xl [&>blockquote]:border-l-4 [&>blockquote]:border-primary [&>blockquote]:bg-card/60 [&>blockquote]:py-2 [&>blockquote]:pl-5 [&>blockquote]:pr-4 [&>blockquote]:italic [&>blockquote]:text-foreground/80",
                 "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_code]:text-foreground",
                 "[&>pre]:my-6 [&>pre]:overflow-x-auto [&>pre]:rounded-2xl [&>pre]:border [&>pre]:border-border [&>pre]:bg-muted [&>pre]:p-5 [&>pre]:text-sm [&_pre_code]:bg-transparent [&_pre_code]:p-0",
                 "[&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:border-border",
                 "[&>hr]:my-10 [&>hr]:border-border",
+                // Tables (2 Oct 2026, the price comparisons). The typography plugin
+                // is not installed, so `prose` styles nothing and a table arrived
+                // bare. sanitizeRich wraps each table in div.legal-table; that box
+                // scrolls sideways on a phone, so a table of three or more columns
+                // keeps a readable width and the page itself never scrolls sideways.
+                "[&_.legal-table]:my-8 [&_.legal-table]:overflow-x-auto [&_.legal-table]:rounded-2xl [&_.legal-table]:border [&_.legal-table]:border-border",
+                "[&_table]:w-full [&_table]:border-collapse [&_table]:text-left [&_table]:text-sm md:[&_table]:text-base [&_table:has(th:nth-child(3))]:min-w-[34rem]",
+                "[&_th]:bg-muted/60 [&_th]:px-4 [&_th]:py-3 [&_th]:align-top [&_th]:font-semibold [&_th]:text-foreground",
+                "[&_td]:px-4 [&_td]:py-3 [&_td]:align-top [&_td]:text-foreground/85 [&_td:first-child]:font-medium [&_td:first-child]:text-foreground [&_tbody_tr]:border-t [&_tbody_tr]:border-border",
               ].join(" ")}
               dangerouslySetInnerHTML={{ __html: sanitizeRich(post.body) }}
             />
@@ -300,7 +319,8 @@ export default function BlogDetail() {
                       <div className="mt-auto flex items-center justify-between gap-4 pt-2 text-xs text-muted-foreground">
                         {p.publishDate ? (
                           <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
-                            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(p.publishDate)}
+                            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />{" "}
+                            <time dateTime={p.publishDate}>{formatDate(p.publishDate)}</time>
                           </span>
                         ) : <span aria-hidden="true" />}
                         <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">

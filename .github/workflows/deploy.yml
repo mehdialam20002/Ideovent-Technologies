@@ -73,7 +73,9 @@ jobs:
         run: printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
 
       - name: SPA fallback (deep links)
-        run: cp dist/index.html dist/404.html
+        # The shell, not index.html: since 2 Oct 2026 index.html is the homepage
+        # with its canonical (scripts/prerender-heads.mjs, SHELL_FILE).
+        run: cp dist/spa-shell.html dist/404.html
 
       - uses: actions/configure-pages@v5
 

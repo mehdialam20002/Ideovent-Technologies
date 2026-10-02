@@ -21,6 +21,18 @@ const WIDTHS = [320, 360, 390, 414, 768, 834, 1024, 1280, 1366, 1440, 1600, 1920
 const ROUTES = [
   '/', '/about', '/services', '/services/ui-ux-design', '/work', '/pricing',
   '/eduflow', '/internship', '/blog', '/faq', '/contact', '/verify', '/privacy',
+  // The search landing pages and the blog posts (2 Oct 2026). They are the pages
+  // most likely to be a visitor's first page from Google, on a phone. A post is
+  // its own layout (article body, tables that scroll inside their own box), so
+  // every published one is measured, not just /blog. If a post is unpublished or
+  // renamed, change its address here in the same pass.
+  '/websites', '/websites/dental-clinic', '/websites/school', '/websites/coaching-institute',
+  '/websites/899-per-month',
+  '/blog/website-cost-in-india', '/blog/dental-clinic-website-checklist',
+  '/blog/school-website-requirements', '/blog/coaching-institute-website-guide',
+  '/blog/monthly-website-plan-vs-one-time-payment',
+  // The employer-work case page: a different card and band from the client cases.
+  '/work/wtf-go',
   // A pitch page. It is not in the sitemap and it is noindex, but it is a real
   // page a real prospect opens on a phone, usually on mobile data, so it is
   // measured with the rest. This is the example record that ships in the seed;

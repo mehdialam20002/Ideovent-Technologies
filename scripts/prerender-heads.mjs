@@ -16,14 +16,23 @@
  * the page's h1 and text. The values come from src/lib/seo/prerender.ts, which
  * calls the same helpers the pages call. Vercel serves a real file before it
  * applies the SPA rewrite in vercel.json (VERCEL-CONFIG-NOTES.md), so
- * /services/seo gets dist/services/seo/index.html and everything else still
- * gets dist/index.html. React then renders into #root exactly as before.
+ * /services/seo gets dist/services/seo/index.html, / gets dist/index.html and
+ * everything else gets the fallback below. React then renders into #root
+ * exactly as before.
  *
- * dist/index.html itself is also served for every address WITHOUT a file of its
- * own (pitch pages, demos, the admin, a post added in /admin after the build),
- * so it keeps the homepage's title and description but NO canonical and no
- * og:url; <Seo> sets those at runtime, the pattern Google documents for SPAs.
- * Its developer comments (11 KB of the 18.7 KB file) are stripped on the way.
+ * TWO FILES FOR "/" AND FOR EVERYTHING ELSE (2 Oct 2026). dist/index.html is the
+ * homepage, with its own canonical, og:url, title and description in the static
+ * HTML, because Google's JavaScript SEO guide says "the best way to set the
+ * canonical URL is to use HTML". The SPA fallback, served for every address
+ * WITHOUT a file of its own (pitch pages, demos, the admin, a mistyped URL, a
+ * post added in /admin after the build), is a separate file, dist/spa-shell.html
+ * (SHELL_FILE below): the homepage's title and description but NO canonical and
+ * no og:url, so it never tells Google that a pitch page or a 404 is the homepage;
+ * <Seo> sets those at runtime there, the other pattern the same guide allows.
+ * vercel.json's catch-all rewrite points at /spa-shell.html, and api/share.js
+ * reads it for the link-preview cards. Before this, dist/index.html was both,
+ * so the homepage itself had no canonical in its HTML.
+ * Developer comments (11 KB of the 18.7 KB file) are stripped from both.
  *
  * NOT DONE HERE: rendering the React page itself to HTML (SSR/SSG with
  * hydrateRoot). That is the next step for speed and is several days of work;
@@ -40,6 +49,14 @@ const SITE = path.resolve(HERE, "..");
 // PRERENDER_DIST: a build made with `vite build --outDir <dir>` elsewhere.
 const DIST = process.env.PRERENDER_DIST ? path.resolve(process.env.PRERENDER_DIST) : path.join(SITE, "dist");
 const ENTRY = path.join(SITE, "src", "lib", "seo", "prerender.ts");
+/**
+ * The SPA fallback's file name. These name it too and must change with it:
+ * the catch-all rewrite in vercel.json, public/_redirects, api/share.js (SHELL_PATH),
+ * scripts/sync-noindex-header.mjs (SPA_FALLBACKS), scripts/e2e-crm-host.mjs and
+ * the 404.html step of .github/workflows/deploy.yml. Not exported: importing
+ * this file runs the prerender.
+ */
+const SHELL_FILE = "spa-shell.html";
 
 /** .env the way generate-sitemap.mjs reads it: a real env var always wins. */
 async function loadDotEnv() {
@@ -142,19 +159,37 @@ try {
     if (seenDesc.has(head.description)) problems.push(`same description on ${route} and ${seenDesc.get(head.description)}`);
     seenTitle.set(head.title, route);
     seenDesc.set(head.description, route);
-    if (route === "/") continue; // dist/index.html, written below as the shell
+    // "/" lands on dist/index.html itself: the homepage, canonical included.
     const dir = path.join(DIST, ...route.split("/").filter(Boolean));
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, "index.html"), applyHead(shell, head), "utf8");
     written++;
   }
+  // The homepage is always in the sitemap; if it ever is not, it still gets its head.
+  if (!paths.includes("/")) {
+    problems.push("/ is not in the sitemap: dist/index.html written from src/lib/seo/prerender.ts anyway");
+    await writeFile(path.join(DIST, "index.html"), applyHead(shell, mod.headFor("/")), "utf8");
+    written++;
+  }
 
-  const home = mod.shellHead();
-  await writeFile(path.join(DIST, "index.html"), applyHead(shell, home), "utf8");
+  // The SPA fallback: the homepage's title and description, NO canonical, no og:url.
+  const fallback = applyHead(shell, mod.shellHead());
+  await writeFile(path.join(DIST, SHELL_FILE), fallback, "utf8");
+
+  // Prove both, every build: one canonical on "/", none in the fallback.
+  const canonicals = (html) => [...html.matchAll(/<link\b[^>]*\brel="canonical"[^>]*>/gi)].map((m) => (m[0].match(/href="([^"]*)"/) || [])[1]);
+  const homeHtml = await readFile(path.join(DIST, "index.html"), "utf8");
+  const homeCanon = canonicals(homeHtml);
+  if (homeCanon.length !== 1 || homeCanon[0] !== `${mod.host}/`) {
+    throw new Error(`dist/index.html must carry exactly one canonical, ${mod.host}/; found ${JSON.stringify(homeCanon)}`);
+  }
+  if (canonicals(fallback).length || /property="og:url"/.test(fallback)) {
+    throw new Error(`dist/${SHELL_FILE} is served for addresses without their own file and must carry no canonical and no og:url`);
+  }
 
   const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
-  console.log(`prerender    ${written} route files + dist/index.html (shell, no canonical)  host ${mod.host}`);
-  console.log(`  shell ${kb(Buffer.byteLength(built))} -> ${kb(Buffer.byteLength(applyHead(shell, home)))} (developer comments stripped)`);
+  console.log(`prerender    ${written} route files incl. dist/index.html (canonical ${homeCanon[0]})  host ${mod.host}`);
+  console.log(`  dist/${SHELL_FILE}: the SPA fallback, no canonical, ${kb(Buffer.byteLength(built))} -> ${kb(Buffer.byteLength(fallback))} (developer comments stripped)`);
   for (const p of problems) console.warn(`  WARN ${p}`);
 } finally {
   await cleanup();

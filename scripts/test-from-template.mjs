@@ -812,9 +812,10 @@ check(
   const printed = (id) => M.pitchPackage({ recommendedPackage: id, market: M.PITCH_PACKAGES.find((p) => p.id === id).market, instituteType: "dental" });
   check(M.PITCH_PACKAGES.every((p) => clinicOpts.find((o) => o.value === p.id)?.label.includes(`${printed(p.id).label}, ${p.range}`)),
     "pitch packages: every clinic option reads the label and the range the clinic's page prints");
-  check(!clinicOpts.some((o) => /School website|Coaching or school portal/.test(o.label)) && clinicOpts.some((o) => o.label === "India: Clinic website, ₹20,000 to ₹45,000"),
+  // The Website band is ₹12,000 to ₹25,000 since 1 Oct 2026 (src/lib/pricing.ts).
+  check(!clinicOpts.some((o) => /School website|Coaching or school portal/.test(o.label)) && clinicOpts.some((o) => o.label === "India: Clinic website, ₹12,000 to ₹25,000"),
     `pitch packages: a clinic is offered "Clinic website", never a school's package (${clinicOpts.map((o) => o.label).join(" | ")})`);
-  check(M.pitchPackageOptionsFor().some((o) => o.label === "India: School website, ₹20,000 to ₹45,000"), "pitch packages: a school still reads School website");
+  check(M.pitchPackageOptionsFor().some((o) => o.label === "India: School website, ₹12,000 to ₹25,000"), "pitch packages: a school still reads School website");
 
   /* A dental page with nothing on it, and a missing photograph, never speak of courses, a centre or a campus. */
   const dentalWords = [M.EMPTY_COPY.bodyDental.en, M.EMPTY_COPY.noPhotoDental.en].join(" ");

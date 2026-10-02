@@ -2,7 +2,11 @@
  * Post-build guard for the home hero's 3D layer. Runs in `npm run build`, after
  * `vite build` and before prerender-heads.
  *
- *   node scripts/check-hero-3d.mjs [--dist <dir>]     (default: dist)
+ *   node scripts/check-hero-3d.mjs [--dist <dir>]     (default: $PRERENDER_DIST, else dist)
+ *
+ * PRERENDER_DIST is the folder `npm run gate` builds into when GATE_OUT_DIR is set
+ * (scripts/gate.mjs sets it for the whole build chain), so this check reads the
+ * build that was just made there, never a stale dist/.
  *
  * Fails the build when:
  *   - three.js reached the critical path: any chunk index.html loads, or that one
@@ -25,7 +29,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const di = args.indexOf("--dist");
-const dist = path.resolve(root, di >= 0 ? args[di + 1] : "dist");
+const dist = path.resolve(root, di >= 0 ? args[di + 1] : process.env.PRERENDER_DIST || "dist");
 const assets = path.join(dist, "assets");
 const MARK = "KHR_parallel_shader_compile";
 const BUDGET = { renderGz: 150000, renderRaw: 600000, workerGz: 3000 };

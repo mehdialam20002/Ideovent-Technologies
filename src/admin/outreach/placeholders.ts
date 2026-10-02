@@ -1,4 +1,5 @@
 import { PLACEHOLDER_RE } from "@/lib/outreach/engine";
+import { ONE_TIME, inr } from "@/lib/pricing";
 
 /**
  * BLANKS IN A MESSAGE: "[package and price]", "[date]". The approved after-call
@@ -62,11 +63,13 @@ export function listBlanks(names: string[]): string {
 }
 
 /**
- * Website options exactly as /pricing lists them (src/pages/Pricing.tsx,
- * "Website": Essential, Professional, Premium; the clinic range in the approved
- * call flow is the same Rs 20,000 to 45,000). Offered as suggestions only.
+ * Website options exactly as /pricing lists them ("Website": Essential,
+ * Professional, Premium), read from src/lib/pricing.ts since 2 Oct 2026: Rs
+ * 12,000 / 18,000 / 25,000, the middle one still Mehdi's to confirm. Offered as
+ * suggestions only.
  */
-export const WEBSITE_OPTIONS = ["Website Essential, Rs 20,000", "Website Professional, Rs 30,000", "Website Premium, Rs 45,000"];
+const WEBSITE_TIER_NAMES = ["Website Essential", "Website Professional", "Website Premium"];
+export const WEBSITE_OPTIONS = ONE_TIME.website.tiers.map((n, i) => `${WEBSITE_TIER_NAMES[i] || "Website"}, ${inr(n).replace("₹", "Rs ")}`);
 
 /** The next `n` working days (Monday to Saturday) after `from`, as "Monday 5 Oct". */
 export function nextWorkingDays(from: Date, n = 6): string[] {

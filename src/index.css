@@ -1365,3 +1365,52 @@
      initials discs are how the page is recognisably ours. */
 .pitch-doc { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SECTIONS BELOW THE FIRST ONE ARE RENDERED WHEN THEY COME NEAR THE SCREEN
+   (2 Oct 2026, the mobile speed fix).
+
+   The home page is 19,000 px tall at 390 px wide, about 1,000 elements, and
+   the browser laid ALL of it out before the first paint, then again after
+   each web font arrived. Traced in Chrome at 4x CPU throttling on a
+   production build: 1.5 to 1.9 s of layout, one single layout of 0.9 to
+   1.0 s, before the h1 could appear. Lighthouse's mobile run put
+   "Style & Layout" at 3.4 s of 5.6 s of main-thread work.
+
+   `content-visibility: auto` lets the browser skip style, layout and paint
+   for a section until it is near the viewport. The content stays in the
+   page: in the DOM and the accessibility tree, reachable by Tab, by
+   find-in-page and by a link to an #anchor (web.dev/articles/content-visibility).
+   Nothing is removed from the DOM, so a crawler that renders the page reads
+   the same text. The first section of every page, the one on screen when it
+   opens, is left alone.
+
+   WHAT IT ALSO DOES, AND WHY THAT IS SAFE HERE. `auto` turns on layout and
+   paint containment for the section: a descendant's ink is clipped to the
+   section's box, and a position:fixed descendant would be placed against the
+   section instead of the screen. Every public page was checked on 2 Oct 2026
+   (45 addresses at 390 and 1280 px): #main's first child is a section on all
+   of them, no section holds a fixed element, and nothing visible sticks out
+   of one. A NEW SECTION THAT NEEDS EITHER (a fixed bar, a glow that spills
+   into the next section) must sit outside #main or opt out with
+   `content-visibility: visible`.
+
+   The site footer (Footer.tsx, the element right after #main) gets the same:
+   it holds no fixed element, and its glow sits inside its own overflow-hidden
+   band. On a page shorter than the screen it is on screen, so it renders at
+   once as before.
+
+   `contain-intrinsic-size: auto 900px` is the placeholder height of a
+   section that has never been rendered, so the scrollbar is roughly right;
+   once rendered, `auto` keeps its real height.
+   ───────────────────────────────────────────────────────────────────────── */
+#main > section:not(:first-child),
+#main + footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+@media print {
+  /* Paper gets every section, whatever was scrolled to. */
+  #main > section:not(:first-child),
+  #main + footer { content-visibility: visible; }
+}

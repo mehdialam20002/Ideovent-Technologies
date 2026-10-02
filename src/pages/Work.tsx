@@ -9,6 +9,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { CtaButton } from "@/components/ui/cta-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProjectCover, employerCredit } from "@/components/ui/project-cover";
+import { EmployerWorkCard } from "@/components/ui/employer-work-card";
 import { Reveal } from "@/components/motion/Reveal";
 import { useCollection } from "@/lib/cms/context";
 import { staggerContainer, fadeUp } from "@/lib/motion";
@@ -63,6 +64,26 @@ const BANDS: {
   pad: string;
   intro: string;
 }[] = [
+  /*
+    MEHDI ALAM'S WORK ELSEWHERE COMES FIRST (2 Oct 2026, Mehdi: "project me
+    wtfgos.com ko phle dikhao"). The band moved, its label did not soften: the
+    eyebrow is "Experience" (the heading FACTS.md's attribution rule allows for
+    employer work), the heading says it was built for someone else, and the card
+    names the employer before the product and says it is not an Ideovent client
+    project. The Work menu (src/components/layout/navPanels.ts, PROJECT_BANDS)
+    lists the bands in the same order under the same names.
+  */
+  {
+    key: "employer work",
+    eyebrow: "Experience",
+    title: "Built by Mehdi Alam, ",
+    accent: "for someone else",
+    pad: "pt-14 pb-10 md:pt-20 md:pb-14",
+    intro:
+      // 2 Oct 2026: was "Before and alongside Ideovent". Ideovent dates from 2019
+      // and his employment from 2024 (FACTS.md), so it ran alongside, not after.
+      "Alongside Ideovent, Mehdi Alam has also worked as a full-stack developer for other companies. That work belongs to those companies, not to us, and it is listed here with them named. It is not client work and we are not selling it.",
+  },
   {
     key: "web",
     eyebrow: "Client projects",
@@ -81,15 +102,6 @@ const BANDS: {
     pad: "pt-10 pb-12 md:pt-14 md:pb-16",
     intro:
       "Every agency says it builds software. These are the ones we built without a client paying us to, which is a different kind of evidence.",
-  },
-  {
-    key: "employer work",
-    eyebrow: "Elsewhere",
-    title: "Built by Mehdi Alam, ",
-    accent: "for someone else",
-    pad: "pt-8 pb-10 md:pt-10 md:pb-14",
-    intro:
-      "Before and alongside Ideovent, Mehdi Alam has worked as a full-stack developer for other companies. That work belongs to those companies, not to us, and it is listed here with them named. It is not client work and we are not selling it.",
   },
 ];
 
@@ -284,75 +296,12 @@ function LeadProjectRow({ project: p }: { project: Project }) {
   );
 }
 
-/**
- * The founder's work for an employer, as a full-width horizontal card.
- *
- * It is not a variant of ProjectCard and it is not meant to be. FACTS.md's
- * attribution rule is the whole design brief here: this work belongs to the
- * company that employed him, and a reader who glances at this band for one
- * second has to come away with the employer's name, not ours. So the employer
- * is the largest type in the card (larger than the product) and the sentence
- * that says it is not a client project sits directly under it rather than three
- * lines down in a clamped summary.
- *
- * It is also the practical fix for a band that holds one item. A single tile in
- * a three-column grid leaves two thirds of the row empty, which reads as a
- * section that failed to load; a horizontal card fills the width it is given
- * and gets the attribution more room, not less.
- */
-function EmployerWorkCard({ project: p }: { project: Project }) {
-  const employer = (p.clientName ?? "").split(/,\s/)[0].trim();
-
-  return (
-    <Link
-      to={`/work/${p.slug}`}
-      className="group block overflow-hidden rounded-3xl border border-dashed border-primary/45 bg-primary/[0.04] transition-colors duration-200 hover:border-primary/70 motion-reduce:transition-none"
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-12">
-        <div className="relative aspect-[16/10] overflow-hidden lg:col-span-5 lg:aspect-auto lg:min-h-[19rem]">
-          <ProjectCover
-            src={p.coverImage}
-            title={p.title}
-            slot="showcase"
-            panel="tall"
-            noImageReason={p.noImageReason}
-            attribution={employerCredit(p)}
-            className="group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-          />
-        </div>
-
-        <div className="lg:col-span-7 p-7 md:p-10">
-          <p className="text-[0.6875rem] uppercase tracking-[0.18em] text-muted-foreground">
-            Built by Mehdi Alam while employed at
-          </p>
-          <p className="mt-2 font-display text-2xl font-semibold leading-tight md:text-3xl">
-            {employer || p.clientName}
-          </p>
-          <p className="mt-3 max-w-xl text-sm text-foreground/80 text-pretty">
-            This is his professional work for that company. It is not an Ideovent client project,
-            we did not deliver it as a firm, and it is not for sale here.
-          </p>
-
-          <div className="mt-6 border-t border-border/60 pt-6">
-            <h3 className="font-display text-lg font-semibold md:text-xl">{p.title}</h3>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground text-pretty">{p.summary}</p>
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {p.technologies.map((t) => (
-                <span key={t} className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                  {t}
-                </span>
-))}
-            </div>
-            <span className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary">
-              Read what it was
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" />
-            </span>
-          </div>
-        </div>
-      </div>
-    </Link>
-);
-}
+/* The employer-work card lives in src/components/ui/employer-work-card.tsx since
+   2 Oct 2026: the home page's work section shows it too, first, with the same
+   label. It is still the practical fix for a band that holds one item: a single
+   tile in a three-column grid leaves two thirds of the row empty, which reads as a
+   section that failed to load; a horizontal card fills the width it is given and
+   gets the attribution more room, not less. */
 
 export default function Work() {
   const projects = useCollection("projects");
@@ -523,9 +472,11 @@ export default function Work() {
             // section that had failed to load.
             //
             // And not the same padding three times over either: `band.pad`
-            // steps down from the client band to the employer band, so the
-            // page says which of the three matters most with its spacing
-            // rather than only with its wording.
+            // gives the client band the most room, so the page says which of
+            // the three it exists for with its spacing rather than only with
+            // its wording. (The employer band is first since 2 Oct 2026, at
+            // Mehdi's request, with a tight bottom so the client band follows
+            // close behind it.)
             className={cn("scroll-mt-28", band.pad)}
           >
             <div className="container-page">

@@ -81,47 +81,92 @@
     },
     {
       "source": "/blogs/1",
-      "destination": "/blog/how-seo-can-boost-your-business-growth",
+      "destination": "/services/seo",
       "permanent": true
     },
     {
       "source": "/blogs/2",
-      "destination": "/blog/why-every-business-must-have-a-website-in-2025",
+      "destination": "/websites",
       "permanent": true
     },
     {
       "source": "/blogs/3",
-      "destination": "/blog/why-a-high-performance-website-is-essential-for-small-business-growth-and-how-id",
+      "destination": "/websites",
       "permanent": true
     },
     {
       "source": "/blogs/4",
-      "destination": "/blog/10-common-website-mistakes-small-businesses-make-and-how-ideovent-fixes-them",
+      "destination": "/websites",
       "permanent": true
     },
     {
       "source": "/blogs/5",
-      "destination": "/blog/what-to-look-for-in-a-tech-partner-and-how-we-work",
+      "destination": "/blog/website-cost-in-india",
       "permanent": true
     },
     {
       "source": "/blogs/6",
-      "destination": "/blog/one-team-for-design-build-and-seo-why-it-beats-juggling-vendors",
+      "destination": "/blog/website-cost-in-india",
       "permanent": true
     },
     {
       "source": "/blogs/7",
-      "destination": "/blog/how-ideovent-technologies-empowers-small-businesses-in-new-delhi",
+      "destination": "/websites",
       "permanent": true
     },
     {
       "source": "/blogs/8",
-      "destination": "/blog/what-working-with-ideovent-technologies-is-like",
+      "destination": "/websites",
       "permanent": true
     },
     {
       "source": "/blogs/9",
-      "destination": "/blog/why-digital-transformation-is-the-key-to-business-growth-in-2025-an-ideovent-per",
+      "destination": "/websites",
+      "permanent": true
+    },
+    {
+      "source": "/blog/how-seo-can-boost-your-business-growth",
+      "destination": "/services/seo",
+      "permanent": true
+    },
+    {
+      "source": "/blog/why-every-business-must-have-a-website-in-2025",
+      "destination": "/websites",
+      "permanent": true
+    },
+    {
+      "source": "/blog/why-a-high-performance-website-is-essential-for-small-business-growth-and-how-id",
+      "destination": "/websites",
+      "permanent": true
+    },
+    {
+      "source": "/blog/10-common-website-mistakes-small-businesses-make-and-how-ideovent-fixes-them",
+      "destination": "/websites",
+      "permanent": true
+    },
+    {
+      "source": "/blog/what-to-look-for-in-a-tech-partner-and-how-we-work",
+      "destination": "/blog/website-cost-in-india",
+      "permanent": true
+    },
+    {
+      "source": "/blog/one-team-for-design-build-and-seo-why-it-beats-juggling-vendors",
+      "destination": "/blog/website-cost-in-india",
+      "permanent": true
+    },
+    {
+      "source": "/blog/how-ideovent-technologies-empowers-small-businesses-in-new-delhi",
+      "destination": "/websites",
+      "permanent": true
+    },
+    {
+      "source": "/blog/what-working-with-ideovent-technologies-is-like",
+      "destination": "/websites",
+      "permanent": true
+    },
+    {
+      "source": "/blog/why-digital-transformation-is-the-key-to-business-growth-in-2025-an-ideovent-per",
+      "destination": "/websites",
       "permanent": true
     }
   ],
@@ -160,7 +205,7 @@
       "destination": "/api/share?kind=pitch&slug=:slug"
     },
     {
-      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|me|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|team|templates|terms|today|verify|w|work)/?$)[^/.]+)",
+      "source": "/:slug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|me|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|team|templates|terms|today|verify|w|websites|work)/?$)[^/.]+)",
       "has": [
         {
           "type": "header",
@@ -172,7 +217,7 @@
     },
     {
       "source": "/((?!assets/).*)",
-      "destination": "/index.html"
+      "destination": "/spa-shell.html"
     }
   ],
   "headers": [
@@ -212,6 +257,15 @@
     },
     {
       "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/spa-shell.html",
       "headers": [
         {
           "key": "Cache-Control",
@@ -265,7 +319,7 @@
       ]
     },
     {
-      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|me|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|team|templates|terms|today|verify|w|work)/?$)[^/.]+)",
+      "source": "/:pitchSlug((?!(?:about|admin|ai-keys|api|applications|assets|blog|blog-covers|blogs|c|certificates|checkout|contact|cookie-policy|crm|demo|demos|disclaimer|eduflow|faq|finder|home|icons|ii|import|internship|launchpad|lead-finder|leads|login|me|og|outreach|payments|pipeline|pitch|portfolio|preview|pricing|privacy|privacy-policy|projects|refund|refund-policy|s|services|settings|site|submissions|team|templates|terms|today|verify|w|websites|work)/?$)[^/.]+)",
       "headers": [
         {
           "key": "X-Robots-Tag",

@@ -961,7 +961,7 @@ for (const s of STAGED) {
   const qs = await cs.getByTestId("call-questions").locator("li").count();
   check(qs >= 4 && qs <= 5, `it gives 4 to 5 questions to ask (${qs})`);
   const text = await cs.innerText();
-  check(/Rs 20,000/.test(text) && /Rs 30,000/.test(text) && /Rs 45,000/.test(text) && /50% advance, 50% at launch/.test(text), "the price step gives the /pricing options and the approved payment terms");
+  check(/Rs 12,000/.test(text) && /Rs 18,000/.test(text) && /Rs 25,000/.test(text) && /50% advance, 50% at launch/.test(text), "the price step gives the /pricing options (the Website band since 1 Oct 2026) and the approved payment terms");
   check(!/[–—]/.test(text) && !/\bfree\b|guarantee/i.test(text), "the card has no dash and no hype word");
   check(/Dr\. Kapoor/.test(text) && /would like to make a short sample page/.test(text) && !/I made a sample website/.test(text), "it greets their own contact and, with no demo made, never says a sample exists");
   await cs.getByRole("button", { name: "Hinglish" }).click();

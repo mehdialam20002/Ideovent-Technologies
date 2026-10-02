@@ -413,7 +413,15 @@ async function scenarioB(browser) {
   await page.route("https://checkout.razorpay.com/**", (route) => { checkoutJs++; return route.abort(); });
   await page.route(/emailjs|supabase\.co/, (route) => route.abort());
   await page.goto(BASE + "/pricing", { waitUntil: "networkidle" });
-  const soon = await page.locator('[data-testid="pay-coming-soon"]').innerText().catch(() => "");
+  // Read it where a visitor reads it: scrolled to. The note sits in a section below the
+  // first screen, and since 2 Oct 2026 those render as they come near the viewport
+  // (content-visibility: auto, src/index.css). Chrome's innerText of a section it has not
+  // rendered yet is "", which is not what anybody scrolling down sees; the section
+  // renders on the next frame after it comes into view, so wait two frames first.
+  const soonNote = page.locator('[data-testid="pay-coming-soon"]');
+  await soonNote.scrollIntoViewIfNeeded().catch(() => {});
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  const soon = await soonNote.innerText().catch(() => "");
   check(/coming soon/i.test(soon), "/pricing says online payment is coming soon", soon);
   check((await page.locator('a[href^="/checkout/"]').count()) === 0, "/pricing links to no checkout");
   check((await page.locator('#start a[href^="https://wa.me/917761921786"]').count()) > 0, "/pricing's start step offers WhatsApp");
