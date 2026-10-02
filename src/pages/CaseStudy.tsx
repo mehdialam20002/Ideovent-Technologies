@@ -131,7 +131,12 @@ export default function CaseStudy() {
            tools that sit behind a login). They fall back to the generated work
            card rather than to a stock photograph, FACTS.md forbids using one
            to stand for a project. And never to another project's cover. */
-        image={project.coverImage || "/og/ideovent-og-work.png"}
+        image={project.shareImage?.src || project.coverImage || "/og/ideovent-og-work.png"}
+        /* A cover that is not 1.91:1 (Onyx's is 789x735) has a 1200x630 copy for
+           link cards, with its real size: Project.shareImage, 3 Oct 2026. The
+           cover below stays the page's picture. */
+        imageWidth={project.shareImage?.width}
+        imageHeight={project.shareImage?.height}
         type="article"
         breadcrumbs={[
           { name: "Work", path: "/work" },

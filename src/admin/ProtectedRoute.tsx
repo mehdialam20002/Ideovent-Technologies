@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAdminAuth } from "./auth";
+import { Seo } from "@/components/seo/Seo";
 import { crmMovedOut, crmOriginUrl, CRM_ORIGIN, isCrmHost } from "@/lib/host";
 
 /*
@@ -11,9 +12,19 @@ import { crmMovedOut, crmOriginUrl, CRM_ORIGIN, isCrmHost } from "@/lib/host";
 */
 const LOGIN_PATH = isCrmHost() ? "/login" : "/admin/login";
 
-function Loading() {
+/*
+  NOINDEX AND A PLAIN TITLE WHILE THE GUARD DECIDES (3 Oct 2026). The waiting
+  and "not for you" screens rendered no <Seo>, so they kept whatever head was
+  there: the homepage's title and robots "index, follow" until 2 Oct 2026 (live
+  crawl, F4). Through the same <Seo> as the sign-in page: "Admin" or "CRM",
+  noindex, nofollow, no canonical.
+*/
+const areaTitle = (pathname: string) => (isCrmHost() || /^\/crm(\/|$)/.test(pathname) ? "CRM" : "Admin");
+
+function Loading({ title }: { title: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
+      <Seo title={title} noindex />
       Loading…
     </div>
   );
@@ -28,7 +39,7 @@ export function ProtectedRoute({ children, ownerOnly = false }: { children: Reac
   const { authed, loading } = useAdminAuth();
   const location = useLocation();
 
-  if (loading) return <Loading />;
+  if (loading) return <Loading title={areaTitle(location.pathname)} />;
   if (!authed) return <Navigate to={LOGIN_PATH} state={{ from: location.pathname + location.search }} replace />;
   if (ownerOnly) return <OwnerOnly>{children}</OwnerOnly>;
   return <>{children}</>;
@@ -82,7 +93,7 @@ function OwnerOnly({ children }: { children: ReactNode }) {
     };
   }, [attempt]);
 
-  if (check.state === "checking") return <Loading />;
+  if (check.state === "checking") return <Loading title="Admin" />;
   if (check.state === "owner") return <>{children}</>;
   return (
     <NotForYou
@@ -109,6 +120,7 @@ function NotForYou({ error, onRetry, backToMehdi }: { error?: string; onRetry: (
     "inline-flex h-10 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
+      <Seo title="Admin" noindex />
       <section data-testid="admin-owner-only" className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
         {error ? (
           <>

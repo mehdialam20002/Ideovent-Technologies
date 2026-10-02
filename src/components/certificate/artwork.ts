@@ -128,7 +128,7 @@ export interface CertificateArtData {
   issuedAt: string; // YYYY-MM-DD
   issuedBy: string;
   completion: "completed" | "completed-with-distinction";
-  /** The absolute URL printed under the QR, e.g. www.ideovent.com/verify/INT2025A75 */
+  /** The absolute URL printed under the QR, e.g. www.ideovent.in/verify/INT2025A75 */
   verifyLabel: string;
   /**
    * The partner who signs, printed under the rule and above "Authorised Partner".

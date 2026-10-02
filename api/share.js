@@ -77,6 +77,15 @@ function attr(s) {
     .replace(/"/g, "&quot;");
 }
 
+/** Undo attr(): a value read back out of the document, ready to be written again. */
+function unattr(s) {
+  return String(s ?? "")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
 /**
  * Replace a meta tag's content, or insert the tag if the document does not carry
  * it. Matches across newlines, because index.html writes its longer meta tags
@@ -90,6 +99,24 @@ function setMeta(html, kind, name, value) {
   if (reReversed.test(html)) return html.replace(reReversed, `$1${attr(value)}$3`);
   return html.replace(/<\/head>/i, `  <meta ${attrName}="${name}" content="${attr(value)}" />\n</head>`);
 }
+
+/** A meta tag's content as written in the document (still escaped), or null when it has none. */
+function getMeta(html, kind, name) {
+  const attrName = kind === "property" ? "property" : "name";
+  const m =
+    new RegExp(`<meta[^>]*\\b${attrName}=["']${name}["'][^>]*\\bcontent=["']([^"']*)["']`, "is").exec(html) ||
+    new RegExp(`<meta[^>]*\\bcontent=["']([^"']*)["'][^>]*\\b${attrName}=["']${name}["']`, "is").exec(html);
+  return m ? m[1] : null;
+}
+
+/** Insert a meta tag the document lacks; one it already carries is left as it is. */
+function ensureMeta(html, kind, name, value) {
+  return getMeta(html, kind, name) === null ? setMeta(html, kind, name, value) : html;
+}
+
+/** The brand card, for a shell that carries no picture at all. */
+const BRAND = "Ideovent Technologies";
+const BRAND_CARD_ALT = "Ideovent Technologies, the iV monogram and wordmark on a navy card";
 
 export default async function handler(request) {
   const url = new URL(request.url);
@@ -145,6 +172,29 @@ export default async function handler(request) {
     html = setMeta(html, "property", "og:url", `${url.origin}${here}`);
     html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${attr(name)}</title>`);
   }
+
+  /*
+   * EVERY TAG A CARD NEEDS, WHATEVER THE SHELL CARRIES (3 Oct 2026). The shell
+   * is a neutral page now (scripts/prerender-heads.mjs): the firm's name, robots
+   * noindex, the brand card, and no description or og:url of its own. The lines
+   * above write or insert the title, description and url; these insert, only
+   * where the document has none, the rest of what WhatsApp, LinkedIn and X draw
+   * a card from: the picture (the brand card, with its size) and the card type.
+   * So the card never depends on the shell keeping a tag, and a tag the shell
+   * does carry is left as it is.
+   */
+  if (getMeta(html, "property", "og:image") === null) {
+    html = setMeta(html, "property", "og:image", `${url.origin}/og/ideovent-og.png`);
+    html = setMeta(html, "property", "og:image:width", "1200");
+    html = setMeta(html, "property", "og:image:height", "630");
+    html = setMeta(html, "property", "og:image:alt", BRAND_CARD_ALT);
+  }
+  html = ensureMeta(html, "property", "og:site_name", BRAND);
+  html = ensureMeta(html, "property", "og:type", "website");
+  html = ensureMeta(html, "property", "og:title", BRAND);
+  html = ensureMeta(html, "name", "twitter:card", "summary_large_image");
+  html = ensureMeta(html, "name", "twitter:title", unattr(getMeta(html, "property", "og:title")));
+  html = ensureMeta(html, "name", "twitter:image", unattr(getMeta(html, "property", "og:image")));
 
   return new Response(html, {
     status: 200,

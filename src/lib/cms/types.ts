@@ -593,6 +593,12 @@ export interface Project extends BaseDoc {
   seoTitle?: string;
   /** Meta description, 150 to 155 characters, saying only what the page itself says. */
   metaDescription?: string;
+  /**
+   * The link-card picture (og:image, twitter:image) when the cover is not 1.91:1,
+   * with its real size in pixels (3 Oct 2026). The page itself still shows
+   * `coverImage`. Without it the card is the cover, or the work card.
+   */
+  shareImage?: { src: string; width: number; height: number };
 }
 
 export interface TeamMember extends BaseDoc {

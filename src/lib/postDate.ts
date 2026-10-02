@@ -25,3 +25,20 @@ export function formatPostDate(value: string): string {
     ...(dateOnly ? { timeZone: "UTC" } : {}),
   });
 }
+
+/** The studio's name: what a post's byline prints and what BlogPosting names as its author. */
+export const POST_PUBLISHER = "Ideovent Technologies";
+
+/**
+ * A post's byline as the site prints it (3 Oct 2026), in the same three places as
+ * the date. BlogPosting names the studio as the author of every post whose byline
+ * names Ideovent (blogPostingNode in src/lib/seo/schema.ts), so the byline that said
+ * "Ideovent Team", the old default author, now prints the studio's own name. A post
+ * saved in /admin before the change still holds "Ideovent Team", so that value is
+ * mapped here too, as is an empty author. Any other name is printed as written, and
+ * BlogPosting then names that person, so the markup always matches the byline.
+ */
+export function postByline(author?: string): string {
+  const a = (author || "").trim();
+  return !a || /^ideovent team$/i.test(a) ? POST_PUBLISHER : a;
+}

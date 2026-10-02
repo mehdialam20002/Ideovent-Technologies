@@ -642,10 +642,11 @@ export default function CertificateVerify() {
      URLs here are SITE-RELATIVE on purpose. Seo resolves them against
      settings.defaultSeo.canonicalHost, so the node's @id always matches the
      page's own <link rel="canonical">. canonicalVerifyUrl() is the PRINTED
-     origin (lib/verify.ts) and is currently the bare apex while the canonical
-     host carries www, feeding it in here would put a second, different URL for
-     this page into the graph, which is the exact split signal the rest of this
-     head fix exists to remove. */
+     origin (lib/verify.ts). It is www.ideovent.in today, like the canonical
+     host, but it is set separately (VITE_PUBLIC_URL overrides it, and it was
+     once the bare apex), so feeding it in here could put a second, different
+     URL for this page into the graph, which is the exact split signal the
+     rest of this head fix exists to remove. */
   const schema = useMemo<Json>(() => {
     const issued = cert && cert.status === "active" ? cert: undefined;
     const path = certId ? `/verify/${certId}`: "/verify";

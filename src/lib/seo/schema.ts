@@ -1,5 +1,6 @@
 import type { ContactInfo, SiteSettings, SocialLink } from "@/lib/cms/types";
 import { MAILBOX_LIVE } from "@/lib/mailbox";
+import { POST_PUBLISHER, postByline } from "@/lib/postDate";
 
 /**
  * JSON-LD builders.
@@ -351,27 +352,63 @@ interface PostNodeInput {
   excerpt?: string;
   coverImage?: string;
   publishDate?: string;
+  /** The byline as stored; postByline() turns it into what the page prints. */
   author?: string;
+  /** Stamped by the store on every save in /admin (BaseDoc); absent on the seeded posts. */
+  updatedAt?: string;
   tags?: string[];
+}
+
+/** An ISO date or date-time ("2026-10-02", "2026-10-03T09:15:00.000Z"), else "". */
+const isoDate = (v?: string) => {
+  const s = (v || "").trim();
+  return /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)?$/.test(s) && !Number.isNaN(Date.parse(s)) ? s : "";
+};
+
+/**
+ * A post's dateModified: its last save in /admin (`updatedAt`, which the store
+ * stamps on every save) when that is later than the publish date, else the
+ * publish date itself. The seeded posts have no `updatedAt`: they have not
+ * changed since they went up, so dateModified equals datePublished.
+ */
+function postModified(p: { publishDate?: string; updatedAt?: string }): string | undefined {
+  const saved = isoDate(p.updatedAt);
+  return saved && (!p.publishDate || saved > p.publishDate) ? saved : p.publishDate || undefined;
 }
 
 /**
  * A blog post. BlogPosting, the narrower type Google documents for articles.
- * The byline is the studio: no post is attributed to a named person in FACTS.md.
- * `datePublished` only when the record carries a real date.
- * author.url is /about, the page that names the people behind the byline: Google
- * "strongly recommend[s] using the type and url (or sameAs)" on an author (Article
- * structured data, author markup best practices; SEO audit, 2 Oct 2026).
+ *
+ * THE AUTHOR IS THE PUBLISHER (3 Oct 2026). No post is attributed to a named
+ * person in FACTS.md, so the author is the studio: the same Organization node
+ * every page emits, by its @id, with its name and url, which Google "strongly
+ * recommend[s]" on an author (Article structured data, author markup best
+ * practices). It used to be a second, anonymous Organization called "Ideovent
+ * Team"; the byline the page prints says "Ideovent Technologies" too (postByline,
+ * src/lib/postDate.ts). Site-relative "@id" and url are made absolute by
+ * absolutizeUrls, in <Seo> and in the prerender.
+ * The markup follows the printed byline, so the two never differ: a byline that
+ * names Ideovent is the studio; a post whose author is set in /admin to anyone
+ * else's name prints that name, and its BlogPosting names that person
+ * ({"@type": "Person", name}) instead of the studio.
+ *
+ * DATES. `datePublished` only when the record carries a real date. `dateModified`
+ * (3 Oct 2026) is postModified() above; it stays out when the post has no date at all.
  */
 export function blogPostingNode(p: PostNodeInput): Json {
+  const modified = postModified(p);
+  const byline = postByline(p.author);
   return {
     "@type": "BlogPosting",
     headline: p.title.slice(0, 110),
     description: p.excerpt,
     ...(p.coverImage ? { image: p.coverImage } : {}),
     ...(p.publishDate ? { datePublished: p.publishDate } : {}),
+    ...(modified ? { dateModified: modified } : {}),
     inLanguage: "en-IN",
-    author: { "@type": "Organization", name: p.author || "Ideovent Technologies", url: "/about" },
+    author: /\bideovent\b/i.test(byline)
+      ? { "@type": "Organization", "@id": `/${ORG_ID}`, name: POST_PUBLISHER, url: "/" }
+      : { "@type": "Person", name: byline },
     mainEntityOfPage: { "@type": "WebPage", "@id": `/blog/${p.slug}` },
     ...(p.tags?.length ? { keywords: p.tags.join(", ") } : {}),
   };
