@@ -16,7 +16,7 @@ import { sanitizeRich } from "@/lib/sanitize";
 import type { BlogPost } from "@/lib/cms/types";
 import { postSeo } from "@/lib/seo/pages";
 import { blogPostingNode } from "@/lib/seo/schema";
-import { formatPostDate as formatDate } from "@/lib/postDate";
+import { formatPostDate as formatDate, postByline } from "@/lib/postDate";
 
 /** Single article view for /blog/: slug. */
 export default function BlogDetail() {
@@ -131,7 +131,7 @@ export default function BlogDetail() {
 
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <PenLine className="h-3.5 w-3.5" aria-hidden="true" /> {post.author}
+                <PenLine className="h-3.5 w-3.5" aria-hidden="true" /> {postByline(post.author)}
               </span>
               {/* No date unless the record has a real one (see seed.ts). Labelled
                   "Published", as Google's byline-date guidance asks, and in a

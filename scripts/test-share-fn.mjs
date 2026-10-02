@@ -163,6 +163,90 @@ console.log("\nThe file it reads (2 Oct 2026: the SPA shell, not the homepage)\n
     (v) => v === "/spa-shell.html -> /index.html | St Xaviers High School");
 }
 
+/*
+ * THE SHELL IS NEUTRAL SINCE 3 OCT 2026 (scripts/prerender-heads.mjs): the firm's
+ * name, robots noindex and the brand card, and no description, og:url or
+ * twitter:description of its own. The card must not depend on what the shell
+ * carries, so it is checked twice: against a shell stripped of EVERY head tag
+ * Helmet owns (the worst case), and against the real built shell when there is
+ * one (SHARE_SHELL=<path to spa-shell.html>, or dist/spa-shell.html).
+ */
+const cardOf = (html) => ({
+  title: parseTitle(html),
+  ogTitle: parseMeta(html, ["property", "og:title"]),
+  description: parseMeta(html, ["name", "description"]),
+  ogDescription: parseMeta(html, ["property", "og:description"]),
+  ogImage: parseMeta(html, ["property", "og:image"]),
+  ogUrl: parseMeta(html, ["property", "og:url"]),
+  twitterCard: parseMeta(html, ["name", "twitter:card"]),
+  twitterTitle: parseMeta(html, ["name", "twitter:title"]),
+  twitterDescription: parseMeta(html, ["name", "twitter:description"]),
+  twitterImage: parseMeta(html, ["name", "twitter:image"]),
+});
+const once = (html, attrName, name) => (html.match(new RegExp(`<meta[^>]*\\b${attrName}=["']${name}["']`, "gi")) || []).length;
+
+async function cardChecks(label, shellHtml) {
+  globalThis.fetch = async () => ({ ok: true, status: 200, text: async () => shellHtml });
+  for (const [kind, slug, url, word] of [
+    ["site", "st-xaviers-high-school", "https://ideovent.vercel.app/site/st-xaviers-high-school", /demonstration/i],
+    ["pitch", "example-public-school", "https://ideovent.vercel.app/pitch/example-public-school", /proposal/i],
+  ]) {
+    const name = kind === "site" ? "St Xaviers High School" : "Example Public School";
+    const { html } = await run(`/api/share?kind=${kind}&slug=${slug}`);
+    const c = cardOf(html);
+    check(`${label}, ${kind}: title, og:title and twitter:title are the institute`, [c.title, c.ogTitle, c.twitterTitle].join(" | "),
+      () => c.title === name && c.ogTitle === name && c.twitterTitle === name);
+    check(`${label}, ${kind}: a description, og:description and twitter:description that say what it is`,
+      [c.description, c.ogDescription, c.twitterDescription].join(" | "),
+      () => [c.description, c.ogDescription, c.twitterDescription].every((v) => v && v.includes(name) && word.test(v)));
+    check(`${label}, ${kind}: a picture, absolute, the same on og:image and twitter:image`, `${c.ogImage} | ${c.twitterImage}`,
+      () => /^https:\/\/[^"'<>]+\.(png|jpe?g|webp)$/i.test(c.ogImage || "") && c.twitterImage === c.ogImage);
+    check(`${label}, ${kind}: og:url is the page's own address`, c.ogUrl, (v) => v === url);
+    check(`${label}, ${kind}: twitter:card is summary_large_image`, c.twitterCard, (v) => v === "summary_large_image");
+    const counts = [["property", "og:title"], ["property", "og:description"], ["property", "og:image"], ["property", "og:url"],
+      ["name", "description"], ["name", "twitter:card"], ["name", "twitter:title"], ["name", "twitter:image"]]
+      .map(([a, n]) => `${n}=${once(html, a, n)}`);
+    check(`${label}, ${kind}: each of those tags appears exactly once`, counts.join(" "), () => counts.every((s) => s.endsWith("=1")));
+    check(`${label}, ${kind}: no canonical, and the app still boots`, `${(html.match(/rel=["']canonical["']/gi) || []).length} canonical, module script ${/<script[^>]*type="module"/i.test(html)}`,
+      () => !/rel=["']canonical["']/i.test(html) && /<script[^>]*type="module"/i.test(html));
+  }
+  const { html: empty } = await run("/api/share?kind=site&slug=");
+  const e = cardOf(empty);
+  check(`${label}, empty slug: still a card with the firm's name and a picture`, `${e.ogTitle} | ${e.ogImage}`,
+    () => /Ideovent/.test(e.ogTitle || "") && Boolean(e.ogImage) && e.twitterImage === e.ogImage);
+  return { html: (await run("/api/share?kind=site&slug=st-xaviers-high-school")).html };
+}
+
+console.log("\nThe neutral shell (3 Oct 2026): a shell with no head tags at all\n");
+{
+  // The same strip prerender-heads.mjs makes ([^>] spans the multi-line tags in index.html).
+  const bare = realIndex
+    .replace(/[ \t]*<(meta|link)\b[^>]*\bdata-rh="true"[^>]*>[ \t]*\r?\n?/gi, "")
+    .replace(/[ \t]*<script\b[^>]*\bdata-rh="true"[^>]*>[\s\S]*?<\/script>[ \t]*\r?\n?/gi, "")
+    .replace(/<title>[\s\S]*?<\/title>/i, '<title>Ideovent Technologies</title>\n    <meta data-rh="true" name="robots" content="noindex" />');
+  check("the fixture really carries no card tag and no description", cardOf(bare),
+    (c) => Object.entries(c).every(([k, v]) => k === "title" || v === null));
+  const { html } = await cardChecks("bare shell", bare);
+  check("bare shell: the inserted brand card says its size", `${parseMeta(html, ["property", "og:image:width"])}x${parseMeta(html, ["property", "og:image:height"])}`,
+    (v) => v === "1200x630");
+}
+
+{
+  const builtShell = process.env.SHARE_SHELL || resolve(here, "../dist/spa-shell.html");
+  let shellHtml = null;
+  try { shellHtml = readFileSync(builtShell, "utf8"); } catch { /* no build here */ }
+  if (shellHtml) {
+    console.log(`\nThe real built shell: ${builtShell}\n`);
+    check("the built shell is neutral: noindex, no description, no canonical, no og:url",
+      `robots ${parseMeta(shellHtml, ["name", "robots"])} | description ${parseMeta(shellHtml, ["name", "description"])} | og:url ${parseMeta(shellHtml, ["property", "og:url"])}`,
+      () => /noindex/.test(parseMeta(shellHtml, ["name", "robots"]) || "") && parseMeta(shellHtml, ["name", "description"]) === null
+        && parseMeta(shellHtml, ["property", "og:url"]) === null && !/rel=["']canonical["']/i.test(shellHtml));
+    await cardChecks("built shell", shellHtml);
+  } else {
+    console.log(`\nskip  the real built shell: none at ${builtShell} (set SHARE_SHELL=<path to spa-shell.html> after a build)`);
+  }
+}
+
 console.log("");
 if (fails.length) {
   console.log(`${fails.length} FAILURE(S): ${fails.join("; ")}`);

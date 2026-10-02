@@ -13,7 +13,7 @@ import {
 } from "../pricing";
 import type { PageSeo } from "./pages";
 import { websitesNoscript } from "../../pages/websites/noscript";
-import { formatPostDate } from "../postDate";
+import { formatPostDate, postByline } from "../postDate";
 
 export interface BodyContext {
   services: Service[];
@@ -136,7 +136,7 @@ export function noscriptBlock(path: string, seo: PageSeo, ctx: BodyContext): str
     if (po) {
       // The byline the page prints: the date only when the record has a real one
       // (seed.ts), in the words and format BlogDetail.tsx uses.
-      const byline = [po.author ? `By ${po.author}.` : "", po.publishDate ? `Published ${formatPostDate(po.publishDate)}.` : ""]
+      const byline = [`By ${postByline(po.author)}.`, po.publishDate ? `Published ${formatPostDate(po.publishDate)}.` : ""]
         .filter(Boolean).join(" ");
       main = `${p(byline)}${p(po.excerpt)}${cleanHtml(ctx.postBodies.get(String(po.id)) || "")}`;
     }
