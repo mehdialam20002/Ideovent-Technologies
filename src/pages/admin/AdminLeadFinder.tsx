@@ -5,10 +5,10 @@ import {
   AUDIT_BATCH, OSM_ATTRIBUTION, auditSites, isOsm, placeDetails, searchPlaces, type FinderPlace, type SearchResult, type SiteAudit,
 } from "@/lib/leadFinder/client";
 import {
-  NO_FILTERS, auditBatches, auditKindForPlace, findExisting, kindForPlace, leadFromPlace, passes, savedPhonePatch,
+  NO_FILTERS, auditBatches, auditKindForPlace, findExisting, kindForPlace, leadFromPlace, mergeSources, passes, savedPhonePatch,
   searchedTypeForTemplate, templateForPlace, withoutRatingFilters, type AuditKind, type FinderFilters,
 } from "@/lib/leadFinder/leads";
-import { FREE_USAGE_TEXT } from "@/lib/leadFinder/freeUsage";
+import { FREE_USAGE, FREE_USAGE_TEXT } from "@/lib/leadFinder/freeUsage";
 import { getOutreachStore } from "@/lib/outreach/store";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { templateMeta, templatesOfKind, type TemplateId } from "@/lib/demo/templates";
@@ -24,12 +24,20 @@ import { btn, btnPrimary } from "@/admin/leadFinder/styles";
 import { cn } from "@/lib/utils";
 
 /*
-  LEAD FINDER: type a city and a type, get the list from Google Maps (or,
-  with no working Google key, from OpenStreetMap, free), see whose website is
-  missing, broken or poor on a phone, and add the good ones to the CRM's
-  leads in one click, with a demo if wanted. (It said "Outreach" until
-  30 Sep 2026; the CRM calls them leads, and so does this page now.) Dental clinics (28 Sep 2026) have their
-  own presets, become "dental" leads and get a d1 to d7 demo.
+  LEAD FINDER: type a city and a type, get the list from OpenStreetMap (free,
+  no key: the default since 4 Oct 2026) and, when "Also use Google" is ticked
+  and a key works, from Google Maps too; see whose website is missing, broken
+  or poor on a phone, and add the good ones to the CRM's leads in one click,
+  with a demo if wanted. (It said "Outreach" until 30 Sep 2026; the CRM calls
+  them leads, and so does this page now.) Dental clinics (28 Sep 2026) have
+  their own presets, become "dental" leads and get a d1 to d7 demo.
+
+  TWO REQUESTS, NEVER ONE WAITING FOR THE OTHER. The free search is its own
+  request and never reads a key. With "Also use Google" ticked a second
+  request goes to Google at the same moment; its rows join the list when they
+  come (after the free ones, without the businesses the free list already
+  has: mergeSources), and if no key works the page says why in one line and
+  the free list stands as it is.
 
   GOOGLE'S TERMS, the one rule on this page: Google's phone, address and
   rating are shown live and never saved by the page on its own. A lead keeps
@@ -55,14 +63,32 @@ const AUDIT_PARALLEL = 2;
 const choice = (id: TemplateId): TemplateChoice => ({ id, label: `${id.split("-")[0]}, ${templateMeta(id)?.label || id}` });
 
 type RowBusy = RowProps["busy"];
-/** Where the list came from, and what the page must say about it. */
+/** What the free (OpenStreetMap) list's answer says about itself: credit, counts, area, notes. */
 type SourceInfo = Omit<SearchResult, "places" | "nextPageToken" | "textQuery">;
+/** The Google side of a search: not asked, asking, answered, or why no key worked. */
+type GoogleState = { status: "off" } | { status: "searching" } | { status: "ok" } | { status: "error"; message: string };
+type Tokens = { osm: string | null; google: string | null };
+
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * "Found 33 in OpenStreetMap within 5 km of Saket: 15 with a phone, 4 with a website. Small towns have fewer listings."
+ * Nothing found: "Nothing in OpenStreetMap inside the Gopalganj district boundary (Bihar)." (the status line says what to try).
+ */
+function foundLine(s: SourceInfo): string {
+  const where = s.area?.label ? ` ${s.area.label}` : "";
+  if (s.total === 0) return `Nothing in OpenStreetMap${where}.`;
+  const counts = s.counts ? `: ${s.counts.withPhone} with a phone, ${s.counts.withWebsite} with a website` : "";
+  return `Found ${s.total ?? 0} in OpenStreetMap${where}${counts}. Small towns have fewer listings.`;
+}
 
 export default function AdminLeadFinder() {
   const [ctx, setCtx] = useState<SearchInput | null>(null);
   const [src, setSrc] = useState<SourceInfo | null>(null);
-  const [places, setPlaces] = useState<FinderPlace[]>([]);
-  const [nextToken, setNextToken] = useState<string | null>(null);
+  const [google, setGoogle] = useState<GoogleState>({ status: "off" });
+  const [osmPlaces, setOsmPlaces] = useState<FinderPlace[]>([]);
+  const [googlePlaces, setGooglePlaces] = useState<FinderPlace[]>([]);
+  const [tokens, setTokens] = useState<Tokens>({ osm: null, google: null });
   const [audits, setAudits] = useState<Record<string, AuditState>>({});
   const [leads, setLeads] = useState<OutreachLead[]>([]);
   const [filters, setFilters] = useState<FinderFilters>(NO_FILTERS);
@@ -77,8 +103,19 @@ export default function AdminLeadFinder() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const createDemo = useCreateDemo();
-  /* Bumped on every new search, so audits of an old list never land on a new one. */
+  /* Bumped on every new search, so audits and answers of an old list never land on a new one. */
   const generation = useRef(0);
+  /* Website checks still running for this list: the free list's and Google's run side by side. */
+  const auditRuns = useRef(0);
+  /* The two lists as they are right now, for the two requests that fill them at once. */
+  const osmNow = useRef<FinderPlace[]>([]);
+  const googleNow = useRef<FinderPlace[]>([]);
+  const putOsm = (list: FinderPlace[]) => { osmNow.current = list; setOsmPlaces(list); };
+  const putGoogle = (list: FinderPlace[]) => { googleNow.current = list; setGooglePlaces(list); };
+
+  /* The free rows first, then Google's rows that are not already in it. */
+  const places = useMemo(() => mergeSources(osmPlaces, googlePlaces), [osmPlaces, googlePlaces]);
+  const googleShown = places.length - osmPlaces.length;
 
   const reloadLeads = useCallback(async () => {
     try {
@@ -97,6 +134,7 @@ export default function AdminLeadFinder() {
   const runAudits = useCallback(async (list: FinderPlace[], kindOf: (p: FinderPlace) => AuditKind) => {
     if (!list.length) return;
     const gen = generation.current;
+    auditRuns.current++;
     setAuditing(true);
     setAudits((a) => ({ ...a, ...Object.fromEntries(list.map((p) => [p.placeId, { state: "checking" } as AuditState])) }));
     const batches = auditBatches(list, kindOf, AUDIT_BATCH);
@@ -117,7 +155,9 @@ export default function AdminLeadFinder() {
       }
     };
     await Promise.all(Array.from({ length: Math.min(AUDIT_PARALLEL, batches.length) }, worker));
-    if (gen === generation.current) setAuditing(false);
+    if (gen !== generation.current) return;
+    auditRuns.current = Math.max(0, auditRuns.current - 1);
+    if (!auditRuns.current) setAuditing(false);
   }, []);
 
   const search = async (q: SearchInput, more = false) => {
@@ -126,33 +166,77 @@ export default function AdminLeadFinder() {
     setSearching(more ? "more" : "new");
     if (!more) {
       generation.current++;
-      setPlaces([]);
+      putOsm([]);
+      putGoogle([]);
       setAudits({});
       setSelected(new Set());
       setRowError({});
       setTplPick({});
-      setNextToken(null);
+      setTokens({ osm: null, google: null });
+      auditRuns.current = 0;
       setAuditing(false);
       setCtx(q);
       setSrc(null);
+      setGoogle(q.google ? { status: "searching" } : { status: "off" });
+      /* No Google rows, no ratings: the rating filters are off (and hidden) on a free list. */
+      if (!q.google) setFilters(withoutRatingFilters);
     }
-    try {
-      const res = await searchPlaces({ type: q.type, city: q.city, preset: q.preset?.id, pageToken: more ? nextToken : null });
-      const known = new Set(more ? places.map((p) => p.placeId) : []);
-      const fresh = res.places.filter((p) => !known.has(p.placeId));
-      setPlaces((prev) => (more ? [...prev, ...fresh] : fresh));
-      setNextToken(res.nextPageToken);
-      const { places: _p, nextPageToken: _n, textQuery: _t, ...info } = res;
-      /* "Load more" on OpenStreetMap never asks Google, so it has no reason of its own: keep the first page's. */
-      setSrc((prev) => (more && prev ? { ...info, fallbackReason: info.fallbackReason ?? prev.fallbackReason } : info));
-      if (res.source === "osm") setFilters(withoutRatingFilters);
-      const where = res.source === "osm" ? "OpenStreetMap" : "Google Maps";
-      if (!more && !fresh.length) setNotice(`${where} found nothing for this. Try another type or a nearby bigger city.`);
-      void runAudits(fresh, (p) => auditKindForPlace(p, q.type, q.preset));
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setSearching(null);
+    const gen = generation.current;
+    const asked = { type: q.type, city: q.city, preset: q.preset?.id };
+    const kindOf = (p: FinderPlace) => auditKindForPlace(p, q.type, q.preset);
+    let freeFailed = false;
+
+    /* The free search: OpenStreetMap, no key. Its own request, never waiting for Google. */
+    const free = async () => {
+      if (more && !tokens.osm) return;
+      try {
+        const res = await searchPlaces({ ...asked, radiusKm: q.radiusKm, pageToken: more ? tokens.osm : null });
+        if (gen !== generation.current) return;
+        const known = new Set(osmNow.current.map((p) => p.placeId));
+        const fresh = res.places.filter((p) => !known.has(p.placeId));
+        putOsm(more ? [...osmNow.current, ...fresh] : fresh);
+        setTokens((t) => ({ ...t, osm: res.nextPageToken }));
+        const { places: _p, nextPageToken: _n, textQuery: _t, ...info } = res;
+        setSrc(info);
+        void runAudits(fresh, kindOf);
+      } catch (e) {
+        if (gen !== generation.current) return;
+        freeFailed = true;
+        setError((e as Error).message);
+      }
+    };
+
+    /* Google Maps, only when ticked: a second request at the same moment. A failing key is one line, never an error box. */
+    const alsoGoogle = async () => {
+      if (!q.google || (more && !tokens.google)) return;
+      try {
+        const res = await searchPlaces({ ...asked, google: true, pageToken: more ? tokens.google : null });
+        if (gen !== generation.current) return;
+        const known = new Set(googleNow.current.map((p) => p.placeId));
+        const fresh = res.places.filter((p) => !known.has(p.placeId));
+        putGoogle(more ? [...googleNow.current, ...fresh] : fresh);
+        setTokens((t) => ({ ...t, google: res.nextPageToken }));
+        setGoogle({ status: "ok" });
+        /* Only the rows that show: a business the free list already has is not checked twice. */
+        const shown = new Set(mergeSources(osmNow.current, fresh).map((p) => p.placeId));
+        void runAudits(fresh.filter((p) => shown.has(p.placeId)), kindOf);
+      } catch (e) {
+        if (gen !== generation.current) return;
+        setTokens((t) => ({ ...t, google: null }));
+        /* Its first page came, its next did not: the rows stay, and the line says Google was used. */
+        if (more) setNotice(`Google Maps could not give its next page: ${(e as Error).message}`);
+        else setGoogle({ status: "error", message: (e as Error).message });
+      }
+    };
+
+    await Promise.all([free(), alsoGoogle()]);
+    if (gen !== generation.current) return;
+    setSearching(null);
+    /* The found line already says nothing was found, and where: this line says what to try. */
+    if (!more && !freeFailed && osmNow.current.length + googleNow.current.length === 0) {
+      setNotice(q.radiusKm === 25
+        ? "Small towns have few listings on OpenStreetMap, even 25 km around: try another type, or a nearby bigger city."
+        : "Small towns have few listings on OpenStreetMap: try Area \"25 km around it\", another type, or a nearby bigger city.");
     }
   };
 
@@ -164,11 +248,12 @@ export default function AdminLeadFinder() {
   const kindOf = (p: FinderPlace) => kindForPlace(p.name, ctx?.type || "", ctx?.preset, p.primaryType);
   /*
     The default: dentalTemplateFor(name, category, type searched) for a clinic,
-    the type left out when OSM broadened the list; chooseTemplate for a school
-    or coaching centre. Mehdi's pick for the row wins.
+    the type left out when OSM broadened the list (for OSM's rows only: Google
+    was asked for the type itself); chooseTemplate for a school or coaching
+    centre. Mehdi's pick for the row wins.
   */
   const templateOf = (p: FinderPlace): TemplateId | null =>
-    tplPick[p.placeId] || templateForPlace(p.name, searchedTypeForTemplate(ctx?.type || "", src?.broadened), kindOf(p), p.primaryType);
+    tplPick[p.placeId] || templateForPlace(p.name, searchedTypeForTemplate(ctx?.type || "", isOsm(p) ? src?.broadened : null), kindOf(p), p.primaryType);
   const templateOptionsOf = (p: FinderPlace): TemplateChoice[] => {
     const kind = kindOf(p);
     return kind === "other" ? [] : templatesOfKind(kind).map((t) => choice(t.id));
@@ -238,7 +323,7 @@ export default function AdminLeadFinder() {
   const onGetPhone = (p: FinderPlace) => withRow(p, "phone", async () => {
     const d = await placeDetails(p.placeId);
     if (!d.phone && !d.phoneIntl) throw new Error("Google has no phone number for this place.");
-    setPlaces((list) => list.map((x) => (x.placeId === p.placeId
+    putGoogle(googleNow.current.map((x) => (x.placeId === p.placeId
       ? { ...x, phone: d.phone, phoneIntl: d.phoneIntl, website: x.website || d.website, address: x.address || d.address } : x)));
   });
 
@@ -283,10 +368,13 @@ export default function AdminLeadFinder() {
     if (failed.length) setError(`Not added: ${failed.join("; ")}`);
   };
 
+  const anyGoogleRows = googleShown > 0;
+  /* Ratings exist only on Google's rows: with none on the list, the rating filters are off (and hidden). */
+  const active = useMemo(() => (anyGoogleRows ? filters : withoutRatingFilters(filters)), [filters, anyGoogleRows]);
   const shown = useMemo(
-    () => places.filter((p) => passes(p, auditOf(p), filters)),
+    () => places.filter((p) => passes(p, auditOf(p), active)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [places, audits, filters],
+    [places, audits, active],
   );
   const selectable = shown.filter((p) => !existingFor(p));
   const allSelected = selectable.length > 0 && selectable.every((p) => selected.has(p.placeId));
@@ -296,6 +384,8 @@ export default function AdminLeadFinder() {
     for (const a of Object.values(audits)) if (a.state === "done") c[a.audit.verdict]++;
     return c;
   }, [audits]);
+  /* "3 of 4": the free list's total (OpenStreetMap says it), plus the Google rows on show. */
+  const total = src?.total != null ? src.total + googleShown : null;
 
   return (
     <div data-testid="lead-finder" className="min-w-0 max-w-6xl">
@@ -305,7 +395,7 @@ export default function AdminLeadFinder() {
         </span>
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-semibold">Lead finder</h1>
-          <p className="text-sm text-muted-foreground">Businesses from Google Maps or, free, OpenStreetMap, with their website checked. One click adds one to your leads.</p>
+          <p className="text-sm text-muted-foreground">Businesses from OpenStreetMap, free and with no key (and from Google Maps too, if you turn it on), with their website checked. One click adds one to your leads.</p>
         </div>
       </div>
 
@@ -318,10 +408,12 @@ export default function AdminLeadFinder() {
 
       {!ctx && (
         <section aria-label="What it costs" className="mt-4 rounded-2xl border border-border bg-card/60 p-4 text-sm">
-          <p className="font-medium">Free, if you cap it</p>
-          <p className="mt-1 text-muted-foreground">{FREE_USAGE_TEXT}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            OpenStreetMap lists fewer businesses and fewer phone numbers than Google Maps. Keys:{" "}
+          <p className="font-medium">Free: no key needed</p>
+          <p className="mt-1 text-muted-foreground">
+            {FREE_USAGE.free} It lists fewer businesses and fewer phone numbers than Google Maps, and small towns have fewer listings.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {FREE_USAGE.optional} {FREE_USAGE_TEXT} Keys:{" "}
             <MainSiteLink path="/admin/ai-keys" newTab={mainSiteIsCrossOrigin()} className="text-primary hover:underline">AI keys</MainSiteLink>, under Lead Finder.
           </p>
         </section>
@@ -330,30 +422,46 @@ export default function AdminLeadFinder() {
       {error && <p role="alert" className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
       {notice && <p role="status" className="mt-4 rounded-xl border border-border bg-card/60 p-3 text-sm">{notice}</p>}
 
-      {src?.source === "osm" && (
+      {src && (
         <div data-source="osm" className="mt-4 rounded-xl border border-border bg-card/60 p-3 text-sm">
           <p>
-            <span className="font-medium">Source: OpenStreetMap</span>{" "}
+            <span className="font-medium">Free search (OpenStreetMap): no key needed</span>{" "}
             <a href={src.attributionUrl || "https://www.openstreetmap.org/copyright"} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
               {src.attribution || OSM_ATTRIBUTION}
             </a>
             <span className="text-xs text-muted-foreground"> (ODbL)</span>
           </p>
-          {src.fallbackReason && <p className="mt-1 text-xs text-muted-foreground">{src.fallbackReason} So this list is from OpenStreetMap, free.</p>}
+          <p data-testid="osm-found" className="mt-1 text-xs">{foundLine(src)}</p>
+          {src.placeNote && <p data-testid="osm-place-note" className="mt-1 text-xs">{src.placeNote}</p>}
           <p className="mt-1 text-xs text-muted-foreground">{src.note}</p>
+          {src.capped && <p className="mt-1 text-xs">There are more here than one search can carry, so some are left out: pick a smaller area (or a part of the city) for the full list.</p>}
           {src.broadened && <p className="mt-1 text-xs">{src.broadened}</p>}
           {src.caveat && <p className="mt-1 text-xs">{src.caveat}</p>}
         </div>
       )}
-      {src?.source === "google" && (
-        <p data-source="google" className="mt-4 text-xs text-muted-foreground"><span className="font-medium text-foreground">Source: Google Maps</span></p>
+      {google.status !== "off" && (
+        <p data-source="google" className="mt-2 text-xs text-muted-foreground">
+          {google.status === "searching" && <>Also asking Google Maps.</>}
+          {google.status === "ok" && (
+            <>
+              <span className="font-medium text-foreground">Source: Google Maps</span>, too: {plural(googleShown, "more place")}
+              {googlePlaces.length > googleShown && `, and ${plural(googlePlaces.length - googleShown, "place")} the free list already has (shown once)`}.
+            </>
+          )}
+          {google.status === "error" && (
+            <>
+              Google Maps was not used: {google.message}{" "}
+              <MainSiteLink path="/admin/ai-keys" newTab={mainSiteIsCrossOrigin()} className="text-primary hover:underline">AI keys</MainSiteLink>
+            </>
+          )}
+        </p>
       )}
 
       {ctx && (places.length > 0 || searching) && (
         <section aria-label="Results" className="mt-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm">
-              <span className="font-medium">{places.length}</span>{src?.total != null && src.total > places.length ? ` of ${src.total}` : ""} found for {ctx.typeLabel} in {ctx.city}
+              <span className="font-medium">{places.length}</span>{total != null && total > places.length ? ` of ${total}` : ""} found for {ctx.typeLabel} in {ctx.city}
               {shown.length !== places.length && <span className="text-muted-foreground">, {shown.length} shown</span>}
               {counts.none + counts.broken + counts.poor + counts.ok + counts.unchecked > 0 && (
                 <span className="text-muted-foreground">
@@ -369,7 +477,7 @@ export default function AdminLeadFinder() {
           </div>
 
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <Filters value={filters} onChange={setFilters} ratings={src?.source !== "osm"} />
+            <Filters value={active} onChange={setFilters} ratings={anyGoogleRows} />
             <div className="flex flex-wrap items-center gap-2">
               <label className="inline-flex items-center gap-2 text-xs">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} disabled={!selectable.length} className="h-4 w-4" />
@@ -386,7 +494,7 @@ export default function AdminLeadFinder() {
             <span />
             <span>Name and address</span>
             <span>Rating</span>
-            <span>{src?.source === "osm" ? "Phone" : "Phone (live)"}</span>
+            <span>{anyGoogleRows && !osmPlaces.length ? "Phone (live)" : "Phone"}</span>
             <span>Website</span>
             <span className="text-right">Actions</span>
           </div>
@@ -415,21 +523,28 @@ export default function AdminLeadFinder() {
             })}
           </ul>
           {searching === "new" && (
-            <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Searching (Google Maps, or OpenStreetMap when no key works, which can take up to 20 seconds)</p>
+            <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              {src ? "Still asking Google Maps" : `Searching OpenStreetMap (free; a big city can take up to a minute)${ctx.google ? ", and Google Maps" : ""}`}
+            </p>
           )}
           {places.length > 0 && shown.length === 0 && (
             <p className="mt-4 text-sm text-muted-foreground">No result passes these filters. Turn one off to see more.</p>
           )}
-          {nextToken && (
+          {(tokens.osm || tokens.google) && (
             <button type="button" className={cn(btn, "mt-4")} disabled={searching !== null} onClick={() => void search(ctx, true)}>
               {searching === "more" && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
               Load more
             </button>
           )}
           <p className="mt-4 text-[11px] text-muted-foreground">
-            {src?.source === "osm" ? (
-              <>Results from OpenStreetMap: <a href={src.attributionUrl || "https://www.openstreetmap.org/copyright"} target="_blank" rel="noreferrer" className="text-primary hover:underline">{src.attribution || OSM_ATTRIBUTION}</a> (ODbL).</>
-            ) : "Results from Google Maps."}{" "}
+            {src && osmPlaces.length > 0 && (
+              <>
+                Results from OpenStreetMap: <a href={src.attributionUrl || "https://www.openstreetmap.org/copyright"} target="_blank" rel="noreferrer" className="text-primary hover:underline">{src.attribution || OSM_ATTRIBUTION}</a> (ODbL)
+                {anyGoogleRows ? ", and from Google Maps where a row links there." : "."}{" "}
+              </>
+            )}
+            {anyGoogleRows && !osmPlaces.length && <>Results from Google Maps.{" "}</>}
             Added leads are in the CRM, under <Link to={CRM.leads} className="text-primary hover:underline">Leads</Link>.
           </p>
         </section>

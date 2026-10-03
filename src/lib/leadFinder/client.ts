@@ -2,17 +2,18 @@
  * The Lead Finder's only door to the server: POST /api/leads-search.
  *
  * The function (api/leads-search.js) checks the caller is a signed-in admin
- * with the caller's own Supabase token, reads the Google Maps key under RLS,
- * and answers three actions:
+ * with the caller's own Supabase token and answers three actions:
  *
- *   search  { query?, type?, city?, preset?, pageToken? } -> { source, places[], nextPageToken }
- *   details { placeId }                                   -> { place }   (Google results only)
- *   audit   { urls: [..10], kind? }                       -> { audits[] }
+ *   search  { query?, type?, city?, preset?, radiusKm?, pageToken? } -> OpenStreetMap, free: { source: "osm", places[], ... }
+ *   search  { ..., google: true, pageToken? }                        -> Google Maps: { source: "google", places[], nextPageToken }
+ *   details { placeId }                                              -> { place }   (Google results only)
+ *   audit   { urls: [..10], kind? }                                  -> { audits[] }
  *
- * TWO SOURCES (28 Sep 2026). With a working Google key the list is Google
- * Maps; with none, or when every key fails, it is OpenStreetMap: free, fewer
- * businesses and fewer phones, and always shown with "© OpenStreetMap
- * contributors".
+ * FREE FIRST (4 Oct 2026). Every search is OpenStreetMap: free, no key, no
+ * card. It lists fewer businesses and fewer phones than Google, small towns
+ * fewest, and it is always shown with "© OpenStreetMap contributors". Google
+ * Maps is a second request, sent only when Mehdi ticks "Also use Google
+ * (needs a working key)", so a failing key never touches the free list.
  *
  * GOOGLE'S TERMS. What comes back from Google (phone, address, rating) is
  * shown LIVE and never written to our database by this module. Only the place
@@ -51,6 +52,16 @@ export interface FinderPlace {
 export const OSM_ATTRIBUTION = "© OpenStreetMap contributors";
 export const OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright";
 export const OSM_NOTE = "OpenStreetMap is free, but it lists fewer businesses and fewer phone numbers than Google Maps.";
+/** The radii the finder offers instead of the city's own area, in km (RADIUS_CHOICES_KM in api/_lib/osm.js). */
+export const RADIUS_CHOICES_KM = [5, 10, 25] as const;
+
+/** Where an OpenStreetMap search looked: the place's boundary, its outline's box, or a circle around it. */
+export interface SearchArea {
+  kind: "boundary" | "box" | "radius";
+  /** "inside the Gopalganj district boundary", "within 5 km of Saket". */
+  label: string;
+  radiusKm?: number;
+}
 
 /** "unchecked": the page is drawn by scripts and nothing that could be checked was wrong (30 Sep 2026). */
 export type AuditVerdict = "none" | "broken" | "poor" | "ok" | "unchecked";
@@ -85,14 +96,20 @@ export interface SearchResult {
   attributionUrl: string | null;
   /** OSM only: the honest line about fewer businesses and phones. */
   note: string | null;
-  /** OSM only: why Google was not used, e.g. "No Google Maps key is saved." Null when Google was not tried. */
-  fallbackReason: string | null;
   /** OSM only: a speciality found nobody, so the broader list is shown (said in a sentence). */
   broadened: string | null;
   /** OSM only: what OpenStreetMap cannot tell apart for this preset, e.g. a school's board. */
   caveat: string | null;
+  /** OSM only: the place typed was read as another, said in a sentence ("Delhi NCR": NCR is several cities, so Delhi only). */
+  placeNote: string | null;
   /** OSM only: how many results in all (Google does not say). */
   total: number | null;
+  /** OSM only: how many of them, in all, have a phone and a website on OpenStreetMap. */
+  counts: { withPhone: number; withWebsite: number } | null;
+  /** OSM only: where it looked. */
+  area: SearchArea | null;
+  /** OSM only: the area held more than one answer may carry, so some were left out. */
+  capped: boolean;
 }
 
 /** Raised for every failure, with a sentence Mehdi can act on. */
@@ -140,13 +157,15 @@ export function plainError(status: number, code?: string, detail?: string): stri
   if (status === 422 || code === "no_keys") {
     return detail || "No Google Maps key is saved and switched on. Add one in AI keys under Google Maps (Places).";
   }
+  /* Why no Google key answered a search, already said plainly by the server. */
+  if (code && ["quota", "billing", "api_disabled", "timeout", "keys_unreadable"].includes(code)) return detail || "No Google Maps key worked. Open AI keys to see each key's error.";
   if (code === "all_failed") return "No Google Maps key worked. Open AI keys to see each key's error (often billing not enabled, or the Places API (New) not switched on).";
   if (code === "not_found") return "Google has no place with this ID any more.";
   if (status === 404) return "The Lead Finder service is not deployed here. It runs on the Vercel deploy.";
   if (status === 413) return "That request was too large.";
   if (code === "bad_body") return detail ? `${detail.replace(/\.$/, "")}.` : "Type a type and a city, then search.";
   if (status === 400) return detail ? `Google did not accept the search: ${detail}` : "Type a type and a city, then search.";
-  if (status === 504 || status === 408) return "The search took too long (Google Maps or OpenStreetMap). Try again.";
+  if (status === 504 || status === 408) return "The search took too long. Try again, or pick a smaller area.";
   return detail ? `The search failed: ${detail}` : `The search failed (HTTP ${status}). Try again.`;
 }
 
@@ -203,20 +222,27 @@ export function toAudit(a: unknown): SiteAudit {
 }
 
 /**
- * One page of results for "<type> in <city>" (or a free query): Google Maps
- * when a key works, else OpenStreetMap. `preset` (a TYPE_PRESETS id) tells
- * OpenStreetMap which tags to look for.
+ * One page of results for "<type> in <city>" (or a free query): OpenStreetMap,
+ * free, by default; Google Maps when `google` is true (a separate request,
+ * sent only when Mehdi ticks "Also use Google"). `preset` (a TYPE_PRESETS id)
+ * tells OpenStreetMap which tags to look for; `radiusKm` searches a circle of
+ * that size around the city instead of its own area.
  */
-export async function searchPlaces(q: { type?: string; city?: string; query?: string; preset?: string; pageToken?: string | null }): Promise<SearchResult> {
+export async function searchPlaces(q: {
+  type?: string; city?: string; query?: string; preset?: string; pageToken?: string | null; google?: boolean; radiusKm?: number | null;
+}): Promise<SearchResult> {
   const body: Record<string, unknown> = { action: "search" };
   if (q.type?.trim()) body.type = q.type.trim();
   if (q.city?.trim()) body.city = q.city.trim();
   if (q.query?.trim()) body.query = q.query.trim();
   if (q.preset) body.preset = q.preset;
   if (q.pageToken) body.pageToken = q.pageToken;
+  if (q.google) body.google = true;
+  if (!q.google && q.radiusKm) body.radiusKm = q.radiusKm;
   const json = await post<{
     places?: unknown[]; nextPageToken?: string | null; textQuery?: string; source?: string; attribution?: string;
-    attributionUrl?: string; note?: string; broadened?: string; caveat?: string; total?: number; fallback?: { reason?: string };
+    attributionUrl?: string; note?: string; broadened?: string; caveat?: string; placeNote?: string; total?: number;
+    counts?: { withPhone?: unknown; withWebsite?: unknown }; area?: { kind?: unknown; label?: unknown; radiusKm?: unknown }; capped?: boolean;
   }>(body);
   const source: FinderSource = json.source === "osm" ? "osm" : "google";
   return {
@@ -227,11 +253,23 @@ export async function searchPlaces(q: { type?: string; city?: string; query?: st
     attribution: str(json.attribution) || (source === "osm" ? OSM_ATTRIBUTION : "Google Maps"),
     attributionUrl: str(json.attributionUrl) ?? (source === "osm" ? OSM_COPYRIGHT_URL : null),
     note: str(json.note) ?? (source === "osm" ? OSM_NOTE : null),
-    fallbackReason: str(json.fallback?.reason),
     broadened: str(json.broadened),
     caveat: str(json.caveat),
+    placeNote: str(json.placeNote),
     total: num(json.total),
+    counts: json.counts && num(json.counts.withPhone) !== null && num(json.counts.withWebsite) !== null
+      ? { withPhone: num(json.counts.withPhone) as number, withWebsite: num(json.counts.withWebsite) as number } : null,
+    area: toArea(json.area),
+    capped: json.capped === true,
   };
+}
+
+const AREA_KINDS: SearchArea["kind"][] = ["boundary", "box", "radius"];
+function toArea(a: { kind?: unknown; label?: unknown; radiusKm?: unknown } | undefined): SearchArea | null {
+  const label = str(a?.label);
+  if (!a || !label || !AREA_KINDS.includes(a.kind as SearchArea["kind"])) return null;
+  const radiusKm = num(a.radiusKm);
+  return { kind: a.kind as SearchArea["kind"], label, ...(radiusKm !== null ? { radiusKm } : {}) };
 }
 
 /** Place Details, live: Google's current phone, website and address. Never stored by this call. */

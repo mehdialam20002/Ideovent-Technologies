@@ -4,19 +4,31 @@
  *   node scripts/e2e-lead-finder.mjs [baseUrl]        default http://localhost:5402
  *   SHOT_DIR=<folder> node scripts/e2e-lead-finder.mjs  also saves 390 and 1440 px screenshots
  *
- * GOOGLE MAPS (a working key): pick "JEE/NEET coaching", type Patna, search; the page says
+ * FREE FIRST (4 Oct 2026): the page says "Free search (OpenStreetMap): no key needed", and "Also use
+ * Google (needs a working key)" is off. A search sends ONE request, without google, and says what
+ * OpenStreetMap found where ("Found 4 in OpenStreetMap in and around Indore: ... Small towns have
+ * fewer listings."); when it found nothing it says so and where it looked ("Nothing in
+ * OpenStreetMap in and around Patna."), with one plain line on what to try. A region typed the way
+ * Mehdi names his market ("Delhi NCR") shows the server's one-line note: Delhi was searched.
+ *
+ * GOOGLE MAPS (ticked, a working key): the free request and a google: true request go together;
+ * pick "JEE/NEET coaching", type Patna, search; the page says
  * "Source: Google Maps"; the websites are checked on their own (None / Broken / Poor / OK badges
  * with the reason); filter to no website, to poor or broken, to rating 4+ and 20+ reviews; load
  * the next page; add one lead; see "Already a lead" on a place whose phone is already a lead;
  * add + create demo, which makes a DRAFT demo and links it to the lead; get a phone from Google;
  * save it only by clicking.
  *
- * OPENSTREETMAP (no Google key, 28 Sep 2026): pick "Dental clinic", type Indore, search; the page
- * says "Source: OpenStreetMap", credits "© OpenStreetMap contributors" linked to the ODbL page,
- * gives the honest line about fewer businesses and phones and says why Google was not used; no
+ * OPENSTREETMAP (Google unticked): pick "Dental clinic", type Indore, search; one free request; the
+ * page credits "© OpenStreetMap contributors" linked to the ODbL page, gives the honest line about
+ * fewer businesses and phones, and how many it found where, with a phone and a website; no
  * rating filters; every website check carries kind "dental"; a dental lead keeps OSM's phone and
  * credits OpenStreetMap; Add + create demo on an orthodontic clinic makes a d5 demo; Load more
- * keeps the reason line.
+ * keeps the found line.
+ *
+ * A FAILING KEY (Google ticked, the key's project without Places API (New)): the free list shows
+ * while Google is still being asked, and Google's failure is one line, never an error box.
+ * BOTH SOURCES (Gaya): the free rows first, then Google's, and a business both have is shown once.
  *
  * THE CRM HOST (30 Sep 2026): crm.localhost stands in for crm.ideovent.in. There the finder's
  * links to AI keys and to a demo's editor are absolute to the main site in a plain <a> (new tab),
@@ -36,7 +48,9 @@
  *
  * serves AdminLeadFinder.tsx with its Leads link hard-wired to "/crm/leads" (the module is
  * rewritten in flight; no file is touched). On the CRM host the two link checks that catch a
- * hand-written /crm path must then FAIL and the run must exit 1.
+ * hand-written /crm path must then FAIL and the run must exit 1. It also serves SearchBar.tsx with
+ * "Also use Google" ticked by default (the finder's old Google-first habit): the free-first checks
+ * must then FAIL too.
  */
 import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
@@ -50,6 +64,9 @@ const OUTREACH_KEY = "ideovent_outreach_v1";
 const CMS_KEY = "ideovent_cms_v1";
 const CITY = "Patna";
 const OSM_CITY = "Indore";
+/* Both sources answer here: a business both have, one only the free search has, one only Google has. */
+const MIX_CITY = "Gaya";
+const GOOGLE_PREF = "ideovent_finder_also_google";
 
 const findings = [];
 const fail = (m) => { findings.push(m); console.log("FAIL  " + m); };
@@ -89,6 +106,14 @@ const OSM_CREDIT = {
   attribution: "© OpenStreetMap contributors", attributionUrl: "https://www.openstreetmap.org/copyright", licence: "ODbL",
   note: "OpenStreetMap is free, but it lists fewer businesses and fewer phone numbers than Google Maps.",
 };
+const O_TWIN = osmPlace(9101, "Twin Tuition Centre E2E", { primaryType: "prep_school", phone: "+91 98123 00001", phoneIntl: "+919812300001", address: "1 Example Road, Gaya" });
+const O_FREE = osmPlace(9102, "Free Only Tutorials E2E", { primaryType: "prep_school", address: "2 Example Road, Gaya" });
+const G_TWIN = place("P_TWIN", "Twin Tuition Centre E2E", { rating: 4.5, ratingCount: 31, phone: "098123 00001", phoneIntl: "+91 98123 00001" });
+const G_ONLY = place("P_GONLY", "Google Only Classes E2E", { rating: 4.1, ratingCount: 12 });
+/* A region, typed the way Mehdi names his market: the server searches Delhi and says so (api/_lib/osm.js splitRegion, 4 Oct 2026). */
+const NCR_CITY = "Delhi NCR";
+const NCR_NOTE = "NCR is several cities, so this searched Delhi only. Search Noida, Gurugram, Ghaziabad or Faridabad on their own too.";
+const O_DELHI = osmPlace(9201, "Example Saket Dental E2E", { address: "9 Example Road, Saket, New Delhi, 110017" });
 
 const AUDITS = {
   "": { verdict: "none", evidence: [{ code: "no_website", text: "No website listed for it on the map" }], phones: [], emails: [] },
@@ -149,7 +174,12 @@ if (process.env.E2E_NEGATIVE) {
     const code = (await res.text()).replace(/\bto: CRM\.leads\b/g, 'to: "/crm/leads"');
     await route.fulfill({ response: res, body: code });
   });
-  console.log("NEGATIVE MODE: the finder's Leads link is served as a hand-written /crm/leads");
+  await context.route(/\/src\/admin\/leadFinder\/SearchBar\.tsx/, async (route) => {
+    const res = await route.fetch({ url: route.request().url().replace("//crm.localhost", "//localhost") });
+    const code = (await res.text()).replace("useState<boolean>(readGooglePref)", "useState<boolean>(() => true)").replace("useState(readGooglePref)", "useState(() => true)");
+    await route.fulfill({ response: res, body: code });
+  });
+  console.log("NEGATIVE MODE: the finder's Leads link is served as a hand-written /crm/leads, and Also use Google as ticked by default");
 }
 await context.route(/\.supabase\.co|api\.emailjs\.com|googleapis\.com|nominatim\.openstreetmap\.org|overpass/, (route) => route.abort());
 /* The main site's address (the CRM host links there): answered here, never the live site. */
@@ -164,23 +194,39 @@ await context.route("**/api/leads-search", async (route) => {
   if (body.action === "search") {
     calls.search++;
     calls.searches.push({ phase, ...body });
+    const textQuery = `${body.type} in ${body.city}`;
+    if (body.google === true || (body.pageToken && !/^osm\./.test(body.pageToken))) {
+      /* Google Maps: asked only when "Also use Google" is ticked. */
+      if (body.city === OSM_CITY) {
+        // The key's Google Cloud project has no Places API (New) (Mehdi's key, 3 Oct 2026): slow to say so, too.
+        await new Promise((r) => setTimeout(r, 1500));
+        return json(502, { ok: false, code: "api_disabled", error: "Places API (New) is not enabled for the key's Google Cloud project.",
+          attempts: [{ label: "Key 1", status: "error", error: "HTTP 403 PERMISSION_DENIED: Places API (New) has not been used in project 1 before or it is disabled." }] });
+      }
+      const google = { ok: true, source: "google", attribution: "Google Maps", textQuery };
+      if (body.city === MIX_CITY) return json(200, { ...google, places: [G_TWIN, G_ONLY], nextPageToken: null });
+      if (body.city !== CITY || !body.type) return json(400, { ok: false, code: "bad_body", error: "Type a business type and a city" });
+      return body.pageToken === "PAGE2"
+        ? json(200, { ...google, places: PAGE2, nextPageToken: null })
+        : json(200, { ...google, places: PAGE1, nextPageToken: "PAGE2" });
+    }
+    /* The free search: OpenStreetMap, no key. */
+    const free = (places, extra = {}) => json(200, { ok: true, source: "osm", textQuery, places, nextPageToken: null, total: places.length,
+      counts: { withPhone: places.filter((p) => p.phone).length, withWebsite: places.filter((p) => p.website).length },
+      area: { kind: "box", label: `in and around ${body.city}` }, ...OSM_CREDIT, ...extra });
     if (body.city === OSM_CITY && body.preset === "ortho") {
       // OpenStreetMap has no orthodontist by name here: the server shows every dental clinic and says so.
-      return json(200, { ok: true, source: "osm", textQuery: `${body.type} in ${body.city}`, places: [OSM_BROAD], nextPageToken: null, total: 1,
-        ...OSM_CREDIT, broadened: `OpenStreetMap has no orthodontists by name in ${OSM_CITY}, so these are all the dental clinics it lists there.`,
-        fallback: { code: "quota", reason: "Every Google Maps key is out of quota for today." } });
+      return free([OSM_BROAD], { broadened: `OpenStreetMap has no orthodontists by name in ${OSM_CITY}, so these are all the dental clinics it lists there.` });
     }
     if (body.city === OSM_CITY) {
       const more = body.pageToken === "osm.20";
-      return json(200, { ok: true, source: "osm", textQuery: `${body.type} in ${body.city}`, places: more ? OSM_PAGE2 : OSM_PAGE1,
-        nextPageToken: more ? null : "osm.20", total: OSM_PAGE1.length + OSM_PAGE2.length, ...OSM_CREDIT,
-        ...(more ? {} : { fallback: { code: "no_keys", reason: "No Google Maps key is saved." } }) });
+      return free(more ? OSM_PAGE2 : OSM_PAGE1, { nextPageToken: more ? null : "osm.20", total: OSM_PAGE1.length + OSM_PAGE2.length,
+        counts: { withPhone: 2, withWebsite: 2 } });
     }
-    if (body.city !== CITY || !body.type) return json(400, { ok: false, code: "bad_body", error: "Type a business type and a city" });
-    const google = { ok: true, source: "google", attribution: "Google Maps", textQuery: `${body.type} in ${body.city}` };
-    return body.pageToken === "PAGE2"
-      ? json(200, { ...google, places: PAGE2, nextPageToken: null })
-      : json(200, { ...google, places: PAGE1, nextPageToken: "PAGE2" });
+    if (body.city === MIX_CITY) return free([O_TWIN, O_FREE]);
+    if (body.city === NCR_CITY) return free([O_DELHI], { area: { kind: "box", label: "in and around Delhi" }, placeNote: NCR_NOTE });
+    if (body.city === CITY && body.type) return free([]);
+    return json(400, { ok: false, code: "bad_body", error: "Type a business type and a city" });
   }
   if (body.action === "details") {
     calls.details++;
@@ -236,12 +282,21 @@ check((await page.getByText("Google's terms:").count()) === 1, "the one-line Goo
 /* ── 0. Free to use: the empty state, and its link on the main site ───── */
 const costs = page.getByRole("region", { name: "What it costs" });
 const costText = (await costs.innerText().catch(() => "")).replace(/\s+/g, " ");
+check(/Free: no key needed/.test(costText) && /The finder is free: every search uses OpenStreetMap, with no key, no card and no bill\./.test(costText)
+  && /fewer businesses and fewer phone numbers than Google Maps/.test(costText)
+  && /small towns have fewer listings/.test(costText) && /A Google Maps key is optional: tick "Also use Google"/.test(costText),
+  "the empty state says it is free first: OpenStreetMap, no key, no card, no bill; small towns have fewer listings; Google optional", "empty state: " + costText);
 check(/7,000 free Text Searches and 7,000 free Place Details a month on India pricing \(checked 28 Sep 2026\)/.test(costText)
   && /set a daily quota of 200 for each/.test(costText) && /Google Maps Platform > Quotas, then Places API \(New\)/.test(costText)
   && /If Google shows only per-minute quotas there, they do not cap the month/.test(costText)
-  && /A card is still needed to create the key/.test(costText) && /Without a key the finder works on OpenStreetMap for free/.test(costText)
-  && /fewer businesses and fewer phone numbers than Google Maps/.test(costText),
-  "the empty state: 7,000 free a month each on India pricing, a 200-a-day quota (a per-minute one does not cap the month), a card for the key, OpenStreetMap free", "empty state: " + costText);
+  && /A card is still needed to create the key/.test(costText),
+  "... and for Google, if ticked: 7,000 free a month each on India pricing, a 200-a-day quota (a per-minute one does not cap the month), a card for the key", "empty state: " + costText);
+check(((await page.getByTestId("free-search").innerText().catch(() => "")).trim()) === "Free search (OpenStreetMap): no key needed",
+  "the search box says plainly: Free search (OpenStreetMap): no key needed");
+const alsoGoogle = (p = page) => p.getByRole("checkbox", { name: "Also use Google (needs a working key)" });
+check((await alsoGoogle().count()) === 1 && !(await alsoGoogle().isChecked()), "'Also use Google (needs a working key)' is there, and off");
+check(await page.getByLabel("Area").inputValue() === "" && (await page.getByLabel("Area").locator("option").count()) === 4,
+  "Area: the city's own area by default, or 5, 10 or 25 km around it");
 const aiKeysHref = await hrefOf(costs.getByRole("link", { name: "AI keys" }));
 check(aiKeysHref === "/admin/ai-keys", "on the main site the AI keys link stays relative, as today", "AI keys href: " + aiKeysHref);
 
@@ -254,13 +309,30 @@ check((await page.getByRole("button", { name: "Dental clinic" }).count()) === 1 
 await page.getByRole("button", { name: "JEE/NEET coaching" }).click();
 await page.getByLabel("City").fill(CITY);
 await page.getByRole("button", { name: "Search", exact: true }).click();
+await page.getByTestId("osm-found").waitFor({ timeout: 10000 });
+await page.waitForTimeout(400);
+check(calls.search === 1 && calls.searches[0]?.google === undefined && calls.searches[0]?.preset === "jee" && calls.searches[0]?.city === CITY,
+  "a search with Google off sends ONE request, the free one (no google flag), with the preset id", JSON.stringify(calls.searches));
+check((await page.getByTestId("osm-found").innerText()).trim() === "Nothing in OpenStreetMap in and around Patna.",
+  "the free list says honestly that it found nothing, and where it looked", await page.getByTestId("osm-found").innerText().catch(() => ""));
+check((await page.locator('[data-source="osm"]').innerText()).includes("Free search (OpenStreetMap): no key needed"), "the result box says it was the free search, with no key");
+const tryLines = await page.getByRole("status").filter({ hasText: /Small towns/ }).allInnerTexts();
+check(tryLines.length === 1 && tryLines[0].trim() === "Small towns have few listings on OpenStreetMap: try Area \"25 km around it\", another type, or a nearby bigger city.",
+  "... and one plain line says what to try (small towns said once, not twice)", JSON.stringify(tryLines));
+check((await page.locator('[data-source="google"]').count()) === 0 && (await page.getByRole("alert").count()) === 0, "no Google line and no error: Google was not asked");
+const freeOnly = calls.search;
+await alsoGoogle().check();
+await page.getByRole("button", { name: "Search", exact: true }).click();
 await row("P_OK").waitFor({ timeout: 10000 });
+const both = calls.searches.slice(freeOnly);
+check(both.length === 2 && both.filter((s) => s.google === true).length === 1 && both.filter((s) => s.google === undefined).length === 1
+  && both.every((s) => s.preset === "jee"), "with 'Also use Google' ticked: two requests at once, the free one and google: true, both with the preset", JSON.stringify(both));
 check((await page.locator("li[data-place-id]").count()) === 5, "the first page shows 5 places");
 check((await page.locator('[data-source="google"]').innerText().catch(() => "")).includes("Source: Google Maps"), "the page says which source answered: Google Maps");
-check((await page.locator('[data-source="osm"]').count()) === 0, "no OpenStreetMap credit on a Google list");
+check((await page.getByTestId("osm-found").innerText().catch(() => "")).startsWith("Nothing in OpenStreetMap"), "the free search ran too, and says it found none here");
+check((await page.getByRole("status").filter({ hasText: /Small towns/ }).count()) === 0, "with Google's rows on the list, no 'try another area' line");
 check((await row("P_NONE").innerText()).includes("0612 222 0001"), "Google's phone is shown live");
 check((await row("P_NONE").innerText()).includes("4.6"), "the rating is shown");
-check(calls.searches.at(-1)?.preset === "jee", "the preset id goes with the search (OpenStreetMap needs it)", JSON.stringify(calls.searches.at(-1)));
 
 /* ── 2. Audit badges fill in on their own ──────────────────────────────── */
 await page.waitForFunction(() => document.querySelectorAll("li[data-place-id] [data-verdict]").length >= 5, null, { timeout: 10000 });
@@ -391,8 +463,9 @@ const overflowWide = await page.evaluate(() => document.documentElement.scrollWi
 check(overflowWide <= 0, "no horizontal scroll at 1440", `overflow ${overflowWide}px at 1440`);
 const googleDemoId = none?.demoId;
 
-/* ── 11. OpenStreetMap (no Google key): a dental search in Indore ─────── */
+/* ── 11. OpenStreetMap (Google unticked): a dental search in Indore ───── */
 phase = "osm";
+await alsoGoogle().uncheck();
 await page.getByRole("button", { name: "Dental clinic" }).click();
 await page.getByLabel("City").fill(OSM_CITY);
 await page.getByRole("button", { name: "Search", exact: true }).click();
@@ -400,13 +473,17 @@ const osmRow = (n, p = page) => row(`osm:node/${n}`, p);
 await osmRow(9001).waitFor({ timeout: 10000 });
 const credit = page.locator('[data-source="osm"]');
 const creditText = (await credit.innerText().catch(() => "")).replace(/\s+/g, " ");
-check(creditText.includes("Source: OpenStreetMap"), "the page says which source answered: OpenStreetMap", "credit box: " + creditText);
+check(creditText.includes("Free search (OpenStreetMap): no key needed"), "the page says which source answered: the free search, OpenStreetMap", "credit box: " + creditText);
 const attr = credit.getByRole("link", { name: "© OpenStreetMap contributors" });
 check((await attr.count()) === 1 && (await attr.getAttribute("href")) === "https://www.openstreetmap.org/copyright" && creditText.includes("(ODbL)"),
   "the list credits © OpenStreetMap contributors, linked to their copyright page, ODbL");
-check(creditText.includes("OpenStreetMap is free, but it lists fewer businesses and fewer phone numbers than Google Maps."), "the one honest line about fewer businesses and phones");
-check(creditText.includes("No Google Maps key is saved. So this list is from OpenStreetMap, free."), "and why Google was not used");
-check((await page.locator('[data-source="google"]').count()) === 0, "no Google Maps label on an OpenStreetMap list");
+check(creditText.includes("OpenStreetMap is free, but it lists fewer businesses and fewer phone numbers than Google Maps.") && (creditText.match(/small towns have fewer listings/gi) || []).length === 1,
+  "the one honest line about fewer businesses and phones, and small towns said once");
+check(creditText.includes("Found 4 in OpenStreetMap in and around Indore: 2 with a phone, 2 with a website. Small towns have fewer listings."),
+  "and how many it found where, with a phone and with a website");
+check((await page.getByTestId("osm-place-note").count()) === 0, "a city searched as typed gets no place note");
+check((await page.locator('[data-source="google"]').count()) === 0 && calls.searches.filter((s) => s.phase === "osm").every((s) => s.google === undefined),
+  "Google unticked: no Google line, and no Google request");
 check(calls.searches.at(-1)?.preset === "dental" && calls.searches.at(-1)?.type === "dental clinic", "the Dental clinic preset searches 'dental clinic' with preset dental",
   JSON.stringify(calls.searches.at(-1)));
 check((await page.locator("li[data-place-id]").count()) === 3 && /3 of 4 found for Dental clinic in Indore/.test(await results().innerText()),
@@ -481,16 +558,53 @@ check(!kids?.pitch && !kids?.observation && /Website check \(unchecked\)/.test(k
 await page.getByRole("button", { name: "Load more" }).click();
 await osmRow(9004).waitFor({ timeout: 10000 });
 check(calls.searches.at(-1)?.pageToken === "osm.20", "Load more sends the OSM token");
-check((await credit.innerText()).includes("No Google Maps key is saved."), "the reason Google was not used is still shown after Load more");
+check((await credit.innerText()).includes("Found 4 in OpenStreetMap in and around Indore"), "the found line is still shown after Load more");
 check(await tplText(9004) === "d3", "a Smile Studio picks d3", "template: " + (await tplText(9004)));
 
 /* ── 14. A speciality OpenStreetMap does not have: said plainly, template by the clinic's own words ── */
 await page.getByRole("button", { name: "Orthodontist or aligners" }).click();
+await alsoGoogle().check();
 await page.getByRole("button", { name: "Search", exact: true }).click();
 await osmRow(9005).waitFor({ timeout: 10000 });
+const asking = (await page.locator('[data-source="google"]').innerText().catch(() => "")).trim();
+check(asking === "Also asking Google Maps.", "a failing key never slows the free list: it shows while Google is still being asked", "google line: " + asking);
 check(/no orthodontists by name in Indore, so these are all the dental clinics it lists there/.test(await credit.innerText()), "the broadened list is said in one plain line");
-check(/Every Google Maps key is out of quota for today\. So this list is from OpenStreetMap, free\./.test(await credit.innerText()), "an over-quota Google key is given as the reason");
+await page.locator('[data-source="google"]').filter({ hasText: "was not used" }).waitFor({ timeout: 10000 });
+const failed = (await page.locator('[data-source="google"]').innerText()).replace(/\s+/g, " ").trim();
+check(failed === "Google Maps was not used: Places API (New) is not enabled for the key's Google Cloud project. AI keys"
+  && (await page.locator('[data-source="google"]').getByRole("link", { name: "AI keys" }).count()) === 1,
+  "... and when Google fails, one plain line says why (Places API (New) not enabled), with the way to AI keys", "google line: " + failed);
+check((await page.getByRole("alert").count()) === 0 && (await page.locator("li[data-place-id]").count()) === 1, "no error box, and the free list stands as it was");
 check(await tplText(9005) === "d1", "a plain clinic in a broadened list is not forced onto the ortho template (d1, from its own words)", "template: " + (await tplText(9005)));
+
+/* ── 14b. Both sources: the free rows first, then Google's; a business both have is shown once ── */
+phase = "mix";
+await page.getByRole("button", { name: "Tuition centre" }).click();
+await page.getByLabel("City").fill(MIX_CITY);
+await page.getByRole("button", { name: "Search", exact: true }).click();
+await row("P_GONLY").waitFor({ timeout: 10000 });
+const mixed = await page.locator("li[data-place-id]").evaluateAll((els) => els.map((e) => e.getAttribute("data-place-id")));
+check(JSON.stringify(mixed) === JSON.stringify(["osm:node/9101", "osm:node/9102", "P_GONLY"]),
+  "both sources: the free rows first, then Google's, and the business both list is shown once (the free row, whose phone may be kept)", JSON.stringify(mixed));
+check(/Source: Google Maps, too: 1 more place, and 1 place the free list already has \(shown once\)\./.test((await page.locator('[data-source="google"]').innerText()).replace(/\s+/g, " ")),
+  "the Google line says what Google added", await page.locator('[data-source="google"]').innerText());
+check((await page.getByRole("button", { name: "Rating 4+" }).count()) === 1 && (await row("P_GONLY").innerText()).includes("4.1"),
+  "with Google rows on the list, the rating filters are back, and Google's rating shows");
+check(/3 found for Tuition centre in Gaya/.test(await results().innerText()), "3 found in all");
+await alsoGoogle().uncheck();
+
+/* ── 14c. A region typed as Mehdi names it ("Delhi NCR"): Delhi is searched, and the page says so in one line ── */
+phase = "ncr";
+await page.getByRole("button", { name: "Dental clinic" }).click();
+await page.getByLabel("City").fill(NCR_CITY);
+await page.getByRole("button", { name: "Search", exact: true }).click();
+await osmRow(9201).waitFor({ timeout: 10000 });
+check(calls.searches.at(-1)?.city === NCR_CITY && calls.searches.at(-1)?.google === undefined && calls.searches.filter((s) => s.phase === "ncr").length === 1,
+  "'Delhi NCR' goes to the server as typed, in one free request", JSON.stringify(calls.searches.at(-1)));
+const ncrNote = (await page.getByTestId("osm-place-note").innerText().catch(() => "")).trim();
+check(ncrNote === NCR_NOTE, "the page says NCR is several cities, that Delhi was searched, and which cities to search on their own", ncrNote);
+check((await page.getByTestId("osm-found").innerText()).startsWith("Found 1 in OpenStreetMap in and around Delhi"), "and the found line says where it looked: in and around Delhi",
+  await page.getByTestId("osm-found").innerText());
 const orthoDemoId = ortho?.demoId;
 const kidsDemoId = kids?.demoId;
 
@@ -516,6 +630,7 @@ if (finderUp) {
     `CRM host: AI keys is an absolute link to the main site (${mainOrigin || "none"}), in a new tab`, "href: " + keysHref);
   /* Inside the finder only: the CRM's top bar has a search box of its own. */
   const finder = sub.locator('[data-testid="lead-finder"]');
+  await alsoGoogle(sub).check();
   await finder.getByRole("button", { name: "JEE/NEET coaching" }).click();
   await finder.getByLabel("City", { exact: true }).fill(CITY);
   await finder.getByRole("button", { name: "Search", exact: true }).click();
@@ -548,15 +663,18 @@ const keysFree = (await page.getByTestId("maps-free-usage").innerText().catch(()
 check(/7,000 free Text Searches and 7,000 free Place Details a month on India pricing/.test(keysFree) && /daily quota of 200 for each/.test(keysFree)
   && /only per-minute quotas there, they do not cap the month/.test(keysFree)
   && /card is still needed/.test(keysFree) && /OpenStreetMap for free/.test(keysFree), "AI keys says the same about free Google usage and OpenStreetMap", keysFree);
+check(/The finder is free: every search uses OpenStreetMap, with no key, no card and no bill/.test(keysFree) && /A Google Maps key is optional/.test(keysFree),
+  "... and that the key is optional: the finder is free without it", keysFree);
 
 /* ── Cleanup ──────────────────────────────────────────────────────────── */
-await page.evaluate(([ok, ck, ids]) => {
+await page.evaluate(([ok, ck, ids, gp]) => {
   localStorage.removeItem(ok);
+  localStorage.removeItem(gp);
   const data = JSON.parse(localStorage.getItem(ck) || "{}");
   data.demoSites = (data.demoSites || []).filter((x) => !ids.includes(x.id));
   data.demoSiteSlots = (data.demoSiteSlots || []).filter((x) => !ids.includes(x.id));
   localStorage.setItem(ck, JSON.stringify(data));
-}, [OUTREACH_KEY, CMS_KEY, [googleDemoId, orthoDemoId, kidsDemoId].filter(Boolean)]);
+}, [OUTREACH_KEY, CMS_KEY, [googleDemoId, orthoDemoId, kidsDemoId].filter(Boolean), GOOGLE_PREF]);
 
 const realErrors = consoleErrors.filter((e) => !/favicon|Failed to load resource|intercepted|ERR_FAILED/i.test(e));
 check(realErrors.length === 0, "no console errors", "console errors: " + realErrors.slice(0, 5).join(" | "));

@@ -13,7 +13,9 @@
  *
  * OPENSTREETMAP results (28 Sep 2026) are ODbL data, which may be kept with
  * the attribution: a lead from OSM also keeps the phone OSM lists (after any
- * found on their own website) and a note crediting OpenStreetMap.
+ * found on their own website) and a note crediting OpenStreetMap. Since
+ * 4 Oct 2026 OpenStreetMap is the finder's default (free, no key); Google's
+ * results join the list only when Mehdi ticks "Also use Google" (mergeSources).
  *
  * DENTAL (28 Sep 2026): the dental presets, a Google/OSM category that says
  * dentist, or dental words in the typed type or the name make a "dental" lead,
@@ -261,6 +263,24 @@ export function findExisting(
   const c = squash(city);
   if (!name) return undefined;
   return leads.find((l) => squash(l.instituteName) === name && (!c || !l.city || squash(l.city) === c));
+}
+
+/**
+ * The list the finder shows when Google is on too: every OpenStreetMap result
+ * first, then the Google results OpenStreetMap does not already have. One
+ * business is the same name (as findExisting compares names) or the same
+ * phone; Google's copy is then left out, so the row a lead is made from is
+ * the free one, whose phone ODbL lets the lead keep.
+ */
+export function mergeSources(osm: FinderPlace[], google: FinderPlace[]): FinderPlace[] {
+  const names = new Set(osm.map((p) => squash(p.name)).filter(Boolean));
+  const phones = new Set(osm.map((p) => normalizePhone(p.phoneIntl || p.phone)).filter((p): p is string => !!p));
+  const ids = new Set(osm.map((p) => p.placeId));
+  const extra = google.filter((g) => {
+    const phone = normalizePhone(g.phoneIntl || g.phone);
+    return !ids.has(g.placeId) && !names.has(squash(g.name)) && !(phone && phones.has(phone));
+  });
+  return extra.length ? [...osm, ...extra] : osm;
 }
 
 /** What "Save this number" writes: Google's phone, by Mehdi's explicit choice. */
