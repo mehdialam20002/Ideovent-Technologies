@@ -34,6 +34,8 @@ const ROOT = resolve(HERE, "..");
 const SETUP_ALL = first(process.env.CRM_SETUP_ALL, join(ROOT, "supabase/SETUP_ALL.sql"));
 const MIGRATION = first(process.env.CRM_MIGRATION, join(ROOT, "supabase/migrations/0011_crm_team.sql"));
 if (!SETUP_ALL || !MIGRATION) throw new Error(`missing SQL: SETUP_ALL=${SETUP_ALL} MIGRATION=${MIGRATION}`);
+/* What a Meta lead looks like (META_SOURCES): a member's new lead must never pass for one (section 8). */
+const { META_SOURCES } = await import(pathToFileURL(join(ROOT, "src/lib/meta/fields.js")).href);
 
 /** PGlite and its pgcrypto (Supabase has pgcrypto in schema `extensions`; crm_reset_password uses it). */
 async function loadPGlite() {
@@ -467,8 +469,77 @@ r = await as("asha", `insert into public.outreach_events (id, lead_id, data) val
 check(!ok(r) && /not to be contacted/.test(r.error), "a 'sent' line on a Do-not-contact lead is refused", r);
 r = await as("owner", `insert into public.outreach_events (id, lead_id, data) values ('E12', 'L4', '{"type":"sent","channel":"email"}') returning id`);
 check(!ok(r), "...for Mehdi too (lift Do not contact first)", r);
+/* A lead from a Meta form who left the box "Ideovent may contact me on WhatsApp and phone" unticked (metaConsent
+   "no"): e-mail only, for everyone, Mehdi included; the database holds it, not only the screens (review, 3 Oct).
+   L1 is made such a lead inside each probe's own transaction (as the database owner), so nothing of it stays. */
+async function asWith(prep, who, sql, params = []) {
+  await db.exec("begin");
+  try {
+    await db.exec(prep);
+    const p = P[who];
+    await db.exec("set local role authenticated");
+    await db.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: p.uid, email: p.email, role: "authenticated", aud: "authenticated" })]);
+    const out = await db.query(sql, params);
+    await db.exec("rollback");
+    return { rows: out.rows, n: out.affectedRows ?? out.rows.length };
+  } catch (e) {
+    await db.exec("rollback");
+    return { error: e.message, code: e.code };
+  }
+}
+const UNTICKED = `update public.outreach_leads set data = data || '{"source":"Instagram Lead Ads","metaLeadId":"9000000000000081","metaConsent":"no"}'::jsonb where id = 'L1'`;
+const TICKED = UNTICKED.replace('"metaConsent":"no"', '"metaConsent":"yes"');
+const NO_TICK = "crm: they did not tick the box on the Facebook or Instagram form that allows WhatsApp and calls. E-mail them only.";
+const logOn = (prep, who, data) => asWith(prep, who, `insert into public.outreach_events (id, lead_id, data) values ('EC', 'L1', $1::jsonb) returning id`, [JSON.stringify(data)]);
+for (const [who, data, what] of [
+  ["asha", { type: "sent", channel: "whatsapp", stage: "first" }, "asha's first WhatsApp"],
+  ["asha", { type: "sent", channel: "whatsapp", stage: "follow_up_1" }, "asha's WhatsApp follow-up"],
+  ["asha", { type: "call", channel: "call", outcome: "no_answer" }, "asha's call"],
+  ["asha", { type: "call", outcome: "connected_interested" }, "asha's call with no channel on it"],
+  ["asha", { type: "sent", templateId: "wa_follow_up_1_school_en" }, "a WhatsApp send with its channel left out (the template id gives it away)"],
+  ["ayesha", { type: "sent", channel: "whatsapp", stage: "first" }, "an admin's WhatsApp"],
+  ["owner", { type: "sent", channel: "whatsapp", stage: "first" }, "Mehdi's own WhatsApp"],
+  ["owner", { type: "call", channel: "call", outcome: "connected_interested" }, "Mehdi's own call"],
+]) {
+  r = await logOn(UNTICKED, who, data);
+  check(!ok(r) && r.code === "42501" && r.error === NO_TICK, `a Meta lead who did not tick the box: ${what} is refused, in the screen's words`, r);
+}
+for (const [prep, who, data, what] of [
+  [UNTICKED, "asha", { type: "sent", channel: "email", stage: "first" }, "asha's e-mail to them"],
+  [UNTICKED, "asha", { type: "note", detail: "Wrote by e-mail" }, "a note"],
+  [UNTICKED, "asha", { type: "replied", channel: "whatsapp" }, "their own WhatsApp reply, logged"],
+  [UNTICKED, "owner", { type: "sent", channel: "email", stage: "first" }, "Mehdi's e-mail"],
+  [TICKED, "asha", { type: "sent", channel: "whatsapp", stage: "first" }, "a WhatsApp to a Meta lead who ticked it"],
+  [TICKED, "asha", { type: "call", channel: "call", outcome: "no_answer" }, "a call to a Meta lead who ticked it"],
+]) {
+  r = await logOn(prep, who, data);
+  check(ok(r), `...while ${what} still saves (rolled back)`, r);
+}
+check((await pg(`select data ? 'metaConsent' as has from public.outreach_leads where id = 'L1'`))[0]?.has === false, "...and L1 is as it was after the probes");
 r = await as("asha", `insert into public.outreach_events (id, lead_id, data) values ('E13', 'L1', '{"type":"status","detail":"Status: Replied to Won"}') returning id`);
 check(!ok(r), "asha cannot write a '... to Won' line (the dashboard counts wins from it)", r);
+/* Review, 3 Oct: metrics.ts isWinEvent (/\bto Won$/) takes every character but an ASCII letter, digit or _ for a
+   word break; the guard's old \m followed the database's locale, so "éto Won" passed it and still counted as a win. */
+for (const [detail, refused, what] of [
+  ["Status: Contacted éto Won", true, "'éto Won' (é is a word break for the dashboard)"],
+  ["Status: Contacted ½to Proposal", true, "'½to Proposal'"],
+  ["to Won", true, "a line that is only 'to Won'"],
+  ["Status: Contacted\tto  Won ", true, "a tab before 'to' and spaces around 'Won'"],
+  ["Status: Contacted xto Won", false, "'xto Won' (one word: the dashboard does not count it either)"],
+  ["Status: Contacted 1to Won", false, "'1to Won'"],
+  ["Status: Contacted _to Won", false, "'_to Won'"],
+]) {
+  r = await as("asha", `insert into public.outreach_events (id, lead_id, data) values ('E13', 'L1', jsonb_build_object('type', 'status', 'detail', $1::text)) returning id`, [detail]);
+  const counted = /\bto Won$|\bto Proposal$/.test(detail.trimEnd().replace(/\s+/g, " "));
+  check(refused ? !ok(r) && r.code === "42501" : ok(r), `${refused ? "asha cannot write" : "asha may write"} ${what}${refused ? "" : " (rolled back)"}`, r);
+  if (!refused) check(!counted, `...and the dashboard would not count ${what} as a win`, detail);
+}
+{
+  /* The negative control: the old pattern in this same database lets "éto Won" through; the new one does not. */
+  const [old, now] = (await pg(`select $1 ~* '\\mto\\s+(won|proposal)\\s*$' as old, $1 ~* '(^|[^a-z0-9_])to\\s+(won|proposal)\\s*$' as now`, ["Status: Contacted éto Won"]))
+    .map((x) => [x.old, x.now])[0];
+  check(old === false && now === true, "the old \\m pattern let 'éto Won' through in this locale; the new one refuses it", { old, now });
+}
 r = await as("asha", `insert into public.outreach_events (id, lead_id, data) values ('E14', 'L1', '{"type":"assign","detail":"Assigned to Asha"}') returning id`);
 check(!ok(r), "asha cannot forge a system line (assign, handoff)", r);
 /* Money is never delegated (SOP-10): no after-call summary, no proposal, from anyone but Mehdi. */
@@ -569,6 +640,35 @@ for (const [data, what] of [
   r = await as("asha", `insert into public.outreach_leads (id, data) values ('LS', $1::jsonb) returning id`, [JSON.stringify(data)]);
   check(!ok(r) && ["22023", "23514"].includes(r.code), `asha cannot add a lead with ${what}`, r);
 }
+/* ...and never one that passes for a lead from Meta's forms (0012 brings those in; Mehdi imports Meta's own
+   files): a Meta lead's id would take a future Meta lead's place, a Meta source or meta... key would credit
+   the ads with her own lead. Each insert below is rolled back, so her New-lead count is unchanged. */
+for (const id of ["ol_meta_9000000000000071", "OL_META_9000000000000072"]) {
+  r = await as("asha", `insert into public.outreach_leads (id, data) values ($1, '{"instituteName":"Meta Look","phone":"+919830000071"}') returning id`, [id]);
+  check(!ok(r) && r.code === "42501" && /ids starting with ol_meta_ are kept for leads from Facebook and Instagram forms/.test(r.error),
+    `asha cannot add a lead with the id ${id} (a Meta lead's place)`, r);
+}
+/* Compared on its letters only (review, 3 Oct): the dashboard and the Source filter group "Meta Lead Ads" with a
+   no-break space, a tab, a line break or an ideographic space around it as "meta lead ads" (JavaScript's trim). */
+const SPACED = ["Meta Lead Ads ", "\tInstagram Lead Ads", "Facebook Lead Ads\n", "Meta Leads Center　", "Meta Lead Ads​",
+  "﻿Meta Lead Ads", "FacebooK Lead Ads", "meta-lead-ads", "  Meta   Lead   Ads  "];
+for (const source of [...META_SOURCES, " instagram lead ads ", "META LEADS CENTER", ...SPACED]) {
+  r = await as("asha", `insert into public.outreach_leads (id, data) values ('LM', jsonb_build_object('instituteName', 'Meta Look', 'phone', '+919830000072', 'source', $1::text)) returning id`, [source]);
+  check(!ok(r) && r.code === "42501" && /that source is kept for leads from Facebook and Instagram forms/.test(r.error), `asha cannot add a lead whose source is ${JSON.stringify(source)}`, r);
+}
+for (const source of ["Manual", "Instagram", "Referral", "Meta Lead Ads (old campaign)"]) {
+  r = await as("asha", `insert into public.outreach_leads (id, data) values ('LM', jsonb_build_object('instituteName', 'Meta Look', 'phone', '+919830000072', 'source', $1::text)) returning id`, [source]);
+  check(ok(r), `...but may add one whose source is "${source}" (rolled back)`, r);
+}
+r = await as("asha", `insert into public.outreach_leads (id, data) values ('ol_meta_9000000000000073', '{"instituteName":"Copy of Bilal","phone":"+919810000002"}') returning id`);
+check(!ok(r) && r.code === "42501" && !/already/.test(r.error), "...the Meta id is refused first, so the refusal says nothing about the number", r);
+r = await as("asha", `insert into public.outreach_leads (id, data) values ('LM', $1::jsonb) returning data`, [JSON.stringify({ instituteName: "Meta Look",
+  phone: "+919830000074", source: "Instagram page", metaLeadId: "9000000000000074", metaPlatform: "ig", metaConsent: "yes", metaCampaignName: "Made up", MetaOther: "x" })]);
+check(ok(r) && !Object.keys(r.rows[0].data).some((k) => /^meta/i.test(k)) && r.rows[0].data.source === "Instagram page" && r.rows[0].data.phone === "+919830000074",
+  "a lead asha adds keeps none of the meta... keys, and the rest as she wrote it", r);
+r = await as("owner", `insert into public.outreach_leads (id, data) values ('ol_meta_9000000000000075', '{"instituteName":"Mehdi Import","source":"Meta Leads Center","metaLeadId":"9000000000000075","metaConsent":"no"}') returning data`);
+check(ok(r) && r.rows[0].data.metaLeadId === "9000000000000075" && r.rows[0].data.source === "Meta Leads Center" && r.rows[0].data.metaConsent === "no",
+  "Mehdi's import of Meta's own files still adds Meta leads as they are", r);
 r = await as("asha", `select * from public.crm_find_duplicate('+919810000002', null)`);
 check(ok(r) && r.rows.length === 1 && r.rows[0].assignee_name === "Bilal" && r.rows[0].visible === false && !("phone" in r.rows[0]),
   "crm_find_duplicate tells asha it is bilal's, and that she cannot open it", r);
@@ -683,6 +783,13 @@ check(!ok(r), "...but not the demo of bilal's lead", r);
 await db.exec(`update public.outreach_leads set data = data || '{"demoId":"d9"}' where id = 'L9'`);
 r = await as("asha", `select public.crm_publish_lead_demo('L9') as slug`);
 check(!ok(r) && /closed/.test(r.error), "a demo Mehdi closed stays closed", r);
+/* 3 Oct 2026 (with the link in the first message): a Free slot is an empty page, and no send publishes one; nor does this. */
+await db.exec(`insert into public.content (collection, doc_id, data) values ('demoSites', 'd8', '{"id":"d8","slug":"free-one","status":"free","instituteName":"Free"}');
+               update public.outreach_leads set data = data || '{"demoId":"d8"}' where id = 'L9'`);
+r = await as("asha", `select public.crm_publish_lead_demo('L9') as slug`, [], { commit: true });
+const d8 = (await pg(`select data->>'status' as s from public.content where collection = 'demoSites' and doc_id = 'd8'`))[0];
+check(!ok(r) && /Free slot/.test(r.error) && d8?.s === "free", "a Free slot (an empty page) is never turned on: it stays free", [r, d8]);
+await db.exec(`update public.outreach_leads set data = data || '{"demoId":"d9"}' where id = 'L9'`);
 r = await as("asha", `update public.content set data = '{}' where collection = 'demoSites' returning id`);
 check(ok(r) && r.n === 0, "asha still cannot write the CMS directly", r);
 

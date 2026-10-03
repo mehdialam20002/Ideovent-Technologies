@@ -109,8 +109,10 @@ const LEADS = [
 }));
 const SEED = { leads: LEADS, events: [], settings: null };
 
-/* Paths that exist only on the CRM host, never on the main site. */
-const CRM_SCREENS = ["/", "/today", "/leads", "/pipeline", "/demos", "/finder", "/import", "/settings"];
+/* Paths that exist only on the CRM host, never on the main site. Mehdi's rail, in order: since the
+   team (crm-team-spec 10.1 and 13.4) Team sits between Pipeline and Demos, so nine links. Local mode
+   always has the team; on Supabase before 0011 (legacy) the rail is the other eight. */
+const CRM_SCREENS = ["/", "/today", "/leads", "/pipeline", "/team", "/demos", "/finder", "/import", "/settings"];
 const PHONE_TABS = ["/", "/today", "/leads", "/pipeline"];
 /* ── Browser ───────────────────────────────────────────────────────────── */
 async function launch() {
@@ -273,14 +275,14 @@ async function crmHostLinks(where) {
 const dash = await crmHostLinks("dashboard");
 const rail = dash.filter((a) => a.where === "rail").map((a) => a.href);
 const railNav = await page.locator('aside[aria-label="CRM"] nav a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-check(JSON.stringify(railNav) === JSON.stringify(CRM_SCREENS), "the rail's eight links are the CRM screens at the root", JSON.stringify(railNav));
+check(JSON.stringify(railNav) === JSON.stringify(CRM_SCREENS), "the rail's nine links are the CRM screens at the root, Team between Pipeline and Demos", JSON.stringify(railNav));
 check(rail.every((h) => h.startsWith("/") && !h.startsWith("/crm")), "every rail link is a path on this host", JSON.stringify(rail));
 const tabs = await page.locator('nav[aria-label="CRM tabs"] a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
 check(JSON.stringify(tabs) === JSON.stringify(PHONE_TABS), "the phone tab bar links are /, /today, /leads, /pipeline", JSON.stringify(tabs));
 const newLead = await page.getByRole("link", { name: /new lead/i }).first().getAttribute("href").catch(() => null);
 check(newLead === "/leads/new", "New lead is /leads/new", newLead);
 /* Click through every rail link: each screen opens on the CRM host, without /crm, and renders. */
-for (const label of ["Today", "Leads", "Pipeline", "Demos", "Lead finder", "Import", "Settings", "Dashboard"]) {
+for (const label of ["Today", "Leads", "Pipeline", "Team", "Demos", "Lead finder", "Import", "Settings", "Dashboard"]) {
   const link = page.locator('aside[aria-label="CRM"] nav a', { hasText: label }).first();
   const href = await link.getAttribute("href").catch(() => null);
   await link.click().catch(() => {});
@@ -307,6 +309,7 @@ await page.locator("#crm-more").waitFor({ timeout: 5000 }).catch(() => {});
 const more = await page.locator("#crm-more a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
 check(JSON.stringify(more.slice(0, 4)) === JSON.stringify(["/demos", "/finder", "/import", "/settings"]), "the phone More menu links are the other four screens at the root", JSON.stringify(more));
 check(more[4] === `${MAIN_ORIGIN}/admin`, `the phone More menu's Back to admin is ${MAIN_ORIGIN}/admin`, more[4]);
+check(more[5] === "/team" && more.length === 6, "and Team comes after Back to admin, at the root", JSON.stringify(more));
 await page.locator("#crm-more a", { hasText: "Settings" }).click().catch(() => {});
 await waitPath(page, "/settings", 10000);
 check(url().origin === CRM && url().pathname === "/settings", "More > Settings opens /settings on the CRM host", page.url());
@@ -378,7 +381,7 @@ await tab2.getByTestId("crm-dashboard").waitFor({ timeout: 30000 }).catch(() => 
 check(url(tab2).pathname === "/crm" && (await tab2.getByTestId("crm-dashboard").isVisible().catch(() => false)), "/crm on localhost is the CRM dashboard", tab2.url());
 const localRail = await tab2.locator('aside[aria-label="CRM"] nav a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
 const expectLocal = CRM_SCREENS.map((p) => (p === "/" ? "/crm" : `/crm${p}`));
-check(JSON.stringify(localRail) === JSON.stringify(expectLocal), "the rail links are /crm, /crm/today ... /crm/settings, as before", JSON.stringify(localRail));
+check(JSON.stringify(localRail) === JSON.stringify(expectLocal), "the rail links keep /crm, as before: /crm, /crm/today ... /crm/team ... /crm/settings", JSON.stringify(localRail));
 await tab2.locator('aside[aria-label="CRM"] nav a', { hasText: "Pipeline" }).click().catch(() => {});
 await waitPath(tab2, "/crm/pipeline", 10000);
 check(url(tab2).origin === LOCAL && url(tab2).pathname === "/crm/pipeline", "rail Pipeline opens /crm/pipeline on localhost", tab2.url());
@@ -456,9 +459,11 @@ try {
 /* The generated bare-slug rules follow the route table (sync-noindex-header.mjs --check owns them). */
 const generated = (r) => typeof r.source === "string" && /^\/:(pitchSlug|slug)\(/.test(r.source);
 /* The SPA catch-all is checked on its own below: its destination moved from
-   /index.html to /spa-shell.html on 2 Oct 2026 (scripts/prerender-heads.mjs). */
-const SPA_SOURCE = "/((?!assets/).*)";
+   /index.html to /spa-shell.html on 2 Oct 2026 (scripts/prerender-heads.mjs), and
+   on 3 Oct 2026 its source learned to leave file names alone, so a missing
+   /og/x.png answers 404 instead of the shell (VERCEL-CONFIG-NOTES.md). */
 const SPA_FALLBACKS = ["/spa-shell.html", "/index.html"];
+const isSpaFallback = (r) => SPA_FALLBACKS.includes(r.destination) && typeof r.source === "string" && r.source.startsWith("/((?!assets/)");
 if (head) {
   /* A rule is the same rule if its source and its conditions are (2 Oct 2026):
      a destination can move on purpose (the SPA fallback to /spa-shell.html, the
@@ -468,7 +473,7 @@ if (head) {
   const ruleKey = (r) => JSON.stringify([r.source, r.has || null, r.missing || null]);
   for (const kind of ["redirects", "rewrites", "headers"]) {
     const now = new Map((vercel[kind] || []).map((r) => [ruleKey(r), r]));
-    const kept = (head[kind] || []).filter((r) => !generated(r));
+    const kept = (head[kind] || []).filter((r) => !generated(r) && !(kind === "rewrites" && isSpaFallback(r)));
     const missing = kept.filter((r) => !now.has(ruleKey(r)));
     const lostHeader = kind !== "headers" ? [] : kept.filter((r) => now.has(ruleKey(r))
       && (r.headers || []).some((h) => !(now.get(ruleKey(r)).headers || []).some((x) => x.key === h.key)));
@@ -481,7 +486,7 @@ const crmHeader = (vercel.headers || []).find((h) => h.source === "/(.*)" && onC
 check(Boolean(crmHeader?.headers?.some((x) => x.key === "X-Robots-Tag" && x.value === "noindex, nofollow")), `vercel.json: X-Robots-Tag "noindex, nofollow" on every path of ${CRM_HOST_NAME}`, JSON.stringify(crmHeader));
 const crmRobots = [...(vercel.redirects || []), ...(vercel.rewrites || [])].find((r) => r.source === "/robots.txt" && onCrm(r));
 check(crmRobots?.destination === "/robots-crm.txt", `vercel.json: /robots.txt on ${CRM_HOST_NAME} answers with /robots-crm.txt`, JSON.stringify(crmRobots));
-const spa = (vercel.rewrites || []).find((r) => r.source === SPA_SOURCE && SPA_FALLBACKS.includes(r.destination));
+const spa = (vercel.rewrites || []).find(isSpaFallback);
 check(Boolean(spa) && !spa.has && !spa.missing, "vercel.json: the SPA fallback (to the shell file) has no host condition, so the CRM host gets it too", JSON.stringify(spa));
 /* 1 Oct 2026: the old production alias answers every path with a 308 to the same path on
    www.ideovent.in. It is the one host-limited rule allowed that is not the CRM host's. */
@@ -490,8 +495,14 @@ const onOldAlias = (r) => Array.isArray(r.has) && r.has.length === 1 && r.has[0]
   && r.source === "/:path*" && r.destination === "https://www.ideovent.in/:path*" && r.permanent === true;
 const aliasRules = (vercel.redirects || []).filter(onOldAlias);
 check(aliasRules.length === 1 && onOldAlias((vercel.redirects || [])[0]), `vercel.json: ${OLD_ALIAS} sends every path to www.ideovent.in (308), first among the redirects`, JSON.stringify(aliasRules));
+/* 3 Oct 2026: "/:path*" never matches the bare "/" (Vercel compiles it strict), so
+   the root of the old alias has a rule of its own, beside the first. */
+const onOldAliasRoot = (r) => Array.isArray(r.has) && r.has.length === 1 && r.has[0].type === "host" && r.has[0].value === OLD_ALIAS
+  && r.source === "/" && r.destination === "https://www.ideovent.in/" && r.permanent === true;
+const aliasRoot = (vercel.redirects || []).filter(onOldAliasRoot);
+check(aliasRoot.length === 1, `vercel.json: ${OLD_ALIAS}/ itself goes to https://www.ideovent.in/ (308)`, JSON.stringify(aliasRoot));
 const hostRules = ["redirects", "rewrites", "headers"].flatMap((k) => (vercel[k] || []).filter((r) => Array.isArray(r.has) && r.has.some((h) => h.type === "host")));
-check(hostRules.every((r) => onCrm(r) || onOldAlias(r)), `every host-limited rule in vercel.json is for ${CRM_HOST_NAME}, apart from the ${OLD_ALIAS} redirect`, JSON.stringify(hostRules.filter((r) => !onCrm(r) && !onOldAlias(r))));
+check(hostRules.every((r) => onCrm(r) || onOldAlias(r) || onOldAliasRoot(r)), `every host-limited rule in vercel.json is for ${CRM_HOST_NAME}, apart from the two ${OLD_ALIAS} redirects`, JSON.stringify(hostRules.filter((r) => !onCrm(r) && !onOldAlias(r) && !onOldAliasRoot(r))));
 
 const robots = readFileSync(resolve(ROOT, "public/robots-crm.txt"), "utf8").split(/\r?\n/).map((s) => s.trim()).filter((s) => s && !s.startsWith("#"));
 check(robots.join("\n") === "User-agent: *\nDisallow: /", "public/robots-crm.txt is User-agent: * / Disallow: /", robots.join(" | "));

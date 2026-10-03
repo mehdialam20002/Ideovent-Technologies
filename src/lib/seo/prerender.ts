@@ -38,10 +38,12 @@ export interface HeadSpec {
   path: string;
   title: string;
   description: string;
-  /** Null for the SPA shell, which is served for many addresses. */
-  canonical: string | null;
+  canonical: string;
   image: string;
   imageIsCard: boolean;
+  /** The real size of a picture that is not an /og/ card, when it is known (a project's shareImage). */
+  imageWidth?: number;
+  imageHeight?: number;
   imageAlt: string;
   type: "website" | "article";
   publishedTime?: string;
@@ -96,7 +98,8 @@ function cmsH1(path: string): string | undefined {
 }
 
 function spec(path: string, seo: PageSeo, opts: {
-  crumbs?: Crumb[]; nodes?: (Json | undefined)[]; image?: string; type?: "website" | "article"; publishedTime?: string;
+  crumbs?: Crumb[]; nodes?: (Json | undefined)[]; image?: string; imageSize?: { width: number; height: number };
+  type?: "website" | "article"; publishedTime?: string;
 } = {}): HeadSpec {
   const image = opts.image || seo.image || seed.settings.defaultSeo.ogImage;
   const card = /(^|\/)og\/[^/]+$/.test(image);
@@ -107,6 +110,7 @@ function spec(path: string, seo: PageSeo, opts: {
     canonical: `${host}${path}`,
     image: absolute(host, image),
     imageIsCard: card,
+    ...(!card && opts.imageSize ? { imageWidth: opts.imageSize.width, imageHeight: opts.imageSize.height } : {}),
     imageAlt: card ? `${siteName}, the iV monogram and wordmark on a navy card` : seo.title,
     type: opts.type || "website",
     publishedTime: opts.publishedTime || undefined,
@@ -154,7 +158,9 @@ export function headFor(path: string): HeadSpec | null {
     return spec(path, projectSeo(p), {
       crumbs: [{ name: "Work", path: "/work" }, { name: p.title, path }],
       nodes: [caseStudyNode(p)],
-      image: p.coverImage || "/og/ideovent-og-work.png",
+      // The link-card copy of a cover that is not 1.91:1, with its size (CaseStudy.tsx does the same).
+      image: p.shareImage?.src || p.coverImage || "/og/ideovent-og-work.png",
+      imageSize: p.shareImage,
       type: "article",
     });
   }
@@ -177,15 +183,44 @@ export function headFor(path: string): HeadSpec | null {
   return null;
 }
 
+/** The head of dist/spa-shell.html, the SPA fallback (see shellHead). */
+export interface ShellSpec {
+  title: string;
+  robots: string;
+  siteName: string;
+  image: string;
+  imageAlt: string;
+  twitterHandle: string;
+}
+
 /**
- * dist/spa-shell.html (since 2 Oct 2026; it used to be dist/index.html, which is
- * now the homepage with headFor("/") and its canonical). The file served for every
- * address that has no file of its own (pitch pages, demos, the admin, a post added
- * in /admin after the build), so it carries NO canonical and no og:url: <Seo> sets
- * those at runtime, which Google accepts when the HTML has none. It keeps the
- * homepage's title, description and no-script summary.
+ * dist/spa-shell.html: the file served for every address that has no file of its
+ * own (pitch pages, demos, the admin, the CRM, a mistyped or mixed-case URL, a
+ * draft policy, a post added in /admin after the build).
+ *
+ * A NEUTRAL PAGE SINCE 3 OCT 2026. Until then it kept the homepage's title,
+ * description, robots "index, follow", JSON-LD and no-script summary, so to a
+ * crawler that reads only the HTML every unknown address was an indexable copy of
+ * the homepage (live crawl of 2 Oct 2026, F1). Now it carries the firm's name as
+ * its title, robots "noindex", no description, no canonical, no og:url, no JSON-LD
+ * and no summary. The Open Graph and Twitter tags left are the brand card, nothing
+ * of any one page; api/share.js writes a demo's or a pitch's own card over them.
+ * Everything carries data-rh, so <Seo> and the pages' own Helmet tags replace it
+ * once React runs, exactly as before: a pitch page, a demo and the not-found page
+ * still set their own title and robots. No public page is ever served this file:
+ * scripts/prerender-heads.mjs fails the build when a sitemap URL has no file of its
+ * own. A post, project or service published in /admin never gets a file of its own
+ * (this module reads seed.ts, not the store), so /blog/<slug>, /work/<slug> and
+ * /services/<slug> without a file get dist/spa-shell-cms.html instead: this head
+ * with no robots tag, because Google does not render a page whose HTML says noindex.
  */
-export function shellHead(): HeadSpec {
-  const home = headFor("/")!;
-  return { ...home, canonical: null, jsonLd: graph(undefined, []) };
+export function shellHead(): ShellSpec {
+  return {
+    title: siteName,
+    robots: "noindex",
+    siteName,
+    image: absolute(host, seed.settings.defaultSeo.ogImage),
+    imageAlt: `${siteName}, the iV monogram and wordmark on a navy card`,
+    twitterHandle: seed.settings.defaultSeo.twitterHandle || "@Ideovent_",
+  };
 }

@@ -22,6 +22,12 @@ somebody is going to attach to a job application should arrive as a .png.
 
 Originals are copied to screenshots-src/certificates/ on first run and read from
 there afterwards, so this is re-runnable without compounding the quantisation.
+
+A certificate that is already a palette PNG is left alone (3 Oct 2026). The two
+scans were reissued that day with a QR code for www.ideovent.in as palette PNGs,
+while the copies banked in screenshots-src/ still carry the old ideovent.com
+code: re-quantising from those would quietly put the old QR back. A file that is
+not a palette PNG yet is a new original, so it is banked again before use.
 """
 from __future__ import annotations
 
@@ -41,6 +47,13 @@ def kb(path: str) -> float:
     return os.path.getsize(path) / 1024
 
 
+def mode_of(path: str) -> str | None:
+    if not os.path.exists(path):
+        return None
+    with Image.open(path) as im:
+        return im.mode
+
+
 def main() -> None:
     os.makedirs(SRC, exist_ok=True)
     rows = []
@@ -49,12 +62,19 @@ def main() -> None:
         live = os.path.join(OUT, name)
         original = os.path.join(SRC, name)
 
-        # First run: the live file IS the original, so bank it before touching it.
-        if not os.path.exists(original):
-            if not os.path.exists(live):
-                print(f"  ! {name}: nothing to optimise")
-                continue
+        live_mode = mode_of(live)
+        # Already optimised (see the docstring): never re-made from a banked copy.
+        if live_mode == "P":
+            print(f"  = {name}: already a palette PNG, left as it is")
+            continue
+
+        # First run, or a new scan put in public/certificates/: the live file IS the
+        # original, so bank it before touching it.
+        if live_mode is not None:
             shutil.copy2(live, original)
+        elif not os.path.exists(original):
+            print(f"  ! {name}: nothing to optimise")
+            continue
 
         im = Image.open(original)
         before = kb(original)

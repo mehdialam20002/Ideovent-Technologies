@@ -5,6 +5,7 @@ import { dueLabel, fmtDate, KIND_LABEL } from "@/admin/outreach/ui";
 import { cn } from "@/lib/utils";
 import { crm, StatusDot } from "../ui";
 import { contactText, DemoCell, NextAction, StatusSelect, UntouchedChip, type StatusBlock } from "./columns";
+import { SourceBadge } from "../meta/SourceBadge";
 import { sinceLabel, type LeadRow } from "./leadQuery";
 
 /** The phone layout of the table: one card per lead, same selection and status change. */
@@ -37,6 +38,8 @@ export function LeadCards({ rows, selected, onToggle, onOpen, now, setStatus, ma
               <button type="button" onClick={() => onOpen(l.id)} className="block w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <span className="block truncate text-[15px] font-medium">{l.instituteName}</span>
                 <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
+                  {/* A Meta lead's Instagram / Facebook chip (meta-leads-spec 6.2); nothing for any other lead. */}
+                  <SourceBadge lead={l} className="mr-1.5" />
                   {[l.city, KIND_LABEL[l.kind], r.lastContactAt ? `contacted ${sinceLabel(r.lastContactAt, now)}` : "never contacted"].filter(Boolean).join(" · ")}
                 </span>
                 {contact && <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">{contact}</span>}

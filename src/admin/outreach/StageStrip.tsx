@@ -11,6 +11,7 @@ import {
   stagesWithMessages,
   type PlainStage,
   type StageSuggestion,
+  type TemplateOffer,
 } from "./stages";
 
 export interface StageChoice {
@@ -27,14 +28,20 @@ export interface StageChoice {
  * one follow-up and no closing message). Follow-up on e-mail has more than one
  * step, so it gets a second row: day 4, day 9.
  */
-export function StageStrip({ channel, kind, current, suggested, onPick }: {
+export function StageStrip({ channel, kind, current, suggested, onPick, stages = PLAIN_STAGES, offer, team = false }: {
   channel: TemplateChannel;
   kind: LeadKind;
   current: StageChoice;
   suggested: StageSuggestion;
   onPick: (choice: StageChoice) => void;
+  /** The stages this sender has (spec 10.7: a member never sees After the call or Proposal). */
+  stages?: readonly PlainStage[];
+  /** Anyone but Mehdi: what they may send (a stage with nothing for them is dashed). */
+  offer?: TemplateOffer;
+  /** Anyone but Mehdi: the hints say what is theirs to do (a yes goes to Mehdi). */
+  team?: boolean;
 }) {
-  const withMessages = new Set(stagesWithMessages(channel, kind));
+  const withMessages = new Set(stagesWithMessages(channel, kind, offer));
   const suggestedPlain = plainStageOf(suggested.stage);
   const pick = (plain: PlainStage) => {
     if (plain === suggestedPlain) return onPick({ plain, stage: suggested.stage });
@@ -47,7 +54,7 @@ export function StageStrip({ channel, kind, current, suggested, onPick }: {
     <div data-testid="stage-strip">
       <p className="mb-1.5 text-sm font-medium" id="stage-label">Stage</p>
       <div role="group" aria-labelledby="stage-label" className="flex flex-wrap gap-1.5">
-        {PLAIN_STAGES.map((plain) => {
+        {stages.map((plain) => {
           const on = plain === current.plain;
           const has = engineStagesOf(plain).some((s) => withMessages.has(s));
           const now = plain === suggestedPlain;
@@ -87,7 +94,7 @@ export function StageStrip({ channel, kind, current, suggested, onPick }: {
         </div>
       )}
 
-      <p className="mt-2 text-xs text-muted-foreground" data-testid="stage-hint">{stageHint(current.plain, channel, kind)}</p>
+      <p className="mt-2 text-xs text-muted-foreground" data-testid="stage-hint">{stageHint(current.plain, channel, kind, team)}</p>
       {suggested.done && current.plain === suggestedPlain && (
         <p role="note" className="mt-2 rounded-xl border border-warning/50 bg-warning/10 px-3 py-2 text-sm" data-testid="stage-done">
           {suggested.done}

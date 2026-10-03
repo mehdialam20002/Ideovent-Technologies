@@ -12,7 +12,8 @@ import type { OutreachEvent, OutreachLead } from "@/lib/outreach/types";
  *   First message        first         to someone who has not heard from us: the checked
  *                                       problem, the sample, one question, an easy no, no link
  *                                       but, on WhatsApp to a clinic, school or coaching
- *                                       institute, the kind's picture link (1 Oct 2026)
+ *                                       institute, the kind's picture link (1 Oct 2026), or
+ *                                       With link their sample's own link (2 Oct 2026)
  *   After they say yes   after_reply   the sample link, the honest line, two call times
  *   Follow-up            follow_up_1/2 no reply: WhatsApp once; e-mail as replies in the thread
  *   After the call       after_call    the same day: what was agreed, in writing
@@ -83,14 +84,26 @@ export function isRetired(t: MessageTemplate): boolean {
   return Boolean(x.retired || x.hidden || x.suggest === false);
 }
 
-/** Templates Mehdi can pick for this channel, stage and kind (never a retired one). */
-export function offered(channel: TemplateChannel, stage: TemplateStage, kind: OutreachLead["kind"] | undefined): MessageTemplate[] {
-  return templatesFor({ channel, stage, kind: kind || undefined }).filter((t) => !isRetired(t));
+/**
+ * What a sender may send of a template: the template itself (Mehdi), or for
+ * anyone else its team version, or null when it is not theirs to send
+ * (templates.ts memberVersion: money stages, wording not approved yet).
+ */
+export type TemplateOffer = (t: MessageTemplate) => MessageTemplate | null;
+
+/** Templates the sender can pick for this channel, stage and kind (never a retired one). `offer`: anyone but Mehdi. */
+export function offered(channel: TemplateChannel, stage: TemplateStage, kind: OutreachLead["kind"] | undefined, offer?: TemplateOffer): MessageTemplate[] {
+  const all = templatesFor({ channel, stage, kind: kind || undefined }).filter((t) => !isRetired(t));
+  return offer ? all.map(offer).filter((t): t is MessageTemplate => Boolean(t)) : all;
 }
 
-/** The engine's stages that have at least one message on this channel for this kind. */
-export function stagesWithMessages(channel: TemplateChannel, kind: OutreachLead["kind"] | undefined): TemplateStage[] {
-  return engineStages().filter((s) => offered(channel, s, kind).length > 0);
+/**
+ * The engine's stages that have at least one message on this channel for this
+ * kind. With `offer`, the ones this sender may send (the ladder itself, ladderFor,
+ * stays the same for everyone: the cadence does not change with the sender).
+ */
+export function stagesWithMessages(channel: TemplateChannel, kind: OutreachLead["kind"] | undefined, offer?: TemplateOffer): TemplateStage[] {
+  return engineStages().filter((s) => offered(channel, s, kind, offer).length > 0);
 }
 
 /**
@@ -137,17 +150,35 @@ export function stageName(stage: TemplateStage): string {
 
 const days = (stages: TemplateStage[]) => stages.map(dayOf).filter((d): d is number => d !== null);
 
-/** One line under the stage buttons: when this stage is used, and the rule that holds in it. */
-export function stageHint(plain: PlainStage, channel: TemplateChannel, kind: OutreachLead["kind"] | undefined): string {
+/**
+ * One line under the stage buttons: when this stage is used, and the rule that
+ * holds in it. `team`: anyone but Mehdi, who hands a yes to him (spec 10.7).
+ */
+export function stageHint(plain: PlainStage, channel: TemplateChannel, kind: OutreachLead["kind"] | undefined, team = false): string {
+  if (team && plain === "after_yes") {
+    return "They said yes: hand the lead to Mehdi now, and he sends the call times. A yes given on a call: the sample link within five minutes, with no call times.";
+  }
   const ladder = ladderFor(channel, kind);
   const fu = days(ladder.filter((s) => plainStageOf(s) === "follow_up"));
   const close = days(ladder.filter((s) => plainStageOf(s) === "closing"));
   switch (plain) {
     case "first":
-      // On WhatsApp a clinic, school or coaching institute also gets its picture: the one link a first message may carry.
-      return channel === "whatsapp" && previewFor(kind)
-        ? "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, the picture link, one question and an easy no. Their own sample's link goes after a yes."
-        : "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, one question and an easy no. No link.";
+      // Anyone but Mehdi (the CRM team, 3 Oct 2026): With link is his alone, so their hint is the one from before the
+      // switch, word for word: the picture link on WhatsApp where the kind has one, and their sample's link after a yes.
+      if (team) {
+        return channel === "whatsapp" && previewFor(kind)
+          ? "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, the picture link, one question and an easy no. Their own sample's link goes after a yes."
+          : "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, one question and an easy no. No link.";
+      }
+      // On WhatsApp a clinic, school or coaching institute also gets its picture, or With link their sample's own link
+      // (2 Oct 2026): the one link a first message may carry. Mehdi's hint names the switch, not a promise (the demo may
+      // still be missing or closed, and the switch then says why it is off).
+      if (channel === "email") {
+        return "To someone who has not heard from you, in short parts: the one problem you checked today, what it costs them, the sample in three points, With link the link to their sample, one question and an easy no. With no demo yet, no link: it offers to make one.";
+      }
+      return previewFor(kind)
+        ? "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, then the picture link, or With link their sample's own link, one question and an easy no."
+        : "To someone who has not heard from you, in short parts: who you are, the one problem you checked today, what it costs them, the sample in three points, their sample's link if you switch to With link, one question and an easy no.";
     case "after_yes":
       return "They said yes: the full sample link on its own line, the true lines that it is a demonstration, and two times for a 10-minute call. Within the hour.";
     case "follow_up":
@@ -171,6 +202,9 @@ export interface StageSuggestion {
   done?: string;
 }
 
+/** A lead at Call or Proposal, seen by a member: the call and the price are Mehdi's. */
+export const MEHDIS_NOW = "This lead is at the call or the proposal: Mehdi sends what comes next. If they write to you, hand it to him.";
+
 /**
  * The stage this lead is at on this channel. A reply, a call or a proposal
  * decides it; otherwise the no-reply sends already made on this channel (a
@@ -178,8 +212,12 @@ export interface StageSuggestion {
  * message; one, the first follow-up; and so on. Past the end of the ladder the
  * answer says so, instead of offering one more message than the rules allow.
  */
-export function suggestFor(lead: OutreachLead, events: OutreachEvent[], channel: TemplateChannel): StageSuggestion {
+export function suggestFor(lead: OutreachLead, events: OutreachEvent[], channel: TemplateChannel, opts: { member?: boolean } = {}): StageSuggestion {
   if (lead.status === "replied" || lead.status === "demo_opened") return { stage: stageFor("after_yes") };
+  // After the call and Proposal carry the price: never a member's stage (spec 10.7). Such a lead is Mehdi's to send to.
+  if (opts.member && (lead.status === "call" || lead.status === "proposal")) {
+    return { stage: stageFor("after_yes"), done: MEHDIS_NOW };
+  }
   if (lead.status === "call") return { stage: stageFor("after_call") };
   if (lead.status === "proposal") return { stage: stageFor("proposal") };
   const cold = events.filter((e) => {

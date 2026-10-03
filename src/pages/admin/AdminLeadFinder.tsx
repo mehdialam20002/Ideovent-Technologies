@@ -211,7 +211,8 @@ export default function AdminLeadFinder() {
     const have = existingFor(p);
     if (have) return have;
     const audit = checked === undefined ? await auditNow(p) : checked ?? undefined;
-    const lead = await getOutreachStore().upsertLead(
+    // A new lead is an INSERT (spec 9.3): never an upsert over a lead that has the same id.
+    const lead = await getOutreachStore().createLead(
       leadFromPlace(p, { city: ctx?.city || "", kind: kindOf(p), audit, typeLabel: ctx?.typeLabel }),
     );
     setLeads((l) => [lead, ...l.filter((x) => x.id !== lead.id)]);
@@ -228,7 +229,8 @@ export default function AdminLeadFinder() {
     if (!tpl) throw new Error("No demo template fits this kind of business.");
     const lead = await addLead(p);
     const demo = await createDemo(tpl, { name: p.name, city: ctx?.city || "" });
-    const linked = await getOutreachStore().upsertLead({ ...lead, demoId: demo.id, demoSlug: demo.slug });
+    // Only the demo keys change, merged on the server (whoever works the lead is told "Demo ready").
+    const linked = await getOutreachStore().patchLead(lead.id, { demoId: demo.id, demoSlug: demo.slug });
     setLeads((l) => [linked, ...l.filter((x) => x.id !== linked.id)]);
     setNotice(`Draft demo made for ${p.name} and linked to the lead. Fill its contact details from their own website${isOsm(p) ? " or the OpenStreetMap entry" : ""} before sending.`);
   });
@@ -245,7 +247,7 @@ export default function AdminLeadFinder() {
     if (!lead) return;
     const patch = savedPhonePatch(lead, p);
     if (!patch) return;
-    const saved = await getOutreachStore().upsertLead({ ...lead, ...patch });
+    const saved = await getOutreachStore().patchLead(lead.id, patch);
     setLeads((l) => l.map((x) => (x.id === saved.id ? saved : x)));
   });
 

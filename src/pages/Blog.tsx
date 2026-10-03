@@ -15,7 +15,7 @@ import { useCollection } from "@/lib/cms/context";
 import { cn } from "@/lib/utils";
 import type { BlogPost } from "@/lib/cms/types";
 import { PAGE_SEO } from "@/lib/seo/pages";
-import { formatPostDate as formatDate } from "@/lib/postDate";
+import { formatPostDate as formatDate, postByline } from "@/lib/postDate";
 
 const ALL = "All";
 
@@ -135,7 +135,7 @@ export default function Blog() {
                       <div className="mt-2 flex items-center justify-between gap-4">
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5">
-                            <PenLine className="h-3.5 w-3.5" /> {featured.author}
+                            <PenLine className="h-3.5 w-3.5" /> {postByline(featured.author)}
                           </span>
                           {featured.publishDate ? (
                             <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">
@@ -259,7 +259,7 @@ export default function Blog() {
                           <p className="line-clamp-3 text-sm text-muted-foreground">{p.excerpt}</p>
                           <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-xs text-muted-foreground">
                             <span className="inline-flex items-center gap-1.5">
-                              <PenLine className="h-3.5 w-3.5" /> {p.author}
+                              <PenLine className="h-3.5 w-3.5" /> {postByline(p.author)}
                             </span>
                             {p.publishDate ? (
                               <span className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap">

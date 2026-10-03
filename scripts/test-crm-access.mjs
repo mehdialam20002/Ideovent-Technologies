@@ -20,7 +20,8 @@
  *      the window); guardNewLead (ownership, starts New, links stripped,
  *      duplicates across the team, the New cap); stampEvent (money, 4 KB, types);
  *      planDistribution and planRules on the SQL test's own cases, plus the
- *      preview counts; isEngaged; masking; crmErrorText; cadenceDone when
+ *      preview counts; isEngaged (an open after a cold link does not count,
+ *      3 Oct 2026) and linkWentCold; masking; crmErrorText; cadenceDone when
  *      derive.ts has it (work package D).
  *   3. LocalOutreachStore acting as Mehdi, an admin, members, See all, a
  *      switched-off person and a stranger: who sees what, every refusal with
@@ -79,6 +80,8 @@ const bundled = await build({
       `export * from "@/lib/outreach/team";`,
       `export { LocalOutreachStore, OUTREACH_LOCAL_KEY, prepareLead } from "@/lib/outreach/store";`,
       `export { LEAD_STATUSES, LEAD_KIND_VALUES } from "@/lib/outreach/types";`,
+      `export { META_SOURCES, META_LEAD_ID_PREFIX, isMetaLead } from "./src/lib/meta/fields.js";`,
+      `export { NO_META_CONSENT } from "@/lib/outreach/engine";`,
       HAS_CADENCE ? `export { cadenceDone } from "@/admin/outreach/derive";` : "",
     ].join("\n"),
     resolveDir: ROOT,
@@ -148,7 +151,17 @@ const moneyStages = (guard.match(/'stage', ''\) in \(([^)]*)\)/) || [])[1]?.spli
 check(same(moneyStages, [...M.MONEY_STAGES]), "MONEY_STAGES equals the history guard's stages", moneyStages);
 check((guard.match(/'templateId', ''\) ~ '([^']+)'/) || [])[1] === M.MONEY_TEMPLATE_RE.source, "MONEY_TEMPLATE_RE equals the history guard's template pattern", M.MONEY_TEMPLATE_RE.source);
 const winSql = (guard.match(/'detail', ''\) ~\* '([^']+)'/) || [])[1] || "";
-check(winSql.replace(/\\m/g, "\\b") === M.WIN_STATUS_LINE_RE.source && M.WIN_STATUS_LINE_RE.flags.includes("i"), "WIN_STATUS_LINE_RE equals the guard's '... to Won' test (case-insensitive)", winSql);
+/* The guard spells JavaScript's \b out as (^|[^a-z0-9_]) (review, 3 Oct: Postgres' \m follows the database's locale,
+   so "éto Won" passed it while metrics.ts isWinEvent counted it). In JavaScript the two read every text alike. */
+check(winSql === "(^|[^a-z0-9_])" + M.WIN_STATUS_LINE_RE.source.replace(/^\\b/, "") && M.WIN_STATUS_LINE_RE.flags.includes("i"),
+  "WIN_STATUS_LINE_RE is the guard's '... to Won' test, its \\b written as (^|[^a-z0-9_]) (case-insensitive)", winSql);
+{
+  const sqlWin = new RegExp(winSql, "i");
+  const texts = ["Status: Replied to Won", "Status: Contacted éto Won", "Status: Contacted xto Won", "Status: Contacted 1to Won", "Status: Contacted _to Won",
+    "to Won", "Status: X to Proposal ", "Status: Contacted ½to Proposal", "Status: Contacted to Lost", "Status: Contacted TO WON", "Status: Contacted\tto\tWon"];
+  const differ = texts.filter((t) => sqlWin.test(t) !== M.WIN_STATUS_LINE_RE.test(t));
+  check(differ.length === 0 && sqlWin.test("Status: Contacted éto Won"), "...and in JavaScript both refuse the same lines, 'éto Won' among them", differ);
+}
 const types = (guard.match(/v_type not in \(([^)]*)\)/) || [])[1]?.split(",").map((s) => s.trim().replace(/^'|'$/g, ""));
 check(same(types, [...M.MEMBER_EVENT_TYPES]), "MEMBER_EVENT_TYPES equals the line types the guard lets a non-owner write", types);
 const sizes = [...guard.matchAll(/::text\) > (\d+)/g)].map((m) => Number(m[1]));
@@ -174,9 +187,31 @@ check(/\) >= 7\s/.test(phoneSql) && /right\(regexp_replace\(p, '\\D', '', 'g'\),
   "phoneKey is private.crm_phone_key: the last ten digits, at least 7 digits", phoneSql);
 check(/nullif\(lower\(btrim\(coalesce\(p, ''\)\)\), ''\)/.test(fnBody("crm_email_key")) && M.emailKey(" Office@School.Example ") === "office@school.example" && M.emailKey("  ") === null,
   "emailKey is private.crm_email_key: no case, no outer spaces");
-for (const k of ["DUPLICATE_ON_ADD", "DUPLICATE_ON_FILL", "NO_ADDING", "NO_BOOKING_YET"]) {
+for (const k of ["DUPLICATE_ON_ADD", "DUPLICATE_ON_FILL", "NO_ADDING", "NO_BOOKING_YET", "META_ID_REFUSED", "META_SOURCE_REFUSED", "META_CONSENT_REFUSED"]) {
   check(SQL.includes(`'${M[k]}'`), `${k} is the database's own sentence, word for word`, M[k]);
 }
+check(M.crmErrorText(M.META_CONSENT_REFUSED) === M.NO_META_CONSENT, "...and META_CONSENT_REFUSED reads on screen as engine.ts's NO_META_CONSENT", M.crmErrorText(M.META_CONSENT_REFUSED));
+{
+  /* After the callers' branches close (like Do not contact): every caller, Mehdi and the database's own functions too. */
+  const at = guard.indexOf("if v_consent = 'no'");
+  const shared = guard.indexOf("|| jsonb_build_object('id', new.id, 'leadId', new.lead_id, 'type', v_type)");
+  check(at > shared && shared > 0 && /if v_type in \('sent', 'call'\) then/.test(guard)
+    && /if v_consent = 'no'\s+and \(v_type = 'call'\s+or coalesce\(new\.data ->> 'channel', ''\) in \('whatsapp', 'call'\)\s+or coalesce\(new\.data ->> 'templateId', ''\) ~ '\^wa_'\)/.test(guard),
+    "the history guard refuses a call or a WhatsApp line (its channel, or a wa_ template) to a lead whose metaConsent is no, for every caller",
+    guard.slice(Math.max(0, at - 120), at + 260));
+}
+/* A member's new lead never passes for a Meta lead: the guard's prefix, sources and keys are fields.js's. */
+const leadsGuard = fnBody("crm_leads_guard");
+check(M.META_LEAD_ID_PREFIX === "ol_meta_" && leadsGuard.includes(`left(lower(new.id), ${M.META_LEAD_ID_PREFIX.length}) = '${M.META_LEAD_ID_PREFIX}'`),
+  "the field guard's Meta id test is META_LEAD_ID_PREFIX (without case)");
+const metaSourcesSql = (leadsGuard.match(/regexp_replace\(lower\(translate\(coalesce\(new\.data ->> 'source', ''\), 'K', 'k'\)\), '\[\^a-z\]', '', 'g'\)\s*= any \(array\[([^\]]*)\]\)/) || [])[1]
+  ?.split(",").map((s) => s.trim().replace(/^'|'$/g, ""));
+check(same(metaSourcesSql, M.META_SOURCES.map((s) => s.toLowerCase().replace(/[^a-z]/g, ""))),
+  "the field guard's Meta sources are META_SOURCES, compared on their letters only (no case, spaces, invisible characters or punctuation)", metaSourcesSql);
+check(/where lower\(e\.k\) like 'meta%'/.test(leadsGuard) && /new\.data := new\.data - coalesce\(/.test(leadsGuard), "the field guard drops every meta... key from a member's new lead");
+const memberInsert = leadsGuard.slice(leadsGuard.indexOf("if tg_op = 'INSERT' then\n    new.created_by"));
+check(memberInsert.indexOf("'ol_meta_'") > 0 && memberInsert.indexOf("'ol_meta_'") < memberInsert.indexOf("crm_spend('lead_add')")
+  && memberInsert.indexOf("crm_spend('lead_add')") < memberInsert.indexOf("crm_duplicate_of"), "...in the member INSERT branch, before the budget and the duplicate check");
 const summarySql = (SQL.match(/create or replace function public\.crm_access_summary[\s\S]*?\$\$([\s\S]*?)\$\$/) || [])[1] || "";
 check(new RegExp(`g\\.sign_ins > ${M.ACCESS_FLAG_SIGN_INS}\\b`).test(summarySql) && new RegExp(`g\\.logged > ${M.ACCESS_FLAG_LOGGED}\\b`).test(summarySql)
   && same([...summarySql.matchAll(/a\.action in \(([^)]*)\)\) as logged/g)].map((m) => m[1].split(",").map((s) => s.trim().replace(/^'|'$/g, "")))[0], [...M.LOGGED_ACTIONS]),
@@ -362,6 +397,31 @@ const byOwner = M.guardNewLead(OWNER, L("N5", { status: "lost", assigneeId: "m_o
 check(byOwner.assigneeId === null && byOwner.createdById === "m_owner" && byOwner.closedAt === NOW.toISOString(), "guardNewLead: Mehdi's lead is his (created by), Unassigned; a closed one is stamped closed");
 e = err(() => M.guardNewLead(OFF, L("N6"), team, 0, NOW, names));
 check(e?.code === "42501", "guardNewLead: no access, no lead");
+/* A member's new lead never passes for one from Meta's forms: the id and the source are refused, the meta... keys go. */
+for (const id of ["ol_meta_9000000000000071", "OL_META_9000000000000071", "Ol_Meta_x"]) {
+  e = err(() => M.guardNewLead(ADDER, L(id, { phone: "+919830000071" }), team, 0, NOW, names));
+  check(e?.code === "42501" && e.message === M.crmErrorText(M.META_ID_REFUSED), `guardNewLead: a member cannot add a lead with the id "${id}" (a Meta lead's place)`, e?.message);
+}
+/* On its letters only, as the guard (review, 3 Oct): the dashboard groups these with the Meta sources. */
+for (const source of [...M.META_SOURCES, " instagram lead ads ", "META LEADS CENTER", "Meta Lead Ads ", "\tInstagram Lead Ads", "Facebook Lead Ads\n",
+  "Meta Leads Center　", "Meta Lead Ads​", "﻿Meta Lead Ads", "FacebooK Lead Ads", "meta-lead-ads", "  Meta   Lead   Ads  "]) {
+  e = err(() => M.guardNewLead(ADDER, L("N10", { phone: "+919830000072", source }), team, 0, NOW, names));
+  check(e?.code === "42501" && e.message === M.crmErrorText(M.META_SOURCE_REFUSED), `guardNewLead: a member cannot add a lead whose source is ${JSON.stringify(source)}`, e?.message);
+  check(M.isMetaSourceText(source), `isMetaSourceText(${JSON.stringify(source)})`);
+}
+for (const source of ["Manual", "Instagram", "Referral", "Meta Lead Ads (old campaign)", "", undefined]) {
+  check(!M.isMetaSourceText(source) && Boolean(M.guardNewLead(ADDER, L("N10", { phone: "+919830000072", source }), team, 0, NOW, names)),
+    `guardNewLead: a member may add a lead whose source is ${JSON.stringify(source)}`);
+}
+e = err(() => M.guardNewLead(ADDER, L("ol_meta_9000000000000073", { phone: "+919810000002" }), team, 0, NOW, names));
+check(e?.code === "42501" && e.message === M.crmErrorText(M.META_ID_REFUSED), "guardNewLead: the Meta id is refused before the duplicate check, as in the database", e?.message);
+const notMeta = M.guardNewLead(ADDER, L("N11", { phone: "+919830000074", source: "Instagram page", metaLeadId: "9000000000000074", metaPlatform: "ig",
+  metaConsent: "yes", metaCampaignName: "Made up", metaCreatedAt: "2026-10-01T05:00:00.000Z", MetaOther: "x" }), team, 0, NOW, names);
+check(!Object.keys(notMeta).some((k) => /^meta/i.test(k)) && notMeta.source === "Instagram page" && notMeta.phone === "+919830000074" && !M.isMetaLead(notMeta),
+  "guardNewLead: a member's lead keeps none of the meta... keys (and is not a Meta lead), the rest as asked", notMeta);
+const metaImport = M.guardNewLead(OWNER, L("ol_meta_9000000000000075", { source: "Meta Leads Center", metaLeadId: "9000000000000075", metaConsent: "no" }), team, 0, NOW, names);
+check(metaImport.id === "ol_meta_9000000000000075" && metaImport.source === "Meta Leads Center" && metaImport.metaLeadId === "9000000000000075" && metaImport.metaConsent === "no",
+  "guardNewLead: Mehdi's import of Meta's own files still adds Meta leads as they are");
 
 /* stampEvent: the history guard */
 const ev = (over = {}) => ({ id: "E", leadId: "A", type: "note", at: "2020-01-01T00:00:00.000Z", ...over });
@@ -390,6 +450,33 @@ e = err(() => M.stampEvent(OWNER, ev({ detail: "x".repeat(21000) }), mine, NOW))
 check(e?.code === "22001", "stampEvent: nobody writes a line over 20 KB");
 e = err(() => M.stampEvent(OWNER, ev({ type: "sent", channel: "email" }), { ...mine, status: "do_not_contact" }, NOW));
 check(e?.code === "42501" && /not to be contacted/.test(e.message), "stampEvent: nothing is sent to Do not contact, by anyone");
+/* A Meta lead who left the WhatsApp-and-phone box unticked: e-mail only, from anyone (the history guard, review 3 Oct). */
+{
+  const unticked = { ...mine, source: "Instagram Lead Ads", metaLeadId: "9000000000000081", metaConsent: "no" };
+  for (const [who, line, what] of [
+    [MEMBER, { type: "sent", channel: "whatsapp", stage: "first" }, "a member's first WhatsApp"],
+    [MEMBER, { type: "sent", channel: "whatsapp", stage: "follow_up_1" }, "a member's WhatsApp follow-up"],
+    [MEMBER, { type: "call", channel: "call", outcome: "no_answer" }, "a member's call"],
+    [MEMBER, { type: "call" }, "a call with no channel on it"],
+    [MEMBER, { type: "sent", templateId: "wa_first_new_school_en" }, "a WhatsApp send with its channel left out"],
+    [ADMIN, { type: "sent", channel: "whatsapp", stage: "first" }, "an admin's WhatsApp"],
+    [OWNER, { type: "sent", channel: "whatsapp", stage: "first" }, "Mehdi's own WhatsApp"],
+    [OWNER, { type: "call", channel: "call" }, "Mehdi's own call"],
+  ]) {
+    e = err(() => M.stampEvent(who, ev(line), unticked, NOW));
+    check(e?.code === "42501" && e.message === M.NO_META_CONSENT, `stampEvent: box left unticked, ${what} is refused with the screen's sentence`, e?.message);
+  }
+  for (const [who, lead, line, what] of [
+    [MEMBER, unticked, { type: "sent", channel: "email", stage: "first" }, "a member's e-mail"],
+    [MEMBER, unticked, { type: "note", detail: "Wrote by e-mail" }, "a note"],
+    [MEMBER, unticked, { type: "replied", channel: "whatsapp" }, "their own WhatsApp reply, logged"],
+    [OWNER, unticked, { type: "sent", channel: "email", stage: "first" }, "Mehdi's e-mail"],
+    [MEMBER, { ...unticked, metaConsent: "yes" }, { type: "sent", channel: "whatsapp", stage: "first" }, "a WhatsApp to a Meta lead who ticked it"],
+    [MEMBER, { ...unticked, metaConsent: "none" }, { type: "call", channel: "call" }, "a call to a Meta lead whose form had no box"],
+  ]) {
+    check(!err(() => M.stampEvent(who, ev(line), lead, NOW)), `stampEvent: ...while ${what} is fine`, err(() => M.stampEvent(who, ev(line), lead, NOW))?.message);
+  }
+}
 e = err(() => M.stampEvent(MEMBER, ev({ leadId: "B" }), theirs, NOW));
 seen(e?.code === "42501", "stampEvent: no line on another's lead");
 for (const [bad, what] of [
@@ -450,6 +537,22 @@ check(M.planRules([{ ...pool(1), assigneeId: "x" }, { ...pool(3), status: "conta
 check(!M.isEngaged(mine, []) && M.isEngaged(mine, [{ leadId: "A", type: "replied" }]) && M.isEngaged({ ...mine, status: "demo_opened" }, []),
   "isEngaged: a reply, a demo open or that stage (the cold-call gate)");
 check(!M.isEngaged(mine, [{ leadId: "B", type: "replied" }]), "isEngaged: another lead's reply does not count");
+/* An open after a cold link is not engagement (3 Oct 2026, the link in the first message, send-links D9): when the last
+   message that carried their demo link was a cold first message (a twin with link "demo"), the open does not open the gate. */
+{
+  const at = (d) => `2026-10-0${d}T09:00:00.000Z`;
+  const cold = { leadId: "A", type: "sent", channel: "email", templateId: "em_first_new_dental_en_link", stage: "first", at: at(1) };
+  const open = { leadId: "A", type: "demo_opened", at: at(2) };
+  const warm = { leadId: "A", type: "sent", channel: "whatsapp", templateId: "wa_after_reply_dental_en", stage: "after_reply", at: at(4) };
+  const pointBack = { leadId: "A", type: "sent", channel: "email", templateId: "em_fu1_dental_en_after_link", stage: "follow_up_1", at: at(3) };
+  check(M.isEngaged(mine, [open]) && !M.isEngaged(mine, [cold, open]), "isEngaged: a demo open counts, unless the last link they got went cold in a first message");
+  check(M.isEngaged(mine, [cold, open, { leadId: "A", type: "replied", at: at(3) }]), "isEngaged: after a cold link, a reply still opens the gate");
+  check(!M.isEngaged(mine, [cold, open, pointBack]), "isEngaged: a follow-up that only points back to the link changes nothing");
+  check(M.isEngaged(mine, [cold, open, warm, { leadId: "A", type: "demo_opened", at: at(5) }]), "isEngaged: once the link went again after a yes, an open counts");
+  check(M.isEngaged(mine, [{ ...cold, leadId: "B" }, open]), "isEngaged: another lead's cold link does not touch this lead's open");
+  check(M.linkWentCold("A", [cold]) && !M.linkWentCold("A", [cold, warm]) && !M.linkWentCold("A", [pointBack]) && !M.linkWentCold("A", []) && !M.linkWentCold("B", [cold]),
+    "linkWentCold: the latest message that carried the link decides; a point-back follow-up or another lead's send never does");
+}
 check(M.maskPhone("+919810012345") === "+91 98100 •••45" && M.maskEmail("office@school.example") === "of•••@school.example",
   "masking: +91 98100 •••45 and of•••@school.example", [M.maskPhone("+919810012345"), M.maskEmail("office@school.example")]);
 check(M.maskPhone("") === "" && M.maskEmail(undefined) === "" && !M.maskPhone("+14155550123").includes("55501"), "masking: empty stays empty; another country's number is masked too");
@@ -481,6 +584,18 @@ if (HAS_CADENCE) {
   const replied = L("R", { status: "contacted", lastContactedAt: iso(NOW - 30 * DAY) });
   check(!M.cadenceDone(replied, [{ id: "r", leadId: "R", type: "replied", at: iso(NOW - 25 * DAY) }], NOW), "cadenceDone: a lead that replied is not closed off");
   check(!M.cadenceDone(L("W", { status: "won" }), [], NOW), "cadenceDone: a closed lead is never in Close these");
+  /* An open after a cold link is not "came back" (3 Oct 2026: send-links D9 and its known gap 10.9, the rule isEngaged
+     follows): a WhatsApp-only lead whose two messages went, the first with their sample's link, is offered for closing
+     although that link was opened; after a first message without the link an open still keeps it out, as before. */
+  const waOnly = L("C", { status: "contacted", phone: "+919810000009", lastContactedAt: iso(NOW - 16 * DAY) });
+  const sentC = (id, days, templateId, stage) => ({ id, leadId: "C", type: "sent", channel: "whatsapp", templateId, stage, at: iso(NOW - days * DAY) });
+  const openC = { id: "c_open", leadId: "C", type: "demo_opened", at: iso(NOW - 19 * DAY) };
+  const coldTrail = [sentC("c1", 20, "wa_first_new_school_en_link", "first"), openC, sentC("c3", 16, "wa_fu1_en_after_link", "follow_up_1")];
+  const plainTrail = [sentC("p1", 20, "wa_first_new_school_en", "first"), openC, sentC("p3", 16, "wa_fu1_en", "follow_up_1")];
+  check(M.cadenceDone(waOnly, coldTrail, NOW), "cadenceDone: an open after a cold link is not 'came back': the finished lead is offered for closing");
+  check(!M.cadenceDone(waOnly, plainTrail, NOW), "cadenceDone: an open after a first message without the link still counts");
+  check(M.cadenceDone(waOnly, plainTrail.filter((e) => e !== openC), NOW), "cadenceDone: the same two messages and no open: done");
+  check(!M.cadenceDone(waOnly, [...coldTrail, { id: "c_rep", leadId: "C", type: "replied", at: iso(NOW - 15 * DAY) }], NOW), "cadenceDone: after a cold link a reply still keeps it out");
 } else {
   console.log("note  derive.ts has no cadenceDone yet (work package D): its checks run once it does");
 }
@@ -663,6 +778,20 @@ check(e?.code === "42501", "asha cannot add a lead while Can add leads is off");
 as(null);
 await store.saveMember({ id: ID.asha, canAddLeads: true });
 as("asha");
+/* Never a lead that passes for one from Meta's forms: the id and the source refused, the meta... keys dropped. */
+e = await error(() => store.createLead({ id: "ol_meta_9000000000000077", instituteName: "Meta Look", phone: "+919830000077" }));
+check(e?.code === "42501" && e.message === M.crmErrorText(M.META_ID_REFUSED), "asha cannot add a lead with a Meta lead's id (ol_meta_...)", e?.message);
+e = await error(() => store.createLead({ id: "LM1", instituteName: "Meta Look", phone: "+919830000077", source: "Facebook Lead Ads" }));
+check(e?.code === "42501" && e.message === M.crmErrorText(M.META_SOURCE_REFUSED), "...nor one whose source says Facebook Lead Ads", e?.message);
+check(!(await store.getLead("LM1")) && !(await store.getLead("ol_meta_9000000000000077")), "...and neither was added");
+r = await store.createLead({ id: "LM2", instituteName: "Meta Look", phone: "+919830000078", source: "Walk-in", metaLeadId: "9000000000000078",
+  metaPlatform: "ig", metaConsent: "yes", metaCampaignName: "Made up" });
+const lm2 = await store.getLead("LM2");
+check(lm2 && !Object.keys(r).some((k) => /^meta/i.test(k)) && !Object.keys(lm2).some((k) => /^meta/i.test(k)) && lm2.source === "Walk-in" && !M.isMetaLead(lm2),
+  "a lead asha adds keeps none of the meta... keys: it is never a Meta lead", lm2);
+as(null);
+await store.deleteLead("LM2");
+as("asha");
 r = await store.createLead({ id: "L7", instituteName: "Asha Found It", phone: "+919830000007", demoId: "d2", status: "won", assigneeId: ID.bilal });
 check(r.assigneeId === ID.asha && r.createdById === ID.asha && !r.demoId && r.status === "new", "asha adds L7 naming bilal: it is hers, the demo link is dropped, the stage starts at New", r);
 e = await error(() => store.createLead({ id: "L8", instituteName: "Copy of Bilal", phone: "098100 00002" }));
@@ -786,6 +915,7 @@ mem.setItem("ideovent_cms_v1", JSON.stringify({
     { id: "d1", slug: "asha-one", status: "draft", instituteName: "Asha School One" },
     { id: "d2", slug: "bilal-two", status: "sent", instituteName: "Bilal Classes Two" },
     { id: "d9", slug: "closed-one", status: "closed", instituteName: "Closed" },
+    { id: "d8", slug: "free-one", status: "free", instituteName: "Free" },
   ],
   demoSiteSlots: [],
   demoSiteOpens: [{ id: "o1", demoId: "d1", at: iso(Date.now() - DAY) }, { id: "o2", demoId: "d2", at: iso(Date.now() - DAY) }],
@@ -807,6 +937,16 @@ as("asha");
 e = await error(() => store.publishLeadDemo("L9"));
 check(e?.code === "42501" && /closed this demo/.test(e.message), "a demo Mehdi closed stays closed");
 check((await store.notifications()).some((n) => n.kind === "demo_ready" && n.leadId === "L9"), "...linking it told her 'Demo ready'");
+/* 3 Oct 2026: a Free slot is an empty page; no send publishes one, and neither does Turn on the link (the SQL's own refusal). */
+as(null);
+await store.patchLead("L9", { demoId: "d8" });
+as("asha");
+e = await error(() => store.publishLeadDemo("L9"));
+check(e?.code === "42501" && /Free slot/.test(e.message) && JSON.parse(mem.getItem("ideovent_cms_v1")).demoSites.find((d) => d.id === "d8")?.status === "free",
+  "a Free slot (an empty page) is never turned on: it stays free", e?.message);
+as(null);
+await store.patchLead("L9", { demoId: "d9" });
+as("asha");
 
 /* 3k. Hand-over, Ask Mehdi, Waiting on you. */
 e = await error(() => store.handoff({ leadId: "L1", slotAt: iso(Date.now() + 3 * DAY), note: "Wants a call" }));

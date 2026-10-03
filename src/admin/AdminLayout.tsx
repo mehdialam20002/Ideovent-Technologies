@@ -7,6 +7,7 @@ import { useCms, useDeferredBodies } from "@/lib/cms/context";
 import { useAdminAuth } from "./auth";
 import { getIcon } from "@/lib/icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Seo } from "@/components/seo/Seo";
 import { collectionSchemas, singletonSchemas } from "./schemas";
 import { cn } from "@/lib/utils";
 import { useOutreachDueCount } from "./outreach/badge";
@@ -248,6 +249,10 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
+      {/* A plain title and noindex on every admin screen (3 Oct 2026), as the CRM
+          shell does. Without it the signed-in admin kept the head it opened on,
+          the homepage's title and "index, follow" until 2 Oct 2026 (live crawl, F4). */}
+      <Seo title="Admin" noindex />
       <div className="hidden lg:block">{Sidebar}</div>
       {/*
         The mobile drawer could be opened from the keyboard but not closed from it:

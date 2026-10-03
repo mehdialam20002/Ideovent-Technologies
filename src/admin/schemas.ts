@@ -198,7 +198,7 @@ export const collectionSchemas: Partial<Record<CollectionKey, CollectionSchema>>
   },
   posts: {
     label: "Blog Posts", singular: "Post", icon: "Newspaper", titleField: "title", subtitleField: "author", imageField: "coverImage",
-    defaults: () => ({ id: nextId("post"), title: "", slug: "", excerpt: "", coverImage: "", body: "<p></p>", author: "Ideovent Team", publishDate: new Date().toISOString().slice(0, 10), tags: [], status: "published", featured: false }),
+    defaults: () => ({ id: nextId("post"), title: "", slug: "", excerpt: "", coverImage: "", body: "<p></p>", author: "Ideovent Technologies", publishDate: new Date().toISOString().slice(0, 10), tags: [], status: "published", featured: false }),
     fields: [
       { name: "title", label: "Title", type: "text", full: true },
       { name: "slug", label: "Slug", type: "text" },

@@ -173,7 +173,7 @@ function Rail({ nav }: { nav: CrmNavSet }) {
           <RailLink key={item.to} item={item} collapsed={collapsed} />
         ))}
       </nav>
-      {/* Below the list: Mehdi's Team link in part 1 of the team build, an admin's Me (nav.ts crmNav). */}
+      {/* Below the list: an admin's Me (nav.ts crmNav). Mehdi's Team link is in the list itself. */}
       {nav.railFooter.length > 0 && (
         <div role="navigation" aria-label={nav.railFooter.map((i) => i.label).join(", ")} className="space-y-0.5 border-t border-border p-2">
           {nav.railFooter.map((item) => (
@@ -312,7 +312,10 @@ function CrmShell() {
             {error}
           </p>
         )}
-        <main id="crm-main" tabIndex={-1} className="min-h-0 flex-1 focus:outline-none overflow-y-auto px-3 pb-24 pt-4 md:px-6 md:pb-8 md:pt-5">
+        {/* `relative`: main is the containing block of the screens' sr-only labels (position: absolute).
+            Without it they escaped this scroll area, and the page itself scrolled behind the shell
+            (up to 4,700 px on a lead page on a phone, showing blank space under the tab bar). */}
+        <main id="crm-main" tabIndex={-1} className="relative min-h-0 flex-1 focus:outline-none overflow-y-auto px-3 pb-24 pt-4 md:px-6 md:pb-8 md:pt-5">
           {loading ? (
             <div className="flex justify-center py-20" role="status" aria-label="Loading the CRM">
               <div className="h-7 w-7 animate-spin rounded-full border-2 border-border border-t-primary" />

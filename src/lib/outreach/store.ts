@@ -28,6 +28,10 @@ import type { DemoSite, DemoSiteOpen } from "@/lib/cms/types";
 import { looksDental } from "@/lib/demo/templates/dentalPick";
 import { CrmAccessError, LEAD_VALUES, MIRROR_KEYS, crmErrorText } from "./access";
 import { LocalCrm, normalizeTeam, type LocalCms, type LocalCmsAccess, type LocalData } from "./localTeam";
+/* Meta Lead Ads (meta-leads-spec 6.5, 7). Relative paths: the Node test harnesses resolve "@/" to .ts files only. */
+import type { MetaAssignMode, MetaIngestResult } from "./localTeam";
+import { META_LEAD_ID_PREFIX } from "../meta/fields";
+import { mapMetaCsvRow, metaCsvLayout, unguardCells } from "../meta/metaCsv";
 import {
   LOCAL_ACTOR_KEY,
   legacyMe,
@@ -187,6 +191,12 @@ export interface OutreachStore {
   actAs?(memberId: string | null): void;
   /** Local mode only: who the store acts as (null = Mehdi). */
   actingAs?(): string | null;
+  /**
+   * Local mode only (the Meta page's Simulate, and the e2e suites): one Meta
+   * lead as 0012's meta_lead_ingest takes it, steps 5 to 12. Mehdi only. The
+   * live CRM has no such method: real Meta leads arrive through the webhook.
+   */
+  simulateMetaLead?(leadgenId: string, lead: Record<string, unknown>, opts?: { assignMode?: MetaAssignMode }): Promise<MetaIngestResult>;
 }
 
 /* ── Normalisation ───────────────────────────────────────────────────────── */
@@ -301,9 +311,46 @@ export function countSentToday(events: OutreachEvent[], channel: "whatsapp" | "e
 
 /* ── CSV import ──────────────────────────────────────────────────────────── */
 
-/** RFC 4180 CSV (quoted fields, "" escapes, CRLF) into header-keyed rows. */
-export function parseCsv(text: string): Record<string, string>[] {
+/**
+ * The delimiter of a CSV, read from its first non-empty line, outside quotes:
+ * a tab anywhere means tab (Meta's lead downloads, a paste from a sheet); else
+ * more semicolons than commas means semicolon (Excel in many locales); else
+ * comma, which every sheet the CRM read before 2 Oct 2026 has.
+ */
+export function sniffDelimiter(src: string): "," | ";" | "\t" {
+  let quoted = false;
+  let filled = false;
+  let tabs = 0;
+  let semis = 0;
+  let commas = 0;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (quoted) {
+      if (c === '"' && src[i + 1] === '"') i++;
+      else if (c === '"') quoted = false;
+      continue;
+    }
+    if (c === '"') quoted = filled = true;
+    else if (c === "\n" || c === "\r") {
+      if (filled) break;
+      tabs = semis = commas = 0;
+    } else if (c === "\t") tabs++;
+    else if (c === ";") semis++;
+    else if (c === ",") commas++;
+    if (!/\s/.test(c)) filled = true;
+  }
+  if (tabs) return "\t";
+  return semis > commas ? ";" : ",";
+}
+
+/**
+ * RFC 4180 CSV (quoted fields, "" escapes, CRLF) into header-keyed rows. The
+ * delimiter is sniffed when not given (sniffDelimiter): a comma file parses
+ * exactly as before, and Meta's tab-separated downloads parse too.
+ */
+export function parseCsv(text: string, delimiter?: string): Record<string, string>[] {
   const src = text.replace(/^\uFEFF/, "");
+  const delim = delimiter || sniffDelimiter(src);
   const table: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -315,7 +362,7 @@ export function parseCsv(text: string): Record<string, string>[] {
       else if (c === '"') quoted = false;
       else field += c;
     } else if (c === '"') quoted = true;
-    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === delim) { row.push(field); field = ""; }
     else if (c === "\n" || c === "\r") {
       if (c === "\r" && src[i + 1] === "\n") i++;
       row.push(field); field = "";
@@ -500,6 +547,10 @@ function otherPhones(raw?: string): string | undefined {
 }
 
 export function mapCsvRow(row: Record<string, string>): { lead: LeadInput } | { skip: string } {
+  /* The CRM's own export guards formula-like cells with a ': off again. Meta's downloads map through fields.js (meta-leads-spec 7). */
+  row = unguardCells(row);
+  const layout = metaCsvLayout(Object.keys(row));
+  if (layout) return mapMetaCsvRow(row, layout);
   const g = (k: keyof typeof COLS) => val(pick(row, COLS[k]));
   const instituteName = g("instituteName");
   if (!instituteName) return { skip: "no institute name (or the template's placeholder row)" };
@@ -622,7 +673,9 @@ export function planImport(
     const mapped = mapCsvRow(rows[i]);
     if ("skip" in mapped) { result.skipped.push({ row: rowNo, reason: mapped.skip }); continue; }
     const l = mapped.lead;
-    const dup = known.find(
+    /* The same Meta lead (an export imported twice, or one the webhook already brought) first, then the contact. */
+    const sameMeta = l.metaLeadId ? known.find((k) => k.metaLeadId === l.metaLeadId || k.id === META_LEAD_ID_PREFIX + l.metaLeadId) : undefined;
+    const dup = sameMeta || known.find(
       (k) => sameContact(k, { phone: l.phone, email: l.email }) || (l.whatsapp && sameContact(k, { phone: l.whatsapp })),
     );
     if (dup) {
@@ -1041,6 +1094,16 @@ export class LocalOutreachStore implements OutreachStore {
 
   async deleteRule(id: number) {
     this.run((t) => t.deleteRule(id));
+  }
+
+  /**
+   * Meta Lead Ads, locally (meta-leads-spec 6.5): one lead as 0012's
+   * meta_lead_ingest takes it, as a trusted write (LocalCrm.ingestMeta). Mehdi
+   * only. src/lib/meta/localIntake.ts keeps the intake's own registry (a
+   * deleted lead stays deleted), the log and the settings around it.
+   */
+  async simulateMetaLead(leadgenId: string, lead: Record<string, unknown>, opts: { assignMode?: MetaAssignMode } = {}) {
+    return this.run((t) => t.ingestMeta(leadgenId, lead, opts), (r) => r.result !== "already");
   }
 }
 

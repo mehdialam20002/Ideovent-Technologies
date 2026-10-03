@@ -18,6 +18,7 @@
  */
 
 import type { AskTopic, CallOutcome, MemberWordingKey } from "./team";
+import type { MetaLeadData } from "../meta/fields";
 import type { TemplateStage } from "./templates";
 
 export type LeadStatus =
@@ -119,6 +120,29 @@ export interface OutreachLead {
   /** Why the lead was lost. Required when a member marks a lead Lost (the database refuses it without one). */
   lostReason?: string;
 
+  /*
+   * ── Meta Lead Ads (0012, meta-leads-spec 3). Set by the webhook, the relay
+   * or an import of Meta's own downloads, from src/lib/meta/fields.js; text
+   * only. A member can never change them (0011's field guard locks any key
+   * not on its lists). A Meta lead's id is "ol_meta_" + metaLeadId.
+   */
+  metaLeadId?: MetaLeadData["metaLeadId"];
+  /** "fb", "ig" (or another code Meta adds). */
+  metaPlatform?: MetaLeadData["metaPlatform"];
+  metaFormId?: MetaLeadData["metaFormId"];
+  metaFormName?: MetaLeadData["metaFormName"];
+  metaCampaignId?: MetaLeadData["metaCampaignId"];
+  metaCampaignName?: MetaLeadData["metaCampaignName"];
+  metaAdsetId?: MetaLeadData["metaAdsetId"];
+  metaAdsetName?: MetaLeadData["metaAdsetName"];
+  metaAdId?: MetaLeadData["metaAdId"];
+  metaAdName?: MetaLeadData["metaAdName"];
+  /** When the person sent the form (ISO, UTC). */
+  metaCreatedAt?: MetaLeadData["metaCreatedAt"];
+  metaOrganic?: MetaLeadData["metaOrganic"];
+  /** The form's consent tick: "yes", "no" (NOT ticked: e-mail only, no WhatsApp or calls; engine.ts NO_META_CONSENT), "none" (the form had none). */
+  metaConsent?: MetaLeadData["metaConsent"];
+
   /* ── Column mirrors (0011). Filled in on read; never stored in the lead's data. ── */
   /** crm_members id of the person who works the lead. null = Unassigned: the pool nobody has written to. */
   assigneeId?: string | null;
@@ -169,6 +193,12 @@ export interface OutreachSettings {
    */
   senderGmail?: string;
   signature: string;
+  /**
+   * Where Open in Zoho Mail opens a new e-mail (2 Oct 2026): a Zoho Mail address, e.g.
+   * https://mail.zoho.in (Zoho India, where contact@ideovent.in is). Blank means that one.
+   * mailLinks.ts zohoMailOrigin reads it; anything not on Zoho Mail is refused.
+   */
+  zohoMailUrl?: string;
   /**
    * RETIRED. It was a forced cap of 10 a day, and every saved settings row
    * carries that 10, so it cannot mean "Mehdi chose 10". Nothing reads it any

@@ -49,6 +49,7 @@ import {
   meFromMember,
   memberReads,
   overviewRows,
+  phoneKey,
   planDistribution,
   planRulesDetailed,
   refuse,
@@ -87,6 +88,26 @@ import {
   type SaveMemberInput,
 } from "./team";
 import type { EventInput, OutreachEvent, OutreachLead, OutreachSettings } from "./types";
+/* Meta Lead Ads (0012, meta-leads-spec 6.5). Relative paths: the Node test harnesses resolve "@/" to .ts files only. */
+import { LEAD_KIND_VALUES } from "./types";
+import { META_LEAD_ID_PREFIX, META_LEAD_KEYS, META_MAX, META_SOURCES, platformLabel } from "../meta/fields";
+
+/** Where a new Meta lead goes: the Unassigned pool (default), Mehdi, or the assignment rules (no match: the pool). */
+export type MetaAssignMode = "pool" | "owner" | "rules";
+
+/** What 0012's meta_lead_ingest answers; local mode answers in the same words. */
+export interface MetaIngestResult {
+  result: "created" | "duplicate" | "already" | "over_cap";
+  /** The CRM lead: the new one, the one it duplicates, or the one made before (null when that was deleted). */
+  leadId: string | null;
+  /** Who works it (null: the Unassigned pool). */
+  assignedTo: string | null;
+  /** A duplicate past the day's limit of Meta touches on that lead: logged only, the lead left as it was. */
+  quiet?: boolean;
+}
+
+/** At most this many Meta touches (and one bell) per existing lead per India day (meta-leads-spec decision 6). */
+const META_TOUCHES_A_DAY = 3;
 
 /* ── The data ────────────────────────────────────────────────────────────── */
 
@@ -771,7 +792,7 @@ export class LocalCrm {
     return this.cms.read().demoSiteOpens.filter((o) => ids.has(o.demoId) && Date.parse(o.updatedAt || o.at) >= since);
   }
 
-  /** crm_publish_lead_demo: turns the linked demo's public link on (draft to sent), as markDemoSent does. */
+  /** crm_publish_lead_demo: turns the linked demo's public link on (draft to sent), as markDemoSent does; never a closed demo or a Free slot. */
   publishLeadDemo(leadId: string, sentTo?: string): string {
     this.needRole();
     const l = this.lead(leadId);
@@ -783,6 +804,7 @@ export class LocalCrm {
     if (!cms || !demo) refuse("P0002", "crm: this lead has no demo yet. Ask Mehdi for one.");
     const status = demo.status || "draft";
     if (status === "closed") refuse("42501", "crm: Mehdi closed this demo. Ask him before sending it.");
+    if (status === "free") refuse("42501", "crm: this demo is a Free slot, an empty page. Ask Mehdi to build it first.");
     if (status !== "sent") {
       const to = ((sentTo || "").trim() || l.contactName || l.instituteName || "").slice(0, 200);
       const sites = cms.demoSites.map((d) => (d.id === demo.id ? { ...d, status: "sent" as const, updatedAt: this.iso } : d));
@@ -1205,5 +1227,160 @@ export class LocalCrm {
   deleteRule(id: number): void {
     if (this.me.role !== "owner") return;
     this.d.team.rules = this.d.team.rules.filter((r) => r.id !== id);
+  }
+
+  /* ── Meta Lead Ads: 0012's meta_lead_ingest, locally (meta-leads-spec 5.3, 6.5) ── */
+
+  /**
+   * One Meta lead, as 0012's meta_lead_ingest takes it from step 5 on: a
+   * trusted write (the function runs as its owner, so the field guard only
+   * stamps), with the function's own checks. Local mode's Simulate and the e2e
+   * suites only; on the live CRM leads come from the webhook. Mehdi only.
+   * src/lib/meta/localIntake.ts has already looked in its registry (a Meta
+   * lead id seen before stays done, even after a delete) and at the daily cap.
+   */
+  ingestMeta(leadgenId: string, input: Record<string, unknown>, opts: { assignMode?: MetaAssignMode } = {}): MetaIngestResult {
+    if (this.me.role !== "owner") refuse("42501", "crm: only Mehdi adds Meta leads here; on the live CRM they come in by themselves");
+    if (!/^\d{1,32}$/.test(leadgenId || "")) refuse("22023", "meta: p_leadgen_id must be digits");
+    if (!input || typeof input !== "object" || Array.isArray(input) || jsonBytes(input) > 16000) {
+      refuse("22023", "meta: p_lead must be a JSON object of at most 16 KB");
+    }
+    const id = META_LEAD_ID_PREFIX + leadgenId;
+    // 5. A CRM lead for this Meta lead already: its own id, or an earlier import of Meta's export.
+    const made = this.allLeads().find((l) => l.id === id || l.metaLeadId === leadgenId);
+    if (made) return { result: "already", leadId: made.id, assignedTo: made.assigneeId ?? null };
+    // 6. Only Meta's keys, text only, trimmed and cut; the kind and the source from their lists.
+    const data: Record<string, string> = {};
+    for (const k of META_LEAD_KEYS) {
+      const v = input[k];
+      const t = typeof v === "string" ? v.trim().slice(0, META_MAX[k]) : "";
+      if (t) data[k] = t;
+    }
+    if (!(LEAD_KIND_VALUES as string[]).includes(data.kind)) data.kind = "other";
+    if (!(META_SOURCES as readonly string[]).includes(data.source)) data.source = "Meta Lead Ads";
+    data.metaLeadId = leadgenId;
+    if (!data.instituteName) data.instituteName = "Lead from Meta";
+    const where = platformLabel(data.metaPlatform || "");
+    // 7. The same person or business already in the CRM (private.crm_duplicate_of): no second lead.
+    const all = this.allLeads();
+    const hit = duplicateOf(all, { phone: data.phone, whatsapp: data.whatsapp, email: data.email });
+    if (hit) return this.metaDuplicate(hit.lead, leadgenId, data, where);
+    // 8. Who works it: the pool, Mehdi, or the rules; a pick the caps refuse goes to the pool.
+    const sent = Date.parse(data.metaCreatedAt || "");
+    const t = this.now.getTime();
+    const draft: OutreachLead = {
+      ...(data as unknown as OutreachLead),
+      id,
+      status: "new",
+      createdAt: Number.isFinite(sent) && sent >= t - 90 * 864e5 && sent <= t + 5 * 60e3 ? new Date(sent).toISOString() : this.iso,
+      updatedAt: this.iso,
+      nextActionAt: this.iso,
+      createdById: this.owner.id,
+      assigneeId: null,
+    };
+    const mode = opts.assignMode || "pool";
+    let to: string | null = mode === "owner" ? this.owner.id : mode === "rules" ? this.metaRulePick(draft, all) : null;
+    if (to) {
+      try {
+        checkAssignee(this.member(to), this.held(to), { newLeads: 1, openLeads: 1 });
+      } catch {
+        to = null;
+      }
+    }
+    // 9. The insert, as Mehdi's (decision 8); the audit line has the title and the source, no contacts.
+    const lead: OutreachLead = { ...draft, assigneeId: to };
+    if (to) lead.assignedAt = this.iso;
+    this.changed(undefined, lead);
+    this.pinColumns(id);
+    // 10. One history line, written by nobody: it claims nothing and counts as nobody's work.
+    const form = data.metaFormName ? ` "${data.metaFormName}"` : "";
+    const campaign = data.metaCampaignName ? ` (campaign "${data.metaCampaignName}")` : "";
+    this.metaLine(id, leadgenId, `New lead from the ${where} lead form${form}${campaign}.`);
+    // 11. The bells: Mehdi hears of every new lead; whoever it went to, of theirs.
+    this.metaBell(this.owner.id, "lead_in", `New lead from ${where}: ${data.instituteName}`, id);
+    if (to && to !== this.owner.id) this.metaBell(to, "assigned", `New ${where} lead assigned to you: ${data.instituteName}`, id);
+    // 12.
+    return { result: "created", leadId: id, assignedTo: to };
+  }
+
+  /**
+   * 5.3 step 7: a form carried a number or e-mail the CRM has. Anyone can type
+   * someone else's number into a form, so whoever sent it may not be that lead
+   * (review, 3 Oct): the lead gets a neutral line saying which of its contacts
+   * the form came with, and the answers go to Mehdi alone, as a request on his
+   * Today (kind meta_form, asked by nobody; a member never reads it). At most 3
+   * Meta touches a day reach the lead: the line, due now when it is open, and
+   * on the first touch of the day a bell to whoever works it (or Mehdi). Later
+   * ones change nothing ("quiet"). Today's touches are its Meta lines dated
+   * today (India): the line of a lead made from Meta today counts as one, and
+   * quiet ones only ever come after three.
+   */
+  private metaDuplicate(lead: OutreachLead, leadgenId: string, data: Record<string, string>, where: string): MetaIngestResult {
+    const today = istDay(this.now);
+    const touches = this.d.events.filter((e) => e.leadId === lead.id && e.id.startsWith("oe_meta_") && istDay(e.at) === today).length;
+    const out: MetaIngestResult = { result: "duplicate", leadId: lead.id, assignedTo: lead.assigneeId ?? null };
+    if (touches >= META_TOUCHES_A_DAY) return { ...out, quiet: true };
+    const asked = [phoneKey(data.phone), phoneKey(data.whatsapp)].filter(Boolean);
+    const byNumber = [phoneKey(lead.phone), phoneKey(lead.whatsapp)].some((k) => Boolean(k) && asked.includes(k));
+    const match = byNumber ? "phone number" : "e-mail";
+    const notes = data.notes || "";
+    const at = notes.indexOf("Answers:\n");
+    const answers = at >= 0 ? notes.slice(at + "Answers:\n".length).split("\n").join("; ").replace(/^[; ]+|[; ]+$/g, "") : "";
+    const parts = [data.metaFormName && `form "${data.metaFormName}"`, data.metaCampaignName && `campaign "${data.metaCampaignName}"`].filter(Boolean);
+    this.pinColumns(lead.id);
+    this.metaLine(lead.id, leadgenId,
+      `Someone sent the ${where} lead form with this lead's ${match}${parts.length ? ` (${parts.join(", ")})` : ""}.${answers ? " Their answers went to Mehdi." : ""}`);
+    if (answers) {
+      const form = data.metaFormName ? ` "${data.metaFormName}"` : "";
+      const body = `Sent on the ${where} form${form} with this lead's ${match}. Answers: ${answers}`.slice(0, 500);
+      this.d.team.requests.push({ id: this.nextId(), leadId: lead.id, kind: "meta_form", hostId: this.owner.id, body, createdAt: this.iso });
+    }
+    const open = isOpenStatus(lead.status);
+    if (open) this.changed(lead, { ...lead, nextActionAt: this.iso, updatedAt: this.iso }, true);
+    if (touches === 0) {
+      const works = lead.assigneeId && open && this.member(lead.assigneeId)?.active ? lead.assigneeId : this.owner.id;
+      this.metaBell(works, "lead_in", `${lead.instituteName}: someone sent the ${where} form with this lead's ${match}`, lead.id);
+    }
+    return out;
+  }
+
+  /**
+   * private.meta_rule_pick: crm_apply_rules' own walk (planRules) for this one
+   * New lead: active rules by priority, kind and "city contains", the next
+   * person in turn who is switched on and under their caps. Like
+   * crm_apply_rules it moves that rule's turn on. null: no rule fits (the pool).
+   */
+  private metaRulePick(lead: OutreachLead, all: OutreachLead[]): string | null {
+    const { plan, nextIndex } = planRulesDetailed([lead], this.d.team.rules, rulePeople(all, this.d.team.members), false);
+    const pick = plan.get(lead.id) || null;
+    if (pick) for (const r of this.d.team.rules) if (nextIndex.has(r.id)) r.nextIndex = nextIndex.get(r.id) as number;
+    return pick;
+  }
+
+  /**
+   * Local mode reads a lead with no stored creator, and a line with no writer,
+   * as being from before the team (effectiveLead), which would make the lead
+   * Mehdi's on the next read. The intake writes lines with no writer, as 0012
+   * does, so the lead's columns are stored as they read now.
+   */
+  private pinColumns(id: string): void {
+    const stored = this.d.leads.find((l) => l.id === id);
+    if (!stored) return;
+    const now = effectiveLead(stored, this.owner.id, this.before.has(id));
+    if (!stored.createdById) stored.createdById = now.createdById;
+    if (stored.assigneeId === undefined && now.assigneeId) stored.assigneeId = now.assigneeId;
+  }
+
+  /** A history line 0012 writes: no writer (actor null), id oe_meta_<Meta lead id>, never twice. */
+  private metaLine(leadId: string, leadgenId: string, detail: string): void {
+    const id = `oe_meta_${leadgenId}`;
+    if (this.d.events.some((e) => e.id === id)) return;
+    this.d.events.push({ id, leadId, at: this.iso, type: "note", detail: detail.slice(0, 2000) });
+  }
+
+  /** A bell 0012 rings: no actor (the intake, not a person). */
+  private metaBell(memberId: string | null | undefined, kind: NotificationKind, title: string, leadId: string): void {
+    if (!memberId) return;
+    this.d.team.notifications.push({ id: this.nextId(), memberId, kind, title: title.slice(0, 300), leadId, createdAt: this.iso });
   }
 }

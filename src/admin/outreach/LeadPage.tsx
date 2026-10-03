@@ -1,13 +1,18 @@
 import { Fragment, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Pencil, Trash2 } from "lucide-react";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS, type LeadStatus, type OutreachLead } from "@/lib/outreach/types";
+import { MEMBER_FILL_KEYS, blank, can, crmErrorText } from "@/lib/outreach/access";
 import { useOutreach } from "./useOutreach";
-import { LeadFields, draftToLead, type LeadDraft } from "./LeadFields";
+import { LeadFields, changedFields, draftToLead, type LeadDraft } from "./LeadFields";
 import { ComposePanel } from "./ComposePanel";
 import { CallScriptCard } from "./CallScriptCard";
 import { History } from "./History";
 import { nextStep, todayQueue } from "./compose";
 import { KIND_LABEL, StatusPill, btnDanger, btnGhost, btnPrimary, btnSecondary, cardCls, dueLabel, fmtDateTime, inputCls, prettyPhone, summaryCls, textareaCls } from "./ui";
+import { AskOwnerDialog } from "@/crm/lead/AskOwnerDialog";
+import { LostReasonDialog } from "@/crm/lead/LostReasonDialog";
+import { NotesBox } from "@/crm/lead/NotesBox";
+import { statusRefusal } from "@/crm/lead/statusRules";
 import { cn } from "@/lib/utils";
 
 /** YYYY-MM-DDTHH:MM in local time, for <input type="datetime-local">. */
@@ -29,6 +34,15 @@ function toLocalInput(iso?: string): string {
  *
  * The compose steps are keyed by the lead id (see ComposePanel for why), and
  * "Next lead" walks Today's list without going back to it.
+ *
+ * Every change travels as a patch of the keys it names (spec 9.3), merged on
+ * the server, so two people never overwrite each other.
+ *
+ * A MEMBER'S LEAD PAGE (spec 10.7): Edit shows the institute's name and kind
+ * and every filled contact field read-only, with "Wrong? Ask Mehdi"; an empty
+ * one can be filled. Notes only grow ("Add to notes"). Call, Proposal and Won
+ * are Mehdi's (Hand to Mehdi), Lost asks why, Do not contact is one tap, and
+ * there is no Delete.
  */
 /**
  * A long email breaks after "@" and before dots instead of mid-word
@@ -39,10 +53,20 @@ function softBreaks(text: string) {
   return parts.map((p, i) => <Fragment key={i}>{i > 0 && <wbr />}{p}</Fragment>);
 }
 
+/** The fields a member's edit shows read-only: name and kind, and every fill-once field already filled. */
+function lockedFor(lead: OutreachLead): ReadonlySet<string> {
+  const data = lead as unknown as Record<string, unknown>;
+  return new Set(["instituteName", "kind", ...MEMBER_FILL_KEYS.filter((k) => !blank(data[k]))]);
+}
+
 export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: () => void; onOpen: (id: string) => void }) {
-  const { leads, opens, saveLead } = useOutreach();
+  const { leads, opens, patchLead, me } = useOutreach();
   const lead = leads.find((l) => l.id === leadId);
   const [editing, setEditing] = useState<LeadDraft | null>(null);
+  const [editErr, setEditErr] = useState<string | null>(null);
+  const [correction, setCorrection] = useState<string | null>(null);
+  const member = me.role === "member" && !me.legacy;
+  const locked = useMemo(() => (member && lead ? lockedFor(lead) : undefined), [member, lead]);
 
   // Where "Next lead" goes: the lead after this one in Today's order, else the first other one there.
   const next = useMemo(() => {
@@ -60,7 +84,7 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
     );
   }
 
-  const step = nextStep(lead, opens);
+  const step = nextStep(lead, opens, new Date(), { member });
   const contact = [lead.phone && prettyPhone(lead.phone), lead.email].filter(Boolean);
 
   return (
@@ -83,14 +107,27 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
             onSubmit={async (e) => {
               e.preventDefault();
               if (!editing.instituteName.trim()) return;
-              await saveLead({ ...lead, ...draftToLead(editing) });
-              setEditing(null);
+              setEditErr(null);
+              try {
+                const patch = changedFields(lead, draftToLead(editing));
+                if (Object.keys(patch).length) await patchLead(lead.id, patch);
+                setEditing(null);
+              } catch (x) {
+                setEditErr(crmErrorText(x));
+              }
             }}
           >
-            <LeadFields value={editing} onChange={setEditing} excludeId={lead.id} tried />
+            {member && (
+              <p className="mb-3 text-sm text-muted-foreground" data-testid="member-edit-note">
+                You can fill in what is empty. What is filled stays as it is: if it is wrong, ask Mehdi.
+              </p>
+            )}
+            <LeadFields value={editing} onChange={setEditing} excludeId={lead.id} tried locked={locked}
+              onAskMehdi={member ? (what) => setCorrection(`${what[0].toUpperCase()}${what.slice(1)} is wrong. It should be: `) : undefined} />
+            {editErr && <p role="alert" data-testid="edit-error" className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">{editErr}</p>}
             <div className="mt-4 flex gap-3">
               <button type="submit" className={btnPrimary}><Check className="h-4 w-4" aria-hidden="true" /> Save</button>
-              <button type="button" className={btnSecondary} onClick={() => setEditing(null)}>Cancel</button>
+              <button type="button" className={btnSecondary} onClick={() => { setEditing(null); setEditErr(null); }}>Cancel</button>
             </div>
           </form>
         ) : (
@@ -126,6 +163,9 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
       <CallScriptCard key={`call-${lead.id}`} lead={lead} />
 
       <LeadDetails lead={lead} onDeleted={onBack} />
+      {member && (
+        <AskOwnerDialog lead={lead} open={correction !== null} onClose={() => setCorrection(null)} topic="correction" text={correction ?? ""} />
+      )}
     </div>
   );
 }
@@ -136,15 +176,33 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
  * so the folded view still says what is inside.
  */
 function LeadDetails({ lead, onDeleted }: { lead: OutreachLead; onDeleted: () => void }) {
-  const { events, saveLead, addEvent, deleteLead } = useOutreach();
+  const { events, patchLead, addEvent, deleteLead, me } = useOutreach();
   const mine = useMemo(() => events.filter((e) => e.leadId === lead.id), [events, lead.id]);
   const [note, setNote] = useState("");
   const [notesDraft, setNotesDraft] = useState<string | null>(null);
+  const [askLost, setAskLost] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [delErr, setDelErr] = useState<string | null>(null);
+  const member = me.role === "member" && !me.legacy;
+  // Mehdi and admins rewrite the notes; a member only adds to them (spec 10.7).
+  const rewritesNotes = !member;
 
-  const setStatus = async (status: LeadStatus) => {
+  const run = async (fn: () => Promise<unknown>) => {
+    setErr(null);
+    try {
+      await fn();
+    } catch (x) {
+      setErr(crmErrorText(x));
+    }
+  };
+  const setStatus = async (status: LeadStatus, extra: Partial<OutreachLead> = {}) => {
     if (status === lead.status) return;
-    await saveLead({ ...lead, status });
+    await patchLead(lead.id, { ...extra, status });
     await addEvent({ leadId: lead.id, type: "status", detail: `Status: ${LEAD_STATUS_LABELS[lead.status]} to ${LEAD_STATUS_LABELS[status]}` });
+  };
+  const pick = (s: LeadStatus) => {
+    if (s === "lost" && member && lead.status !== "lost") return setAskLost(true);
+    void run(() => setStatus(s));
   };
 
   return (
@@ -158,17 +216,23 @@ function LeadDetails({ lead, onDeleted }: { lead: OutreachLead; onDeleted: () =>
         </summary>
         <div className="space-y-4 pb-3 pt-1">
           <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Lead status">
-            {LEAD_STATUSES.map((s) => (
-              <button key={s} type="button" role="radio" aria-checked={lead.status === s} onClick={() => void setStatus(s)}
-                className={cn("min-h-10 rounded-full px-3 text-sm", lead.status === s ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground hover:text-foreground")}>
-                {LEAD_STATUS_LABELS[s]}
-              </button>
-            ))}
+            {LEAD_STATUSES.map((s) => {
+              const no = statusRefusal(me, lead.status, s);
+              return (
+                <button key={s} type="button" role="radio" aria-checked={lead.status === s} onClick={() => pick(s)}
+                  disabled={Boolean(no)} title={no || undefined} aria-disabled={no ? true : undefined}
+                  className={cn("min-h-10 rounded-full px-3 text-sm", lead.status === s ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground hover:text-foreground", no && "cursor-not-allowed opacity-50 hover:text-muted-foreground")}>
+                  {LEAD_STATUS_LABELS[s]}
+                </button>
+              );
+            })}
           </div>
+          {member && <p className="text-xs text-muted-foreground" data-testid="status-member-note">Call, Proposal and Won are Mehdi's: when they want a call or the price, use Hand to Mehdi.</p>}
+          {err && <p role="alert" className="text-sm text-destructive" data-testid="status-error">{err}</p>}
           <div className="max-w-xs">
             <label htmlFor="lead-next" className="block text-sm font-medium">Next follow-up</label>
             <input id="lead-next" type="datetime-local" className={inputCls} value={toLocalInput(lead.nextActionAt)}
-              onChange={(e) => void saveLead({ ...lead, nextActionAt: e.target.value ? new Date(e.target.value).toISOString() : undefined })} />
+              onChange={(e) => void run(() => patchLead(lead.id, { nextActionAt: e.target.value ? new Date(e.target.value).toISOString() : undefined }))} />
           </div>
           {lead.lastContactedAt && <p className="text-xs text-muted-foreground">Last contacted {fmtDateTime(lead.lastContactedAt)}</p>}
         </div>
@@ -180,13 +244,17 @@ function LeadDetails({ lead, onDeleted }: { lead: OutreachLead; onDeleted: () =>
           <span className="ml-auto max-w-[60%] truncate text-xs font-normal">{lead.notes ? lead.notes.split("\n")[0] : "none yet"}</span>
         </summary>
         <div className="pb-3">
-          <textarea aria-label="Notes about this lead" rows={3} className={textareaCls} value={notesDraft ?? lead.notes ?? ""}
-            onChange={(e) => setNotesDraft(e.target.value)}
-            onBlur={async () => {
-              if (notesDraft !== null && notesDraft !== (lead.notes ?? "")) await saveLead({ ...lead, notes: notesDraft });
-              setNotesDraft(null);
-            }}
-            placeholder="Who picks up, best time to call, what they said" />
+          {rewritesNotes ? (
+            <textarea aria-label="Notes about this lead" rows={3} className={textareaCls} value={notesDraft ?? lead.notes ?? ""}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              onBlur={async () => {
+                if (notesDraft !== null && notesDraft !== (lead.notes ?? "")) await run(() => patchLead(lead.id, { notes: notesDraft }));
+                setNotesDraft(null);
+              }}
+              placeholder="Who picks up, best time to call, what they said" />
+          ) : (
+            <NotesBox lead={lead} />
+          )}
         </div>
       </details>
 
@@ -199,23 +267,42 @@ function LeadDetails({ lead, onDeleted }: { lead: OutreachLead; onDeleted: () =>
           <form className="mb-3 flex gap-2" onSubmit={async (e) => {
             e.preventDefault();
             if (!note.trim()) return;
-            await addEvent({ leadId: lead.id, type: "note", detail: note.trim() });
-            setNote("");
+            setDelErr(null);
+            try {
+              await addEvent({ leadId: lead.id, type: "note", detail: note.trim() });
+              setNote("");
+            } catch (x) {
+              setDelErr(crmErrorText(x));
+            }
           }}>
             <label htmlFor="hist-note" className="sr-only">Add a line to the history</label>
             <input id="hist-note" className={inputCls + " mt-0"} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a line to the history" />
             <button type="submit" className={btnSecondary + " shrink-0"} disabled={!note.trim()}>Add</button>
           </form>
           <History lead={lead} events={mine} />
-          <button type="button" className={btnDanger + " mt-4"} onClick={async () => {
-            if (!confirm(`Delete ${lead.instituteName} and its whole history? This cannot be undone. To stop messaging them, use Not interested instead.`)) return;
-            await deleteLead(lead.id);
-            onDeleted();
-          }}>
-            <Trash2 className="h-4 w-4" aria-hidden="true" /> Delete lead
-          </button>
+          {/* Only Mehdi deletes leads (the database refuses anyone else): the button is his alone. */}
+          {can(me, "lead.delete") && (
+            <button type="button" className={btnDanger + " mt-4"} onClick={async () => {
+              if (!confirm(`Delete ${lead.instituteName} and its whole history? This cannot be undone. To stop messaging them, use Not interested instead.`)) return;
+              setDelErr(null);
+              try {
+                await deleteLead(lead.id);
+                onDeleted();
+              } catch (x) {
+                setDelErr(crmErrorText(x));
+              }
+            }}>
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> Delete lead
+            </button>
+          )}
+          {delErr && <p role="alert" className="mt-2 text-sm text-destructive" data-testid="history-error">{delErr}</p>}
         </div>
       </details>
+      <LostReasonDialog open={askLost} onCancel={() => setAskLost(false)}
+        onConfirm={(reason) => {
+          setAskLost(false);
+          void run(() => setStatus("lost", { lostReason: reason }));
+        }} />
     </div>
   );
 }

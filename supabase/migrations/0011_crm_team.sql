@@ -45,6 +45,9 @@
 --   * One school, one lead: a member cannot add, or fill in, a number or an
 --     e-mail another lead already has (numbers compared on their last ten
 --     digits), and the refusal does not say whose it is.
+--   * Nothing is sent to a lead on Do not contact, and a lead from a Meta form
+--     who did not tick its WhatsApp-and-phone box is e-mailed only: no
+--     WhatsApp message and no call, from anyone, Mehdi included.
 --   * Visitors (anon) alone submit the public forms and demo opens; a demo
 --     open is stamped with the server's time and only counts for a live demo.
 --
@@ -930,6 +933,30 @@ begin
     new.created_by   := v_me;
     new.qualified_by := null;
     if v_role = 'member' then
+      -- Never a lead that passes for one from Meta's forms (0012 brings those
+      -- in, and Mehdi imports Meta's own files): an id starting ol_meta_ would
+      -- take a future Meta lead's place, and a Meta source or a meta... key
+      -- would credit the ads with a lead of their own. The prefix and the
+      -- sources are src/lib/meta/fields.js's META_LEAD_ID_PREFIX and
+      -- META_SOURCES; the keys are dropped. A source is compared on its
+      -- letters only (review, 3 Oct): the dashboard and the Source filter
+      -- read "Meta Lead Ads" with a no-break space, a tab, a line break or an
+      -- ideographic space around it as "meta lead ads", so no case, no
+      -- spaces of any kind, no invisible characters and no punctuation. The
+      -- Kelvin sign is the one character JavaScript lower-cases to a plain
+      -- letter (k), whatever this database's locale does with it.
+      -- access.ts guardNewLead does the same in local mode.
+      if left(lower(new.id), 8) = 'ol_meta_' then
+        raise exception 'crm: ids starting with ol_meta_ are kept for leads from Facebook and Instagram forms. Add your lead without one.'
+          using errcode = '42501';
+      end if;
+      if regexp_replace(lower(translate(coalesce(new.data ->> 'source', ''), 'K', 'k')), '[^a-z]', '', 'g')
+         = any (array['facebookleadads', 'instagramleadads', 'metaleadads', 'metaleadscenter']) then
+        raise exception 'crm: that source is kept for leads from Facebook and Instagram forms. Pick another source.'
+          using errcode = '42501';
+      end if;
+      new.data := new.data - coalesce((select array_agg(e.k) from jsonb_object_keys(new.data) as e(k)
+                                       where lower(e.k) like 'meta%'), '{}'::text[]);
       perform private.crm_spend('lead_add');
       -- A lead a member adds is theirs, whatever the request said. It carries
       -- no demo or pitch link (the owner's: a borrowed demo id would show
@@ -1191,6 +1218,7 @@ declare
   v_type   text := coalesce(nullif(new.data ->> 'type', ''), 'note');
   v_at     timestamptz;
   v_status text;
+  v_consent text;
   v_vals   text[];
   k        text;
   v        jsonb;
@@ -1238,7 +1266,11 @@ begin
         end if;
       end loop;
       -- The dashboard counts a win from a "... to Won" line (metrics.ts isWinEvent).
-      if v_type = 'status' and coalesce(new.data ->> 'detail', '') ~* '\mto\s+(won|proposal)\s*$' then
+      -- Its \b takes every character but an ASCII letter, digit or _ for a
+      -- break, while \m here would follow this database's locale ("éto Won"
+      -- passed it and still counted as a win): so "to" after the start or after
+      -- any other character (review, 3 Oct).
+      if v_type = 'status' and coalesce(new.data ->> 'detail', '') ~* '(^|[^a-z0-9_])to\s+(won|proposal)\s*$' then
         raise exception 'crm: only Mehdi moves a lead to Proposal or Won' using errcode = '42501';
       end if;
       -- Money is never delegated (SOP-10): the after-call summary carries the
@@ -1257,10 +1289,24 @@ begin
   end if;
   new.data := coalesce(new.data, '{}'::jsonb)
               || jsonb_build_object('id', new.id, 'leadId', new.lead_id, 'type', v_type);
-  if v_type = 'sent' then
-    select l.data ->> 'status' into v_status from public.outreach_leads l where l.id = new.lead_id;
-    if v_status = 'do_not_contact' then
+  -- For everyone, Mehdi included: nothing is sent to a lead on Do not contact,
+  -- and a lead from a Meta form who left its box "Ideovent may contact me on
+  -- WhatsApp and phone" unticked (metaConsent "no") gets no WhatsApp message
+  -- at any stage and no call: the privacy policy promises exactly that (DPDP;
+  -- review, 3 Oct). E-mail and notes stay open. On screen, engine.ts
+  -- checkSend and teamCompose.ts callRefusal say the same sentence.
+  if v_type in ('sent', 'call') then
+    select l.data ->> 'status', l.data ->> 'metaConsent' into v_status, v_consent
+      from public.outreach_leads l where l.id = new.lead_id;
+    if v_type = 'sent' and v_status = 'do_not_contact' then
       raise exception 'crm: this lead asked not to be contacted. Nothing may be sent.' using errcode = '42501';
+    end if;
+    if v_consent = 'no'
+       and (v_type = 'call'
+            or coalesce(new.data ->> 'channel', '') in ('whatsapp', 'call')
+            or coalesce(new.data ->> 'templateId', '') ~ '^wa_') then
+      raise exception 'crm: they did not tick the box on the Facebook or Instagram form that allows WhatsApp and calls. E-mail them only.'
+        using errcode = '42501';
     end if;
   end if;
   return new;
@@ -1815,7 +1861,9 @@ end $$;
 -- Turns on the public link of the demo linked to the caller's lead (a demo's
 -- link works only once it is "sent", and members cannot write the CMS). Same
 -- effect as markDemoSent in src/admin/outreach/demoActions.ts. A demo the
--- owner closed stays closed.
+-- owner closed stays closed, and a Free slot, an empty page, is never turned
+-- on (3 Oct 2026: no send publishes one either; the CRM's step 1 also sends
+-- the demos only Mehdi can mend to him first, linkChoice.ts teamDemoFix).
 create or replace function public.crm_publish_lead_demo(p_lead_id text, p_sent_to text default null)
 returns text language plpgsql security definer set search_path = '' as $$
 declare
@@ -1850,6 +1898,9 @@ begin
   v_status := coalesce(d.data ->> 'status', 'draft');
   if v_status = 'closed' then
     raise exception 'crm: Mehdi closed this demo. Ask him before sending it.' using errcode = '42501';
+  end if;
+  if v_status = 'free' then
+    raise exception 'crm: this demo is a Free slot, an empty page. Ask Mehdi to build it first.' using errcode = '42501';
   end if;
   if v_status <> 'sent' then
     v_to := left(coalesce(nullif(btrim(p_sent_to), ''), l.data ->> 'contactName', l.data ->> 'instituteName'), 200);

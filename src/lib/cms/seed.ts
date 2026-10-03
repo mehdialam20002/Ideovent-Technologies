@@ -80,7 +80,10 @@ const seedPosts: BlogPost[] = (rawBlogs as RawPost[]).map((b, i) => ({
   // signal that it has not arrived yet, which is what BlogDetail renders its
   // skeleton on.
   body: "",
-  author: "Ideovent Team",
+  // The studio, by its own name (3 Oct 2026): the byline the page prints and the
+  // BlogPosting author (src/lib/seo/schema.ts) name the same organisation. Was
+  // "Ideovent Team", a second name for it.
+  author: "Ideovent Technologies",
   // ONLY A DATE THAT IS ON RECORD (1 Oct 2026). Every imported post carried
   // "2025-06-01", printed on the page and sent to Google as datePublished, and
   // it was the date of none of them, so a post without its own date shows none
@@ -248,12 +251,14 @@ export const seed: ContentData = {
       ],
       ogImage: `${B}og/ideovent-og.png`,
       twitterHandle: "@Ideovent_",
-      // www, NOT the apex. 13-launchpad/CERTIFICATE-SYSTEM.md records that every
-      // certificate already issued to an intern carries a printed QR code and a
-      // LinkedIn credential URL of the form www.ideovent.in/verify/<ID>. A printed
-      // QR cannot be recalled, so the site must live at www and the apex must 301
-      // to it, see 03-legal-docs/GUIDE-04-Domain-and-Email-Recovery.md § 6.1.
-      // NOTE: this host does not resolve yet. Nothing here makes it live.
+      // www, NOT the apex. Every certificate carries a printed QR code and a
+      // LinkedIn credential URL of the form www.ideovent.in/verify/<ID> (the two
+      // issued by hand, INT2025A73 and INT2025A74, were reissued with it on 3 Oct
+      // 2026: 13-launchpad/certificates-reissued-2026-10-03). A printed QR cannot
+      // be recalled, so the site must live at www and the apex must 301 to it, see
+      // 03-legal-docs/GUIDE-04-Domain-and-Email-Recovery.md § 6.1.
+      // NOTE (3 Oct 2026): www.ideovent.in is live; ideovent.in and the old
+      // ideovent.vercel.app alias redirect to it.
       /*
         ONE host for the whole site. Every <link rel="canonical">, every og:url,
         the JSON-LD @id, sitemap.xml, robots.txt AND the URL printed inside every
@@ -1162,6 +1167,9 @@ export const seed: ContentData = {
 
     { id: "atelier", title: "Atelier Co. Clothing E-Commerce Storefront", slug: "atelier-co", category: "web", sector: "Clothing retail", clientName: "Atelier Co.", featured: true, order: 3,
       summary: "A clothing storefront built to read as an editorial magazine rather than a grid of products: a three-panel hero, occasion-led collections, a best-seller rail with colour selection in the card, a saved-items and bag flow, and a styling journal.",
+      // 3 Oct 2026: the summary cut at 155 stopped mid-list with "…". Same facts, a whole sentence.
+      // "Is built to read as", the summary's own words: "reads as" claimed the effect.
+      metaDescription: "This clothing storefront is built to read as an editorial magazine, not a product grid: occasion-led collections, colour picked on the card and a journal.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/atelier-co.webp`, gallery: [], liveUrl: "https://eccom2.vercel.app",
       // The wordmark mismatch is the FIRST thing said about this project, because
@@ -1182,6 +1190,9 @@ export const seed: ContentData = {
 
     { id: "tamkuhi-bazaar", title: "Tamkuhi Bazaar. Local Delivery Marketplace", slug: "tamkuhi-bazaar", category: "web", sector: "Quick commerce", clientName: "Tamkuhi Bazaar", featured: true, order: 4,
       summary: "A hyperlocal delivery marketplace for groceries, food and daily essentials in a cluster of small towns, built so a customer enters a delivery location on the first screen and never has to leave it to find a shop.",
+      // 3 Oct 2026: a whole sentence instead of the summary cut mid-sentence. "Asks where to
+      // deliver" is tryThis: "The first thing the homepage asks is where you are".
+      metaDescription: "This hyperlocal delivery marketplace is for groceries, food and daily essentials in a cluster of small towns, and its first screen asks where to deliver.",
       technologies: ["TypeScript", "React", "Tailwind CSS", "Vercel"],
       coverImage: `${B}work/tamkuhi-bazaar.webp`, gallery: [], liveUrl: "https://tamkuhibazaar-online.vercel.app",
       tryThis: "Look at the first fold. The first thing the homepage asks is where you are, and it names the towns it covers in the sub-headline. A marketplace that cannot reach your street is worse than no marketplace, so it answers that before it sells you anything.",
@@ -1197,6 +1208,8 @@ export const seed: ContentData = {
 
     { id: "highq", title: "HighQ Classes. Coaching Institute Website", slug: "highq-classes", category: "web", sector: "Coaching institute", clientName: "HighQ Classes", featured: false, order: 5,
       summary: "A responsive website for a coaching institute, course and batch information, faculty details and an enquiry form, so a student or parent can read what a course covers without phoning the institute.",
+      // 3 Oct 2026: the summary's own facts in a sentence that fits 155, instead of a cut one.
+      metaDescription: "This coaching institute website lists its courses, batches and faculty and has an enquiry form, so a parent can see what a course covers without phoning.",
       technologies: ["React", "TypeScript", "Node.js", "Tailwind CSS"],
       coverImage: "", gallery: [],
       // The live link is DELIBERATELY ABSENT. highqclasses.ideovent.com is a
@@ -1266,8 +1279,16 @@ export const seed: ContentData = {
     /* ── Our own products ────────────────────────────────────────────────── */
     { id: "onyx", title: "Onyx. Real-Time Desktop AI Copilot", slug: "onyx-realtime-ai-copilot", category: "product", sector: "Desktop app · Electron", clientName: "Ideovent product", featured: false, order: 8,
       summary: "A cross-platform desktop copilot that sits above whatever you are doing, takes the current screen and the current system audio as one streaming request to a language model, and writes the answer back while the model is still producing it. Voice-activity detection runs on the machine itself.",
+      // 3 Oct 2026: the summary's first sentence, whole, instead of cut at 155 with "…".
+      metaDescription: "Our cross-platform desktop AI copilot streams the current screen and system audio to a language model and writes the answer back as the model produces it.",
       technologies: ["Electron 33", "React 18", "Vite 5", "TypeScript", "Google Gemini", "ONNX Runtime", "Cloudflare Workers", "Razorpay"],
       coverImage: `${B}work/onyx/cover.webp`,
+      // The link card (3 Oct 2026). The cover is 789x735, nearly square, and a
+      // summary_large_image card crops it to 1.91:1. share-1200x630.png is the same
+      // window, whole, letterboxed on the page's own light ground (#F8FAFC); the
+      // case study still shows the cover. A new picture needs a new file name
+      // (vercel.json caches /work/ for a day) and its real size here.
+      shareImage: { src: `${B}work/onyx/share-1200x630.png`, width: 1200, height: 630 },
       gallery: [
         { src: `${B}work/onyx/tour-01-welcome.webp`, alt: "Onyx onboarding: the first-run welcome screen" },
         { src: `${B}work/onyx/tour-03-open-settings.webp`, alt: "Onyx settings, showing the model-provider configuration" },
@@ -1286,6 +1307,8 @@ export const seed: ContentData = {
 
     { id: "aura-orbit", title: "Aura Orbit, AI Habit Intelligence", slug: "aura-orbit", category: "product", sector: "Web app · Next.js", clientName: "Ideovent product", featured: false, order: 9,
       summary: "Our own habit-intelligence web app. Routines and streaks are read by a Google Gemini-backed assistant that suggests refinements, inside a deliberately distraction-free workspace. Subscriptions run through Razorpay against a real gateway.",
+      // 3 Oct 2026: the summary's first and last facts, whole, instead of a cut.
+      metaDescription: "In our habit-intelligence app, a Google Gemini-backed assistant reads routines and streaks and suggests refinements. Subscriptions run through Razorpay.",
       technologies: ["Next.js", "TypeScript", "Google Gemini", "Razorpay", "Vercel"],
       coverImage: `${B}work/aura-orbit.webp`, gallery: [], liveUrl: "https://goodhabits-teal.vercel.app",
       tryThis: "It is live, anyone can open it, and the payments run against a real gateway rather than a sandbox. That is a different kind of evidence from a case study, nobody paid us to build it.",
@@ -1303,6 +1326,8 @@ export const seed: ContentData = {
       summary: "This site. A React and Vite studio site with its own admin CMS, where every user-facing string is an editable field rather than hard-coded copy, plus a Supabase-backed content store, an internship application flow, and QR certificate verification at /verify that anyone holding a certificate can check.",
       // The title projectSeo() builds from `title` is 40 characters and already names the firm.
       seoTitle: "Ideovent Technologies: Studio Site & Admin CMS in React",
+      // 3 Oct 2026: the summary's list, whole, instead of cut mid-sentence with "…".
+      metaDescription: "This site runs on React and Vite, with its own admin CMS, a Supabase-backed content store, an internship application flow and QR certificate verification.",
       technologies: ["React", "TypeScript", "Vite", "Tailwind CSS", "Supabase"],
       coverImage: "", gallery: [],
       // 1 Oct 2026: ideovent.in is live (FACTS.md, 30 Sep correction, point 5).

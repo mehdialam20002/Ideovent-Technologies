@@ -17,7 +17,7 @@
  * Pure: no React, no storage, no network.
  */
 import type { PlainStage } from "@/admin/outreach/stages";
-import type { TemplateStage } from "./templates";
+import { getTemplate, type TemplateStage } from "./templates";
 import type {
   LeadKind,
   LeadLanguage,
@@ -44,6 +44,7 @@ import {
   type LeadOverview,
   type MemberStats,
 } from "./team";
+import { META_LEAD_ID_PREFIX, META_SOURCES } from "../meta/fields";
 
 /* ── The SQL's constants (test-crm-access.mjs checks each against 0011) ──── */
 
@@ -370,11 +371,35 @@ export function can(me: CrmMe | null | undefined, action: CrmAction): boolean {
  * The cold-call gate: the prospect replied, opened a demo, or is past that
  * stage (Replied, Demo opened, or a call or proposal with Mehdi). Without
  * "May cold-call" a member calls only these (TRAI, spec 11.4).
+ *
+ * An open after a cold link is not engagement (3 Oct 2026, with the link in
+ * the first message, hotfix-send-links-1002 D9): when the last message that
+ * carried their demo link was a first message sent cold (linkWentCold), the
+ * open says only that a stranger tapped a link we sent unasked, not that they
+ * want a call, so it does not open the gate. useOutreach leaves such a lead at
+ * Contacted for the same reason; a reply still opens it at once.
  */
 export function isEngaged(lead: Partial<OutreachLead> | null | undefined, events: OutreachEvent[] | null | undefined): boolean {
   if (!lead) return false;
   if (lead.status && ["replied", "demo_opened", "call", "proposal", "won"].includes(lead.status)) return true;
-  return (events || []).some((e) => e.leadId === lead.id && (e.type === "replied" || e.type === "demo_opened"));
+  const own = (events || []).filter((e) => e.leadId === lead.id);
+  if (own.some((e) => e.type === "replied")) return true;
+  return own.some((e) => e.type === "demo_opened") && !linkWentCold(lead.id || "", own);
+}
+
+/**
+ * True when the LATEST message that carried this lead's demo link was a cold
+ * first message (a twin with their sample's link, templates.ts link "demo"),
+ * not the link after a yes. The one rule for "an open after a cold link"
+ * (lib/outreach/linkChoice.ts re-exports it for the compose screen and
+ * useOutreach); here because the cold-call gate needs it and access.ts must
+ * stay free of linkChoice's demo-record imports.
+ */
+export function linkWentCold(leadId: string, events: Pick<OutreachEvent, "leadId" | "type" | "templateId" | "at">[]): boolean {
+  const last = events
+    .filter((e) => e.leadId === leadId && e.type === "sent" && Boolean(getTemplate(e.templateId)?.body.includes("{demoLink}")))
+    .sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+  return getTemplate(last?.templateId)?.link === "demo";
 }
 
 /** The compose stages a member is offered: never After the call or Proposal (money is Mehdi's). */
@@ -508,6 +533,47 @@ export const DUPLICATE_ON_FILL = "crm: this phone number or e-mail already belon
 export const NO_ADDING = "crm: adding leads is not switched on for you. Ask Mehdi.";
 /** A member asking for one of Mehdi's call times (phase 2). */
 export const NO_BOOKING_YET = "crm: booking a call time comes later. Hand the lead over without a time; Mehdi sets the call.";
+/**
+ * A member's new lead never passes for one from Meta's forms (the field
+ * guard's member INSERT branch): an id starting "ol_meta_" (it would take a
+ * future Meta lead's place) and a source from META_SOURCES are refused, both
+ * without case, and every meta... key is dropped.
+ */
+export const META_ID_REFUSED = "crm: ids starting with ol_meta_ are kept for leads from Facebook and Instagram forms. Add your lead without one.";
+export const META_SOURCE_REFUSED = "crm: that source is kept for leads from Facebook and Instagram forms. Pick another source.";
+/**
+ * The history guard's refusal of a WhatsApp message or a call to a lead from a
+ * Meta form who left its WhatsApp-and-phone box unticked (metaConsent "no"),
+ * for everyone, Mehdi included. crmErrorText turns it into engine.ts's
+ * NO_META_CONSENT, the sentence the screens show where they stop it.
+ */
+export const META_CONSENT_REFUSED = "crm: they did not tick the box on the Facebook or Instagram form that allows WhatsApp and calls. E-mail them only.";
+
+/** The id a Meta lead has (META_LEAD_ID_PREFIX), without case: left(lower(id), 8) in the guard. */
+export function looksLikeMetaId(id: unknown): boolean {
+  return typeof id === "string" && id.toLowerCase().startsWith(META_LEAD_ID_PREFIX);
+}
+
+/** A text on its letters only: no case, no spaces of any kind, no invisible characters, no punctuation. */
+const lettersOnly = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+const META_SOURCE_LETTERS = META_SOURCES.map(lettersOnly);
+
+/**
+ * A source from META_SOURCES, compared on its letters only (the guard's
+ * regexp_replace(lower(translate(source, 'K', 'k')), '[^a-z]', '', 'g'); review,
+ * 3 Oct): the dashboard and the Source filter read "Meta Lead Ads" with a no-break
+ * space, a tab or a line break around it as "meta lead ads", so nothing like it
+ * may pass. "Instagram", "Manual" and "Meta Lead Ads (old campaign)" are not Meta sources.
+ */
+export function isMetaSourceText(source: unknown): boolean {
+  if (typeof source !== "string") return false;
+  return META_SOURCE_LETTERS.includes(lettersOnly(source));
+}
+
+/** True for a key only Meta's intake writes (metaLeadId, metaConsent, ...): lower(key) like 'meta%' in the guard. */
+export function isMetaKey(key: string): boolean {
+  return key.toLowerCase().startsWith("meta");
+}
 
 /* ── The field guard (private.crm_leads_guard) ──────────────────────────── */
 
@@ -658,7 +724,9 @@ export function checkAssignee(
  * starts at New and carries no demo or pitch link; without "Can add leads"
  * it is refused before anything else, and it is refused when the contact is
  * already a lead anywhere (saying neither which nor whose) and at the New cap.
- * Owner and admin add it Unassigned. `nameOf` is kept for callers; the
+ * It never passes for a Meta lead: an ol_meta_ id or a Meta source is refused
+ * and the meta... keys are dropped (Mehdi imports Meta's own files; the
+ * intake adds the rest). Owner and admin add it Unassigned. `nameOf` is kept for callers; the
  * refusal no longer names anyone.
  */
 export function guardNewLead(
@@ -682,6 +750,10 @@ export function guardNewLead(
   if (role !== "owner") data = guardLeadShape(data, null);
   const cols: Partial<OutreachLead> = { createdById: me.memberId || undefined };
   if (role === "member") {
+    // Never a lead that passes for one from Meta's forms: the id and the source are refused, the meta... keys go.
+    if (looksLikeMetaId(lead.id)) refuse("42501", META_ID_REFUSED);
+    if (isMetaSourceText(data.source)) refuse("42501", META_SOURCE_REFUSED);
+    for (const k of Object.keys(data)) if (isMetaKey(k)) delete data[k];
     for (const k of ["demoId", "demoSlug", "pitchSlug", "assignedTo"]) delete data[k];
     data.createdAt = iso;
     data.status = "new";
@@ -712,7 +784,9 @@ export function guardNewLead(
  * A history line as the database stores it: written by the caller (actorId),
  * dated now (a "demo opened" line keeps the prospect's open time when it is
  * at most 30 days old and not in the future). Refused: a line over 20 KB; a
- * "sent" line on a Do-not-contact lead; and for anyone but Mehdi a line over
+ * "sent" line on a Do-not-contact lead; a WhatsApp message or a call to a lead
+ * from a Meta form whose box was left unticked (META_CONSENT_REFUSED, e-mail
+ * stays open), from anyone; and for anyone but Mehdi a line over
  * 4 KB, a type the database writes itself, a "... to Won/Proposal" status line,
  * an after-call summary or proposal, and a lead that is not theirs.
  */
@@ -740,6 +814,12 @@ export function stampEvent(me: CrmMe, ev: OutreachEvent, lead: OutreachLead | un
   else delete out.actorId;
   if (type === "sent" && lead?.status === "do_not_contact") {
     refuse("42501", "crm: this lead asked not to be contacted. Nothing may be sent.");
+  }
+  if ((type === "sent" || type === "call") && lead?.metaConsent === "no") {
+    const line = ev as unknown as Record<string, unknown>;
+    const channel = typeof line.channel === "string" ? line.channel : "";
+    const templateId = typeof line.templateId === "string" ? line.templateId : "";
+    if (type === "call" || channel === "whatsapp" || channel === "call" || templateId.startsWith("wa_")) refuse("42501", META_CONSENT_REFUSED);
   }
   // The insert policy: staff, or a lead the member reads (within the window).
   if (!isStaffRole(role) && !memberReads(me.memberId, lead, now)) rlsRefusal("outreach_events");

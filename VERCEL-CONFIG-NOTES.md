@@ -138,6 +138,8 @@ Now `scripts/prerender-heads.mjs` writes two files:
 - `dist/spa-shell.html`: the fallback, with the homepage's title and description but **no
   canonical and no og:url**. The catch-all rewrite `/((?!assets/).*)` now points at
   `/spa-shell.html`; `<Seo>` sets the canonical at runtime on the pages it serves.
+  (Since 3 Oct 2026 the shell is a neutral, noindex page and the catch-all leaves file
+  names alone: see the last section.)
 
 The build fails if `/` does not carry exactly one canonical or if the shell carries one. Things
 that name the shell and change with it: `api/share.js` (`SHELL_PATH`, the preview cards for
@@ -158,3 +160,97 @@ serves it as a real file, so no rule here touches it (a name with a dot never ma
 bare-slug rules). Bing, Yandex, Seznam, Naver and Yep read it to check that a submission is
 ours. `node scripts/indexnow.mjs` submits the sitemap's changed URLs BY HAND after a deploy;
 it never runs during a build. Usage is at the top of that script.
+
+## 3 Oct 2026: a neutral shell, the alias's root, trailing slashes, missing files
+
+From the live crawl of 2 Oct 2026. Each rule was compiled with Vercel's own
+`@vercel/routing-utils` (6.6.0) and run against the built `dist/` before the release.
+
+**The shell is neutral and noindex.** `dist/spa-shell.html` kept the homepage's title,
+description, robots `index, follow`, JSON-LD and no-script text, so every address
+without a file of its own (an unknown `/blog/...`, `/Websites/Dental-Clinic`, the draft
+policies, a post published in /admin) answered 200 with an
+indexable copy of the homepage to any crawler that reads only the HTML. The shell's head
+is now the firm's name, `robots: noindex` and the brand card; `api/share.js` writes or
+inserts every tag a demo's or a pitch's card needs. No public page can be served it:
+`scripts/prerender-heads.mjs` fails the build when a sitemap URL has no file of its own
+with its own canonical. Check a deploy with:
+
+    curl -s https://www.ideovent.in/no-such-section/no-such-page | grep -o '<title>[^<]*</title>\|name="robots" content="[^"]*"'
+
+It must print `<title>Ideovent Technologies</title>` and `content="noindex"`.
+
+**What /admin publishes gets a shell without noindex.** A post, project or service saved
+in /admin lives only in the store: the sitemap and `prerender-heads.mjs` read `seed.ts`, so
+it never gets a file of its own, at the next build or any later one. Google does not render
+a page whose HTML says noindex, so the noindex shell would have kept every such page out of
+the index for good. The rewrite `/(blog|work|services)/([a-z0-9]+(?:-[a-z0-9]+)*)` (a
+well-formed lower-case slug, the store's own rule in `src/lib/slug.ts`), placed just before
+the catch-all, serves `dist/spa-shell-cms.html`: the same neutral head with no robots tag.
+The page's `<Seo>` then says index, or noindex for an unknown slug ("Post not found",
+"Project not found", "Service not found"), once React runs. A file of the build is served
+before any rewrite, so the 24 prerendered pages under those three paths are untouched; a
+mixed-case or dotted slug still gets the noindex shell. The price, accepted on purpose: an
+unknown well-formed slug under those three paths answers raw HTML with no robots tag, a
+thin page with the firm's name as its title and no description, canonical or JSON-LD (not
+a copy of the homepage any more). Google renders it and gets noindex; only a crawler that
+never runs JavaScript sees the thin page, and the site links to no such address. Telling
+the two apart in the raw HTML would take a function that asks the store on every request.
+Check after a deploy:
+
+    curl -s https://www.ideovent.in/blog/no-such-post | grep -c 'name="robots"'
+
+It must print `0` (the noindex shell would print `1`).
+
+**`ideovent.vercel.app/` itself.** `"/:path*"` never matches the bare `/`: Vercel compiles
+`source` with path-to-regexp in strict mode, where the `/` before `:path*` sits inside the
+optional group (`^(?:/(...))?$`), so the root of the old alias answered 200 with the
+homepage. It has its own rule, second among the redirects: `"/"` on that host, 308, to
+`https://www.ideovent.in/`.
+
+**Trailing slashes: one redirect, for every path but `/api/`.** The third redirect, right
+after the two alias rules, is
+
+    { "source": "/:path((?!api/).+)/", "destination": "/:path", "permanent": true }
+
+A path that ends in `/` gets a 308 to the same path without it. Compiled, it is one route,
+`^(?:/((?!api/).+))/$` to `/$1`: the route Vercel's `"trailingSlash": false` compiles to
+(`^/(.*)/$` to `/$1`, vercel.com/docs/project-configuration/vercel-json#trailingslash),
+except that it leaves `/api/` alone. It has no host condition, so it runs on every host,
+ahead of the other redirects, the headers and the rewrites:
+
+- `/` itself never matches (the pattern needs a character before the last slash).
+- `/websites/` goes to `/websites` in one hop; a retired address's slash form in two
+  (`/blogs/1/` to `/blogs/1` to `/services/seo`), where it used to answer 200 with the shell.
+- The query string is kept, as on every Vercel redirect (the alias redirect keeps
+  `?utm_source=...` live).
+- `crm.ideovent.in/leads/` goes to `/leads`, the same screen. `/robots.txt` is unaffected.
+- `/api/*` is left out on purpose. Production runs the function for `/api/x/` as for
+  `/api/x`, and it still does: a webhook sender that does not follow redirects keeps
+  working even if its URL was pasted with a slash. (`"trailingSlash": false`, tried first,
+  would have answered those with a 308 before the function. Our own calls and the Razorpay
+  webhook URL that /admin/payments shows, `/api/razorpay/webhook`, carry no slash anyway.)
+- How files are served does not change: no `trailingSlash` or `cleanUrls` flag is set, so
+  `/<route>` is answered by the prerendered `dist/<route>/index.html` exactly as in
+  production today; only `/<route>/` now redirects to it, so a page has one address.
+- The scraper rewrites (`/site/`, `/pitch/`, the bare slug) see the slashless path.
+- On the old alias a slash form takes two hops (to the slashless path, then to www). The
+  alias rules come first but cannot match a path that ends in `/`: a `/:path*` segment is
+  never empty.
+
+Check after a deploy: `curl -sI https://www.ideovent.in/websites/` is a 308 to `/websites`,
+and `curl -s -o /dev/null -w '%{http_code}' https://www.ideovent.in/api/razorpay/webhook/`
+prints `405` (the function's own answer to a GET), not `308`. To undo, delete the rule.
+
+**The catch-all leaves file names alone.** Its source is now
+
+    /((?!assets/)(?!.*\.(?:png|jpe?g|gif|webp|avif|svg|ico|txt|xml|json|webmanifest|js|mjs|css|map|woff2?|ttf|otf|pdf|mp4|webm|html?)$).*)
+
+A path that ends in one of those file types is not rewritten, so a missing
+`/og/x.png` or `/blog-covers/x.jpg` gets Vercel's own 404 instead of 200 with the shell,
+and a broken image path shows up in a status check. Every real file is served before any
+rewrite, so nothing in `public/` changes. A list of file types, not "any dot": a demo's
+course slug or a post's slug is typed in /admin and may carry one (`b.tech`), and those
+stay on the SPA. No `public/404.html`: Vercel's NOT_FOUND page already answers 404. The
+new lookahead sits inside the group beside `(?!assets/)`, the form the live catch-all
+already uses, and routing-utils compiles it unchanged.

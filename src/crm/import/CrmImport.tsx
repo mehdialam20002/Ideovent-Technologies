@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { MapPin, Megaphone } from "lucide-react";
 import { ImportTab } from "@/admin/outreach/ImportTab";
 import { CRM, useOpenLead } from "../nav";
 import { crm, PageHeader } from "../ui";
@@ -23,12 +23,22 @@ export default function CrmImport() {
         <PageHeader title="Import" subtitle="A CSV from a sheet: every row is saved, or none." />
         <ImportTab onOpen={openLead} afterImport={(r) => <ImportAssignStep added={r.added} />} />
       </div>
-      <aside className="lg:pt-14">
+      <aside className="space-y-3 lg:pt-14">
         <div className={cn(crm.panel, crm.panelPad, "space-y-2 text-[13px]")}>
           <p className={crm.label}>No list yet?</p>
           <p className="text-muted-foreground">Find schools, coaching institutes and dental clinics on the map, then add them as leads in one click.</p>
           <Link to={CRM.finder} className={cn(crm.btn, "mt-1")}>
             <MapPin className="h-4 w-4" aria-hidden="true" /> Open Lead finder
+          </Link>
+        </div>
+        {/* Meta Lead Ads (meta-leads-spec 7.6): Meta's downloads import as they are. */}
+        <div data-testid="import-from-meta" className={cn(crm.panel, crm.panelPad, "space-y-2 text-[13px]")}>
+          <p className={crm.label}>From Meta?</p>
+          <p className="text-muted-foreground">
+            Download the leads as CSV in Ads Manager or Business Suite and choose the file here. Leads that already came in by themselves are recognised and skipped.
+          </p>
+          <Link to={CRM.metaLeads} className={cn(crm.btn, "mt-1")}>
+            <Megaphone className="h-4 w-4" aria-hidden="true" /> Meta Lead Ads
           </Link>
         </div>
       </aside>

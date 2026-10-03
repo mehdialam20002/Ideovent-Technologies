@@ -135,14 +135,53 @@ const ROUTES = [
   // the horizontal-scroll and overflow checks apply. Its card grid is the
   // thing most likely to push a phone sideways.
   '/admin/templates',
+  // THE CRM's team screens (crm-team-spec 13.4) and Meta Lead Ads
+  // (meta-leads-spec M3), local mode, behind the same session flag. No
+  // .container-page either: the scroll and overflow checks apply. Team is
+  // Mehdi's; My day is a member's own first screen, so that route carries
+  // ?gutters-as=member and the init script below acts as a fictional member.
+  '/crm/team',
+  '/crm/settings/meta',
+  '/crm?gutters-as=member',
 ]
 
 /** Routes behind the admin login. Mirrors src/admin/auth.tsx, local mode. */
 const SESSION_KEY = 'ideovent_admin_session'
-const needsLogin = (route) => route.startsWith('/admin')
-/** What a template preview renders once its lazy chunk has arrived. */
+const needsLogin = (route) => route.startsWith('/admin') || route.startsWith('/crm')
+/** What a route renders once its lazy chunk has arrived (null: measure once the DOM is there). */
 const readySelector = (route) =>
-  route.startsWith('/admin/preview/template/') ? '.demo-school, .demo-coaching, .ds-site' : null
+  route.startsWith('/admin/preview/template/') ? '.demo-school, .demo-coaching, .ds-site'
+    : route === '/crm/team' ? '[data-testid="crm-team"]'
+    : route === '/crm/settings/meta' ? '[data-testid="meta-leads-page"]'
+    : route.startsWith('/crm?gutters-as=member') ? '[data-testid="my-day"]'
+    : null
+
+/**
+ * The CRM in local mode reads its team from localStorage. A fictional team
+ * (Mehdi and one member with two leads) is written once per fresh profile, and
+ * "Act as" is set only on the route that asks for the member, so every other
+ * CRM route is Mehdi's.
+ */
+const CRM_SEED = (() => {
+  const at = '2026-10-01T05:00:00.000Z'
+  const person = (id, displayName, role) => ({
+    id, userId: `local:${id}`, email: `${id.slice(2)}@gutters.example`, displayName, role, viewAll: role !== 'member',
+    canAddLeads: role !== 'member', waDailyLimit: role === 'member' ? 25 : null, newLeadCap: role === 'member' ? 10 : 1000,
+    mayColdCall: role !== 'member', targets: {}, senderName: displayName, active: true, mustChangePassword: false, createdAt: at,
+  })
+  const lead = (id, instituteName, status) => ({
+    id, instituteName, kind: 'school', city: 'Patna', phone: `+91981000${id.slice(-4)}`, source: 'CSV import', status,
+    createdAt: at, updatedAt: at, createdById: 'm_owner', assigneeId: 'm_gutter', assignedAt: at, assignedById: 'm_owner',
+  })
+  return {
+    leads: [lead('ol_gut_0001', 'Example Gutter Public School', 'new'), lead('ol_gut_0002', 'Example Gutter Classes With A Long Name', 'contacted')],
+    events: [], settings: null,
+    team: {
+      members: [person('m_owner', 'Mehdi Alam', 'owner'), person('m_gutter', 'Gutter Example', 'member')],
+      notifications: [], requests: [], audit: [], bookings: [], rules: [], reviews: [], usage: {}, seq: 10,
+    },
+  }
+})()
 
 const MIN_GUTTER = 16
 
@@ -249,6 +288,16 @@ if (ROUTES.some(needsLogin)) {
   await context.addInitScript((key) => {
     try { sessionStorage.setItem(key, '1') } catch {}
   }, SESSION_KEY)
+}
+if (ROUTES.some((r) => r.startsWith('/crm'))) {
+  await context.addInitScript(([seed]) => {
+    try {
+      if (!location.pathname.startsWith('/crm')) return
+      if (!localStorage.getItem('ideovent_outreach_v1')) localStorage.setItem('ideovent_outreach_v1', JSON.stringify(seed))
+      if (new URLSearchParams(location.search).get('gutters-as') === 'member') localStorage.setItem('ideovent_crm_local_actor', 'm_gutter')
+      else localStorage.removeItem('ideovent_crm_local_actor')
+    } catch {}
+  }, [CRM_SEED])
 }
 let page = await context.newPage()
 const freshPage = async () => {

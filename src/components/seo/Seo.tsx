@@ -25,6 +25,13 @@ interface SeoProps {
   description?: string;
   /** Site-relative ("/og/x.png") or absolute. Made absolute before it is emitted. */
   image?: string;
+  /**
+   * The real size of `image` in pixels, when it is known and is not a card under
+   * /og/ (those are always 1200x630): a project's shareImage (3 Oct 2026). Sent as
+   * og:image:width and og:image:height; left out, nothing is claimed.
+   */
+  imageWidth?: number;
+  imageHeight?: number;
   path?: string;
   type?: "website" | "article";
   noindex?: boolean;
@@ -57,6 +64,8 @@ export function Seo({
   fullTitle: titleIsComplete,
   description,
   image,
+  imageWidth,
+  imageHeight,
   path,
   type = "website",
   noindex,
@@ -97,6 +106,9 @@ export function Seo({
      og: image: width is worse than no og: image: width at all. */
   const img = absolute(host, image || d.ogImage);
   const isGeneratedCard = !image || /(^|\/)og\/[^/]+$/.test(image);
+  const size = isGeneratedCard
+    ? { w: 1200, h: 630 }
+    : imageWidth && imageHeight ? { w: imageWidth, h: imageHeight } : null;
   const url = `${host}${path || "/"}`;
 
   const graph: Json[] = [
@@ -143,8 +155,8 @@ export function Seo({
       <meta property="og:type" content={type} />
       {(!noindex || path) && <meta property="og:url" content={url} />}
       <meta property="og:image" content={img} />
-      {isGeneratedCard && <meta property="og:image:width" content="1200" />}
-      {isGeneratedCard && <meta property="og:image:height" content="630" />}
+      {size && <meta property="og:image:width" content={String(size.w)} />}
+      {size && <meta property="og:image:height" content={String(size.h)} />}
       <meta
         property="og:image:alt"
         content={

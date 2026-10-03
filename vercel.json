@@ -9,8 +9,20 @@
     },
     "api/leads-search.js": {
       "maxDuration": 30
+    },
+    "api/meta/webhook.js": {
+      "maxDuration": 30
+    },
+    "api/meta/catchup.js": {
+      "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/meta/catchup",
+      "schedule": "45 3 * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/:path*",
@@ -21,6 +33,22 @@
         }
       ],
       "destination": "https://www.ideovent.in/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "ideovent.vercel.app"
+        }
+      ],
+      "destination": "https://www.ideovent.in/",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!api/).+)/",
+      "destination": "/:path",
       "permanent": true
     },
     {
@@ -172,6 +200,14 @@
   ],
   "rewrites": [
     {
+      "source": "/api/meta/connect",
+      "destination": "/api/meta/webhook?route=connect"
+    },
+    {
+      "source": "/api/meta/relay",
+      "destination": "/api/meta/webhook?route=relay"
+    },
+    {
       "source": "/site/:slug",
       "has": [
         {
@@ -216,7 +252,11 @@
       "destination": "/api/share?kind=pitch&slug=:slug"
     },
     {
-      "source": "/((?!assets/).*)",
+      "source": "/(blog|work|services)/([a-z0-9]+(?:-[a-z0-9]+)*)",
+      "destination": "/spa-shell-cms.html"
+    },
+    {
+      "source": "/((?!assets/)(?!.*\\.(?:png|jpe?g|gif|webp|avif|svg|ico|txt|xml|json|webmanifest|js|mjs|css|map|woff2?|ttf|otf|pdf|mp4|webm|html?)$).*)",
       "destination": "/spa-shell.html"
     }
   ],

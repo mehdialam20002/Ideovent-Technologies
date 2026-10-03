@@ -54,9 +54,10 @@ const SEO: ContentKey[] = ["settings", "contact", "socials"];
 const CHROME: ContentKey[] = [...SEO, "navigation", "services", "projects"];
 
 /**
- * Every key a visitor's page may read whole. Not the slug-addressed collections and
- * not the private ones (submissions, applications, grades, notes, slots, opens),
- * which `anon` cannot read anyway (supabase/migrations/0005).
+ * Every key a visitor's page may read whole. Not the private collections
+ * (submissions, applications, grades, notes, slots, opens), which `anon` cannot
+ * read (supabase/migrations/0005), and not the slug-addressed ones (ROW_COLLECTIONS):
+ * since 0013 `anon` cannot list those either, and reads one row by its link.
  */
 export const PUBLIC_KEYS: readonly ContentKey[] = [
   "settings", "contact", "navigation", "home", "internship", "eduflow", "legal",

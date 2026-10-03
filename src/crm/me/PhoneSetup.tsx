@@ -27,7 +27,7 @@ const STEPS = [
 /**
  * SET UP THIS PHONE (spec 5.2 step 4, 10.5; the intern guide, section 1).
  *
- * The CRM only opens wa.me and mailto: links, so the phone decides which
+ * The CRM only opens wa.me, mailto: and Zoho Mail's compose page, so the phone decides which
  * account sends. These steps make it the company's WhatsApp Business and
  * the @ideovent.in mailbox. Then "Send a test to Mehdi" opens WhatsApp to his
  * number (crm_me's hostWhatsapp) with the test typed; when it arrives from the

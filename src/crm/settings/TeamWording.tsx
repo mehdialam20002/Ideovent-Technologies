@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MEMBER_WORDING_KEYS, type MemberWordingKey } from "@/lib/outreach/team";
 import { crmErrorText } from "@/lib/outreach/access";
+import { MEMBER_WORDING_GROUPS } from "@/admin/outreach/memberWording";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useCrmData } from "../useCrmData";
@@ -16,66 +17,13 @@ import { crm } from "../ui";
  * script lines a group covers are hidden for members. Mehdi's own messages
  * never change.
  *
- * The sentences below are the proposals of spec 10.7, shown so Mehdi can read
- * both before he approves. (Part 2 of the team build renders them in the
- * templates themselves.)
+ * The sentences below come from the templates and the call script themselves
+ * (src/admin/outreach/memberWording.ts), so what Mehdi approves here is
+ * exactly what a member sends.
  */
-const WORDING: Record<MemberWordingKey, { title: string; where: string; approved: string[]; member: string[]; note?: string }> = {
-  we_pitch_note: {
-    title: "The short note in the first message",
-    where: "First messages that point at what to fix (the pitch)",
-    approved: [
-      "Isi par maine aapke liye ek chhota note likha hai, ...",
-      "I have written a short note for you on what to fix and what each fix would take.",
-      "I have written a short note for you on this, with what each fix would take.",
-    ],
-    member: [
-      "Isi par humne aapke liye ek chhota note likha hai, ...",
-      "We have written a short note for you on what to fix and what each fix would take.",
-      "We have written a short note for you on this, with what each fix would take.",
-    ],
-  },
-  we_sample_made: {
-    title: "The sample, in the first e-mail follow-up",
-    where: "E-mail follow-up 1, English",
-    approved: ["{addressAs}, a quick note on the sample I made for {instituteName}. Shall I send the link?"],
-    member: ["{addressAs}, a quick note on the sample we made for {instituteName}. Shall I send the link?"],
-  },
-  we_leave_it_here: {
-    title: "Leaving it there",
-    where: "WhatsApp follow-up and closing e-mail, Hinglish",
-    approved: ['Main yahin chhod raha hoon, kabhi dekhna ho to bas "haan" likh dijiye.'],
-    member: ['Hum ise yahin chhod rahe hain, kabhi dekhna ho to bas "haan" likh dijiye.'],
-    note: 'The same for the "sample page chahiye" version.',
-  },
-  we_call_lines: {
-    title: "The call script's opening and fix",
-    where: "Call script",
-    approved: [
-      "I made a sample website for your {place}.",
-      "I would like to make a short sample page for your {place}, ...",
-      "main ... sample page banana chahta hoon",
-      "Sample mein sirf wahi hissa dikhata hoon.",
-      "I can make a sample that fixes just that, and show it to you.",
-      "Main ek sample bana sakta hoon ... aur aapko dikha dunga.",
-    ],
-    member: [
-      "We made a sample website for your {place}.",
-      "We would like to make a short sample page for your {place}, ...",
-      "hum ... sample page banana chahte hain",
-      "Sample mein sirf wahi hissa dekhte hain.",
-      "We can make a sample that fixes just that, and show it to you.",
-      "Hum ek sample bana sakte hain ... aur aapko dikha denge.",
-    ],
-  },
-  member_after_yes: {
-    title: "After they say yes, without call times",
-    where: "After-yes WhatsApp and e-mail",
-    approved: ["... 10 minute ki call ke liye {callSlots}?", "what I saw"],
-    member: ["Dekh kar bata dijiye kya badalna hai.", "Have a look and tell me what you would change.", "what we saw"],
-    note: "Then members send the sample themselves; a call is still a hand-over to you.",
-  },
-};
+const WORDING: Record<MemberWordingKey, { title: string; where: string; approved: string[]; member: string[]; note?: string }> = Object.fromEntries(
+  MEMBER_WORDING_GROUPS.map((g) => [g.key, { title: g.title, where: g.where, approved: g.pairs.map((x) => x.owner), member: g.pairs.map((x) => x.member), note: g.note }]),
+) as Record<MemberWordingKey, { title: string; where: string; approved: string[]; member: string[]; note?: string }>;
 
 export function TeamWording() {
   const { settings, saveSettings, me } = useCrmData();

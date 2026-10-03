@@ -5,6 +5,7 @@ import {
   DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KIND_LABEL } from "@/admin/outreach/ui";
+import { campaignOf, isMetaLead } from "@/lib/meta/fields";
 import { cn } from "@/lib/utils";
 import { useOptionalCrmMe } from "../useCrmMe";
 import { crm, StatusDot } from "../ui";
@@ -46,8 +47,10 @@ function AssignedPick({ value, onChange, people, oldLabels }: {
   );
 }
 
-function Pick({ label, value, onChange, options }: {
+function Pick({ label, value, onChange, options, noneLabel }: {
   label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[];
+  /** The words for "not set" (default "<label>: not set"). */
+  noneLabel?: string;
 }) {
   return (
     <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className={cn(selectCls, value && "border-primary/60 text-foreground")}>
@@ -55,7 +58,7 @@ function Pick({ label, value, onChange, options }: {
       {options.map((o) => (
         <option key={o.value} value={o.value}>{o.label}</option>
       ))}
-      <option value={NONE}>{label}: not set</option>
+      <option value={NONE}>{noneLabel || `${label}: not set`}</option>
     </select>
   );
 }
@@ -92,6 +95,9 @@ export function FilterBar({ leads, filters, setFilters, showStatus = true }: {
   const [open, setOpen] = useState(false);
   const cities = useMemo(() => distinct(leads, (l) => l.city).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
   const sources = useMemo(() => distinct(leads, (l) => l.source).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
+  /* Meta Lead Ads (meta-leads-spec 6.2): a Campaign filter, only once a lead came from Meta. */
+  const metaLeads = useMemo(() => leads.filter(isMetaLead), [leads]);
+  const campaigns = useMemo(() => distinct(metaLeads, campaignOf).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [metaLeads]);
   /* Before the team: the free-text labels, exactly as before. */
   const labels = useMemo(() => distinct(leads, (l) => l.assignedTo).map((c) => ({ value: c.value, label: c.value })), [leads]);
   const crmMe = useOptionalCrmMe();
@@ -155,6 +161,10 @@ export function FilterBar({ leads, filters, setFilters, showStatus = true }: {
         <Pick label="Kind" value={filters.kind} onChange={(kind) => setFilters({ kind })} options={kinds} />
         <Pick label="City" value={filters.city} onChange={(city) => setFilters({ city })} options={cities} />
         <Pick label="Source" value={filters.source} onChange={(source) => setFilters({ source })} options={sources} />
+        {metaLeads.length > 0 && (
+          <Pick label="Campaign" value={filters.campaign} onChange={(campaign) => setFilters({ campaign })} options={campaigns}
+            noneLabel="No campaign (organic or test)" />
+        )}
         {showAssigned && !teamOn && <Pick label="Assigned" value={filters.assignee} onChange={(assignee) => setFilters({ assignee })} options={labels} />}
         {showAssigned && teamOn && (
           <AssignedPick value={filters.assignee} onChange={(assignee) => setFilters({ assignee })} people={people} oldLabels={labels} />

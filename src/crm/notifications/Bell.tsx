@@ -148,6 +148,9 @@ const KIND_WORD: Record<NotificationKind, string> = {
   info: "Ask Mehdi",
   demo_ready: "Demo ready",
   resolved: "Done",
+  /* Meta Lead Ads (0012): a new lead from a form, and the intake needing Mehdi (token, limit, Page). */
+  lead_in: "New lead",
+  intake: "Lead Ads",
 };
 
 /**

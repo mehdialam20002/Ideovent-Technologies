@@ -10,7 +10,14 @@
  *   - PARTIAL: a visitor's page in Supabase mode. Whole keys and single rows read by
  *     ./publicRead.ts, merged over the seed by the same mergeWithSeed rule: a key
  *     with stored rows replaces (or for certificates merges into) the seed, a key
- *     without rows shows the seed.
+ *     without rows shows the seed. A demo or a pitch page is only ever a single row,
+ *     asked for by its slug (public_row_by_slug, supabase/migrations/0013); whether
+ *     any exists at all is public_has_rows. Neither collection is read whole.
+ *
+ *   The FULL read runs only on /admin, /crm and the CRM host (./scope.ts). Signed
+ *   out, those show the sign-in form, which shows no demo and no pitch page; since
+ *   0013 such a read gets none (a visitor cannot list them), and the shells read
+ *   everything again with the session once someone signs in (refresh below).
  *
  * CACHING. A key or a row is read once per page load and kept for every later route
  * (moving from / to /about reads only what /about adds). Two components asking for

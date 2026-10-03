@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Eye, Mail, MessageCircle, NotebookPen, PhoneCall, Reply, Shuffle } from "lucide-react";
+import { ArrowRightLeft, Eye, Mail, MessageCircle, NotebookPen, PhoneCall, Reply, Shuffle, UserCheck } from "lucide-react";
 import type { OutreachEvent, OutreachLead } from "@/lib/outreach/types";
 import { fmtDateTime } from "@/admin/outreach/ui";
 import { useCrmData } from "../useCrmData";
@@ -11,6 +11,8 @@ interface Item {
   kind: "open" | OutreachEvent["type"];
   channel?: OutreachEvent["channel"];
   text: string;
+  /** Who wrote the line (stamped by the server); none for a demo open. */
+  actorId?: string;
 }
 
 function icon(i: Item) {
@@ -19,6 +21,8 @@ function icon(i: Item) {
   if (i.kind === "replied") return Reply;
   if (i.kind === "call") return PhoneCall;
   if (i.kind === "status") return Shuffle;
+  if (i.kind === "assign") return UserCheck;
+  if (i.kind === "handoff") return ArrowRightLeft;
   return NotebookPen;
 }
 
@@ -26,14 +30,15 @@ function icon(i: Item) {
  * Everything that happened with this lead, newest first, in one list: the
  * history lines and the demo's opens (which live in the CMS, not in the
  * outreach history). The full, editable history stays in the lead page's
- * History fold; this is the glanceable version.
+ * History fold; this is the glanceable version. Each line names who wrote it
+ * ("Asha · 2 Oct, 10:42"), as the database stamped it (spec 10.7).
  */
 export function LeadActivity({ lead }: { lead: OutreachLead }) {
-  const { eventsFor, opens, demoForLead } = useCrmData();
+  const { eventsFor, opens, demoForLead, nameOf } = useCrmData();
   const demo = demoForLead(lead);
   const [all, setAll] = useState(false);
   const items = useMemo(() => {
-    const list: Item[] = eventsFor(lead.id).map((e) => ({ at: e.at, kind: e.type, channel: e.channel, text: e.detail || e.type }));
+    const list: Item[] = eventsFor(lead.id).map((e) => ({ at: e.at, kind: e.type, channel: e.channel, text: e.detail || e.type, actorId: e.actorId }));
     if (demo) for (const o of opens) if (o.demoId === demo.id) list.push({ at: o.at, kind: "open", text: `Demo opened` });
     return list.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
   }, [eventsFor, lead.id, opens, demo]);
@@ -58,7 +63,7 @@ export function LeadActivity({ lead }: { lead: OutreachLead }) {
                 </span>
                 <span className="min-w-0">
                   <span className="block break-words">{i.text}</span>
-                  <span className="block text-[11px] text-muted-foreground">{fmtDateTime(i.at)}</span>
+                  <span className="block text-[11px] text-muted-foreground">{i.actorId ? `${nameOf(i.actorId)} · ` : ""}{fmtDateTime(i.at)}</span>
                 </span>
               </li>
             );

@@ -105,16 +105,19 @@ export async function addDemoToCrm(
     const kind = leadKindForDemo(demo.kind);
     const takeKind = (!match.lead.kind || match.lead.kind === "other") && kind !== "other";
     const alreadyLinked = match.by === "demo" && match.lead.demoId === demo.id;
+    /* Only the demo keys (and the kind) travel, merged on the server: the database then tells whoever
+       works the lead "Demo ready" (spec 9.3). */
     const lead =
       alreadyLinked && !takeKind
         ? match.lead
-        : await store.upsertLead({ ...match.lead, demoId: demo.id, demoSlug: demo.slug, ...(takeKind ? { kind } : {}) });
+        : await store.patchLead(match.lead.id, { demoId: demo.id, demoSlug: demo.slug, ...(takeKind ? { kind } : {}) });
     const kindNote = takeKind ? `, kind set to ${kind}` : "";
     await store.addEvent({ leadId: lead.id, type: "note", detail: `Demo made from ${how} and linked: /site/${demo.slug}${was}${kindNote}` });
     result = { lead, created: false };
   } else {
     const c = demoContact(demo);
-    const lead = await store.upsertLead({
+    // A new lead: an INSERT, never an upsert over a lead with the same id (spec 9.3).
+    const lead = await store.createLead({
       instituteName: demo.instituteName || demo.slug,
       kind: leadKindForDemo(demo.kind),
       city: demo.city,
