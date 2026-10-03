@@ -1861,7 +1861,9 @@ end $$;
 -- Turns on the public link of the demo linked to the caller's lead (a demo's
 -- link works only once it is "sent", and members cannot write the CMS). Same
 -- effect as markDemoSent in src/admin/outreach/demoActions.ts. A demo the
--- owner closed stays closed.
+-- owner closed stays closed, and a Free slot, an empty page, is never turned
+-- on (3 Oct 2026: no send publishes one either; the CRM's step 1 also sends
+-- the demos only Mehdi can mend to him first, linkChoice.ts teamDemoFix).
 create or replace function public.crm_publish_lead_demo(p_lead_id text, p_sent_to text default null)
 returns text language plpgsql security definer set search_path = '' as $$
 declare
@@ -1896,6 +1898,9 @@ begin
   v_status := coalesce(d.data ->> 'status', 'draft');
   if v_status = 'closed' then
     raise exception 'crm: Mehdi closed this demo. Ask him before sending it.' using errcode = '42501';
+  end if;
+  if v_status = 'free' then
+    raise exception 'crm: this demo is a Free slot, an empty page. Ask Mehdi to build it first.' using errcode = '42501';
   end if;
   if v_status <> 'sent' then
     v_to := left(coalesce(nullif(btrim(p_sent_to), ''), l.data ->> 'contactName', l.data ->> 'instituteName'), 200);

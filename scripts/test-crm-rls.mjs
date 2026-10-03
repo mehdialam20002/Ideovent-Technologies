@@ -783,6 +783,13 @@ check(!ok(r), "...but not the demo of bilal's lead", r);
 await db.exec(`update public.outreach_leads set data = data || '{"demoId":"d9"}' where id = 'L9'`);
 r = await as("asha", `select public.crm_publish_lead_demo('L9') as slug`);
 check(!ok(r) && /closed/.test(r.error), "a demo Mehdi closed stays closed", r);
+/* 3 Oct 2026 (with the link in the first message): a Free slot is an empty page, and no send publishes one; nor does this. */
+await db.exec(`insert into public.content (collection, doc_id, data) values ('demoSites', 'd8', '{"id":"d8","slug":"free-one","status":"free","instituteName":"Free"}');
+               update public.outreach_leads set data = data || '{"demoId":"d8"}' where id = 'L9'`);
+r = await as("asha", `select public.crm_publish_lead_demo('L9') as slug`, [], { commit: true });
+const d8 = (await pg(`select data->>'status' as s from public.content where collection = 'demoSites' and doc_id = 'd8'`))[0];
+check(!ok(r) && /Free slot/.test(r.error) && d8?.s === "free", "a Free slot (an empty page) is never turned on: it stays free", [r, d8]);
+await db.exec(`update public.outreach_leads set data = data || '{"demoId":"d9"}' where id = 'L9'`);
 r = await as("asha", `update public.content set data = '{}' where collection = 'demoSites' returning id`);
 check(ok(r) && r.n === 0, "asha still cannot write the CMS directly", r);
 

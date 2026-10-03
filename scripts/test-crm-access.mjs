@@ -584,6 +584,18 @@ if (HAS_CADENCE) {
   const replied = L("R", { status: "contacted", lastContactedAt: iso(NOW - 30 * DAY) });
   check(!M.cadenceDone(replied, [{ id: "r", leadId: "R", type: "replied", at: iso(NOW - 25 * DAY) }], NOW), "cadenceDone: a lead that replied is not closed off");
   check(!M.cadenceDone(L("W", { status: "won" }), [], NOW), "cadenceDone: a closed lead is never in Close these");
+  /* An open after a cold link is not "came back" (3 Oct 2026: send-links D9 and its known gap 10.9, the rule isEngaged
+     follows): a WhatsApp-only lead whose two messages went, the first with their sample's link, is offered for closing
+     although that link was opened; after a first message without the link an open still keeps it out, as before. */
+  const waOnly = L("C", { status: "contacted", phone: "+919810000009", lastContactedAt: iso(NOW - 16 * DAY) });
+  const sentC = (id, days, templateId, stage) => ({ id, leadId: "C", type: "sent", channel: "whatsapp", templateId, stage, at: iso(NOW - days * DAY) });
+  const openC = { id: "c_open", leadId: "C", type: "demo_opened", at: iso(NOW - 19 * DAY) };
+  const coldTrail = [sentC("c1", 20, "wa_first_new_school_en_link", "first"), openC, sentC("c3", 16, "wa_fu1_en_after_link", "follow_up_1")];
+  const plainTrail = [sentC("p1", 20, "wa_first_new_school_en", "first"), openC, sentC("p3", 16, "wa_fu1_en", "follow_up_1")];
+  check(M.cadenceDone(waOnly, coldTrail, NOW), "cadenceDone: an open after a cold link is not 'came back': the finished lead is offered for closing");
+  check(!M.cadenceDone(waOnly, plainTrail, NOW), "cadenceDone: an open after a first message without the link still counts");
+  check(M.cadenceDone(waOnly, plainTrail.filter((e) => e !== openC), NOW), "cadenceDone: the same two messages and no open: done");
+  check(!M.cadenceDone(waOnly, [...coldTrail, { id: "c_rep", leadId: "C", type: "replied", at: iso(NOW - 15 * DAY) }], NOW), "cadenceDone: after a cold link a reply still keeps it out");
 } else {
   console.log("note  derive.ts has no cadenceDone yet (work package D): its checks run once it does");
 }
@@ -903,6 +915,7 @@ mem.setItem("ideovent_cms_v1", JSON.stringify({
     { id: "d1", slug: "asha-one", status: "draft", instituteName: "Asha School One" },
     { id: "d2", slug: "bilal-two", status: "sent", instituteName: "Bilal Classes Two" },
     { id: "d9", slug: "closed-one", status: "closed", instituteName: "Closed" },
+    { id: "d8", slug: "free-one", status: "free", instituteName: "Free" },
   ],
   demoSiteSlots: [],
   demoSiteOpens: [{ id: "o1", demoId: "d1", at: iso(Date.now() - DAY) }, { id: "o2", demoId: "d2", at: iso(Date.now() - DAY) }],
@@ -924,6 +937,16 @@ as("asha");
 e = await error(() => store.publishLeadDemo("L9"));
 check(e?.code === "42501" && /closed this demo/.test(e.message), "a demo Mehdi closed stays closed");
 check((await store.notifications()).some((n) => n.kind === "demo_ready" && n.leadId === "L9"), "...linking it told her 'Demo ready'");
+/* 3 Oct 2026: a Free slot is an empty page; no send publishes one, and neither does Turn on the link (the SQL's own refusal). */
+as(null);
+await store.patchLead("L9", { demoId: "d8" });
+as("asha");
+e = await error(() => store.publishLeadDemo("L9"));
+check(e?.code === "42501" && /Free slot/.test(e.message) && JSON.parse(mem.getItem("ideovent_cms_v1")).demoSites.find((d) => d.id === "d8")?.status === "free",
+  "a Free slot (an empty page) is never turned on: it stays free", e?.message);
+as(null);
+await store.patchLead("L9", { demoId: "d9" });
+as("asha");
 
 /* 3k. Hand-over, Ask Mehdi, Waiting on you. */
 e = await error(() => store.handoff({ leadId: "L1", slotAt: iso(Date.now() + 3 * DAY), note: "Wants a call" }));

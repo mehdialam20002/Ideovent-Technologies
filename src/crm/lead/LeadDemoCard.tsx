@@ -6,6 +6,7 @@ import { teamPreviewUrl } from "@/lib/demo/opens";
 import { mainSiteUrl } from "@/lib/host";
 import { demoLinkFor } from "@/lib/outreach/engine";
 import { can, crmErrorText } from "@/lib/outreach/access";
+import { teamTurnOnReason } from "@/lib/outreach/linkChoice";
 import { useCms } from "@/lib/cms/context";
 import { markDemoSent } from "@/admin/outreach/demoActions";
 import { fmtDateTime } from "@/admin/outreach/ui";
@@ -23,6 +24,9 @@ const DAY = 86_400_000;
  * Anyone but Mehdi (spec 10.7) turns a draft's link on through the database
  * (crm_publish_lead_demo; they cannot write the CMS), and opens the public page
  * marked as a team visit, so their look never counts as the prospect's open.
+ * A demo only Mehdi can mend first (a Free slot, expired, an example, a
+ * provisional link, the template's toppers, another name: linkChoice.ts
+ * teamDemoFix) gets no Turn on the link, only why.
  */
 export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
   const { demoForLead, opens, slots, addEvent, now, me, publishLeadDemo } = useCrmData();
@@ -63,6 +67,8 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
     );
   }
   const status = demoStatus(demo);
+  // Anyone but Mehdi: a demo that waits for him first is never turned on from here.
+  const mehdisFirst = manages ? "" : teamTurnOnReason(demo, lead, now);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(demoLinkFor(demo.slug));
@@ -111,8 +117,9 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground">Opens per day, last 14 days</p>
+      {mehdisFirst && <p className="text-[12px] text-warning" data-testid="lead-demo-needs-mehdi">{mehdisFirst}</p>}
       <div className="flex flex-wrap gap-1.5">
-        {status !== "sent" && status !== "closed" && (
+        {status !== "sent" && status !== "closed" && !mehdisFirst && (
           <button type="button" className={crm.btnPrimary} onClick={() => void markSent()} data-testid="lead-demo-turn-on">
             <Send className="h-4 w-4" aria-hidden="true" /> {manages ? "Mark sent" : "Turn on the link"}
           </button>

@@ -12,6 +12,7 @@ import { MainSiteLink } from "@/crm/MainSiteLink";
 import { AskOwnerDialog } from "@/crm/lead/AskOwnerDialog";
 import { demoLinkFor, pitchLinkFor } from "@/lib/outreach/engine";
 import { can, crmErrorText } from "@/lib/outreach/access";
+import { teamDemoFix } from "@/lib/outreach/linkChoice";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { demosForPicker, markDemoSent } from "./demoActions";
@@ -311,6 +312,12 @@ function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
  * Ask Mehdi for one; when he links it the lead is due now and they are told.
  * The preview opens the public page marked as a team visit (?team=1), so it
  * never counts as the prospect's open.
+ *
+ * Turning the link on makes the demo public, so it holds the guards Mehdi's
+ * own send has before it publishes a draft (3 Oct 2026, linkChoice.ts
+ * teamDemoFix): a Free slot, an expired demo, an example, a provisional link,
+ * the template's toppers or a demo in another name gets no Turn on the link,
+ * only why and Ask Mehdi.
  */
 function TeamDemoStep({ lead }: { lead: OutreachLead }) {
   const { publishLeadDemo } = useOutreach();
@@ -318,6 +325,7 @@ function TeamDemoStep({ lead }: { lead: OutreachLead }) {
   const demo = leadDemo(lead, sites);
   const state = demo ? demoStatus(demo) : null;
   const slug = demo?.slug || lead.demoSlug;
+  const fix = teamDemoFix(demo, lead);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -341,14 +349,22 @@ function TeamDemoStep({ lead }: { lead: OutreachLead }) {
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <span className="font-medium">{demo?.instituteName || slug}</span>
             {state === "sent" && <span className="text-xs text-success">Live: the link works</span>}
-            {state && state !== "sent" && state !== "closed" && <span className="text-xs text-warning">The link is off until you turn it on</span>}
+            {state && state !== "sent" && state !== "closed" && !fix && <span className="text-xs text-warning">The link is off until you turn it on</span>}
             {state === "closed" && <span className="text-xs text-destructive">Mehdi closed this demo: ask him before you send it</span>}
           </p>
           <p className="mt-0.5 break-all text-xs text-muted-foreground">{demoLinkFor(slug)}</p>
+          {fix && (
+            <p className="mt-1 text-xs text-warning" data-testid="demo-needs-mehdi">The link stays off. {fix.problem} {fix.ask}</p>
+          )}
           <div className="mt-2 flex flex-wrap gap-1">
-            {demo && state !== "sent" && state !== "closed" && (
+            {demo && state !== "sent" && state !== "closed" && !fix && (
               <button type="button" className={btnPrimary} disabled={busy} onClick={() => void turnOn()} data-testid="demo-turn-on">
                 <Send className="h-4 w-4" aria-hidden="true" /> {busy ? "Turning it on..." : "Turn on the link"}
+              </button>
+            )}
+            {fix && (
+              <button type="button" className={btnSecondary} onClick={() => setAsking(true)} data-testid="demo-ask-fix">
+                <HelpCircle className="h-4 w-4" aria-hidden="true" /> Ask Mehdi
               </button>
             )}
             {state === "sent" && (
@@ -372,7 +388,8 @@ function TeamDemoStep({ lead }: { lead: OutreachLead }) {
         </div>
       )}
       {err && <p role="alert" className="mt-2 text-sm text-destructive">{err}</p>}
-      <AskOwnerDialog lead={lead} open={asking} onClose={() => setAsking(false)} topic="demo" text={`A demo for ${lead.instituteName}, please.`} />
+      <AskOwnerDialog lead={lead} open={asking} onClose={() => setAsking(false)} topic="demo"
+        text={fix ? `${fix.problem} Please fix it so I can turn its link on.` : `A demo for ${lead.instituteName}, please.`} />
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { DemoSiteOpen } from "@/lib/cms/types";
 import type { EventInput, OutreachLead } from "@/lib/outreach/types";
-import { can, isEngaged } from "@/lib/outreach/access";
 import { nextStep, repliedChanges, todayQueue } from "@/admin/outreach/compose";
+import { callRefusal } from "@/admin/outreach/teamCompose";
 import { endOfToday, isUntouched } from "@/admin/outreach/derive";
 import { dueLabel } from "@/admin/outreach/ui";
 import { callWindowText, goodTimeToCall } from "./callTime";
@@ -80,25 +80,26 @@ export function useOwnerId(): string | null {
  * (not Mehdi's own: the team update made every lead he had written to his,
  * so for him the word would only be noise). For a member (`callTimes`), "Good
  * time to call" while the lead's kind is in its call window, on a lead they
- * may call: one that replied or opened a demo, or any with May cold-call.
+ * may call (teamCompose.ts callRefusal, the call buttons' own rule): one that
+ * replied or opened a demo, or any with May cold-call, and never a lead from a
+ * Meta form who left its WhatsApp-and-phone box unticked.
  * For Mehdi and admins, the name of whoever else works the lead.
  */
 export function useQueueMarks(callTimes: boolean): (lead: OutreachLead) => Partial<TodayItem> {
   const { me, now, eventsFor, isStaff, nameOf } = useCrmData();
   const ownerId = useOwnerId();
-  const cold = can(me, "call.cold");
   return useCallback(
     (lead: OutreachLead) => {
       const out: Partial<TodayItem> = {};
       const evs = eventsFor(lead.id);
       if (lead.assigneeId && lead.assigneeId !== ownerId && isUntouched(lead, evs, now)) out.untouched = true;
       if (isStaff && lead.assigneeId && lead.assigneeId !== me.memberId) out.owner = nameOf(lead.assigneeId);
-      if (callTimes && (lead.phone || lead.whatsapp) && (cold || isEngaged(lead, evs)) && goodTimeToCall(lead.kind, now)) {
+      if (callTimes && (lead.phone || lead.whatsapp) && !callRefusal(me, lead, evs) && goodTimeToCall(lead.kind, now)) {
         out.callNow = `A good time to call ${CALLEE[lead.kind] || CALLEE.other}: ${callWindowText(lead.kind)}, India time.`;
       }
       return out;
     },
-    [eventsFor, ownerId, now, isStaff, me.memberId, nameOf, callTimes, cold],
+    [eventsFor, ownerId, now, isStaff, me, nameOf, callTimes],
   );
 }
 

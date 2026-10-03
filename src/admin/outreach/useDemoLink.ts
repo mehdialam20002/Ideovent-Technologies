@@ -1,7 +1,7 @@
 import { useCms } from "@/lib/cms/context";
 import { getStore } from "@/lib/cms/store";
 import type { DemoSite, DemoSiteSlot } from "@/lib/cms/types";
-import { coldLinkReason, demoNamedFor, demoReach, type DemoReach } from "@/lib/outreach/linkChoice";
+import { coldLinkReason, demoNamedFor, demoReach, teamReach, type DemoReach } from "@/lib/outreach/linkChoice";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { leadDemo, useLeadDemoSites } from "./DemoPicker";
 import { markDemoSent } from "./demoActions";
@@ -15,6 +15,9 @@ import { useOutreach } from "./useOutreach";
  * sent". Anyone else's send never publishes: a draft blocks it (demoReach canPublish false), and the
  * team turns a link on in step 1 (DemoPicker's TeamDemoStep, "Turn on the link", which runs the
  * database's crm_publish_lead_demo, never this hook). It never sets expiresAt: no existing path does.
+ * Their reasons are in their own words (linkChoice.ts teamReach): ask Mehdi, or Turn on the link when
+ * the demo may go on (a Free slot, an expired demo, an example, a provisional link, the toppers or a
+ * demo in another name waits for him: teamDemoFix, the same guards as his send that would publish it).
  *
  * WHICH RECORDS (3 Oct 2026, with the CRM team and 0013): useLeadDemoSites() (DemoPicker.tsx), the
  * CMS's records plus, for anyone but Mehdi, the demos linked to their own leads (crm_lead_demos,
@@ -41,7 +44,9 @@ export function useDemoLink(lead: OutreachLead): { demo?: DemoSite; reach: DemoR
   const sites = useLeadDemoSites();
   const slots = (data as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || [];
   const demo = leadDemo(lead, sites);
-  const reach = demoReach({ lead, demo, loading: cmsLoading || crmLoading || !me.role, canPublish: owner });
+  const base = demoReach({ lead, demo, loading: cmsLoading || crmLoading || !me.role, canPublish: owner });
+  // Anyone but Mehdi, once `me` has loaded (while it is pending, Mehdi must never read "ask Mehdi").
+  const reach = me.role && !owner ? teamReach(base, { lead, demo }) : base;
   const publish = async () => {
     if (!owner || !demo || !reach.ok || !reach.needsPublish) return;
     // Read it again: the copy on this screen may be older than what Edit demo saved in another tab.

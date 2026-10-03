@@ -792,7 +792,7 @@ export class LocalCrm {
     return this.cms.read().demoSiteOpens.filter((o) => ids.has(o.demoId) && Date.parse(o.updatedAt || o.at) >= since);
   }
 
-  /** crm_publish_lead_demo: turns the linked demo's public link on (draft to sent), as markDemoSent does. */
+  /** crm_publish_lead_demo: turns the linked demo's public link on (draft to sent), as markDemoSent does; never a closed demo or a Free slot. */
   publishLeadDemo(leadId: string, sentTo?: string): string {
     this.needRole();
     const l = this.lead(leadId);
@@ -804,6 +804,7 @@ export class LocalCrm {
     if (!cms || !demo) refuse("P0002", "crm: this lead has no demo yet. Ask Mehdi for one.");
     const status = demo.status || "draft";
     if (status === "closed") refuse("42501", "crm: Mehdi closed this demo. Ask him before sending it.");
+    if (status === "free") refuse("42501", "crm: this demo is a Free slot, an empty page. Ask Mehdi to build it first.");
     if (status !== "sent") {
       const to = ((sentTo || "").trim() || l.contactName || l.instituteName || "").slice(0, 200);
       const sites = cms.demoSites.map((d) => (d.id === demo.id ? { ...d, status: "sent" as const, updatedAt: this.iso } : d));

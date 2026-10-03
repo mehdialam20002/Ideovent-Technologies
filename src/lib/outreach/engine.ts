@@ -1552,7 +1552,8 @@ export function checkSend(
   if (channel === "email") {
     const address = (lead.email ?? "").trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) blockers.push("No valid e-mail address for this lead.");
-    else if (!safeMailAddress(address)) blockers.push("This e-mail address cannot go into a mail link as it is: before the @ only letters, digits and . _ + ' -, after it a plain domain. Fix it under Edit.");
+    // A member cannot change a filled address (access.ts MEMBER_FILL_KEYS): it is Mehdi's to correct ("Wrong? Ask Mehdi").
+    else if (!safeMailAddress(address)) blockers.push(`This e-mail address cannot go into a mail link as it is: before the @ only letters, digits and . _ + ' -, after it a plain domain. ${extra.sender ? "Ask Mehdi to correct it (Wrong? Ask Mehdi, next to the address)." : "Fix it under Edit."}`);
     // A subject is one short line; past this, the mail links (mailLinks.ts drops the body first, never the subject) grow too long.
     const subjectLength = (extra.text?.subject ?? "").length;
     if (subjectLength > MAX_SUBJECT) blockers.push(`The subject is ${subjectLength} characters long. Keep it to one short line, at most ${MAX_SUBJECT} characters.`);

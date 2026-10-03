@@ -57,8 +57,9 @@ export function carriesDemoLink(text: string, lead: Pick<OutreachLead, "demoSlug
 
 /**
  * Every /site/<slug> in the text that is not this lead's own demo (lower-cased, each once). A warning
- * in ComposePanel, never a blocker: in a first message the engine already blocks every link but the
- * allowed one, and after a yes Mehdi may paste one of the site's example demos on purpose.
+ * in ComposePanel on Mehdi's send, never a blocker: in a first message the engine already blocks every
+ * link but the allowed one, and after a yes Mehdi may paste one of the site's example demos on purpose.
+ * From anyone else it blocks unless it is one of the site's example demos (ComposePanel).
  */
 export function foreignDemoSlugs(text: string, lead: Pick<OutreachLead, "demoSlug">): string[] {
   const own = (lead.demoSlug || "").trim().toLowerCase();
@@ -168,8 +169,101 @@ export function coldLinkReason(demo?: Partial<DemoSite> | null): string {
   return sampleToppersReason(demo);
 }
 
-/** One line under the switch. The WhatsApp one says where its starting point comes from, so the memory is never a surprise. */
-export function linkHint(channel: TemplateChannel, hasPicture: boolean): string {
+/* ── Anyone but Mehdi (the CRM team, 3 Oct 2026) ─────────────────────────── */
+
+type TeamFix = { problem: string; ask: string };
+
+/** coldLinkReason's three cases as anyone but Mehdi reads them: what is wrong, and what to ask him (Edit demo is his). */
+function teamColdFix(demo: Partial<DemoSite>): TeamFix | null {
+  if (demo.isExample) return { problem: "This lead's demo is one of the site's example demos, not a sample made in their name.", ask: "Ask Mehdi to make theirs." };
+  if (hasProvisionalTemplateSlug({ slug: demo.slug || "", templateId: demo.templateId })) {
+    return { problem: `This demo is still on its provisional link (/site/${demo.slug}), which WhatsApp's card shows instead of their name.`, ask: "Ask Mehdi to put their name on it." };
+  }
+  if (sampleToppersReason(demo)) {
+    return { problem: "This demo still shows the template's results and toppers, and a real institute's name must never sit next to toppers it did not give us.", ask: "Ask Mehdi to take them off." };
+  }
+  return null;
+}
+
+/** coldLinkReason in the words of anyone but Mehdi ("" when there is none): on a demo he put live himself, a warning. */
+export function teamColdLinkReason(demo?: Partial<DemoSite> | null): string {
+  const fix = demo ? teamColdFix(demo) : null;
+  return fix ? `${fix.problem} ${fix.ask}` : "";
+}
+
+/**
+ * A demo that anyone but Mehdi may not turn on themselves (step 1's and the Demo card's "Turn on the link",
+ * crm_publish_lead_demo): what is wrong with it, and what to ask him. Null when they may, or when there is
+ * nothing to turn on (no demo, live, closed). Turning the link on is what makes the demo public, so it holds the
+ * guards Mehdi's own send has before it publishes a draft (demoReach, coldLinkReason, demoNamedFor): a Free slot
+ * (an empty page), an expired demo, one of the site's example demos, a provisional link, the template's toppers
+ * or a demo in another name waits for Mehdi, who alone makes and edits demos.
+ */
+export function teamDemoFix(
+  demo: Partial<DemoSite> | null | undefined,
+  lead: Pick<OutreachLead, "instituteName">,
+  now: Date = new Date(),
+): TeamFix | null {
+  if (!demo) return null;
+  const status = demoStatus({ status: demo.status });
+  if (status === "sent" || status === "closed") return null;
+  if (status === "free") return { problem: "This lead's demo is a Free slot, an empty page.", ask: "Ask Mehdi to build it before its link goes on." };
+  if (isDemoExpired(demo, now)) {
+    return { problem: `This lead's demo expired on ${String(demo.expiresAt).slice(0, 10)}.`, ask: "Ask Mehdi to change its date before its link goes on." };
+  }
+  const cold = teamColdFix(demo);
+  if (cold) return cold;
+  if (!demoNamedFor({ instituteName: demo.instituteName || "" }, lead)) {
+    return { problem: `This lead's demo is in the name of "${demo.instituteName}", not ${lead.instituteName}.`, ask: "Ask Mehdi to check it is theirs." };
+  }
+  return null;
+}
+
+/** teamDemoFix in one line ("" when they may turn the link on themselves). */
+export function teamTurnOnReason(demo: Partial<DemoSite> | null | undefined, lead: Pick<OutreachLead, "instituteName">, now: Date = new Date()): string {
+  const fix = teamDemoFix(demo, lead, now);
+  return fix ? `${fix.problem} ${fix.ask}` : "";
+}
+
+/**
+ * demoReach's answer in words for anyone but Mehdi (useDemoLink): where his reason names his own step (pick or
+ * create in step 1, Mark sent, Edit demo, Admin > Demo sites), theirs says to ask him; a draft they may turn on
+ * keeps MEMBER_DRAFT_REASON (Turn on the link in step 1), one they may not says why (teamDemoFix). The state,
+ * ok and needsPublish stay as they are.
+ */
+export function teamReach(reach: DemoReach, { lead, demo, now = new Date() }: {
+  lead: Pick<OutreachLead, "demoSlug" | "instituteName">;
+  demo?: Partial<DemoSite> | null;
+  now?: Date;
+}): DemoReach {
+  const slug = (lead.demoSlug || "").trim();
+  const say = (reason: string): DemoReach => ({ ...reach, reason });
+  switch (reach.state) {
+    case "none":
+      return say("No demo yet: ask Mehdi for one in step 1, then the message can carry its link.");
+    case "missing":
+      return say(`No demo on the website has this lead's link (/site/${slug}), so it would open a 404. Ask Mehdi to link its demo (if the demos did not load, reload the page).`);
+    case "mismatch":
+      return say(`This lead's link is /site/${slug}, but its demo is now at /site/${demo?.slug}: ask Mehdi to link the demo again.`);
+    case "closed":
+      return say("Mehdi closed this lead's demo: ask him before you send its link.");
+    case "expired":
+      return say(`This lead's demo expired on ${String(demo?.expiresAt).slice(0, 10)}. Ask Mehdi to change its date before you send its link.`);
+    case "free":
+    case "draft":
+      return reach.ok ? reach : say(teamTurnOnReason(demo, lead, now) || MEMBER_DRAFT_REASON);
+    default:
+      return reach;
+  }
+}
+
+/**
+ * One line under the switch. The WhatsApp one says where its starting point comes from, so the memory is never a surprise.
+ * Anyone but Mehdi (`team`): With link is his alone (TEAM_LINK_REASON, said under it), so their line says only where
+ * their sample's link goes, in their first-message stage hint's words (stages.ts), never how the switch starts.
+ */
+export function linkHint(channel: TemplateChannel, hasPicture: boolean, team = false): string {
+  if (team) return "Their own sample's link goes after a yes.";
   if (channel === "email") return "With link, they can open their sample from this first e-mail. E-mail always starts With link.";
   const risk = "A first WhatsApp with a link, from a number they do not know, gets reported more often. This switch starts on the version you sent last in this browser.";
   return hasPicture ? `With link, their own sample goes in place of the picture. ${risk}` : risk;

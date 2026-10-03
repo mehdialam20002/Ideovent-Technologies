@@ -1,6 +1,7 @@
 import type { DemoSiteOpen } from "@/lib/cms/types";
 import type { OutreachEvent, OutreachLead, LeadStatus } from "@/lib/outreach/types";
 import { leadWhatsappNumber } from "@/lib/outreach/engine";
+import { linkWentCold } from "@/lib/outreach/access";
 import { getTemplate, type TemplateStage } from "@/lib/outreach/templates";
 import { suggestFor } from "./stages";
 
@@ -190,7 +191,10 @@ function lastTouchAt(own: OutreachEvent[]): number {
  * True when the no-reply cadence of this lead is over and it should be
  * closed. All of:
  *   - it is open, at Contacted;
- *   - nothing came back: no reply, no demo open, no connected call;
+ *   - nothing came back: no reply, no demo open, no connected call (an open
+ *     after a cold link is not one: when the last message that carried their
+ *     demo link was a cold first message, access.ts linkWentCold, as for the
+ *     cold-call gate and the Demo opened status, 3 Oct 2026);
  *   - every channel it can be reached on, and any channel it was written on,
  *     has used up its no-reply ladder (stages.ts suggestFor(...).done);
  *   - the last send or call was CLOSE_AFTER_DAYS or more days ago.
@@ -201,8 +205,9 @@ function lastTouchAt(own: OutreachEvent[]): number {
 export function cadenceDone(lead: OutreachLead, events: OutreachEvent[], now = new Date()): boolean {
   if (lead.status !== "contacted") return false;
   const own = events.filter((e) => e.leadId === lead.id);
+  const cold = linkWentCold(lead.id, own);
   const cameBack = own.some(
-    (e) => e.type === "replied" || e.type === "demo_opened" || (e.type === "call" && (e.outcome || "").startsWith("connected")),
+    (e) => e.type === "replied" || (e.type === "demo_opened" && !cold) || (e.type === "call" && (e.outcome || "").startsWith("connected")),
   );
   if (cameBack) return false;
   const last = lastTouchAt(own);

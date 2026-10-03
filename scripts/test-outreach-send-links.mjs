@@ -60,6 +60,13 @@
  *       subject past MAX_SUBJECT blocks the e-mail; a short link typed by hand (bit.ly, wa.me) counts as a
  *       link, and degree names such as B.Ed/M.Ed do not.
  *   33. useDemoLink reads the demo again before it publishes, and writes that record, not this screen's copy.
+ *   Integration with the CRM team (3 Oct 2026)
+ *   34. Anyone but Mehdi: teamDemoFix / teamTurnOnReason (a Free slot, an expired demo, an example, a
+ *       provisional link, the toppers or another name is never turned on by them), teamReach (every state in
+ *       their words, never Mehdi's own steps), the team's line under the switch.
+ *   35. Their screens, read from the source: the checked row shows the version that goes in their words,
+ *       another demo's link stops their send unless it is an example, the offer follow-up after Mehdi's link,
+ *       the mail app first on their phone, TeamDemoStep and the Demo card hold the turn-on guards.
  *
  * NEGATIVE CONTROL
  *
@@ -168,6 +175,9 @@ if (NEGATIVE) {
   // Review, 3 Oct 2026: {offer} reads nothing off the demo but its number, and a dead site counts as no website.
   M.offerFor = (o) => real.offerFor({ ...o, demo: o.demo ? { phone: o.demo.phone, whatsapp: o.demo.whatsapp } : o.demo });
   M.effectivePitch = (l) => l.pitch ?? ((l.website ?? "").trim() ? "fix_website" : "new_website");
+  // Integration, 3 Oct 2026: the team may turn on any demo, and reads Mehdi's own reasons.
+  M.teamTurnOnReason = () => "";
+  M.teamReach = (r) => r;
 }
 
 /* ── Assertion plumbing ──────────────────────────────────────────────────── */
@@ -745,7 +755,7 @@ const ctOf = (z) => (z ? decodeURIComponent(z.href.slice(z.href.indexOf("?ct=") 
   const lines = panel.split("\n");
   check(lines.filter((l) => l === 'import { LANGUAGE_LABELS, carriesPreview, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";').length === 1,
     "ComposePanel's templates import line is as it was (merged with the other branches' import lines)");
-  check(panel.split("  const demo = leadDemo(lead, useLeadDemoSites());").length === 2 && !panel.includes("data.demoSites"),
+  check(panel.split("  const sites = useLeadDemoSites();\n  const demo = leadDemo(lead, sites);").length === 2 && !panel.includes("data.demoSites"),
     "ComposePanel's own demo is read through useLeadDemoSites() (sec-rows, 0013), never the CMS list directly");
   const hook = read("admin/outreach/useDemoLink.ts");
   check(!/publishLeadDemo/.test(hook) && /return \{ demo, reach, owner, publish \};/.test(hook) && /canPublish: owner/.test(hook) && /if \(!owner \|\| !demo \|\| !reach\.ok \|\| !reach\.needsPublish\) return;/.test(hook),
@@ -947,6 +957,97 @@ const ctOf = (z) => (z ? decodeURIComponent(z.href.slice(z.href.indexOf("?ct=") 
   "useDemoLink: the publish reads the demo again, checks it again, and writes that record, never this screen's older copy");
 }
 
+/* ── 34. Anyone but Mehdi: their words, and what they may turn on (integration, 3 Oct 2026) ── */
+
+{
+  const NOW34 = new Date("2026-10-02T10:00:00.000Z");
+  const lead = { demoSlug: "abc", instituteName: "Example Public School" };
+  const site = (o = {}) => ({ id: "d_abc", slug: "abc", status: "draft", kind: "school", templateId: "s1-urban-cbse", instituteName: "Example Public School", ...o });
+  const why = (o) => M.teamTurnOnReason(o === null ? null : site(o), lead, NOW34);
+  check(why({}) === "" && why({ status: "sent" }) === "" && why({ status: "closed" }) === "" && why(null) === "",
+    "teamTurnOnReason: a draft made in their name may be turned on; a live or closed demo, or none, has nothing to turn on");
+  check(why({ status: "free" }) === "This lead's demo is a Free slot, an empty page. Ask Mehdi to build it before its link goes on.", "teamTurnOnReason: a Free slot waits for Mehdi");
+  check(why({ expiresAt: "2026-09-20" }) === "This lead's demo expired on 2026-09-20. Ask Mehdi to change its date before its link goes on.", "teamTurnOnReason: an expired draft waits for Mehdi");
+  check(why({ isExample: true }) === "This lead's demo is one of the site's example demos, not a sample made in their name. Ask Mehdi to make theirs.",
+    "teamTurnOnReason: an example demo waits for Mehdi");
+  check(why({ slug: "draft-s1-urban-cbse" }) === "This demo is still on its provisional link (/site/draft-s1-urban-cbse), which WhatsApp's card shows instead of their name. Ask Mehdi to put their name on it.",
+    "teamTurnOnReason: a provisional link waits for Mehdi");
+  const coach = {
+    id: "ds_example", kind: "coaching", slug: "abc", status: "draft", templateId: "c2-rural-tuition", instituteName: "Example Public School",
+    results: [{ name: "A. Student", exam: "NEET", score: "650" }], stats: [{ label: "Selections", value: "120" }],
+  };
+  coach.sample = { prints: { results: M.samplePrint(coach, "results") } };
+  const TOPPERS34 = "This demo still shows the template's results and toppers, and a real institute's name must never sit next to toppers it did not give us. Ask Mehdi to take them off.";
+  check(M.teamTurnOnReason(coach, lead, NOW34) === TOPPERS34, "teamTurnOnReason: a coaching demo still showing the template's toppers waits for Mehdi");
+  const OTHER = `This lead's demo is in the name of "Sunrise Convent", not Example Public School. Ask Mehdi to check it is theirs.`;
+  check(why({ instituteName: "Sunrise Convent" }) === OTHER, "teamTurnOnReason: a demo in another name waits for Mehdi");
+  check(M.teamColdLinkReason(coach) === TOPPERS34 && M.teamColdLinkReason({ ...coach, status: "sent" }) === TOPPERS34 &&
+    M.teamColdLinkReason(site({ status: "sent", isExample: true })) === "This lead's demo is one of the site's example demos, not a sample made in their name. Ask Mehdi to make theirs." &&
+    M.teamColdLinkReason(site()) === "" && M.teamColdLinkReason(undefined) === "",
+  "teamColdLinkReason: the cold-link reasons in the team's words, on a live demo too (a warning there)");
+  const fix = M.teamDemoFix(site({ status: "free" }), lead, NOW34);
+  check(Boolean(fix) && `${fix.problem} ${fix.ask}` === real.teamTurnOnReason(site({ status: "free" }), lead, NOW34) && !/Ask Mehdi/.test(fix.problem) && /^Ask Mehdi/.test(fix.ask),
+    "teamDemoFix: what is wrong and what to ask Mehdi, apart (Ask Mehdi's message starts from the first)");
+
+  // teamReach: every state in the team's words, never one of Mehdi's own steps; state, ok and needsPublish as they were.
+  const R = (o) => real.demoReach({ now: NOW34, lead, canPublish: false, ...o });
+  const T = (reach, demo) => M.teamReach(reach, { lead, demo, now: NOW34 });
+  const MEHDIS = /Edit demo|Admin > Demo sites|Mark sent|mark it sent|make one in step 1|create one in step 1|Pick its demo|pick the demo again|Build it/;
+  const sent = site({ status: "sent", expiresAt: "2026-09-20" });
+  for (const [name, reach, demo, want] of [
+    ["none", real.demoReach({ now: NOW34, lead: { demoSlug: "" }, canPublish: false }), undefined, "No demo yet: ask Mehdi for one in step 1, then the message can carry its link."],
+    ["missing", R({ demo: undefined }), undefined, "No demo on the website has this lead's link (/site/abc), so it would open a 404. Ask Mehdi to link its demo (if the demos did not load, reload the page)."],
+    ["mismatch", R({ demo: site({ slug: "abc-new" }) }), site({ slug: "abc-new" }), "This lead's link is /site/abc, but its demo is now at /site/abc-new: ask Mehdi to link the demo again."],
+    ["free", R({ demo: site({ status: "free" }) }), site({ status: "free" }), "This lead's demo is a Free slot, an empty page. Ask Mehdi to build it before its link goes on."],
+    ["closed", R({ demo: site({ status: "closed" }) }), site({ status: "closed" }), "Mehdi closed this lead's demo: ask him before you send its link."],
+    ["expired", R({ demo: sent }), sent, "This lead's demo expired on 2026-09-20. Ask Mehdi to change its date before you send its link."],
+    ["a draft they may turn on", R({ demo: site() }), site(), "The demo's link is off, so it shows a 404. Tap Turn on the link in step 1 first."],
+    ["a draft in another name", R({ demo: site({ instituteName: "Sunrise Convent" }) }), site({ instituteName: "Sunrise Convent" }), OTHER],
+    ["a coaching draft with the toppers", R({ demo: coach }), coach, TOPPERS34],
+  ]) {
+    const got = T(reach, demo);
+    check(got.reason === want && got.state === reach.state && got.ok === reach.ok && got.needsPublish === reach.needsPublish && !got.ok && !MEHDIS.test(got.reason),
+      `teamReach ${name}: ${JSON.stringify(want)} (got ${JSON.stringify(got)})`);
+  }
+  const live = R({ demo: site({ status: "sent" }) });
+  const loading = R({ demo: site(), loading: true });
+  check(T(live, site({ status: "sent" })) === live && T(loading, site()) === loading, "teamReach: a live link and a check still loading are left as they are");
+  const ownerDraft = real.demoReach({ now: NOW34, lead, demo: site(), canPublish: true });
+  check(T(ownerDraft, site()) === ownerDraft, "teamReach: a draft Mehdi's own send may publish is left as it is");
+  check(M.linkHint("email", false, true) === "Their own sample's link goes after a yes." && M.linkHint("whatsapp", true, true) === "Their own sample's link goes after a yes.",
+    "linkHint for anyone but Mehdi: their own sample's link goes after a yes, never how the switch starts");
+}
+
+/* ── 35. The CRM team's screens, read from the source (integration, 3 Oct 2026) ── */
+
+{
+  const read = (p) => readFileSync(join(SRC, p), "utf8").replace(/\r\n/g, "\n");
+  const panel = read("admin/outreach/ComposePanel.tsx");
+  check((panel.match(/<TemplateList items=\{(short|ranked)\} selected=\{template\} /g) || []).length === 2 && !/getTemplate\(selected\)/.test(panel) &&
+    panel.includes("const base = selected?.twinOf ?? selected?.id;") && panel.includes("const twin = on && selected?.twinOf ? selected : undefined;"),
+  "TemplateList: the checked row shows the version that goes as it goes (for the team, in their words), never read again by its id");
+  check(panel.includes('linkHint(channel, Boolean(previewFor(template.kind !== "any" ? template.kind : lead.kind)), team)'), "the switch's hint is the team's line for anyone but Mehdi");
+  check(panel.includes("const coldWhy = team ? teamColdLinkReason(demoLink.demo) : coldLinkReason(demoLink.demo);") &&
+    panel.includes("if (carriesLink && coldWhy && !blockers.includes(coldWhy)) (template?.link"),
+  "the cold-link reason is in the team's words for anyone but Mehdi, and said once when their draft's reach already blocks with it");
+  check(/const notExample = team \? foreign\.find\(\(s\) => !sites\.some\(\(d\) => d\.isExample && /.test(panel) && /if \(notExample\) blockers\.push\(/.test(panel) &&
+    /else if \(foreign\.length\) warnings\.push\(/.test(panel),
+  "another demo's link stops a team member's send unless it is one of the site's example demos; Mehdi is warned, as before");
+  check(/if \(template\?\.sample === "offer" && template\.stage !== "first" && linkWentHere\) \{/.test(panel),
+    "a follow-up that offers to make a sample is said where the link went on this channel, from them or from Mehdi");
+  check(panel.includes("const mailAppFirst = team && onPhone();") && panel.includes("{mailAppFirst ? mailAppButton(true) : zohoButton(true)}") &&
+    panel.includes("{mailAppFirst ? zohoButton(false) : mailAppButton(false)}"),
+  "on a phone a team member's e-mail opens in the mail app first (Set up this phone); Mehdi's order is unchanged");
+  check(read("admin/outreach/useDemoLink.ts").includes("const reach = me.role && !owner ? teamReach(base, { lead, demo }) : base;"),
+    "useDemoLink: anyone but Mehdi reads the reasons in their own words (teamReach); Mehdi, and anyone while `me` is pending, his");
+  const picker = read("admin/outreach/DemoPicker.tsx");
+  check(picker.includes("const fix = teamDemoFix(demo, lead);") && /\{demo && state !== "sent" && state !== "closed" && !fix && \(/.test(picker) && picker.includes('data-testid="demo-ask-fix"'),
+    "TeamDemoStep: no Turn on the link for a demo only Mehdi can mend; why, and Ask Mehdi, instead");
+  const card = read("crm/lead/LeadDemoCard.tsx");
+  check(card.includes('const mehdisFirst = manages ? "" : teamTurnOnReason(demo, lead, now);') && /status !== "sent" && status !== "closed" && !mehdisFirst && \(/.test(card),
+    "LeadDemoCard: the same on the lead's Demo card");
+}
+
 /* ── Verdict ─────────────────────────────────────────────────────────────── */
 
 console.log(`test-outreach-send-links: ${passes} passed, ${failures.length} failed${NEGATIVE ? " (NEGATIVE CONTROL: failures expected)" : ""}`);
@@ -962,6 +1063,8 @@ if (NEGATIVE) {
     /c1-jee-neet-urban: a course shows no fee/,
     /d3-smile-studio: its first screen shows the treatments/,
     /effectivePitch: a lead with a website that would not open/,
+    /teamTurnOnReason: a Free slot waits for Mehdi/,
+    /teamReach free/,
   ];
   const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
   if (missed.length) {

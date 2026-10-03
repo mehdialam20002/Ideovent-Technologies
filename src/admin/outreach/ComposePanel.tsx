@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowRight, ArrowRightLeft, Ban, Check, Copy, Mail, MessageCircle, Monitor, MoreHorizontal, PhoneCall, Reply } from "lucide-react";
-import { demoStatus } from "@/lib/demo/record";
 import { LANGUAGE_LABELS, carriesPreview, fieldsUsed, stageLabel, type TemplateChannel } from "@/lib/outreach/templates";
 import { previewFor } from "@/lib/outreach/preview";
 import {
@@ -40,8 +39,8 @@ import { HandoffNow } from "@/crm/lead/HandoffNow";
 import { HandoffDialog } from "@/crm/lead/HandoffDialog";
 import { btnGhost, inputCls, prettyPhone, summaryCls } from "./ui";
 import { cn } from "@/lib/utils";
-import { getTemplate, linkTwinOf } from "@/lib/outreach/templates";
-import { TEAM_LINK_REASON, carriesDemoLink, coldLinkReason, demoNamedFor, foreignDemoSlugs, linkHint, linkWentOn, offersLink, pointBackReason, sendVariant, type LinkChoiceValue } from "@/lib/outreach/linkChoice";
+import { getTemplate, linkTwinOf, type MessageTemplate } from "@/lib/outreach/templates";
+import { TEAM_LINK_REASON, carriesDemoLink, coldLinkReason, demoNamedFor, foreignDemoSlugs, linkHint, linkWentOn, offersLink, pointBackReason, sendVariant, teamColdLinkReason, type LinkChoiceValue } from "@/lib/outreach/linkChoice";
 import { zohoComposeLink } from "@/lib/outreach/mailLinks";
 import { useDemoLink } from "./useDemoLink";
 import { LinkChoice, readWaLinkChoice, writeWaLinkChoice } from "./LinkChoice";
@@ -173,8 +172,15 @@ const ENGAGED = new Set<OutreachLead["status"]>(["replied", "demo_opened", "call
  * the link (it points back to "my message above", which must be in their
  * thread), and passes the same team wording as the list; a draft demo's link
  * blocks their send until they tap Turn on the link in step 1 (their send
- * never publishes); and an open after a cold link is not a reply, so it does
- * not open their calls (access.ts isEngaged).
+ * never publishes), and a demo only Mehdi can mend first (a Free slot, expired,
+ * an example, a provisional link, the toppers, another name) is never turned
+ * on by them: the reasons say to ask him (linkChoice.ts teamReach,
+ * teamDemoFix); and an open after a cold link is not a reply, so it does
+ * not open their calls (access.ts isEngaged). The checked row of the list
+ * shows the version that goes, in their words; another demo's link stops
+ * their send unless it is one of the site's example demos; and on a phone
+ * Open in mail app comes first (Me > Set up this phone makes the Zoho Mail
+ * app the phone's mail app).
  *
  * NO TICK, NO WHATSAPP OR CALL (DPDP; meta-leads-spec 12). A lead from a Meta
  * form who left its box "Ideovent may contact me on WhatsApp and phone"
@@ -184,7 +190,8 @@ const ENGAGED = new Set<OutreachLead["status"]>(["replied", "demo_opened", "call
  */
 export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name: string; open: () => void } }) {
   const { leads, events, settings, patchLead, addEvent, me } = useOutreach();
-  const demo = leadDemo(lead, useLeadDemoSites());
+  const sites = useLeadDemoSites();
+  const demo = leadDemo(lead, sites);
   // The team (spec 10.7): undefined / null / {} for Mehdi, so his screen is as before.
   const team = isTeamSender(me);
   const member = isMemberSender(me);
@@ -251,8 +258,9 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   // The lead's demo for the link (2 Oct 2026): may its link go, and the step that puts a draft on the website.
   const demoLink = useDemoLink(lead);
   // An example demo, a provisional draft-<template> link, or a coaching demo still showing the template's toppers:
-  // it would open, but it must not go to someone who has not replied (linkChoice.ts coldLinkReason).
-  const coldWhy = coldLinkReason(demoLink.demo);
+  // it would open, but it must not go to someone who has not replied (linkChoice.ts coldLinkReason). Anyone but
+  // Mehdi reads it in their words: Edit demo is his (teamColdLinkReason).
+  const coldWhy = team ? teamColdLinkReason(demoLink.demo) : coldLinkReason(demoLink.demo);
   // E-mail starts with their sample's link every time (Mehdi: "mail pe to first msz pe hi link"); WhatsApp on the
   // version last sent in this browser, Without link the very first time. Mehdi's only (demoLink.owner).
   const [emailLinkChoice, setEmailLinkChoice] = useState<LinkChoiceValue>("with");
@@ -384,11 +392,16 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   const needsPublish = carriesLink && demoLink.reach.needsPublish;
   // It would open, but must not go out like this: blocks the twin (the switch is off anyway) and any send that would
   // publish the demo (this send is then what makes it public); a warning on a demo Mehdi already put live himself.
-  if (carriesLink && coldWhy) (template?.link === "demo" || needsPublish ? blockers : warnings).push(coldWhy);
+  // (Said once: for anyone but Mehdi a draft's reach already blocks with these words, teamReach.)
+  if (carriesLink && coldWhy && !blockers.includes(coldWhy)) (template?.link === "demo" || needsPublish ? blockers : warnings).push(coldWhy);
   // Another demo's link: in a first message the engine already blocks it (one allowed link at most); later, Mehdi may
-  // paste one of the site's example demos on purpose, so it is said, not stopped.
+  // paste one of the site's example demos on purpose, so it is said, not stopped. Anyone but Mehdi works their own leads
+  // only, and another of them is never the one to send: from them it stops, unless the records they read say it is one
+  // of the site's example demos.
   const foreign = foreignDemoSlugs(text, lead);
-  if (foreign.length) warnings.push(`This message carries another demo's link (/site/${foreign[0]}). Send it only if you mean to, such as one of the site's example demos: never another lead's.`);
+  const notExample = team ? foreign.find((s) => !sites.some((d) => d.isExample && (d.slug || "").toLowerCase() === s)) : undefined;
+  if (notExample) blockers.push(`This message carries another demo's link (/site/${notExample}). From you only this lead's own demo, or one of the site's example demos, may go: take it out.`);
+  else if (foreign.length) warnings.push(`This message carries another demo's link (/site/${foreign[0]}). Send it only if you mean to, such as one of the site's example demos: never another lead's.`);
   // A message that says the sample is made, for a lead whose demo record cannot be found: true only if the demo exists.
   if (!carriesLink && !template?.afterLink && template?.promises === "demo" && ["missing", "mismatch", "free"].includes(demoLink.reach.state)) warnings.push(`${demoLink.reach.reason} This message says the sample is made.`);
   // A follow-up that points back to the link they got ("Its link is in my first e-mail") must lead somewhere
@@ -413,8 +426,11 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
     // Anyone but Mehdi: the link went on this channel too, from Mehdi's own number or mailbox, so not in their thread.
     warnings.push(`Their sample's link already went ${channel === "email" ? "by e-mail" : "on WhatsApp"} from Mehdi, and this message offers it again.`);
   }
-  if (template?.sample === "offer" && template.stage !== "first" && linkWent) {
-    warnings.push("Your first message here carried their sample's link, and this one offers to make a sample. Pick the follow-up for a sample made.");
+  // A follow-up that offers to make a sample, where the link already went on this channel: theirs, or (anyone but Mehdi) his.
+  if (template?.sample === "offer" && template.stage !== "first" && linkWentHere) {
+    warnings.push(linkWent
+      ? "Your first message here carried their sample's link, and this one offers to make a sample. Pick the follow-up for a sample made."
+      : `Their sample's link already went ${channel === "email" ? "by e-mail" : "on WhatsApp"} from Mehdi, and this one offers to make a sample. Pick the follow-up for a sample made.`);
   }
   const others = otherLeadsNamed(text, lead, leads);
   if (others.length) {
@@ -614,6 +630,15 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
       </a>
     );
   };
+  // The two e-mail buttons, either one the big one. Mehdi's mailbox is web-only on Zoho's free plan, so Zoho Mail comes
+  // first for him, and for anyone on a computer. On a phone anyone but Mehdi gets Open in mail app first: Me > Set up this
+  // phone makes the Zoho Mail app the phone's mail app (spec 5.2), and a phone's browser may lose Zoho's web compose at
+  // its sign-in (send-links known gap 11), while the click has already recorded the send.
+  const zohoButton = (primary: boolean) => sendLink(zoho?.href || "", "Zoho Mail", "Open in Zoho Mail", Mail, primary, "open-zoho",
+    () => void copyToClipboard(body).then((ok) => ok && setCopied("zoho")), !primary);
+  const mailAppButton = (primary: boolean) => sendLink(links.primary, "email app", "Open in mail app", Mail, primary, "open-mailto",
+    longMail ? () => void copyToClipboard(body).then((ok) => ok && setCopied("body")) : undefined, !primary);
+  const mailAppFirst = team && onPhone();
 
   const obsKnown = OBSERVATIONS.some((o) => o.id === observation);
   // The picker offers what fits this lead's kind (a dental clinic gets the booking and treatment
@@ -688,7 +713,7 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
             {current.stage ? stageLabel(current.stage, channel) : PLAIN_STAGE_LABELS[current.plain]}
             <span className="font-normal text-muted-foreground">{choice ? ", picked by you" : ", where this lead is now"}</span>
           </p>
-          <TemplateList items={short} selected={template?.id} suggested={ranked[0]?.id} onPick={setTemplateId} />
+          <TemplateList items={short} selected={template} suggested={ranked[0]?.id} onPick={setTemplateId} />
           {waiting > 0 && (
             <p className="mt-1.5 text-xs text-muted-foreground" data-testid="wording-waiting">
               {waiting === 1 ? "1 more message at this stage waits" : `${waiting} more messages at this stage wait`} for Mehdi to approve the team's wording.
@@ -698,14 +723,14 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
             <details className="mt-1">
               <summary className={summaryCls}>More templates for this stage ({ranked.length})</summary>
               <div className="mt-2 rounded-xl bg-muted/40 p-2">
-                <TemplateList items={ranked} selected={template?.id} suggested={ranked[0]?.id} onPick={setTemplateId} />
+                <TemplateList items={ranked} selected={template} suggested={ranked[0]?.id} onPick={setTemplateId} />
               </div>
             </details>
           )}
         </div>
         {template?.stage === "first" && hasLinkTwin && (
           <LinkChoice value={linkChoice} disabledReason={linkOff}
-            hint={linkHint(channel, Boolean(previewFor(template.kind !== "any" ? template.kind : lead.kind)))}
+            hint={linkHint(channel, Boolean(previewFor(template.kind !== "any" ? template.kind : lead.kind)), team)}
             onChange={(v) => (channel === "email" ? setEmailLinkChoice(v) : setWaLinkChoice(v))} />
         )}
 
@@ -786,12 +811,10 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
           )
         ) : isEmail ? (
           <div className="space-y-2">
-            {sendLink(zoho?.href || "", "Zoho Mail", "Open in Zoho Mail", Mail, true, "open-zoho",
-              () => void copyToClipboard(body).then((ok) => ok && setCopied("zoho")))}
+            {mailAppFirst ? mailAppButton(true) : zohoButton(true)}
             <div className="flex flex-col gap-2 sm:flex-row">
               <div className="min-w-0 flex-1">
-                {sendLink(links.primary, "email app", "Open in mail app", Mail, false, "open-mailto",
-                  longMail ? () => void copyToClipboard(body).then((ok) => ok && setCopied("body")) : undefined, true)}
+                {mailAppFirst ? zohoButton(false) : mailAppButton(false)}
               </div>
               <button type="button" onClick={() => void copyMail()} disabled={blocked || publishing} data-testid="copy-email"
                 className="flex min-h-14 items-center justify-center gap-2 rounded-full border border-border px-5 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto">
@@ -950,21 +973,33 @@ function isBlankRule(message: string): boolean {
   return /placeholder|unfilled|\bblanks?\b|\[[^\]\n]+\]/i.test(message);
 }
 
+/** A phone or a tablet: the device's main pointer is a finger (a computer's is a mouse or a trackpad). */
+function onPhone(): boolean {
+  try {
+    return typeof window !== "undefined" && Boolean(window.matchMedia?.("(pointer: coarse)").matches);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Templates as a short radio list: the label, its language, "suggested" on the one that fits this lead best.
- * `selected` is the message that goes, which may be a twin (with their sample's link, or the follow-up for after
- * the link, 2 Oct 2026): its listed row is checked, and shows the twin's own label and note.
+ * `selected` is the message that goes, exactly as it goes (for anyone but Mehdi, already in the team's words,
+ * templates.ts memberVersion), which may be a twin (with their sample's link, or the follow-up for after the
+ * link, 2 Oct 2026): its listed row is checked, and a twin shows its own label and note there. It is never read
+ * again by its id, which would give Mehdi's own label and note on a team member's screen.
  */
-function TemplateList({ items, selected, suggested, onPick }: { items: { id: string; label: string; language: keyof typeof LANGUAGE_LABELS; note?: string }[]; selected?: string; suggested?: string; onPick: (id: string) => void }) {
+function TemplateList({ items, selected, suggested, onPick }: { items: { id: string; label: string; language: keyof typeof LANGUAGE_LABELS; note?: string }[]; selected?: Pick<MessageTemplate, "id" | "label" | "note" | "twinOf">; suggested?: string; onPick: (id: string) => void }) {
   if (!items.length) return <p className="text-sm text-muted-foreground" data-testid="template-list-empty">No message for this stage on this channel.</p>;
-  const variant = getTemplate(selected);
-  const base = variant?.twinOf ?? selected;
+  const base = selected?.twinOf ?? selected?.id;
   return (
     <ul className="space-y-1" role="radiogroup" aria-label="Template" data-testid="template-list">
       {items.map((t) => {
         const on = t.id === base;
-        const label = on ? variant?.label ?? t.label : t.label;
-        const note = on ? variant?.note ?? t.note : t.note;
+        // The listed row is the version on offer already; only a twin that goes in its place brings its own words.
+        const twin = on && selected?.twinOf ? selected : undefined;
+        const label = twin ? twin.label : t.label;
+        const note = twin ? twin.note ?? t.note : t.note;
         return (
           <li key={t.id}>
             <button type="button" role="radio" aria-checked={on} data-template-id={t.id} onClick={() => onPick(t.id)}
