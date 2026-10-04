@@ -20,7 +20,7 @@
  * and the lamp are in ./runtime, fetched with a guarded import() when the start rule
  * fires, so they are not on the home page's critical path (spec 10, LCP).
  */
-import { Component, isValidElement, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { Component, isValidElement, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { cn } from "@/lib/utils";
 import { DESK_SVG, PHONE_SVG } from "./posters.generated";
 import { REDUCED, decide, setSessionOff, whenStartable, type Decision, type Mode, type Path } from "./gates";
@@ -70,11 +70,30 @@ function Posters() {
   );
 }
 
+/* useLayoutEffect in the browser; nothing on the build's server render (React warns there). */
+const useBrowserLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 export function HeroScene({ sectionRef, className }: { sectionRef: RefObject<HTMLElement>; className?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [decision] = useState(decide);
   const [state, setState] = useState<Mode>(decision.mode);
   const [xfade, setXfade] = useState(false);
+
+  /*
+    THE PRERENDERED HOME PAGE (3 Oct 2026). The build draws the plan (gates.ts, no
+    window) and React does not repair an attribute while hydrating, so a visitor
+    decided for the still would keep data-state="plan". Before the first frame
+    after hydration this moves the box to the decided state, cross-faded the way
+    every other move to the still is. On a page reached by a link React has
+    already written the right value and this does nothing.
+  */
+  useBrowserLayoutEffect(() => {
+    const el = box.current;
+    if (el && el.dataset.state !== state) {
+      el.classList.add("h3d-xfade");
+      el.dataset.state = state;
+    }
+  }, [state]);
 
   useEffect(() => {
     const el = box.current;

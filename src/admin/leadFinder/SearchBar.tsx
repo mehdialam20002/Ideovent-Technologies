@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import { CheckCircle2, Loader2, Search } from "lucide-react";
+import { RADIUS_CHOICES_KM } from "@/lib/leadFinder/client";
 import { TYPE_PRESETS, type PresetGroup, type TypePreset } from "@/lib/leadFinder/leads";
 import { cn } from "@/lib/utils";
 import { btn, input } from "./styles";
@@ -11,9 +12,30 @@ export interface SearchInput {
   /** Shown on the lead as a tag, e.g. "JEE/NEET coaching". */
   typeLabel: string;
   preset?: TypePreset;
+  /** "Also use Google (needs a working key)": a second request, to Google Maps, beside the free one. */
+  google: boolean;
+  /** A circle of this many km around the city instead of the city's own area; null: its own area. */
+  radiusKm: number | null;
 }
 
 const GROUPS: PresetGroup[] = ["Schools", "Coaching", "Dental"];
+
+/* Remembered in this browser only, as a convenience: whether "Also use Google" was ticked last time. Off by default. */
+const GOOGLE_PREF = "ideovent_finder_also_google";
+const readGooglePref = () => {
+  try {
+    return localStorage.getItem(GOOGLE_PREF) === "1";
+  } catch {
+    return false;
+  }
+};
+const writeGooglePref = (on: boolean) => {
+  try {
+    localStorage.setItem(GOOGLE_PREF, on ? "1" : "0");
+  } catch {
+    /* a private window: the box still works for this visit */
+  }
+};
 
 const chip = (on: boolean) => cn(
   "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
@@ -23,13 +45,17 @@ const chip = (on: boolean) => cn(
 /**
  * City plus a type. The chips are the kinds Mehdi sells to most, in three
  * rows (schools, coaching, dental); "Other" opens a free text box for
- * anything else (a gym, a physiotherapist, a shop).
+ * anything else (a gym, a physiotherapist, a shop). Every search is free
+ * (OpenStreetMap, no key); "Also use Google" adds Google Maps when a working
+ * key is saved, and "Area" swaps the city's own area for a circle around it.
  */
 export function SearchBar({ busy, onSearch }: { busy: boolean; onSearch: (q: SearchInput) => void }) {
   const [city, setCity] = useState("");
   const [presetId, setPresetId] = useState<string>("coaching");
   const [free, setFree] = useState("");
   const [tried, setTried] = useState(false);
+  const [google, setGoogle] = useState<boolean>(readGooglePref);
+  const [radius, setRadius] = useState("");
   const preset = TYPE_PRESETS.find((p) => p.id === presetId);
   const typeText = preset ? preset.query : free.trim();
   const missing = !city.trim() ? "city" : !typeText ? "type" : null;
@@ -43,7 +69,10 @@ export function SearchBar({ busy, onSearch }: { busy: boolean; onSearch: (q: Sea
         e.preventDefault();
         setTried(true);
         if (missing || busy) return;
-        onSearch({ city: city.trim(), type: typeText, typeLabel: preset ? preset.label : free.trim(), preset });
+        onSearch({
+          city: city.trim(), type: typeText, typeLabel: preset ? preset.label : free.trim(), preset,
+          google, radiusKm: radius ? Number(radius) : null,
+        });
       }}
     >
       <fieldset>
@@ -89,6 +118,26 @@ export function SearchBar({ busy, onSearch }: { busy: boolean; onSearch: (q: Sea
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Search className="h-4 w-4" aria-hidden="true" />}
           Search
         </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+        <p data-testid="free-search" className="inline-flex items-center gap-1.5 font-medium">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
+          Free search (OpenStreetMap): no key needed
+        </p>
+        <span className="inline-flex items-center gap-1.5">
+          <label htmlFor="lf-area" className="text-muted-foreground">Area</label>
+          <select id="lf-area" value={radius} onChange={(e) => setRadius(e.target.value)}
+            className="h-7 min-w-0 max-w-[14rem] rounded-md border border-border bg-background px-1.5 text-xs text-foreground">
+            <option value="">The city's own area</option>
+            {RADIUS_CHOICES_KM.map((km) => <option key={km} value={String(km)}>{km} km around it</option>)}
+          </select>
+        </span>
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" checked={google} className="h-4 w-4 shrink-0"
+            onChange={(e) => { setGoogle(e.target.checked); writeGooglePref(e.target.checked); }} />
+          Also use Google (needs a working key)
+        </label>
       </div>
       {tried && missing && (
         <p role="alert" className="mt-2 text-xs text-destructive">

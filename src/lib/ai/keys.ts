@@ -79,7 +79,7 @@ export const PROVIDERS: ProviderInfo<ProviderId>[] = [
 /** The Lead Finder's key. Not in PROVIDERS, so it never enters the poster order. */
 export const GOOGLE_MAPS_PROVIDER: ProviderInfo = {
   id: GOOGLE_MAPS_ID, label: "Google Maps (Places)", defaultModel: "places-v1",
-  where: "Get a key at console.cloud.google.com: enable Places API (New), restrict the key to it. Used by the Lead Finder only, never for posters. Billed by Google after the free monthly usage.",
+  where: "Optional: the Lead Finder is free on OpenStreetMap without it. Get a key at console.cloud.google.com: enable Places API (New), restrict the key to it, and tick \"Also use Google\" in the finder. Used by the Lead Finder only, never for posters. Billed by Google after the free monthly usage.",
   url: "https://console.cloud.google.com/google/maps-apis/api-list", free: false,
 };
 

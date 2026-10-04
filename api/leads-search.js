@@ -3,26 +3,28 @@
  *
  * THE FLOW
  *
- * Mehdi types a type and a city ("coaching", "Patna"). This function asks
- * Google Maps (Places API, New) for the businesses, and the admin page then
- * asks it to audit each one's website: none, broken, poor or ok (or
- * unchecked, for a page drawn by scripts), with the evidence. One click in
- * the page turns a place into a CRM lead.
+ * Mehdi types a type and a city ("coaching", "Patna"). The search is FREE by
+ * default (4 Oct 2026): OpenStreetMap, with no key at all (api/_lib/osm.js).
+ * Google Maps (Places API, New) is asked only when the page sends
+ * google: true, which it does when Mehdi ticks "Also use Google (needs a
+ * working key)". Then the page sends two requests at once, the free one and
+ * the Google one, so a key that fails never slows or empties the free list:
+ * the free request never reads a key. The admin page then asks this function
+ * to audit each result's website: none, broken, poor or ok (or unchecked, for
+ * a page drawn by scripts), with the evidence. One click in the page turns a
+ * place into a CRM lead.
  *
- *   { action: "search",  query?, type?, city?, preset?, pageToken? } -> { source, places[], nextPageToken, attribution }
- *   { action: "details", placeId }                                   -> { place }   (Google results only)
- *   { action: "audit",   url } or { urls: [..10] }, kind?            -> { audit } or { audits[] }
+ *   { action: "search", type?, city?, query?, preset?, radiusKm?, pageToken? }
+ *        -> OpenStreetMap: { source: "osm", places[], nextPageToken, total, counts, area, attribution, note,
+ *           broadened?, caveat?, placeNote? ("Delhi NCR" was searched as Delhi), capped? }
+ *   { action: "search", google: true, type?, city?, query?, pageToken? }
+ *        -> Google Maps:   { source: "google", places[], nextPageToken, attribution }
+ *   { action: "details", placeId }                         -> { place }   (Google results only)
+ *   { action: "audit",   url } or { urls: [..10] }, kind?   -> { audit } or { audits[] }
  *
- * THE FREE SOURCE (28 Sep 2026)
- *
- * With a working Google key, Google answers (source "google"). With no key
- * saved, or when every key fails (out of quota, billing off, a bad key), the
- * search goes to OpenStreetMap instead (source "osm", api/_lib/osm.js): free,
- * no key, fewer businesses and fewer phones, and the answer says so and
- * carries "© OpenStreetMap contributors". `fallback` says why Google was not
- * used. An OSM "Load more" token starts with "osm." and never touches Google.
- * `kind: "dental"` on an audit adds the dental checks (booking, WhatsApp,
- * treatment pages).
+ * An OpenStreetMap "Load more" token is "osm.<offset>"; any other token is
+ * Google's and goes to Google, as before. `kind: "dental"` on an audit adds
+ * the dental checks (booking, WhatsApp, treatment pages).
  *
  * WHO MAY CALL IT
  *
@@ -30,13 +32,15 @@
  * with Supabase auth, then public.is_admin() AS THE CALLER, and the Google key
  * read AS THE CALLER, so the RLS from 0006 guards it. No service_role key.
  *
- * KEYS
+ * KEYS (Google only)
  *
  * The Places key lives in public.ai_provider_keys with provider 'google_maps'
  * (0009 allows it). Several keys are tried in the admin's order. A key that
  * reports a quota or rate limit is parked until tomorrow (India time) by its
  * own id, like the poster reader does. An error caused by the request itself
  * (an unknown place id, a stale page token) is not retried on the next key.
+ * A Google search that no key can answer says why (no key, quota, billing,
+ * Places API not enabled) and leaves the free list alone.
  *
  * GOOGLE'S TERMS
  *
@@ -50,7 +54,7 @@
  * Keys never appear in a response or a log line.
  */
 import {
-  OSM_ATTRIBUTION, OSM_COPYRIGHT_URL, OSM_LICENCE, OSM_NOTE, OSM_TOKEN_RE, OsmError, osmSearch,
+  OSM_ATTRIBUTION, OSM_COPYRIGHT_URL, OSM_LICENCE, OSM_NOTE, OSM_TOKEN_RE, OsmError, RADIUS_CHOICES_KM, osmSearch,
 } from "./_lib/osm.js";
 import { PlacesError, PLACE_ID_RE, placeDetails, textSearch } from "./_lib/places.js";
 import { redact } from "./_lib/providers.js";
@@ -60,9 +64,12 @@ import { getUser, isAdmin, readKeys, supabaseEnv } from "./_lib/supabaseRest.js"
 export const PROVIDER = "google_maps";
 const PER_ATTEMPT_MS = 10_000;
 const BUDGET_MS = 25_000;
-/* A search leaves OpenStreetMap time to answer when Google fails (vercel.json: 30 s). */
-const SEARCH_GOOGLE_BUDGET_MS = 12_000;
-const SEARCH_TOTAL_MS = 27_500;
+/*
+  The free search may use most of the function's time (vercel.json gives it
+  60 s): a district's boundary with name patterns takes Overpass 8 to 21 s,
+  and a busy server needs a second try. The rest is left for the answer.
+*/
+const SEARCH_TOTAL_MS = 52_000;
 const MIN_ATTEMPT_MS = 3_000;
 const MAX_AUDITS = 10;
 const AUDIT_KINDS = ["school", "coaching", "dental", "other"];
@@ -106,13 +113,21 @@ export function parseRequest(body) {
     if (pageToken !== null && (typeof pageToken !== "string" || pageToken.length > 4000 || /\s/.test(pageToken))) {
       return { status: 400, error: "pageToken is not valid" };
     }
+    if (body.google != null && typeof body.google !== "boolean") return { status: 400, error: "google must be true or false" };
     const preset = clean(body.preset, 40);
     if (preset && !/^[a-z0-9_-]+$/.test(preset)) return { status: 400, error: "preset is not valid" };
+    let radiusKm = null;
+    if (body.radiusKm != null && body.radiusKm !== "" && body.radiusKm !== 0) {
+      if (!RADIUS_CHOICES_KM.includes(body.radiusKm)) return { status: 400, error: `radiusKm must be one of ${RADIUS_CHOICES_KM.join(", ")}` };
+      radiusKm = body.radiusKm;
+    }
     // OpenStreetMap needs the type and the city apart: "NEET coaching in Gaya" -> "NEET coaching", "Gaya".
     const split = /^(.*?)\s+in\s+(.+)$/i.exec(query);
-    const osm = { type: type || (split ? split[1] : query), city: city || (split ? split[2] : ""), preset: preset || null };
+    const osm = { type: type || (split ? split[1] : query), city: city || (split ? split[2] : ""), preset: preset || null, radiusKm };
     const osmPage = pageToken && OSM_TOKEN_RE.exec(pageToken);
-    return { action, textQuery, pageToken: osmPage ? null : pageToken, osm, osmOffset: osmPage ? Number(osmPage[1]) : null };
+    // Google only when asked: google: true, or a Google "Load more" token. An OSM token is always OSM's.
+    const google = !osmPage && (body.google === true || pageToken !== null);
+    return { action, textQuery, google, pageToken: osmPage ? null : pageToken, osm, osmOffset: osmPage ? Number(osmPage[1]) : null };
   }
   if (action === "details") {
     if (typeof body.placeId !== "string" || !PLACE_ID_RE.test(body.placeId)) return { status: 400, error: "placeId is not valid" };
@@ -235,32 +250,27 @@ export default async function handler(req, res) {
   }
 
   const search = job.action === "search";
-  // "Load more" on an OpenStreetMap list stays on OpenStreetMap.
-  if (search && job.osmOffset !== null) return sendOsm(res, job, started, null);
+  // Free by default: OpenStreetMap, and no key is read at all.
+  if (search && !job.google) return sendOsm(res, job, started);
 
+  // From here on Google Maps: a search Mehdi asked Google for, a Google "Load more", or a place's details.
   let keys;
   try {
     keys = await readKeys(env, token);
-  } catch (e) {
-    if (search) return sendOsm(res, job, started, { code: "keys_unreadable", reason: "The saved Google Maps keys could not be read." });
-    return send(res, 502, { ok: false, code: "keys_unreadable", error: e.message });
+  } catch {
+    return send(res, 502, { ok: false, code: "keys_unreadable", error: "The saved Google Maps keys could not be read. The free search still works." });
   }
   const rows = keys.rows.filter((r) => r.provider === PROVIDER && r.api_key);
   if (!rows.length) {
-    if (search) {
-      return sendOsm(res, job, started, keys.missing
-        ? { code: "no_keys", reason: "The keys table is not set up yet (run 0006, then 0009, in Supabase), so no Google Maps key could be used." }
-        : { code: "no_keys", reason: "No Google Maps key is saved." });
-    }
     return send(res, 422, { ok: false, code: "no_keys", error: keys.missing
       ? "The keys table does not exist yet. Run supabase/migrations/0006_ai_keys.sql, then 0009_google_maps_key.sql, in the Supabase SQL editor."
-      : "No Google Maps key is saved and switched on. Add one in /admin under AI keys (Google Maps). If saving it fails, run supabase/migrations/0009_google_maps_key.sql first." });
+      : "No Google Maps key is saved and switched on. Add one in /admin under AI keys (Google Maps), or leave Google off: the free search needs no key." });
   }
 
   const fn = search
     ? (apiKey, timeoutMs) => textSearch({ apiKey, textQuery: job.textQuery, pageToken: job.pageToken, timeoutMs })
     : (apiKey, timeoutMs) => placeDetails({ apiKey, placeId: job.placeId, timeoutMs });
-  const out = await withKeys(env, token, rows, started, fn, search ? SEARCH_GOOGLE_BUDGET_MS : BUDGET_MS);
+  const out = await withKeys(env, token, rows, started, fn, BUDGET_MS);
 
   if (out.error) {
     const notFound = job.action === "details" && out.error.status === 404;
@@ -268,8 +278,11 @@ export default async function handler(req, res) {
       error: notFound ? "Google has no place with this id any more" : out.detail, attempts: out.attempts });
   }
   if (!out.value) {
-    // A Google "Load more" cannot continue on OpenStreetMap: a new search can.
-    if (search && !job.pageToken) return sendOsm(res, job, started, { ...whyNotGoogle(out.attempts), attempts: out.attempts });
+    // Every key failed: say why (quota, billing, Places API not enabled). The free list is a request of its own.
+    if (search && !job.pageToken) {
+      const why = whyNotGoogle(out.attempts);
+      return send(res, 502, { ok: false, code: why.code, error: why.reason, attempts: out.attempts });
+    }
     return send(res, 502, { ok: false, code: "all_failed", attempts: out.attempts,
       error: "No Google Maps key worked. See each key's error in /admin under AI keys." });
   }
@@ -282,31 +295,34 @@ export default async function handler(req, res) {
   return send(res, 200, { ok: true, place: { ...out.value, source: "google" }, attribution, attempts: out.attempts });
 }
 
-/** Why Google was not used, in one sentence the page shows above the OSM list. */
+/** Why no Google key answered a search, in one sentence the page shows beside the free list. */
 export function whyNotGoogle(attempts) {
   const errors = attempts.map((a) => a.error || "").join(" ");
   const quota = (a) => a.status === "limit" || (a.status === "skipped" && /quota/i.test(a.error || ""));
   if (attempts.length && attempts.every(quota)) return { code: "quota", reason: "Every Google Maps key is out of quota for today." };
   if (/billing/i.test(errors)) return { code: "billing", reason: "Google Maps billing is not switched on for the key's project." };
+  if (/has not been used|is disabled|not enabled|SERVICE_DISABLED/i.test(errors)) {
+    return { code: "api_disabled", reason: "Places API (New) is not enabled for the key's Google Cloud project." };
+  }
   if (attempts.some(quota)) return { code: "quota", reason: "Google Maps keys are out of quota or failing (see AI keys)." };
   if (attempts.length && attempts.every((a) => /Out of time/.test(a.error || ""))) return { code: "timeout", reason: "Google Maps did not answer in time." };
   return { code: "all_failed", reason: "No Google Maps key worked (see each key's error in AI keys)." };
 }
 
-/** Search OpenStreetMap and send the answer, with its attribution and its honest limits. */
-async function sendOsm(res, job, started, fallback) {
-  const extra = fallback ? { fallback } : {};
+/** Search OpenStreetMap (free, no key) and send the answer, with its attribution, its counts and its honest limits. */
+async function sendOsm(res, job, started) {
   try {
     const r = await osmSearch({ ...job.osm, offset: job.osmOffset || 0, deadline: started + SEARCH_TOTAL_MS });
     return send(res, 200, { ok: true, source: "osm", textQuery: job.textQuery, places: r.places, nextPageToken: r.nextPageToken,
-      total: r.total, attribution: OSM_ATTRIBUTION, attributionUrl: OSM_COPYRIGHT_URL, licence: OSM_LICENCE, note: OSM_NOTE,
-      ...(r.broadened ? { broadened: r.broadened } : {}), ...(r.caveat ? { caveat: r.caveat } : {}), ...extra });
+      total: r.total, counts: r.counts, area: r.area, ...(r.capped ? { capped: true } : {}),
+      attribution: OSM_ATTRIBUTION, attributionUrl: OSM_COPYRIGHT_URL, licence: OSM_LICENCE, note: OSM_NOTE,
+      ...(r.broadened ? { broadened: r.broadened } : {}), ...(r.caveat ? { caveat: r.caveat } : {}),
+      ...(r.placeNote ? { placeNote: r.placeNote } : {}) });
   } catch (e) {
     if (!(e instanceof OsmError)) console.error("leads-search: osm failed");
     const code = e instanceof OsmError ? e.code : "osm_busy";
     const status = code === "osm_city" ? 422 : code === "osm_type" ? 400 : code === "osm_time" ? 504 : 502;
     return send(res, status, { ok: false, code, source: "osm",
-      error: e instanceof OsmError ? e.message : "OpenStreetMap search failed. Try again in a minute.", ...extra });
+      error: e instanceof OsmError ? e.message : "OpenStreetMap search failed. Try again in a minute." });
   }
 }
-

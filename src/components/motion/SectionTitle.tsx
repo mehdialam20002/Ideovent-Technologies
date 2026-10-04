@@ -1,6 +1,7 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { fadeIn, fadeUp, TRANSITION, CONTINUATION_DELAY } from "@/lib/motion";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 
 /*
   THE TYPE ROLES THIS TRACK'S SECTIONS USE, written out once.
@@ -57,7 +58,8 @@ interface SectionTitleProps {
  * state at all, so nothing can be left at opacity 0.
  */
 export function SectionTitle({ statement, continuation, lead, id, className }: SectionTitleProps) {
-  const reduce = useReducedMotion();
+  // Hydration-safe (prerendered pages): see ./useReducedMotionSafe.
+  const reduce = useReducedMotionSafe();
 
   const heading = (cont: ReactNode) => (
     <h2 id={id} className={H2_CLASS}>

@@ -3,26 +3,72 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "rea
 import { ScrollToTop } from "@/components/util/ScrollToTop";
 import { RouteErrorBoundary, RouteRendered } from "@/components/util/RouteErrorBoundary";
 import { crmMovedOut, crmOriginUrl, isCrmHost, mainSiteUrl } from "@/lib/host";
+import { ContentAfterHydration } from "@/lib/cms/context";
+import { SiteTheme } from "./AppProviders";
 
 import Index from "./pages/Index"; // eager: landing page
 
-const About = lazy(() => import("./pages/About"));
-const ServicesPage = lazy(() => import("./pages/ServicesPage"));
-const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
-const Work = lazy(() => import("./pages/Work"));
-const CaseStudy = lazy(() => import("./pages/CaseStudy"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogDetail = lazy(() => import("./pages/BlogDetail"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Internship = lazy(() => import("./pages/Internship"));
-const EduFlow = lazy(() => import("./pages/EduFlow"));
-const Pricing = lazy(() => import("./pages/Pricing"));
-const FAQ = lazy(() => import("./pages/FAQ"));
-const WebsiteLanding = lazy(() => import("./pages/websites/WebsiteLanding"));
+/*
+  THE PUBLIC PAGES ARE LAZY AND PRELOADABLE (3 Oct 2026, perf).
+
+  A prerendered page (scripts/prerender-heads.mjs) is hydrated by src/main.tsx,
+  and React cannot hydrate a lazy() page whose chunk is not in yet: it keeps the
+  HTML and waits, and any update meanwhile (the theme provider's first effect,
+  the stored content) throws that HTML away and redraws the page (React error
+  #421). So the build writes the page's name on #root (data-page), main.tsx
+  loads that page's chunk first (preloadPage) and only then hydrates, and a
+  loaded page renders straight away instead of through lazy(). A page reached by
+  a link loads exactly as before: lazy(), with the spinner while it comes.
+*/
+type PageModule<P> = { default: ComponentType<P> };
+const PAGE_LOADERS = new Map<string, () => Promise<unknown>>();
+let renderedOnServer: string | null = null;
+
+function lazyPage<P extends object>(name: string, load: () => Promise<PageModule<P>>): ComponentType<P> {
+  let loaded: ComponentType<P> | null = null;
+  // `loaded` is set before React hears the promise resolve, so a page that has
+  // rendered once always renders as `loaded` (never Lazy, then the page).
+  const get = () => load().then((m) => ((loaded = m.default), m));
+  PAGE_LOADERS.set(name, get);
+  const Lazy = lazy(get) as unknown as ComponentType<P>;
+  function Page(props: P) {
+    if (typeof window === "undefined") renderedOnServer = name;
+    const Loaded = loaded;
+    return Loaded ? <Loaded {...props} /> : <Lazy {...props} />;
+  }
+  return Page;
+}
+
+/** Load a prerendered page's chunk before hydrating it (src/main.tsx). Unknown name: nothing to wait for. */
+export function preloadPage(name: string | undefined): Promise<unknown> {
+  const load = name ? PAGE_LOADERS.get(name) : undefined;
+  return load ? load() : Promise.resolve();
+}
+
+/** The build only (src/entry-server.tsx): which lazy page the last render showed, then forget it. */
+export function takeRenderedPage(): string | null {
+  const name = renderedOnServer;
+  renderedOnServer = null;
+  return name;
+}
+
+const About = lazyPage("About", () => import("./pages/About"));
+const ServicesPage = lazyPage("ServicesPage", () => import("./pages/ServicesPage"));
+const ServiceDetail = lazyPage("ServiceDetail", () => import("./pages/ServiceDetail"));
+const Work = lazyPage("Work", () => import("./pages/Work"));
+const CaseStudy = lazyPage("CaseStudy", () => import("./pages/CaseStudy"));
+const Blog = lazyPage("Blog", () => import("./pages/Blog"));
+const BlogDetail = lazyPage("BlogDetail", () => import("./pages/BlogDetail"));
+const Contact = lazyPage("Contact", () => import("./pages/Contact"));
+const Internship = lazyPage("Internship", () => import("./pages/Internship"));
+const EduFlow = lazyPage("EduFlow", () => import("./pages/EduFlow"));
+const Pricing = lazyPage("Pricing", () => import("./pages/Pricing"));
+const FAQ = lazyPage("FAQ", () => import("./pages/FAQ"));
+const WebsiteLanding = lazyPage("WebsiteLanding", () => import("./pages/websites/WebsiteLanding"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const CheckoutResult = lazy(() => import("./pages/CheckoutResult"));
-const Legal = lazy(() => import("./pages/Legal"));
-const CertificateVerify = lazy(() => import("./pages/CertificateVerify"));
+const Legal = lazyPage("Legal", () => import("./pages/Legal"));
+const CertificateVerify = lazyPage("CertificateVerify", () => import("./pages/CertificateVerify"));
 const Pitch = lazy(() => import("./pages/Pitch"));
 const DemoSiteRoute = lazy(() => import("./pages/DemoSiteRoute"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -223,8 +269,22 @@ const CRM_HOST_ROUTES = (
   react-remove-scroll) into the chunk that gates the first paint on every route. Put
   it back around whatever subtree needs tooltips on the day something actually uses one.
 */
+/*
+  THE ROUTER IS THE ONLY DIFFERENCE BETWEEN THE BROWSER AND THE BUILD (3 Oct 2026).
+  The build renders each prerendered page with this same body inside a
+  StaticRouter (src/entry-server.tsx, scripts/prerender-heads.mjs), and the
+  browser hydrates that HTML inside the BrowserRouter below (src/main.tsx). Keep
+  everything that renders inside AppBody, so the two trees stay one tree.
+*/
 const App = () => (
   <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}>
+    <AppBody />
+  </BrowserRouter>
+);
+
+export function AppBody() {
+  return (
+  <>
     <ScrollToTop />
     {/*
       Outside the Suspense, so a lazy page whose chunk is gone after a deploy
@@ -234,6 +294,8 @@ const App = () => (
     */}
     <RouteErrorBoundary>
     <Suspense fallback={<PageLoader />}>
+    {/* The theme provider lives in here, not with the others: see SiteTheme in ./AppProviders. */}
+    <SiteTheme>
       {/* crm.ideovent.in renders only the CRM (CRM_HOST_ROUTES above); every other host, the site. */}
       {ON_CRM_HOST ? CRM_HOST_ROUTES : (
       <Routes>
@@ -392,9 +454,14 @@ const App = () => (
       {/* A sibling of <Routes> in the same Suspense, so it commits only once
           the routed page has: that is what clears the reload guard. */}
       <RouteRendered />
+      {/* The same moment publishes the stored content held while a
+          prerendered page hydrated (src/lib/cms/loader.ts). */}
+      <ContentAfterHydration />
+    </SiteTheme>
     </Suspense>
     </RouteErrorBoundary>
-  </BrowserRouter>
-);
+  </>
+  );
+}
 
 export default App;
