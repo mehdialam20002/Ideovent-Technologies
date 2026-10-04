@@ -86,7 +86,15 @@ export default function LeadPopupMount() {
   // Read once per page. A card closed on this page sets `open` false below;
   // the stored memory stops it on every page after.
   const [memory] = useState(popupMemory);
-  const [open, setOpen] = useState(() => session(POPUP_OPEN_KEY) === "1");
+  /*
+    A card left open earlier in this visit comes back after the first render,
+    not in it (3 Oct 2026): prerendered pages are hydrated, and the build's HTML
+    never has the card in it, so the first client render must not either.
+  */
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (session(POPUP_OPEN_KEY) === "1") setOpen(true);
+  }, []);
   const onThisPage = cfg.enabled && memory === null && isPopupPath(pathname);
 
   useEffect(() => {

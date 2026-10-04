@@ -53,6 +53,30 @@ export function primeContent(): void {
   void pageLoader().ensure(needsFor());
 }
 
+/**
+ * main.tsx, before hydrating a prerendered page: keep the published content at the
+ * seed until the routed page has hydrated (see ContentLoader.holdForHydration).
+ */
+export function holdContentForHydration(): void {
+  pageLoader().holdForHydration();
+}
+
+/** main.tsx, as hydration starts: the hold ends after `maxMs` at the latest. */
+export function releaseHeldContentAfter(maxMs: number): void {
+  pageLoader().releaseAfter(maxMs);
+}
+
+/**
+ * Inside the router's Suspense boundary (App.tsx), next to <RouteRendered />: its
+ * effect runs once the routed page has committed, hydrated or rendered, and
+ * publishes whatever content arrived meanwhile. Renders nothing; does nothing when
+ * nothing was held.
+ */
+export function ContentAfterHydration(): null {
+  useEffect(() => pageLoader().releaseAfterHydration(), []);
+  return null;
+}
+
 /*
   WHAT A PAGE LOADS, AND WHEN (2 Oct 2026).
 
@@ -66,7 +90,8 @@ export function primeContent(): void {
 export function ContentProvider({ children }: { children: React.ReactNode }) {
   const store = getStore();
   const loader = pageLoader();
-  const snap = useSyncExternalStore(loader.subscribe, loader.getSnapshot, loader.getSnapshot);
+  // The server snapshot is the seed: what the build rendered a prerendered page from (loader.ts).
+  const snap = useSyncExternalStore(loader.subscribe, loader.getSnapshot, loader.getServerSnapshot);
 
   useEffect(() => {
     void loader.ensure(needsFor());

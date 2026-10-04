@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useReducedMotionSafe } from "@/components/motion/useReducedMotionSafe";
 import { EASE, TRANSITION } from "@/lib/motion";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,8 @@ export default function Navbar() {
   const settings = useSingleton("settings");
   const items = useResolvedNav(nav.header.items);
   const { pathname } = useLocation();
-  const reduce = useReducedMotion();
+  // Hydration-safe (prerendered pages): see components/motion/useReducedMotionSafe.
+  const reduce = useReducedMotionSafe();
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);

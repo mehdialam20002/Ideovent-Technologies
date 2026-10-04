@@ -1,6 +1,7 @@
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { fadeUp } from "@/lib/motion";
 import type { ReactNode } from "react";
+import { useReducedMotionSafe } from "./useReducedMotionSafe";
 
 interface RevealProps {
   children: ReactNode;
@@ -22,7 +23,8 @@ export function Reveal({
   amount = 0.2,
   once = true,
 }: RevealProps) {
-  const reduce = useReducedMotion();
+  // Hydration-safe (prerendered pages): see ./useReducedMotionSafe.
+  const reduce = useReducedMotionSafe();
   const MotionTag = motion[as] as typeof motion.div;
 
   if (reduce) {

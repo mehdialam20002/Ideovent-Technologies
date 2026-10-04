@@ -43,6 +43,20 @@ function pageComponent(def: SitePageDef) {
   return c;
 }
 
+/*
+  The page's chunk starts with the dental chrome's, not after it (3 Oct 2026,
+  perf): the page renders inside <DentalChrome>, so React would only ask for it
+  once the chrome had arrived, one more round trip on a phone. The browser keeps
+  one copy of a module, so lazy() later gets this same download. A failed fetch
+  here costs nothing: lazy() asks again and handles that answer as before.
+*/
+const STARTED = new Set<SitePageDef>();
+function startPage(def: SitePageDef) {
+  if (STARTED.has(def)) return;
+  STARTED.add(def);
+  void def.load().catch(() => STARTED.delete(def));
+}
+
 function useReducedMotion(): boolean {
   const q = "(prefers-reduced-motion: reduce)";
   const [r, set] = useState(() => {
@@ -148,6 +162,7 @@ export default function SiteShell({ site: record, basePath, rest, isPreview }: {
 
   const shown = pages.includes(match.def);
   const Page = shown ? pageComponent(match.def) : null;
+  if (shown) startPage(match.def);
   const pageTitle = match.def.id === "home" ? site.instituteName : `${tr(match.def.label, lang)} | ${site.instituteName}`;
 
   return (

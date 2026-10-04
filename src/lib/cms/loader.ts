@@ -74,6 +74,8 @@ export class ContentLoader {
   private dirty = true;
   private listeners = new Set<() => void>();
   private snap: ContentSnapshot;
+  /** The seed, before any read: what the build renders a prerendered page from. */
+  private readonly first: ContentSnapshot;
 
   /** `reader` is null in local mode: everything then comes from store.load(). */
   constructor(
@@ -81,6 +83,7 @@ export class ContentLoader {
     private readonly reader: PublicReader | null,
   ) {
     this.snap = this.build();
+    this.first = this.snap;
   }
 
   subscribe = (listener: () => void): (() => void) => {
@@ -88,7 +91,43 @@ export class ContentLoader {
     return () => this.listeners.delete(listener);
   };
 
-  getSnapshot = (): ContentSnapshot => this.snap;
+  getSnapshot = (): ContentSnapshot => (this.held ? this.first : this.snap);
+
+  /*
+    HELD WHILE A PRERENDERED PAGE HYDRATES (3 Oct 2026). React hydrates the page
+    inside the router's Suspense boundary at idle priority, after the providers.
+    A store change is a synchronous update (useSyncExternalStore), and one that
+    reaches a boundary still waiting to hydrate makes React throw the page's HTML
+    away and draw it again (error #421). So main.tsx holds the published snapshot
+    at the seed until the routed page has hydrated (<ContentAfterHydration /> in
+    App.tsx), and reads that finish meanwhile are published then, in one update.
+    releaseAfter(maxMs) is the safety net, armed when hydration STARTS (main.tsx):
+    the hold begins before the page's chunk has arrived, and a net counted from
+    there ran out on a slow phone before the page had even started hydrating
+    (measured: chunk in at 11 s, React error #421, the whole page redrawn).
+  */
+  private held = false;
+  holdForHydration(): void {
+    this.held = true;
+  }
+  releaseAfter(maxMs: number): void {
+    setTimeout(() => this.releaseAfterHydration(), maxMs);
+  }
+  releaseAfterHydration(): void {
+    if (!this.held) return;
+    this.held = false;
+    this.emit();
+  }
+
+  /**
+   * useSyncExternalStore's server snapshot (3 Oct 2026). The build renders each
+   * prerendered page from the seed (src/entry-server.tsx), and hydrateRoot must
+   * see exactly what the build saw, even when the stored content (read from
+   * main.tsx before React starts) is already here. React renders the hydration
+   * from this, then re-renders from getSnapshot: the stored content arrives as
+   * an ordinary update, as it always has.
+   */
+  getServerSnapshot = (): ContentSnapshot => this.first;
 
   /** Start whatever `needs` still lacks. Safe to call on every render; resolves when those reads end. */
   ensure(needs: Needs): Promise<void> {
