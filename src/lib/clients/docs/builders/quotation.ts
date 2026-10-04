@@ -88,7 +88,7 @@ export function buildQuotation(c: DocCtx): DocModel {
         "The advance is collected against a proforma invoice issued on acceptance. The launch payment is collected against a numbered invoice carrying its own bank details.",
         "Payment is by NEFT, IMPS, RTGS or UPI. Cash is not accepted. A cheque is accepted only by prior agreement and counts as paid on clearance, not on handover.",
         "The invoice number must appear in the transfer remarks. A payment that cannot be matched to an invoice cannot be credited to the account.",
-        "Late payment carries interest at 1.5% per month, or part of a month, on the outstanding amount, running from the due date until the money is received.",
+        "Late payment carries interest at 1.5% per month on the outstanding amount, running from the due date until the money is received.",
       ] },
       { type: "heading", text: "6. Validity" },
       { type: "paragraph", text: `Valid for 15 days from ${tok("issuedOn")}, that is until ${tok("validUntil")}. After that date the price and the start slot are re-confirmed before work is booked.` },

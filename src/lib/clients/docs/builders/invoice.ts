@@ -72,7 +72,7 @@ export function buildInvoice(c: DocCtx): DocModel {
         "Where this invoice remains unpaid 15 days after its due date, the services may be suspended on 3 working days' written notice. During a suspension no data is deleted, no backup is removed, the site is not taken offline and no domain transfer is blocked (Maintenance and Support Agreement, Clauses 11.2 and 11.3).",
       ]
       : [
-        "Late payment carries interest at 1.5% per month, or part of a month, on the outstanding amount, running from the due date until the money is received.",
+        "Late payment carries interest at 1.5% per month on the outstanding amount, running from the due date until the money is received.",
         "If an invoice is more than 7 days overdue, work on the project may be paused, on written notice, until the account is cleared. Work already delivered and live stays live and nothing is taken down. Delivery dates then move by at least the number of days work was paused.",
         "Intellectual property in the deliverables passes to the client on receipt of the full contract value, as set out in the service agreement.",
       ]),
