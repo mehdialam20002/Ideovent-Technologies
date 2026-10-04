@@ -7,6 +7,9 @@ import { LeadFields, changedFields, draftToLead, type LeadDraft } from "./LeadFi
 import { ComposePanel } from "./ComposePanel";
 import { CallScriptCard } from "./CallScriptCard";
 import { History } from "./History";
+import { historyLines } from "./historyLines";
+import { isHotLead } from "./derive";
+import { useOpensCtx } from "./useOpensCtx";
 import { nextStep, todayQueue } from "./compose";
 import { KIND_LABEL, StatusPill, btnDanger, btnGhost, btnPrimary, btnSecondary, cardCls, dueLabel, fmtDateTime, inputCls, prettyPhone, summaryCls, textareaCls } from "./ui";
 import { AskOwnerDialog } from "@/crm/lead/AskOwnerDialog";
@@ -61,6 +64,7 @@ function lockedFor(lead: OutreachLead): ReadonlySet<string> {
 
 export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: () => void; onOpen: (id: string) => void }) {
   const { leads, opens, patchLead, me } = useOutreach();
+  const openCtx = useOpensCtx();
   const lead = leads.find((l) => l.id === leadId);
   const [editing, setEditing] = useState<LeadDraft | null>(null);
   const [editErr, setEditErr] = useState<string | null>(null);
@@ -70,10 +74,10 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
 
   // Where "Next lead" goes: the lead after this one in Today's order, else the first other one there.
   const next = useMemo(() => {
-    const all = todayQueue(leads, opens).all;
+    const all = todayQueue(leads, opens, new Date(), openCtx).all;
     const at = all.findIndex((l) => l.id === leadId);
     return (at >= 0 ? all[at + 1] : undefined) || all.find((l) => l.id !== leadId);
-  }, [leads, opens, leadId]);
+  }, [leads, opens, leadId, openCtx]);
 
   if (!lead) {
     return (
@@ -84,7 +88,8 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
     );
   }
 
-  const step = nextStep(lead, opens, new Date(), { member });
+  const now = new Date();
+  const step = nextStep(lead, isHotLead(lead, opens, now, openCtx), now, { member });
   const contact = [lead.phone && prettyPhone(lead.phone), lead.email].filter(Boolean);
 
   return (
@@ -176,8 +181,11 @@ export function LeadPage({ leadId, onBack, onOpen }: { leadId: string; onBack: (
  * so the folded view still says what is inside.
  */
 function LeadDetails({ lead, onDeleted }: { lead: OutreachLead; onDeleted: () => void }) {
-  const { events, patchLead, addEvent, deleteLead, me } = useOutreach();
+  const { events, opens, patchLead, addEvent, deleteLead, me } = useOutreach();
+  const openCtx = useOpensCtx();
   const mine = useMemo(() => events.filter((e) => e.leadId === lead.id), [events, lead.id]);
+  // The fold says how many lines the history shows: its lines, the demo's opens and "Lead added" (crm-fixes-1004 item 18).
+  const shown = historyLines(lead, mine, opens, openCtx).length;
   const [note, setNote] = useState("");
   const [notesDraft, setNotesDraft] = useState<string | null>(null);
   const [askLost, setAskLost] = useState(false);
@@ -261,7 +269,7 @@ function LeadDetails({ lead, onDeleted }: { lead: OutreachLead; onDeleted: () =>
       <details className="py-1" data-testid="history-details">
         <summary className={summaryCls}>
           <span>History</span>
-          <span className="ml-auto text-xs font-normal">{mine.length} {mine.length === 1 ? "entry" : "entries"}</span>
+          <span className="ml-auto text-xs font-normal" data-testid="history-count">{shown} {shown === 1 ? "entry" : "entries"}</span>
         </summary>
         <div className="pb-3">
           <form className="mb-3 flex gap-2" onSubmit={async (e) => {

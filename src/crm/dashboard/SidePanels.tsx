@@ -6,6 +6,7 @@ import type { CrmMetrics } from "../metrics";
 import { CRM, useOpenLead } from "../nav";
 import { crm, StatusDot } from "../ui";
 import { cn } from "@/lib/utils";
+import { cityOf } from "@/lib/outreach/city";
 import { ago, plural } from "./format";
 
 /** Demo opened since the last message: the leads to call first. */
@@ -36,7 +37,7 @@ export function HotPanel({ m, now }: { m: CrmMetrics; now: Date }) {
               >
                 <span className="block truncate text-[13px] font-medium">{h.lead.instituteName}</span>
                 <span className={cn("block truncate text-[12px] text-muted-foreground", crm.num)}>
-                  {plural(h.opens.length, "open")}, last {ago(h.lastOpenAt, now)}{h.lead.city ? ` · ${h.lead.city}` : ""}
+                  {plural(h.opens.length, "open")}, last {ago(h.lastOpenAt, now)}{cityOf(h.lead) ? ` · ${cityOf(h.lead)}` : ""}
                 </span>
               </button>
               <Link to={CRM.lead(h.lead.id)} className={cn(crm.btnPrimary, "h-8 shrink-0 px-2.5 max-md:h-10")} aria-label={`Message ${h.lead.instituteName}`}>

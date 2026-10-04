@@ -108,6 +108,64 @@ for (const n of notes) check(C.looksLikeNote(n) === true, `note not caught: ${n}
 for (const s of sentences) check(C.looksLikeNote(s) === false, `sentence taken for a note: ${s}`);
 check(C.startingObservation({ observation: notes[0] }) === "", "a footer note starts a message");
 
+/*
+ * crm-fixes-1004 items 1 and 16 (4 Oct 2026): the live CRM's own saved observations, both ways (the names and
+ * domains made fictional, the shapes as found). A research note (the sheet's verdict, a web address, the lead in
+ * the third person) never reaches a message or the call script; a sentence that speaks to them is used, even with
+ * "directories" in it (Bansal Dental and Ek Dant were flagged, so their first WhatsApp stayed blocked).
+ */
+{
+  const NOTES_NEGATIVE = Boolean(process.env.OUTREACH_COMPOSE_NEGATIVE);
+  /* The checker before 4 Oct 2026, for the negative control. */
+  const oldNote = (text) => {
+    const t = (text || "").trim();
+    if (!t) return false;
+    if (C.OBSERVATIONS.some((o) => o.id === t || o.en === t || o.hinglish === t)) return false;
+    const toThem = /\b(you|your|yours|aap|aapki|aapka|aapke|aapko)\b/i.test(t);
+    if (!toThem && (/^(the|their|its)\s+[\w\s-]{0,40}?\b(reads|says|shows|lists|displays)\b/i.test(t) || /\bcopyright\b|©/i.test(t))) return true;
+    return /\bcurl\b|\bHTTP \d{3}\b|\b\d+(\.\d+)? ?(KB|MB)\b|\bheadless\b|\bgoogle (search )?for\b|returns only|\bdirector(y|ies)\b|\(checked|visible-text|\bog[: ]|\bmeta tag\b/i.test(t);
+  };
+  const isNote = NOTES_NEGATIVE ? oldNote : C.looksLikeNote;
+  const liveNotes = [
+    "Has its own modern, maintained site (exampleschool.in, Admission 2026-27 live): skipped, no new-site pitch.",
+    "Has its own modern site (example-school.edu.in, 2025 WordPress build): skipped, no new-site pitch.",
+    "Their only site is a free WordPress.com blog with no fees or admission details.",
+    "Their only site is a free Blogger blog with no fees, batch timings or contact page.",
+    "Their Wix site still shows the placeholder 'This is a summary of your course...' four times.",
+    "No website of its own: only Justdial and school directories come up for the school.",
+    "The website on their targetstudy listing is a Namecheap parked page with nothing about the centre.",
+    "exampleacademy.com shows a 'Suspended Domain' page, yet their listings still link to it.",
+    "On a phone their site opens as a shrunk desktop page (1005px wide), and the footer still says 2012.",
+  ];
+  const liveSentences = [
+    "You post on Facebook almost every day, but the clinic has no website of its own; a search finds only directories and social pages.",
+    "A search for Example Dant in Rajouri Garden finds Practo, Justdial and other directories, but no website of your own.",
+    "The website on your Facebook page does not open: browsers cannot find that address at all.",
+    "Your Google listing has over 1,100 reviews but no website link, and a search finds only Practo and other directories.",
+    "A search for Example Braces Clinic finds Facebook, Instagram and YouTube, but no website where a patient can read about braces or aligners.",
+  ];
+  for (const n of liveNotes) check(isNote(n) === true, `live note not caught (item 1/16): ${n}`);
+  for (const s of liveSentences) check(isNote(s) === false, `live sentence taken for a note (item 16): ${s}`);
+  // Gate review of 4 Oct 2026: the third-person test runs sentence by sentence. A "your" in one sentence does not
+  // make the next one, which talks about them, speak to them.
+  const mixed = "I looked at your website. Their only site is a free Blogger blog with no fees page.";
+  check(isNote(mixed) === true, `a note after a sentence to them is still a note (gate review): ${mixed}`);
+  for (const s of [
+    "Your clinic, run by Dr. Example Sharma, has no website of its own.",
+    "Your homepage still says 'Admissions open. Apply now.' at the top.",
+    "I looked at your website. It opens as a shrunk desktop page on a phone.",
+  ]) check(isNote(s) === false, `a sentence to them taken for a note (gate review): ${s}`);
+  for (const o of C.OBSERVATIONS) for (const w of [o.en, o.hinglish, ...(o.previous || [])]) check(!C.looksLikeNote(w), `an observation's wording is never a note: ${w}`);
+  check(C.noteReason(liveNotes[0]) === "Has a web address in it" && C.noteReason("Skipped, no new-site pitch.") === "The lead sheet's own verdict"
+    && C.noteReason(liveNotes[2].replace("WordPress.com", "WordPress")) === "Talks about them, not to them" && C.noteReason(liveSentences[0]) === null,
+    "Clean saved observations says why each one is a note");
+  const holy = { id: "hs", instituteName: "Example Convent School", kind: "school", status: "lost", observation: liveNotes[0], phone: "+919000000003", language: "en", createdAt: "", updatedAt: "" };
+  check(C.startingObservation(holy) === "", "the Holy Spirit case: its saved note never starts a message (item 1)");
+  const script = JSON.stringify(C.callScriptFor(holy, { hasDemo: false, language: "en" }));
+  check(!/skipped|new-site pitch|exampleschool/.test(script), "the Holy Spirit case: the call script never reads the note aloud (item 1)");
+  check(/^This sentence reads like a research note/.test(C.NOTE_IN_MESSAGE), "a typed sentence that reads like a note stops the send, in words that say why");
+}
+
 // 2 Oct 2026: a lead named only with generic words ("Kids Dental Clinic") blocked every
 // kids-dental message, because our own template says "aapka kids dental clinic dekha".
 {
@@ -331,7 +389,10 @@ for (const o of C.OBSERVATIONS.filter((x) => (x.kinds || []).includes("dental"))
 
 console.log(`test-outreach-compose: ${pass} passed, ${fail} failed${NEGATIVE ? " (NEGATIVE CONTROL: failures expected)" : ""}`);
 if (NEGATIVE) {
-  const expected = [/with no demo the suggestion never claims a sample/, /offered the e-mail that offers a sample/, /hi lead's first e-mail is/];
+  const expected = [/with no demo the suggestion never claims a sample/, /offered the e-mail that offers a sample/, /hi lead's first e-mail is/,
+    /live note not caught \(item 1\/16\): Has its own modern, maintained site/, /live note not caught \(item 1\/16\): Their only site is a free WordPress/,
+    /live sentence taken for a note \(item 16\): You post on Facebook/, /live sentence taken for a note \(item 16\): A search for Example Dant/,
+    /a note after a sentence to them is still a note \(gate review\)/];
   const missed = expected.filter((re) => !failed.some((f) => re.test(f)));
   if (missed.length) {
     console.log("COMPOSE NEGATIVE CONTROL FAILED: undetected " + missed.join(", "));

@@ -90,6 +90,21 @@ const GATES = [
     why: "the intake functions refuse without the token, and a member never reads a Meta lead that is not theirs" },
   { name: "meta intake", cmd: "node", args: ["scripts/test-meta-intake.mjs"],
     why: "a signed webhook against the real SQL: the lead arrives once, a forged one never" },
+  // The client files (0014, client-process-spec 14). "clients rls" runs the real SQL in PGlite, like
+  // "crm rls": it needs @electric-sql/pglite, or PGLITE_FROM=<a folder that has it>.
+  { name: "clients rls", cmd: "node", args: ["scripts/test-clients-rls.mjs"],
+    why: "the database rules: only Mehdi reads or writes a client file, numbers have no gaps, an issued document never changes" },
+  { name: "client process", cmd: "node", args: ["scripts/test-client-process.mjs"],
+    why: "the twelve stages, their gates and needs, the money, the due dates and every client message's truth" },
+  { name: "client docs", cmd: "node", args: ["scripts/test-client-docs.mjs"],
+    why: "every client document carries its template's sentences, blocks on its blanks and never shows another client's data" },
+  { name: "clients store", cmd: "node", args: ["scripts/test-clients-store.mjs"],
+    why: "local mode applies the same rules as the SQL, and a member's browser never asks for a client row" },
+  // The live CRM test of 3 Oct 2026 (crm-fixes-1004): one reading of opens, Hot and Sent; the CRM's content read.
+  { name: "crm readings", cmd: "node", args: ["scripts/test-crm-readings.mjs"],
+    why: "a demo is Sent only when a message carried its link, an open before that is nobody's, and Hot is one list on every screen" },
+  { name: "cms summaries", cmd: "node", args: ["scripts/test-cms-summaries.mjs"],
+    why: "the CRM reads demos as summaries and never writes one back over a whole demo" },
   { name: "build", cmd: "npm", args: ["run", "build"],
     why: "the deploy runs this, so it fails here or it fails on Vercel" },
   { name: "gutters", cmd: "node", args: ["scripts/measure-gutters.mjs", `http://localhost:${PORT}`],

@@ -3,6 +3,7 @@ import { LEAD_STATUS_LABELS, type LeadStatus } from "@/lib/outreach/types";
 import type { LeadOverview } from "@/lib/outreach/team";
 import { dueLabel, fmtDate, KIND_LABEL } from "@/admin/outreach/ui";
 import { cn } from "@/lib/utils";
+import { cityOf } from "@/lib/outreach/city";
 import { crm, StatusDot } from "../ui";
 import { contactText, DemoCell, NextAction, StatusSelect, UntouchedChip, type StatusBlock } from "./columns";
 import { SourceBadge } from "../meta/SourceBadge";
@@ -40,7 +41,7 @@ export function LeadCards({ rows, selected, onToggle, onOpen, now, setStatus, ma
                 <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
                   {/* A Meta lead's Instagram / Facebook chip (meta-leads-spec 6.2); nothing for any other lead. */}
                   <SourceBadge lead={l} className="mr-1.5" />
-                  {[l.city, KIND_LABEL[l.kind], r.lastContactAt ? `contacted ${sinceLabel(r.lastContactAt, now)}` : "never contacted"].filter(Boolean).join(" · ")}
+                  {[cityOf(l), KIND_LABEL[l.kind], r.lastContactAt ? `contacted ${sinceLabel(r.lastContactAt, now)}` : "never contacted"].filter(Boolean).join(" · ")}
                 </span>
                 {contact && <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">{contact}</span>}
               </button>
@@ -99,7 +100,7 @@ export function OverviewList({ rows, onOpen, now, wide }: {
               <tr key={o.id} tabIndex={0} className={crm.row} onClick={() => onOpen(o.id)} onKeyDown={(e) => e.key === "Enter" && onOpen(o.id)}>
                 <td className={cn(crm.td, "max-w-[18rem] truncate font-medium")}>{o.instituteName}</td>
                 <td className={crm.td}>{KIND_LABEL[o.kind] || o.kind}</td>
-                <td className={crm.td}>{o.city || "-"}</td>
+                <td className={crm.td}>{cityOf(o) || "-"}</td>
                 <td className={crm.td}><StatusDot status={o.status} className="mr-1.5" />{LEAD_STATUS_LABELS[o.status]}</td>
                 <td className={crm.td}>{who(o)}</td>
                 <td className={crm.td}>{o.lastContactedAt ? sinceLabel(o.lastContactedAt, now) : "Never"}</td>
@@ -122,7 +123,7 @@ export function OverviewList({ rows, onOpen, now, wide }: {
               <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="Read only" />
             </span>
             <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
-              {[o.city, KIND_LABEL[o.kind], LEAD_STATUS_LABELS[o.status], who(o)].filter(Boolean).join(" · ")}
+              {[cityOf(o), KIND_LABEL[o.kind], LEAD_STATUS_LABELS[o.status], who(o)].filter(Boolean).join(" · ")}
             </span>
           </button>
         </li>

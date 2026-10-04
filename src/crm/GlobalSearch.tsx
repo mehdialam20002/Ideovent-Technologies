@@ -9,6 +9,7 @@ import { useCrmData } from "./useCrmData";
 import { useOpenLead } from "./nav";
 import { StatusDot } from "./ui";
 import { cn } from "@/lib/utils";
+import { cityOf } from "@/lib/outreach/city";
 
 /** Lead search over name, contact name, phone, email and city. Pure, for tests. */
 export function searchLeads(leads: OutreachLead[], q: string, limit = 8): OutreachLead[] {
@@ -73,7 +74,7 @@ export function GlobalSearch({ className }: { className?: string }) {
   const results = useMemo((): Hit[] => {
     const own = searchLeads(leads, q).map((l): Hit => {
       const contact = l.phone ? (isMember ? maskPhone(l.phone) : prettyPhone(l.phone)) : isMember ? maskEmail(l.email) : l.email;
-      return { id: l.id, instituteName: l.instituteName, status: l.status, detail: [l.city, contact].filter(Boolean).join(" · "), readOnly: false };
+      return { id: l.id, instituteName: l.instituteName, status: l.status, detail: [cityOf(l), contact].filter(Boolean).join(" · "), readOnly: false };
     });
     if (!isMember || !me.viewAll || own.length >= 8) return own;
     const mineIds = new Set(leads.map((l) => l.id));

@@ -29,7 +29,7 @@ import {
   type OutreachSettings,
 } from "@/lib/outreach/types";
 import { useOutreach } from "@/admin/outreach/useOutreach";
-import { closeThese as closeTheseOf, hotLeads, isOpenLead, KEEP_OPEN_TAG, NO_REPLY_REASON } from "@/admin/outreach/derive";
+import { closeThese as closeTheseOf, hotLeads, isOpenLead, KEEP_OPEN_TAG, NO_REPLY_REASON, type OpensCtx } from "@/admin/outreach/derive";
 import { computeMetrics, due, type CrmMetrics, type NameOf } from "./metrics";
 
 /* ── Scope (spec 10.4): whose leads a screen shows ───────────────────────── */
@@ -53,6 +53,9 @@ export const SCOPE_DEFAULTS: Readonly<Record<CrmScreen, CrmScope>> = { dashboard
 export const SCOPE_STORAGE_KEY = "ideovent_crm_scope_v1";
 
 const NO_SCOPES: readonly CrmScope[] = [];
+
+/** Coming back to the tab re-reads the data at most this often (the Refresh buttons read at once). */
+export const FOCUS_REFRESH_MS = 2 * 60_000;
 
 /** Whether this person picks a scope at all: Mehdi and admins, with the team (0011). */
 export function hasScopes(me: CrmMe): boolean {
@@ -143,6 +146,11 @@ export interface CrmData {
   metricsFor: (scope?: CrmScope, owner?: string | null) => CrmMetrics;
   /** Ticks every minute, so "due today" moves at midnight without a reload. */
   now: Date;
+  /**
+   * What reading a lead's demo opens needs (derive.ts): the history, and each lead's own demo (by id, else by
+   * slug). Hot, Demo opened, "since contact" and a demo's "Sent" all read through it, so every screen agrees.
+   */
+  openCtx: OpensCtx;
 
   /* ── Scope (spec 10.4) ── */
   /** The scope of the screen on show (Dashboard, Today, Leads, Pipeline); "all" on any other page and for anyone without a switch. */
@@ -272,9 +280,22 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
   );
   const nameOf = useCallback((id?: string | null, fallback = "Someone") => (id ? knownName(id) || fallback : "Unassigned"), [knownName]);
 
+  /* Each lead's own demo: by demoId, else by the slug (imported leads carry only the slug). */
+  const demoById = useMemo(() => new Map(demos.map((d) => [d.id, d])), [demos]);
+  const demoBySlug = useMemo(() => {
+    const m = new Map<string, DemoSite>();
+    for (const d of demos) if (d.slug && !m.has(d.slug)) m.set(d.slug, d);
+    return m;
+  }, [demos]);
+  const demoForLead = useCallback(
+    (lead: OutreachLead) => (lead.demoId && demoById.get(lead.demoId)) || (lead.demoSlug ? demoBySlug.get(lead.demoSlug) : undefined),
+    [demoById, demoBySlug],
+  );
+  const openCtx = useMemo<OpensCtx>(() => ({ events: o.events, demoIdOf: (l) => demoForLead(l)?.id || l.demoId }), [o.events, demoForLead]);
+
   const metrics = useMemo(
-    () => computeMetrics({ leads, events: o.events, opens: o.opens, demos, now, nameOf: knownName }),
-    [leads, o.events, o.opens, demos, now, knownName],
+    () => computeMetrics({ leads, events: o.events, opens: o.opens, demos, now, nameOf: knownName, demoIdOf: openCtx.demoIdOf }),
+    [leads, o.events, o.opens, demos, now, knownName, openCtx],
   );
 
   /* ── Scope ── */
@@ -320,19 +341,19 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
       const key = `${s}|${owner || ""}`;
       let m = c.map.get(key);
       if (!m) {
-        m = computeMetrics({ leads: byScope[s] || leads, events: o.events, opens: o.opens, demos, now, owner, nameOf: knownName });
+        m = computeMetrics({ leads: byScope[s] || leads, events: o.events, opens: o.opens, demos, now, owner, nameOf: knownName, demoIdOf: openCtx.demoIdOf });
         c.map.set(key, m);
       }
       return m;
     },
-    [metrics, byScope, leads, o.events, o.opens, demos, now, knownName],
+    [metrics, byScope, leads, o.events, o.opens, demos, now, knownName, openCtx],
   );
 
   const closeThese = useMemo(() => closeTheseOf(mine, o.events, now), [mine, o.events, now]);
   const badges = useMemo(() => {
     const d = due(mine, now);
-    return { due: d.today.length + d.overdue.length, hot: hotLeads(mine, o.opens, now).length, closeThese: closeThese.length };
-  }, [mine, o.opens, now, closeThese]);
+    return { due: d.today.length + d.overdue.length, hot: hotLeads(mine, o.opens, now, openCtx).length, closeThese: closeThese.length };
+  }, [mine, o.opens, now, closeThese, openCtx]);
   const unassignedOpen = useMemo(() => (canScope ? byScope.unassigned.filter(isOpenLead).length : 0), [canScope, byScope]);
 
   const { requests } = o;
@@ -345,11 +366,6 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
 
   const leadById = useCallback((id: string) => byId.get(id), [byId]);
   const eventsFor = useCallback((id: string) => eventsByLead.get(id) || [], [eventsByLead]);
-  const demoForLead = useCallback(
-    (lead: OutreachLead) =>
-      (lead.demoId && demos.find((d) => d.id === lead.demoId)) || (lead.demoSlug ? demos.find((d) => d.slug === lead.demoSlug) : undefined),
-    [demos],
-  );
   const canEdit = useCallback((lead: OutreachLead) => canEditLead(me, lead), [me]);
 
   const { reload } = o;
@@ -360,13 +376,17 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
   /*
     Demos are often made in the admin tab (templates, poster upload, the
     demo-sites editor) while this tab stays open. Coming back to this tab
-    re-reads everything, at most every 15 seconds, so a new demo and its
-    opens show without a manual reload (and so does a lead Mehdi moved).
+    re-reads everything, so a new demo and its opens show without a manual
+    reload (and so does a lead Mehdi moved). At most every FOCUS_REFRESH_MS
+    (4 Oct 2026, crm-fixes-1004 item 8): with 15 seconds every return from
+    WhatsApp or Zoho read the whole leads table again, 7 times in one test
+    session, once taking 6.9 s. A send, a status change or a note made here
+    needs no read: it is in this tab's data already.
   */
   const lastRefresh = useRef(Date.now());
   useEffect(() => {
     const on = () => {
-      if (document.visibilityState !== "visible" || Date.now() - lastRefresh.current < 15_000) return;
+      if (document.visibilityState !== "visible" || Date.now() - lastRefresh.current < FOCUS_REFRESH_MS) return;
       lastRefresh.current = Date.now();
       void refresh();
     };
@@ -482,6 +502,7 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
     metrics,
     metricsFor,
     now,
+    openCtx,
     scope,
     setScope,
     scopedLeads: leadsIn(scope),

@@ -1,4 +1,4 @@
-import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types";
+import type { ContentData, CollectionKey, SingletonKey, BaseDoc, DemoSite } from "./types";
 import { type Store, mergeWithSeed, clone, COLLECTION_KEYS, SINGLETON_KEYS } from "./store";
 import { seed } from "./seed";
 
@@ -176,6 +176,13 @@ export class LocalStore implements Store {
   async load(): Promise<ContentData> {
     this.sync();
     return clone(this.data);
+  }
+
+  /** One demo as it is stored now (another tab may have saved it since this tab read it: sync). */
+  async loadDemo(id: string): Promise<DemoSite | null> {
+    this.sync();
+    const d = ((this.data.demoSites as DemoSite[]) || []).find((x) => x.id === id);
+    return d ? clone(d) : null;
   }
 
   async saveDoc(col: CollectionKey, doc: BaseDoc): Promise<ContentData> {

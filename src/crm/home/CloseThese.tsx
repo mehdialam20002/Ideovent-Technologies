@@ -10,6 +10,7 @@ import { CRM } from "../nav";
 import { crm } from "../ui";
 import { cn } from "@/lib/utils";
 import { ago, plural } from "../dashboard/format";
+import { cityOf } from "@/lib/outreach/city";
 
 /**
  * CLOSE THESE (spec 10.5): open leads at Contacted whose no-reply cadence is
@@ -100,7 +101,7 @@ export function CloseThese({ leads, className }: { leads?: OutreachLead[]; class
                 <Link to={CRM.lead(lead.id)} className="min-w-0 flex-1 basis-48 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <span className="block truncate text-[13.5px] font-medium">{lead.instituteName}</span>
                   <span className={cn("block truncate text-[12px] text-muted-foreground", crm.num)}>
-                    {[t.at ? `Last ${t.channel ? `${t.channel} ` : ""}${ago(t.at, now)}` : "", lead.city, KIND_LABEL[lead.kind]].filter(Boolean).join(" · ")}
+                    {[t.at ? `Last ${t.channel ? `${t.channel} ` : ""}${ago(t.at, now)}` : "", cityOf(lead), KIND_LABEL[lead.kind]].filter(Boolean).join(" · ")}
                   </span>
                 </Link>
                 <div className="flex shrink-0 flex-wrap items-center gap-1.5">

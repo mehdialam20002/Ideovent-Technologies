@@ -446,6 +446,12 @@ function knownObservation(raw: string): Observation | undefined {
     ?? (FINDER_SITE_DOWN.test(raw) ? getObservation("site_down") : undefined);
 }
 
+/** True when a saved value is one of the observations (an id, a sentence, an earlier wording, the Lead Finder's "did not open"). */
+export function isKnownObservation(raw: string | undefined | null): boolean {
+  const t = (raw ?? "").trim();
+  return Boolean(t) && Boolean(knownObservation(t));
+}
+
 /**
  * The observations a picker offers for a lead of this kind ("What you noticed
  * on their site"). No kind: every observation. A dental lead gets the generic
@@ -1261,8 +1267,8 @@ export function render(
 /** Em and en dash, built from code points so this file contains neither. */
 const DASH_RE = new RegExp(`[${String.fromCharCode(8212)}${String.fromCharCode(8211)}]`);
 
-/** Tidies what an empty merge field can leave behind: double spaces, " ,", blank runs. */
-function tidy(text: string): string {
+/** Tidies what an empty merge field can leave behind: double spaces, " ,", blank runs. Exported for the client file (src/lib/clients/compose.ts); unchanged. */
+export function tidy(text: string): string {
   return text
     .replace(/[ \t]+([,.:;!?])/g, "$1")
     .replace(/[ \t]{2,}/g, " ")
@@ -1437,6 +1443,14 @@ export interface SendCheckExtra {
    * it and ticked "Number checked" after their test message arrived from it.
    */
   sender?: { phone?: string | null; checked: boolean };
+  /**
+   * Whether this lead was ever sent a message or called, from its HISTORY (a
+   * sent or call line, or its contact date: derive.ts contactedBefore). The
+   * compose screen passes it. Left out, the contact date alone decides. Never
+   * the status: a lead marked Lost without a word sent to it was not
+   * contacted (crm-fixes-1004 item 7, Holy Spirit Convent School).
+   */
+  contactedBefore?: boolean;
 }
 
 /** The refusals of the team's checks, word for word (the e2e suites look for them). */
@@ -1646,7 +1660,7 @@ export function checkSend(
   if (extra.duplicateOf && extra.duplicateOf.id !== lead.id) {
     warnings.push(`Same phone or e-mail as another lead: ${extra.duplicateOf.instituteName}. Do not message them twice.`);
   }
-  if (template.stage === "first" && (lead.lastContactedAt || (lead.status && lead.status !== "new"))) {
+  if (template.stage === "first" && (extra.contactedBefore ?? Boolean(lead.lastContactedAt))) {
     warnings.push("This lead has been contacted before; a first message may repeat what they already have.");
   }
   if (lead.lastContactedAt && lead.status !== "replied") {

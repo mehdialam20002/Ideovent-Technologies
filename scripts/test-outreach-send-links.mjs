@@ -1023,7 +1023,7 @@ const ctOf = (z) => (z ? decodeURIComponent(z.href.slice(z.href.indexOf("?ct=") 
 {
   const read = (p) => readFileSync(join(SRC, p), "utf8").replace(/\r\n/g, "\n");
   const panel = read("admin/outreach/ComposePanel.tsx");
-  check((panel.match(/<TemplateList items=\{(short|ranked)\} selected=\{template\} /g) || []).length === 2 && !/getTemplate\(selected\)/.test(panel) &&
+  check((panel.match(/<TemplateList items=\{(short|ranked|more)\} selected=\{template\} /g) || []).length === 2 && !/getTemplate\(selected\)/.test(panel) &&
     panel.includes("const base = selected?.twinOf ?? selected?.id;") && panel.includes("const twin = on && selected?.twinOf ? selected : undefined;"),
   "TemplateList: the checked row shows the version that goes as it goes (for the team, in their words), never read again by its id");
   check(panel.includes('linkHint(channel, Boolean(previewFor(template.kind !== "any" ? template.kind : lead.kind)), team)'), "the switch's hint is the team's line for anyone but Mehdi");

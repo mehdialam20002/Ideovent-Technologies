@@ -1,8 +1,9 @@
 import type { DemoSite, DemoSiteOpen } from "@/lib/cms/types";
 import { LEAD_STATUSES, type LeadStatus, type OutreachChannel, type OutreachEvent, type OutreachLead } from "@/lib/outreach/types";
 import type { CrmRole } from "@/lib/outreach/team";
-import { endOfToday, isHotOpen, isOpenLead, isUntouched, opensSinceContact } from "@/admin/outreach/derive";
+import { allOpens, endOfToday, hotOf, isUntouched, leadOpens, linkSentAt, opensSinceContact, isOpenLead, type OpensCtx } from "@/admin/outreach/derive";
 import { demoLinkFor } from "@/lib/outreach/engine";
+import { cityOf } from "@/lib/outreach/city";
 import { campaignOf, isMetaLead } from "@/lib/meta/fields";
 import { groupEvents, hasReplied, startOfDay, wasContacted } from "../metrics";
 
@@ -30,13 +31,17 @@ export interface LeadRow {
   /** Assigned more than 24 hours ago and nothing written by that person since (derive.ts isUntouched). */
   untouched?: boolean;
   demo?: DemoSite;
-  /** Every open of the linked demo. */
+  /** The lead's own opens of its demo: after its link went to them in a message (derive.ts leadOpens). */
   opens: number;
-  /** Opens after the last contact: the "hot" signal. */
+  /** Every recorded open of the linked demo, the ones before its link went included. */
+  allOpens: number;
+  /** The lead's own opens after its last contact: the "hot" signal. */
   freshOpens: number;
   lastOpenAt?: string;
-  /** Opened since the last contact, within HOT_DAYS. */
+  /** Hot (derive.ts hotOf): the same answer as Today, the Dashboard and Team > Performance. */
   hot: boolean;
+  /** When a message first carried the demo's link (its history): the demo was SENT. Undefined: live at most. */
+  sentAt?: string;
   /** Created in the last 7 days (the dashboard's "New, last 7 days" window). */
   recent: boolean;
   /** Ever contacted: a send, a call or a status past New (the dashboard's "Contacted"). */
@@ -67,12 +72,6 @@ export function buildRows(
     const cur = lastSend.get(e.leadId);
     if (!cur || t(e.at) > t(cur.at)) lastSend.set(e.leadId, e);
   }
-  const opensBy = new Map<string, DemoSiteOpen[]>();
-  for (const o of opens) {
-    const a = opensBy.get(o.demoId);
-    if (a) a.push(o);
-    else opensBy.set(o.demoId, [o]);
-  }
   const start = startOfDay(now).getTime();
   const end = endOfToday(now).getTime();
   // Same window as metrics.weekCompare: the last 7 days through the end of today.
@@ -81,12 +80,12 @@ export function buildRows(
   const evsBy = groupEvents(events);
   return leads.map((lead) => {
     const demo = demoForLead(lead);
-    const os = demo ? opensBy.get(demo.id) || [] : [];
-    const freshList = demo ? opensSinceContact({ ...lead, demoId: demo.id }, os) : [];
-    const fresh = freshList.length;
+    // The one reading of a lead's opens (derive.ts): its own demo, read against its own history.
+    const ctx: OpensCtx = { events, demoIdOf: () => demo?.id };
+    const every = demo ? allOpens(lead, opens, ctx) : [];
+    const own = demo ? leadOpens(lead, opens, ctx) : [];
+    const fresh = demo ? opensSinceContact(lead, opens, ctx).length : 0;
     const created = t(lead.createdAt);
-    let lastOpenAt: string | undefined;
-    for (const o of os) if (!lastOpenAt || t(o.at) > t(lastOpenAt)) lastOpenAt = o.at;
     const ev = lastSend.get(lead.id);
     const open = isOpenLead(lead);
     const n = t(lead.nextActionAt);
@@ -97,10 +96,12 @@ export function buildRows(
       assigneeName: nameOf && hasTeamColumns(lead) ? nameOf(lead.assigneeId) : undefined,
       untouched: isUntouched(lead, evs, now),
       demo,
-      opens: os.length,
+      opens: own.length,
+      allOpens: every.length,
       freshOpens: fresh,
-      lastOpenAt,
-      hot: open && fresh > 0 && isHotOpen(freshList[0]?.at, now),
+      lastOpenAt: own[0]?.at,
+      hot: Boolean(demo) && hotOf(lead, opens, now, ctx) !== null,
+      sentAt: demo ? linkSentAt(lead.id, events) : undefined,
       recent: created >= weekStart && created < weekEnd,
       contacted: wasContacted(lead, evsBy.get(lead.id) || []),
       replied: hasReplied(lead, evsBy.get(lead.id) || []),
@@ -133,9 +134,11 @@ export const VIEWS: { id: ViewId; label: string; test: (r: LeadRow) => boolean; 
   { id: "ever", label: "Ever contacted", test: (r) => r.contacted, extra: true },
   { id: "replied", label: "Replied", test: (r) => r.lead.status === "replied" },
   { id: "everReplied", label: "Ever replied", test: (r) => r.replied, extra: true },
-  // One meaning of "Demo opened" everywhere: the lead's demo link was opened at
-  // least once. The dashboard tile counts this same test. The Pipeline column of
-  // that name is the stage a lead sits in now, so it can differ.
+  // One meaning of "Demo opened" everywhere: the lead opened its own demo, after
+  // its link went to them (derive.ts leadOpens; a look at the live link before
+  // any message is not theirs). The dashboard tile and the funnel's "Replied or
+  // opened" count this same test. The Pipeline column of that name is the stage
+  // a lead sits in now, so it can differ.
   { id: "demo", label: "Demo opened", test: (r) => r.opens > 0 },
   { id: "won", label: "Won", test: (r) => r.lead.status === "won" },
   { id: "lost", label: "Lost and DNC", test: (r) => r.lead.status === "lost" || r.lead.status === "do_not_contact" },
@@ -257,7 +260,8 @@ export function matchesFilters(r: LeadRow, f: LeadFilters, opts: { ignoreStatus?
   const l = r.lead;
   if (!opts.ignoreStatus && f.status.length && !f.status.includes(l.status)) return false;
   if (!matchField(l.kind, f.kind)) return false;
-  if (!matchField(l.city, f.city)) return false;
+  // The town (city.ts cityOf), not the whole address the field may hold.
+  if (!matchField(cityOf(l), f.city)) return false;
   if (!matchField(l.source, f.source)) return false;
   if (!matchesAssignee(r, f.assignee)) return false;
   if (!matchField(l.assignedTo, f.old || "")) return false;
@@ -301,7 +305,7 @@ const STATUS_ORDER = Object.fromEntries(LEAD_STATUSES.map((s, i) => [s, i])) as 
 const SORT_VALUE: Record<SortKey, (r: LeadRow) => string | number | undefined> = {
   name: (r) => norm(r.lead.instituteName),
   status: (r) => STATUS_ORDER[r.lead.status],
-  city: (r) => norm(r.lead.city) || undefined,
+  city: (r) => norm(cityOf(r.lead)) || undefined,
   kind: (r) => r.lead.kind,
   source: (r) => norm(r.lead.source) || undefined,
   contact: (r) => norm(r.lead.phone || r.lead.email) || undefined,

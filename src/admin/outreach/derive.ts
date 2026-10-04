@@ -38,19 +38,130 @@ export function dueCount(leads: OutreachLead[], now = new Date()): number {
   return dueFollowUps(leads, now).length;
 }
 
+/* ── A lead's demo opens, read against its own history (4 Oct 2026) ─────────
+   The live test of 3 Oct 2026 (crm-fixes-1004 items 2 to 5) found one open
+   counted four ways. A demo's status "sent" only means its link is LIVE: 114
+   leads never written to showed "Sent", a check of the live link before any
+   message made Dazzling Hot, Verma's opens from the day before his first
+   e-mail counted as Demo opened, and Leads, Today, the Dashboard and Team >
+   Performance each had their own Hot. Now one reading, here, for every screen:
+
+     - SENT is the lead's own history: the first "sent" line whose message
+       carried its demo link (its template has {demoLink}: the twin With link,
+       or the link after a yes). A live demo with no such line is "Live, not
+       sent yet".
+     - THE LEAD'S OWN OPENS are the opens of its demo after that send. An open
+       before it cannot be theirs (they did not have the link): it is a look at
+       the live link before sending, a team member's, or a test. They still show
+       in the history, marked as not counted, and count for nothing.
+     - SINCE CONTACT is the lead's own opens after its last contact (the later
+       of lastContactedAt and its newest sent or call line). A lead never
+       contacted has none.
+     - HOT is an open lead with an open since contact in the last HOT_DAYS days.
+
+   Opens from a team browser are not recorded at all (lib/demo/opens.ts
+   viewerIsAdmin), and the CRM opens a live demo as a team preview (?team=1),
+   which also marks that browser on the main site. */
+
+/** The lines a reading needs: whose line, what kind, which message, when. */
+type Line = Pick<OutreachEvent, "leadId" | "type" | "templateId" | "at">;
+
 /**
- * Opens of this lead's demo AFTER we last contacted them, newest first.
- *
- * Opens before the last contact are old news: Mehdi has already acted on
- * them. A lead that was never contacted counts every open (somebody may have
- * forwarded the link).
+ * What reading a lead's opens needs besides the opens: the history (every line,
+ * or only this lead's) and, for a lead linked by its slug alone, which demo is
+ * its own (useCrmData's demoForLead). Without demoIdOf a lead's demo is its demoId.
  */
-export function opensSinceContact(lead: OutreachLead, opens: DemoSiteOpen[] | undefined): DemoSiteOpen[] {
-  if (!lead.demoId) return [];
-  const since = lead.lastContactedAt ? new Date(lead.lastContactedAt).getTime() : 0;
-  return (opens || [])
-    .filter((o) => o.demoId === lead.demoId && new Date(o.at).getTime() > since)
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+export interface OpensCtx {
+  events: readonly Line[];
+  demoIdOf?: (lead: OutreachLead) => string | undefined;
+}
+
+/* Each history list grouped by lead once (the lists are React state: a change is a new array). */
+const byLeadCache = new WeakMap<readonly Line[], { size: number; map: Map<string, Line[]> }>();
+
+/** This lead's lines from `events`, which may be every line or only this lead's. */
+export function linesOf(leadId: string, events: readonly Line[]): Line[] {
+  let c = byLeadCache.get(events);
+  if (!c || c.size !== events.length) {
+    const map = new Map<string, Line[]>();
+    for (const e of events) {
+      const a = map.get(e.leadId);
+      if (a) a.push(e);
+      else map.set(e.leadId, [e]);
+    }
+    c = { size: events.length, map };
+    byLeadCache.set(events, c);
+  }
+  return c.map.get(leadId) || [];
+}
+
+const ms = (iso: string | undefined | null): number => {
+  const t = iso ? Date.parse(iso) : NaN;
+  return Number.isFinite(t) ? t : NaN;
+};
+
+/** True for a "sent" line whose message carried the lead's demo link (its template has {demoLink}). */
+export function carriedDemoLink(e: Pick<OutreachEvent, "type" | "templateId">): boolean {
+  return e.type === "sent" && Boolean(getTemplate(e.templateId)?.body.includes("{demoLink}"));
+}
+
+/** When the lead's demo link FIRST went to them in a message (the line's time), or undefined: a demo's "Sent". */
+export function linkSentAt(leadId: string, events: readonly Line[]): string | undefined {
+  let first: Line | undefined;
+  for (const e of linesOf(leadId, events)) {
+    if (carriedDemoLink(e) && Number.isFinite(ms(e.at)) && (!first || ms(e.at) < ms(first.at))) first = e;
+  }
+  return first?.at;
+}
+
+/** When the lead was last contacted (ms): the later of lastContactedAt and its newest sent or call line; 0 when never. */
+export function lastContactMs(lead: Pick<OutreachLead, "id" | "lastContactedAt">, events: readonly Line[]): number {
+  let last = ms(lead.lastContactedAt);
+  if (!Number.isFinite(last)) last = 0;
+  for (const e of linesOf(lead.id, events)) {
+    if (e.type !== "sent" && e.type !== "call") continue;
+    const t = ms(e.at);
+    if (t > last) last = t;
+  }
+  return last;
+}
+
+/** True when the history has a send or a call to this lead, or the lead carries a contact date. */
+export function contactedBefore(lead: Pick<OutreachLead, "id" | "lastContactedAt">, events: readonly Line[]): boolean {
+  return lastContactMs(lead, events) > 0;
+}
+
+const newestFirst = (a: DemoSiteOpen, b: DemoSiteOpen) => ms(b.at) - ms(a.at);
+
+/** The demo a lead's opens belong to. */
+function demoIdFor(lead: OutreachLead, ctx?: Pick<OpensCtx, "demoIdOf">): string | undefined {
+  return (ctx?.demoIdOf ? ctx.demoIdOf(lead) : lead.demoId) || undefined;
+}
+
+/** Every recorded open of the lead's demo, newest first: the history shows them all. */
+export function allOpens(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, ctx?: Pick<OpensCtx, "demoIdOf">): DemoSiteOpen[] {
+  const id = demoIdFor(lead, ctx);
+  if (!id) return [];
+  return (opens || []).filter((o) => o.demoId === id).sort(newestFirst);
+}
+
+/** The lead's own opens: after its demo link first went to them (linkSentAt), newest first. None before it was sent. */
+export function leadOpens(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, ctx: OpensCtx): DemoSiteOpen[] {
+  const sent = ms(linkSentAt(lead.id, ctx.events));
+  if (!Number.isFinite(sent)) return [];
+  return allOpens(lead, opens, ctx).filter((o) => ms(o.at) >= sent);
+}
+
+/**
+ * The lead's own opens AFTER we last contacted them, newest first ("since
+ * contact"). Opens before the last contact are old news: Mehdi has already
+ * acted on them. A lead never contacted has none, and neither does one whose
+ * demo link never went to them.
+ */
+export function opensSinceContact(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, ctx: OpensCtx): DemoSiteOpen[] {
+  const last = lastContactMs(lead, ctx.events);
+  if (!last) return [];
+  return leadOpens(lead, opens, ctx).filter((o) => ms(o.at) > last);
 }
 
 export interface HotLead {
@@ -73,21 +184,26 @@ export function isHotOpen(lastOpenAt: string | undefined, now = new Date()): boo
   return Number.isFinite(at) && at >= now.getTime() - HOT_DAYS * 864e5;
 }
 
-/** Leads whose demo was opened since the last contact, in the last HOT_DAYS days, most recent open first. */
-export function hotLeads(leads: OutreachLead[], opens: DemoSiteOpen[] | undefined, now = new Date()): HotLead[] {
-  const out: HotLead[] = [];
-  for (const lead of leads) {
-    if (!isOpenLead(lead)) continue;
-    const o = opensSinceContact(lead, opens);
-    if (o.length && isHotOpen(o[0].at, now)) out.push({ lead, opens: o, lastOpenAt: o[0].at });
-  }
-  return out.sort((a, b) => new Date(b.lastOpenAt).getTime() - new Date(a.lastOpenAt).getTime());
+/** The one Hot: an open lead whose own demo was opened since the last contact, in the last HOT_DAYS days. */
+export function hotOf(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, now: Date, ctx: OpensCtx): HotLead | null {
+  if (!isOpenLead(lead)) return null;
+  const o = opensSinceContact(lead, opens, ctx);
+  return o.length && isHotOpen(o[0].at, now) ? { lead, opens: o, lastOpenAt: o[0].at } : null;
 }
 
-/** All opens of a lead's demo, for the history. */
-export function allOpens(lead: OutreachLead, opens: DemoSiteOpen[] | undefined): DemoSiteOpen[] {
-  if (!lead.demoId) return [];
-  return (opens || []).filter((o) => o.demoId === lead.demoId);
+/** True when the lead is Hot (hotOf): the same answer on Leads, Today, the Dashboard, the Pipeline and Team > Performance. */
+export function isHotLead(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, now: Date, ctx: OpensCtx): boolean {
+  return hotOf(lead, opens, now, ctx) !== null;
+}
+
+/** Hot leads (hotOf), most recent open first. */
+export function hotLeads(leads: OutreachLead[], opens: DemoSiteOpen[] | undefined, now: Date, ctx: OpensCtx): HotLead[] {
+  const out: HotLead[] = [];
+  for (const lead of leads) {
+    const h = hotOf(lead, opens, now, ctx);
+    if (h) out.push(h);
+  }
+  return out.sort((a, b) => ms(b.lastOpenAt) - ms(a.lastOpenAt));
 }
 
 /** "sent" events on the same local day, for one channel. */

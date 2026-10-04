@@ -5,24 +5,37 @@ import { teamDemoUrl } from "@/lib/demo/opens";
 import { CRM } from "../nav";
 import { crm, StatusDot } from "../ui";
 import { cn } from "@/lib/utils";
-import { kindLabel, SOURCE_LABEL, type DemoItem, type DemoSort, type DemoSortKey } from "./model";
+import { DEMO_STATE_TEXT, kindLabel, SOURCE_LABEL, type DemoItem, type DemoSort, type DemoSortKey, type DemoState } from "./model";
 import { DemoActionsCell, type RowHandlers } from "./DemoActionsCell";
 
-const STATUS_CLS: Record<string, string> = {
+const STATE_CLS: Record<DemoState, string> = {
   sent: "text-success",
+  live: "text-muted-foreground",
   draft: "text-warning",
   free: "text-muted-foreground",
   closed: "text-muted-foreground",
 };
-const STATUS_TEXT: Record<string, string> = { sent: "Sent", draft: "Draft", free: "Free", closed: "Closed" };
+
+/** The Status cell's tooltip: what the word means for this row. */
+function stateTitle(i: DemoItem): string | undefined {
+  if (i.state === "sent" && i.sentAt) return `A message to the lead carried its link on ${fmtDate(i.sentAt)}.`;
+  if (i.state === "live") return i.lead ? "Its link is live, but no message to the lead has carried it yet." : "Its link is live; no lead is linked, so nothing shows it was sent.";
+  return undefined;
+}
+
+/** The Opens cell's tooltip when some recorded opens are not counted (before the link went to the lead). */
+function opensTitle(i: DemoItem): string | undefined {
+  const other = i.allOpens - i.opens;
+  return other > 0 ? `${other} more ${other === 1 ? "open" : "opens"} from before its link went to the lead, not counted.` : undefined;
+}
 
 const COLS: { key: DemoSortKey; label: string; right?: boolean; hint?: string }[] = [
   { key: "institute", label: "Institute" },
-  { key: "status", label: "Status" },
+  { key: "status", label: "Status", hint: "Sent: a message to the lead carried its link. Live, not sent yet: the link works, but no message has carried it." },
   { key: "source", label: "Source" },
   { key: "created", label: "Created" },
   { key: "lead", label: "Lead" },
-  { key: "opens", label: "Opens", right: true, hint: "Opens of the link by the people it was sent to. Opens from the team's own browsers are never counted." },
+  { key: "opens", label: "Opens", right: true, hint: "Opens by the lead after its link went to them (with no lead: every open). Opens from the team's own browsers are never recorded." },
   { key: "fresh", label: "Since contact", right: true },
   { key: "lastOpen", label: "Last opened" },
 ];
@@ -68,7 +81,7 @@ export function DemoTable({ items, sort, onSort, h }: { items: DemoItem[]; sort:
                   {i.demo.city ? ` · ${i.demo.city}` : ""}
                 </span>
               </td>
-              <td className={cn(crm.td, "py-2", STATUS_CLS[i.status])}>{STATUS_TEXT[i.status] || i.status}</td>
+              <td className={cn(crm.td, "py-2", STATE_CLS[i.state])} title={stateTitle(i)} data-testid="demo-state">{DEMO_STATE_TEXT[i.state]}</td>
               <td className={cn(crm.td, "py-2", "text-muted-foreground")}>
                 <span className="block">{SOURCE_LABEL[i.source]}</span>
                 <span className="block text-[12px]">{kindLabel(i.demo.kind)}</span>
@@ -84,7 +97,7 @@ export function DemoTable({ items, sort, onSort, h }: { items: DemoItem[]; sort:
                   <span className="text-muted-foreground">No lead</span>
                 )}
               </td>
-              <td className={cn(crm.td, "py-2", crm.num, "text-right", i.opens > 0 && "font-medium")}>{i.opens}</td>
+              <td className={cn(crm.td, "py-2", crm.num, "text-right", i.opens > 0 && "font-medium")} title={opensTitle(i)}>{i.opens}</td>
               <td className={cn(crm.td, "py-2", crm.num, "text-right", i.freshOpens > 0 && "font-medium text-primary")}>{i.lead ? i.freshOpens : "-"}</td>
               <td className={cn(crm.td, "py-2", crm.num, "text-muted-foreground")}>{i.lastOpenAt ? fmtDateTime(i.lastOpenAt) : "Never"}</td>
               <td className={cn(crm.td, "py-2", "text-right")}><DemoActionsCell item={i} h={h} /></td>
@@ -115,7 +128,7 @@ export function DemoCards({ items, h }: { items: DemoItem[]; h: RowHandlers }) {
               <p className="break-words text-[14px] font-medium">{i.demo.instituteName || i.demo.slug}</p>
               <p className="break-all text-[12px] text-muted-foreground">/site/{i.demo.slug}</p>
             </div>
-            <span className={cn("shrink-0 text-[12px] font-medium", STATUS_CLS[i.status])}>{STATUS_TEXT[i.status] || i.status}</span>
+            <span className={cn("shrink-0 text-[12px] font-medium", STATE_CLS[i.state])} title={stateTitle(i)}>{DEMO_STATE_TEXT[i.state]}</span>
           </div>
           <p className="mt-1.5 text-[12px] text-muted-foreground">
             {[SOURCE_LABEL[i.source], kindLabel(i.demo.kind), i.demo.city, i.created ? fmtDate(i.created) : ""].filter(Boolean).join(" · ")}

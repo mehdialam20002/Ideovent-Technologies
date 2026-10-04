@@ -1,4 +1,4 @@
-import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types";
+import type { ContentData, CollectionKey, SingletonKey, BaseDoc, DemoSite } from "./types";
 import { seed } from "./seed";
 import { supabaseEnabled } from "./config";
 import { LocalStore } from "./localStore";
@@ -22,6 +22,13 @@ export interface Store {
   reset(): Promise<ContentData>;
   exportJson(): string;
   importJson(json: string): Promise<ContentData>;
+  /**
+   * The CRM's own host, Supabase (./demoSummary.ts): from now on every snapshot carries demoSites as summaries,
+   * plus the whole records read with loadDemo or saved here. Not in local mode, never on the admin.
+   */
+  useDemoSummaries?(): void;
+  /** One demo's whole record, read now (null when it is not there or cannot be read). */
+  loadDemo?(id: string): Promise<DemoSite | null>;
 }
 
 export function clone<T>(v: T): T {
@@ -110,6 +117,8 @@ export function sortByOrder<T extends BaseDoc>(list: T[]): T[] {
 function createDeferredSupabaseStore(): Store {
   let real: Store | null = null;
   let pending: Promise<Store> | null = null;
+  // Asked before the real store exists (the CRM asks at once): handed on when it does.
+  let summaries = false;
 
   const resolve = (): Promise<Store> => {
     if (real) return Promise.resolve(real);
@@ -117,6 +126,7 @@ function createDeferredSupabaseStore(): Store {
       pending = import("./supabaseStore").then(
         (m) => {
           real = new m.SupabaseStore();
+          if (summaries) real.useDemoSummaries?.();
           return real;
         },
         (e) => {
@@ -144,6 +154,14 @@ function createDeferredSupabaseStore(): Store {
     // answer if it somehow does not.
     exportJson: () => (real ? real.exportJson(): JSON.stringify(mergeWithSeed(null), null, 2)),
     importJson: async (json) => (await resolve()).importJson(json),
+    useDemoSummaries: () => {
+      summaries = true;
+      real?.useDemoSummaries?.();
+    },
+    loadDemo: async (id) => {
+      const s = await resolve();
+      return s.loadDemo ? s.loadDemo(id) : null;
+    },
   };
 }
 

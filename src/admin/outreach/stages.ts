@@ -205,11 +205,72 @@ export interface StageSuggestion {
 /** A lead at Call or Proposal, seen by a member: the call and the price are Mehdi's. */
 export const MEHDIS_NOW = "This lead is at the call or the proposal: Mehdi sends what comes next. If they write to you, hand it to him.";
 
+/** The India-time calendar day of a moment (YYYY-MM-DD): one unanswered message a day is counted in it. */
+function istDayOf(t: number): string {
+  return new Date(t + 5.5 * 3600e3).toISOString().slice(0, 10);
+}
+
+/**
+ * How far the no-reply ladder on this channel has gone, from what was SENT
+ * (4 Oct 2026, crm-fixes-1004 item 6): 0 when nothing went, 1 after the first
+ * message, 1 + n after the ladder's n-th step. Each sent line names its stage
+ * (its own, else its template's: derive.ts sentStageOf), so the count of
+ * e-mails no longer decides it: Verma had five e-mails logged in 40 minutes on
+ * 28 Sep (the first message three times, follow-ups 1 and 2) and read "The
+ * closing e-mail has gone" with no closing e-mail in its history. Now:
+ *   - a stage sent again counts once;
+ *   - a ladder step counts only on a later India-time day than the step
+ *     before it (the playbook's one unanswered message a day: a follow-up
+ *     logged the same day as the message before it was an extra tap, not the
+ *     next step); its own day is then where the next step's wait starts;
+ *   - a line with no known stage (a line from before the templates) is the
+ *     first message when nothing went before it, else the next step when it
+ *     went on a later day, as a count of such lines always read;
+ *   - a link sent after a yes, the call summary and the proposal are not
+ *     follow-ups and are left out.
+ */
+export function ladderReached(lead: Pick<OutreachLead, "id" | "kind">, events: Pick<OutreachEvent, "leadId" | "type" | "channel" | "templateId" | "stage" | "at">[], channel: TemplateChannel): number {
+  const ladder = ladderFor(channel, lead.kind);
+  const sends = events
+    .filter((e) => e.leadId === lead.id && e.type === "sent" && e.channel === channel)
+    .map((e) => ({ stage: e.stage || getTemplate(e.templateId)?.stage, t: Date.parse(e.at) }))
+    .filter((s) => Number.isFinite(s.t))
+    .sort((a, b) => a.t - b.t);
+  let reached = 0;
+  let lastDay = "";
+  for (const s of sends) {
+    const day = istDayOf(s.t);
+    if (s.stage === "first") {
+      if (reached === 0) {
+        reached = 1;
+        lastDay = day;
+      }
+      continue;
+    }
+    if (!s.stage) {
+      // No known stage: the first message, or (on a later day) the next step.
+      if (reached === 0 || day !== lastDay) {
+        reached = Math.min(reached + 1, ladder.length + 1);
+        lastDay = day;
+      }
+      continue;
+    }
+    if (!isLadder(s.stage)) continue;
+    const step = ladder.indexOf(s.stage) + 2; // first = 1, the ladder's first step = 2
+    if (step > reached && step >= 2 && day !== lastDay) {
+      reached = step;
+      lastDay = day;
+    }
+  }
+  return reached;
+}
+
 /**
  * The stage this lead is at on this channel. A reply, a call or a proposal
- * decides it; otherwise the no-reply sends already made on this channel (a
- * link sent after a yes is not a follow-up) walk the ladder: none, the first
- * message; one, the first follow-up; and so on. Past the end of the ladder the
+ * decides it; otherwise what was sent on this channel walks the ladder
+ * (ladderReached): nothing yet, the first message; after the first message,
+ * the first follow-up; after a follow-up, the one after it. Past the end of the
+ * ladder (the closing e-mail, WhatsApp's one follow-up, actually sent) the
  * answer says so, instead of offering one more message than the rules allow.
  */
 export function suggestFor(lead: OutreachLead, events: OutreachEvent[], channel: TemplateChannel, opts: { member?: boolean } = {}): StageSuggestion {
@@ -220,14 +281,10 @@ export function suggestFor(lead: OutreachLead, events: OutreachEvent[], channel:
   }
   if (lead.status === "call") return { stage: stageFor("after_call") };
   if (lead.status === "proposal") return { stage: stageFor("proposal") };
-  const cold = events.filter((e) => {
-    if (e.leadId !== lead.id || e.type !== "sent" || e.channel !== channel) return false;
-    const st = getTemplate(e.templateId)?.stage;
-    return !st || st === "first" || isLadder(st);
-  }).length;
-  if (!cold) return { stage: stageFor("first") };
+  const reached = ladderReached(lead, events, channel);
+  if (!reached) return { stage: stageFor("first") };
   const ladder = ladderFor(channel, lead.kind);
-  if (ladder[cold - 1]) return { stage: ladder[cold - 1] };
+  if (ladder[reached - 1]) return { stage: ladder[reached - 1] };
   return {
     stage: ladder[ladder.length - 1] ?? stageFor("follow_up"),
     done:

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, ExternalLink, Files, HelpCircle, Link2Off, Pencil, Search, Send } from "lucide-react";
 import type { DemoSite, DemoSiteSlot, PitchPage } from "@/lib/cms/types";
 import { useCms } from "@/lib/cms/context";
-import { demoStatus, demoPreviewPath } from "@/lib/demo/record";
+import { demoSitePath, demoStatus, demoPreviewPath } from "@/lib/demo/record";
 import { teamPreviewUrl } from "@/lib/demo/opens";
 import { TEMPLATES, loadTemplate, templateMeta, type TemplateId } from "@/lib/demo/templates";
 import { fromTemplate, type DuplicateIdentity } from "@/lib/demo/templates/fromTemplate";
@@ -16,7 +16,8 @@ import { teamDemoFix } from "@/lib/outreach/linkChoice";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { demosForPicker, markDemoSent } from "./demoActions";
-import { KIND_LABEL, btnGhost, btnPrimary, btnSecondary, inputCls } from "./ui";
+import { linkSentAt } from "./derive";
+import { KIND_LABEL, btnGhost, btnPrimary, btnSecondary, fmtDate, inputCls } from "./ui";
 import { cn } from "@/lib/utils";
 
 type Mode = "template" | "existing" | "pitch";
@@ -86,7 +87,9 @@ export function DemoPicker({ lead }: { lead: OutreachLead }) {
 
 function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
   const { data, actions } = useCms();
-  const { patchLead, addEvent, me } = useOutreach();
+  const { patchLead, addEvent, me, events } = useOutreach();
+  // "Sent" is this lead's history (a message that carried the link: derive.ts linkSentAt); a live demo without one is "Live, not sent yet".
+  const sentAt = linkSentAt(lead.id, events);
   const sites = useLeadDemoSites().filter((s) => !(s as DemoSite & { isExample?: boolean }).isExample);
   const pitches = (data.pitchPages as PitchPage[]) || [];
   /*
@@ -149,7 +152,7 @@ function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
 
   const markSent = async () => {
     if (!demo) return;
-    await markDemoSent(actions.saveDoc, demo, slots, [lead.contactName, lead.instituteName].filter(Boolean).join(", "));
+    await markDemoSent(actions.saveDoc, demo, slots, [lead.contactName, lead.instituteName].filter(Boolean).join(", "), new Date(), actions.loadDemo);
     await addEvent({ leadId: lead.id, type: "note", detail: `Demo /site/${demo.slug} marked sent` });
   };
 
@@ -165,7 +168,9 @@ function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
         <div data-testid="linked-demo" className="min-w-0">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <span className="font-medium">{demo?.instituteName || slug}</span>
-            {demoState === "sent" && <span className="text-xs text-success">Sent: link is live</span>}
+            {demoState === "sent" && (sentAt
+              ? <span className="text-xs text-success">Sent {fmtDate(sentAt)}: link is live</span>
+              : <span className="text-xs text-muted-foreground">Live, not sent yet</span>)}
             {demoState && demoState !== "sent" && <span className="text-xs text-warning">{demoState}: link shows a 404 until marked sent</span>}
           </p>
           <p className="mt-0.5 break-all text-xs text-muted-foreground">{demoLinkFor(slug)}</p>
@@ -175,7 +180,14 @@ function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
                 <Send className="h-4 w-4" aria-hidden="true" /> Mark sent to {lead.instituteName}
               </button>
             )}
-            {demo ? (
+            {/* A live demo opens as a team preview (?team=1): Mehdi's look is never recorded as the prospect's open and
+                marks his browser on the main site (4 Oct 2026). A draft's public link 404s: it opens in the admin preview. */}
+            {demo && demoState === "sent" ? (
+              <MainSiteLink path={teamPreviewUrl(demoSitePath(demo.slug))} newTab className={btnGhost} data-testid="demo-open"
+                title="The page the prospect gets. Opening it from here never counts as their open.">
+                <ExternalLink className="h-4 w-4" aria-hidden="true" /> Open
+              </MainSiteLink>
+            ) : demo ? (
               <MainSiteLink path={demoPreviewPath(demo.slug)} newTab className={btnGhost} data-testid="demo-open">
                 <ExternalLink className="h-4 w-4" aria-hidden="true" /> Open
               </MainSiteLink>
@@ -320,7 +332,8 @@ function OwnerDemoPicker({ lead }: { lead: OutreachLead }) {
  * only why and Ask Mehdi.
  */
 function TeamDemoStep({ lead }: { lead: OutreachLead }) {
-  const { publishLeadDemo } = useOutreach();
+  const { publishLeadDemo, events } = useOutreach();
+  const sentAt = linkSentAt(lead.id, events);
   const sites = useLeadDemoSites();
   const demo = leadDemo(lead, sites);
   const state = demo ? demoStatus(demo) : null;
@@ -348,7 +361,9 @@ function TeamDemoStep({ lead }: { lead: OutreachLead }) {
         <div data-testid="linked-demo" className="min-w-0">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <span className="font-medium">{demo?.instituteName || slug}</span>
-            {state === "sent" && <span className="text-xs text-success">Live: the link works</span>}
+            {state === "sent" && (sentAt
+              ? <span className="text-xs text-success">Sent {fmtDate(sentAt)}: the link works</span>
+              : <span className="text-xs text-success">Live, not sent yet: the link works</span>)}
             {state && state !== "sent" && state !== "closed" && !fix && <span className="text-xs text-warning">The link is off until you turn it on</span>}
             {state === "closed" && <span className="text-xs text-destructive">Mehdi closed this demo: ask him before you send it</span>}
           </p>

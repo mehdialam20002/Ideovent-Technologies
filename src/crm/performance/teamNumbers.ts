@@ -2,7 +2,7 @@ import type { DemoSiteOpen } from "@/lib/cms/types";
 import { istStartOfDay } from "@/lib/outreach/access";
 import type { AccessDay, CrmMember, MemberStats } from "@/lib/outreach/team";
 import type { OutreachEvent, OutreachLead } from "@/lib/outreach/types";
-import { closeThese, hotLeads, isOpenLead } from "@/admin/outreach/derive";
+import { closeThese, hotLeads, isOpenLead, type OpensCtx } from "@/admin/outreach/derive";
 import { istClock } from "../today/callTime";
 
 /**
@@ -47,7 +47,11 @@ export interface TeamCards {
   unassigned: number;
   /** Open team leads with no line for STALE_DAYS days or more (since the last line, or the assignment). */
   stale: OutreachLead[];
-  /** Team leads whose demo was opened more than HOT_ACT_HOURS ago with nothing sent since. */
+  /**
+   * Hot leads (derive.ts hotOf, the one Hot of Leads, Today and the Dashboard) whose first open since the last
+   * contact is more than HOT_ACT_HOURS old, with nothing sent since: every lead the caller reads, Mehdi's and the
+   * pool's too (crm-fixes-1004 item 5: Today listed Verma as Hot while this card said 0, counting team leads only).
+   */
   hotNotActed: OutreachLead[];
   /** Open requests waiting for Mehdi. */
   waiting: number;
@@ -55,6 +59,8 @@ export interface TeamCards {
 
 export function teamCards(input: {
   leads: OutreachLead[]; events: OutreachEvent[]; opens: DemoSiteOpen[]; ownerId: string | null; unassigned: number; waiting: number; now: Date;
+  /** Each lead's own demo (useCrmData openCtx); without it, its demoId. The history is `events`. */
+  demoIdOf?: OpensCtx["demoIdOf"];
 }): TeamCards {
   const { events, opens, now } = input;
   const team = teamLeads(input.leads, input.ownerId);
@@ -64,7 +70,7 @@ export function teamCards(input: {
     const since = Math.max(last.get(l.id) || 0, l.assignedAt ? Date.parse(l.assignedAt) || 0 : 0);
     return since > 0 && now.getTime() - since >= STALE_DAYS * DAY_MS;
   });
-  const hotNotActed = hotLeads(team, opens, now)
+  const hotNotActed = hotLeads(input.leads, opens, now, { events, demoIdOf: input.demoIdOf })
     .filter((h) => now.getTime() - Date.parse(h.opens[h.opens.length - 1]?.at || h.lastOpenAt) > HOT_ACT_HOURS * HOUR_MS)
     .map((h) => h.lead);
   return { unassigned: input.unassigned, stale, hotNotActed, waiting: input.waiting };

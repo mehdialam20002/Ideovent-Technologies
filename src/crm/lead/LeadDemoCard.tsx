@@ -2,14 +2,15 @@ import { useMemo, useState } from "react";
 import { Check, Copy, ExternalLink, Send } from "lucide-react";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { demoPreviewPath, demoStatus } from "@/lib/demo/record";
-import { teamPreviewUrl } from "@/lib/demo/opens";
+import { teamDemoUrl, teamPreviewUrl } from "@/lib/demo/opens";
 import { mainSiteUrl } from "@/lib/host";
 import { demoLinkFor } from "@/lib/outreach/engine";
 import { can, crmErrorText } from "@/lib/outreach/access";
 import { teamTurnOnReason } from "@/lib/outreach/linkChoice";
 import { useCms } from "@/lib/cms/context";
 import { markDemoSent } from "@/admin/outreach/demoActions";
-import { fmtDateTime } from "@/admin/outreach/ui";
+import { allOpens, leadOpens, linkSentAt, opensSinceContact } from "@/admin/outreach/derive";
+import { fmtDate, fmtDateTime } from "@/admin/outreach/ui";
 import { useCrmData } from "../useCrmData";
 import { crm } from "../ui";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,15 @@ const DAY = 86_400_000;
  * opens in all, opens since the last contact, the last open, and a 14-day
  * strip of opens so a burst is visible at a glance.
  *
+ * SENT IS THE LEAD'S HISTORY (4 Oct 2026, crm-fixes-1004 items 2 and 3). A
+ * demo's status "sent" only means its link is live; it was SENT when a message
+ * in this lead's history carried the link (derive.ts linkSentAt). Live with no
+ * such message reads "Live, not sent yet". The numbers are the lead's own opens
+ * (derive.ts leadOpens: after the link went to them); a look at the live link
+ * before that (often Mehdi's own check) is counted nowhere and said in one line.
+ * Mehdi's Open on a live demo is a team preview (?team=1), so his look is never
+ * recorded and his browser is marked on the main site (lib/demo/opens.ts).
+ *
  * Anyone but Mehdi (spec 10.7) turns a draft's link on through the database
  * (crm_publish_lead_demo; they cannot write the CMS), and opens the public page
  * marked as a team visit, so their look never counts as the prospect's open.
@@ -29,19 +39,19 @@ const DAY = 86_400_000;
  * teamDemoFix) gets no Turn on the link, only why.
  */
 export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
-  const { demoForLead, opens, slots, addEvent, now, me, publishLeadDemo } = useCrmData();
+  const { demoForLead, opens, slots, addEvent, now, me, publishLeadDemo, openCtx } = useCrmData();
   const manages = !me.role || can(me, "demos.manage");
   const { actions } = useCms();
   const demo = demoForLead(lead);
   const [copied, setCopied] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const mine = useMemo(
-    () => (demo ? opens.filter((o) => o.demoId === demo.id).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)) : []),
-    [demo, opens],
-  );
-  const since = lead.lastContactedAt ? Date.parse(lead.lastContactedAt) : 0;
-  const fresh = mine.filter((o) => Date.parse(o.at) > since).length;
+  // The lead's own opens (after its link went to them), every recorded one, and those since the last contact.
+  const mine = useMemo(() => (demo ? leadOpens(lead, opens, openCtx) : []), [demo, lead, opens, openCtx]);
+  const every = useMemo(() => (demo ? allOpens(lead, opens, openCtx) : []), [demo, lead, opens, openCtx]);
+  const fresh = useMemo(() => (demo ? opensSinceContact(lead, opens, openCtx).length : 0), [demo, lead, opens, openCtx]);
+  const sentAt = demo ? linkSentAt(lead.id, openCtx.events) : undefined;
+  const notCounted = every.length - mine.length;
   const days = useMemo(() => {
     const end = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() + DAY;
     const out = Array.from({ length: 14 }, (_, i) => ({ start: end - (14 - i) * DAY, n: 0 }));
@@ -86,7 +96,7 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
         await publishLeadDemo(lead.id, sentTo);
         return;
       }
-      await markDemoSent(actions.saveDoc, demo, slots, sentTo);
+      await markDemoSent(actions.saveDoc, demo, slots, sentTo, new Date(), actions.loadDemo);
       await addEvent({ leadId: lead.id, type: "note", detail: `Demo /site/${demo.slug} marked sent` });
     } catch (e) {
       setErr(manages ? (e as Error).message || "Not marked sent." : crmErrorText(e));
@@ -97,8 +107,10 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
     <section className={cn(crm.panel, crm.panelPad, "space-y-3")} aria-label="Demo" data-testid="lead-demo-card">
       <div className="flex items-center justify-between gap-2">
         <p className={crm.label}>Demo</p>
-        <span className={cn("text-[12px] font-medium", status === "sent" ? "text-success" : "text-warning")}>
-          {status === "sent" ? "Sent, link is live" : `${status.charAt(0).toUpperCase()}${status.slice(1)}, link is off`}
+        <span className={cn("text-[12px] font-medium", status === "sent" ? (sentAt ? "text-success" : "text-muted-foreground") : "text-warning")} data-testid="lead-demo-state">
+          {status === "sent"
+            ? sentAt ? `Sent ${fmtDate(sentAt)}, link is live` : "Live, not sent yet"
+            : `${status.charAt(0).toUpperCase()}${status.slice(1)}, link is off`}
         </span>
       </div>
       <p className="break-all text-[13px]">/site/{demo.slug}</p>
@@ -117,6 +129,11 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground">Opens per day, last 14 days</p>
+      {notCounted > 0 && (
+        <p className="text-[11px] text-muted-foreground" data-testid="lead-demo-not-counted">
+          {notCounted === 1 ? "1 open" : `${notCounted} opens`} from before its link went to them {notCounted === 1 ? "is" : "are"} not counted (often your own check of the link).
+        </p>
+      )}
       {mehdisFirst && <p className="text-[12px] text-warning" data-testid="lead-demo-needs-mehdi">{mehdisFirst}</p>}
       <div className="flex flex-wrap gap-1.5">
         {status !== "sent" && status !== "closed" && !mehdisFirst && (
@@ -127,10 +144,14 @@ export function LeadDemoCard({ lead }: { lead: OutreachLead }) {
         <button type="button" className={crm.btn} onClick={() => void copy()}>
           {copied ? <Check className="h-4 w-4 text-success" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />} {copied ? "Copied" : "Copy link"}
         </button>
-        {/* The preview is on the main site: relative today, absolute from the CRM's own subdomain. Anyone but
-            Mehdi opens the public page as a team visit (/admin is his), once its link is live. */}
-        {manages ? (
+        {/* The preview is on the main site: relative today, absolute from the CRM's own subdomain. A live demo opens
+            as a team visit (?team=1) for everyone, Mehdi too, so a look from here is never recorded as the prospect's
+            open and marks this browser on the main site (4 Oct 2026); Mehdi's draft opens in the admin preview. */}
+        {manages && status !== "sent" ? (
           <a className={crm.btn} href={mainSiteUrl(demoPreviewPath(demo.slug))} target="_blank" rel="noopener noreferrer" data-testid="lead-demo-open"><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
+        ) : manages && status === "sent" ? (
+          <a className={crm.btn} href={teamDemoUrl(demo.slug)} target="_blank" rel="noopener noreferrer" data-testid="lead-demo-open"
+            title="The page the prospect gets. Opening it from here never counts as their open."><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
         ) : status === "sent" ? (
           <a className={crm.btn} href={teamPreviewUrl(demoLinkFor(demo.slug))} target="_blank" rel="noopener noreferrer" data-testid="lead-demo-open"><ExternalLink className="h-4 w-4" aria-hidden="true" /> Open</a>
         ) : null}

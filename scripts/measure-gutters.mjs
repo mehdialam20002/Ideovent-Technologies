@@ -342,7 +342,18 @@ for (const route of ROUTES) {
       // broken fails both times.
       let rendered = false
       for (let attempt = 0; attempt < 2 && !rendered; attempt++) {
-        if (attempt) await page.reload({ waitUntil: 'domcontentloaded' })
+        if (attempt) {
+          // The reload can fail for a reason outside the app (on 4 Oct 2026 Windows suspended the network for a
+          // moment: net::ERR_NETWORK_IO_SUSPENDED, and the whole run crashed after 76 routes). Then the route is
+          // opened again on a fresh page; only if that fails too is the route marked as not rendered.
+          const reloaded = await page.reload({ waitUntil: 'domcontentloaded', timeout: 20000 }).then(() => true, () => false)
+          if (!reloaded) {
+            await freshPage()
+            await page.setViewportSize({ width: w, height: 900 }).catch(() => {})
+            const again = await page.goto(BASE + route, { waitUntil: 'domcontentloaded', timeout: 20000 }).then(() => true, () => false)
+            if (!again) break
+          }
+        }
         rendered = await page.waitForSelector(ready, { timeout: 15000 }).then(() => true, () => false)
       }
       if (!rendered) {

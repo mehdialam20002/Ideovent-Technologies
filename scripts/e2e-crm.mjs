@@ -147,6 +147,12 @@ for (let i = 0; i < 40; i++) {
     lead.demoId = d.id;
     lead.demoSlug = d.slug;
     const lc = lead.lastContactedAt ? Date.parse(lead.lastContactedAt) : 0;
+    /* Its link went in a first message With link, ten minutes before the seeded send (crm-fixes-1004 items 2, 3:
+       a demo is Sent, and its opens are the lead's, only after a message carried its link). */
+    if (lc) {
+      events.push({ id: `oe_e2e_l${i}`, leadId: lead.id, at: iso(lc - 10 * 60_000), type: "sent", channel: i % 2 ? "whatsapp" : "email",
+        templateId: i % 2 ? "wa_first_new_any_en_link" : "em_first_new_any_en_link", stage: "first", detail: "seeded first message with the link" });
+    }
     if (status === "demo_opened") {
       opens.push({ id: `op_e2e_${i}a`, demoId: d.id, at: iso(lc + 3600e3) }, { id: `op_e2e_${i}b`, demoId: d.id, at: iso(lc + 2 * 3600e3) });
       // The provider writes this once per open; seeding it keeps the seed's statuses and events as they are.
@@ -210,8 +216,10 @@ const EXPECT = {
   overdue: openLeads.filter((l) => Date.parse(l.nextActionAt) < sod).length,
   today: openLeads.filter((l) => Date.parse(l.nextActionAt) >= sod && Date.parse(l.nextActionAt) < sod + DAY).length,
   newLast7: leads.filter((l) => Date.parse(l.createdAt) >= sod + DAY - 7 * DAY).length,
-  // Hot = opened since the last contact, and the open is at most 7 days old (HOT_DAYS in derive.ts).
-  hot: openLeads.filter((l) => l.lastContactedAt && opens.some((o) => o.demoId === l.demoId && Date.parse(o.at) > Date.parse(l.lastContactedAt) && Date.parse(o.at) >= now.getTime() - 7 * DAY)).length,
+  // Hot = the lead's own demo opened since the last contact (and after its link went: derive.ts leadOpens), at most
+  // 7 days ago (HOT_DAYS in derive.ts). The seed's link went ten minutes before the last contact.
+  hot: openLeads.filter((l) => l.lastContactedAt && events.some((e) => e.leadId === l.id && /_link$/.test(e.templateId || ""))
+    && opens.some((o) => o.demoId === l.demoId && Date.parse(o.at) > Date.parse(l.lastContactedAt) && Date.parse(o.at) >= now.getTime() - 7 * DAY)).length,
   unlinked: 2,
   demos: demos.length,
 };
@@ -411,6 +419,60 @@ const hotN = await crm.evaluate(() => document.querySelector('[data-testid="hot-
 check(hotN === String(EXPECT.hot), `Hot leads = ${EXPECT.hot}`, hotN);
 const callout = (await crm.getByTestId("unlinked-callout").innerText().catch(() => "")).replace(/\s+/g, " ");
 check(callout.includes(`${EXPECT.unlinked} demos have no lead`), `the dashboard says ${EXPECT.unlinked} demos have no lead`, callout);
+
+/* crm-fixes-1004 item 11: the activity chart's y-axis labels sit inside the chart (they read "0" when cut). */
+{
+  const ax = await crm.evaluate(() => {
+    const box = document.querySelector('[data-testid="activity-chart"] .recharts-wrapper')?.getBoundingClientRect();
+    const ticks = [...document.querySelectorAll('[data-testid="activity-chart"] .recharts-yAxis .recharts-cartesian-axis-tick-value')].map((t) => {
+      const r = t.getBoundingClientRect();
+      return { text: t.textContent, left: r.left, right: r.right };
+    });
+    return { left: box ? box.left : null, ticks };
+  });
+  check(ax.left !== null && ax.ticks.length > 1 && ax.ticks.every((t) => t.left >= ax.left - 0.5),
+    "the chart's y-axis labels sit inside the chart, none cut at its left edge (item 11)", JSON.stringify(ax));
+}
+/* crm-fixes-1004 item 12: at 1366 px the 7-day table fits its card; its Change column shows. */
+{
+  await crm.setViewportSize({ width: 1366, height: 900 });
+  await settle(crm, 600);
+  const wt = await crm.evaluate(() => {
+    const card = document.querySelector('[data-testid="week-table"]');
+    const table = card?.querySelector("table");
+    const change = [...(card?.querySelectorAll("th") || [])].find((th) => th.textContent.trim() === "Change");
+    const c = card?.getBoundingClientRect();
+    const h = change?.getBoundingClientRect();
+    return c && table && h ? { card: Math.round(c.width), table: Math.round(table.scrollWidth), changeRight: Math.round(h.right), cardRight: Math.round(c.right) } : null;
+  });
+  check(Boolean(wt) && wt.table <= wt.card + 1 && wt.changeRight <= wt.cardRight + 1, "at 1366 px the 7-day table fits its card and its Change column shows (item 12)", JSON.stringify(wt));
+  await crm.setViewportSize({ width: 1440, height: 1000 });
+  await settle(crm, 300);
+}
+/* crm-fixes-1004 item 13: a new screen starts at its top. */
+{
+  await crm.evaluate(() => document.querySelector("#crm-main")?.scrollTo(0, 900));
+  await settle(crm, 200);
+  const before = await crm.evaluate(() => document.querySelector("#crm-main")?.scrollTop || 0);
+  await crm.locator('aside[aria-label="CRM"] nav a', { hasText: "Leads" }).first().click();
+  await crm.locator('table[aria-label="Leads"]').first().waitFor({ timeout: PAGE_WAIT }).catch(() => {});
+  await settle(crm, 300);
+  const after = await crm.evaluate(() => document.querySelector("#crm-main")?.scrollTop || 0);
+  check(before > 100 && after === 0, "scrolled down on the Dashboard, a click on Leads opens Leads at its top (item 13)", JSON.stringify({ before, after }));
+}
+/* crm-fixes-1004 item 17: Mehdi's Me under the rail, and his Me page speaks to him. */
+{
+  const me = crm.locator('aside[aria-label="CRM"] div[role="navigation"] a', { hasText: "Me" }).first();
+  check((await me.getAttribute("href").catch(() => null)) === "/crm/me", "the owner's rail has Me under its list (item 17)", await me.getAttribute("href").catch(() => "none"));
+  await me.click().catch(() => {});
+  await crm.getByTestId("crm-me-page").waitFor({ timeout: PAGE_WAIT }).catch(() => {});
+  const text = (await crm.getByTestId("crm-me-page").innerText().catch(() => "")).replace(/\s+/g, " ");
+  check(/Your own number/.test(text) && /\+91 77619 21786/.test(text) && !/Ask him/.test(text) && !/Mehdi adds it/.test(text) && !/Send a test to Mehdi/.test(text)
+    && (await crm.getByRole("button", { name: /sign out/i }).count()) > 0,
+    "the owner's Me page: his own number and signature, Sign out, and no wording about asking himself (item 17)", text.slice(0, 400));
+  await crm.goto(BASE + "/crm", { waitUntil: "domcontentloaded" });
+  await crm.getByTestId("crm-dashboard").waitFor({ timeout: PAGE_WAIT }).catch(() => {});
+}
 
 /* Every count tile opens a list with exactly its number of rows (Mehdi clicks a 9, he sees 9). */
 const tileLinks = await crm.evaluate(() =>
@@ -626,6 +688,19 @@ const B = leads[9];
 await crm.goto(BASE + `/crm/leads/${A.id}`, { waitUntil: "domcontentloaded" });
 await crm.getByTestId("compose").waitFor({ timeout: PAGE_WAIT });
 check((await crm.getByTestId("lead-name").innerText()) === A.instituteName, `/crm/leads/${A.id} opens ${A.instituteName}`);
+{
+  /* crm-fixes-1004 items 2 and 18. */
+  const state = await crm.getByTestId("lead-demo-state").innerText().catch(() => "");
+  check(state === "Live, not sent yet", `lead A: never written to, its live demo reads "Live, not sent yet", not Sent (item 2)`, state);
+  const step1 = await crm.getByTestId("linked-demo").innerText().catch(() => "");
+  check(/Live, not sent yet/.test(step1) && !/Sent/.test(step1.replace("not sent yet", "")), "lead A: step 1 says Live, not sent yet too", step1.replace(/\s+/g, " "));
+  const hd = crm.getByTestId("history-details");
+  if (!(await hd.evaluate((d) => d.open).catch(() => true))) await hd.locator("summary").click().catch(() => {});
+  await settle(crm, 200);
+  const count = Number((await crm.getByTestId("history-count").innerText().catch(() => "")).split(" ")[0]);
+  const items = await crm.getByTestId("history").locator("li").count();
+  check(count === items && items >= 1, "lead A: the History fold counts the lines it lists (item 18: it said 0 entries over a Lead added line)", JSON.stringify({ count, items }));
+}
 const eA = await emailLink(A);
 checkEmail(A, eA, "lead A");
 await crm.locator("#msg-body").fill(((await crm.locator("#msg-body").inputValue()) || "") + `\nEDITMARK-${A.id}`);
@@ -684,6 +759,16 @@ dr = await demoRows();
 check(dr.length === EXPECT.demos, `the All view lists all ${EXPECT.demos} demos`, String(dr.length));
 const linkedOk = demos.filter((d) => d.id !== POSTER_DEMO.id && d.id !== DUP_DEMO.id).every((d) => dr.find((r) => r.name === d.instituteName)?.lead.includes(d.instituteName));
 check(linkedOk, "every seeded demo shows the lead it belongs to");
+{
+  /* crm-fixes-1004 item 2: a demo's Status is Sent only when its lead's history shows a message that carried the link. */
+  const states = await crm.$$eval('[data-testid="demo-table"] tbody tr', (trs) => Object.fromEntries(trs.map((tr) => [tr.children[0].querySelector("span")?.textContent.trim(), tr.querySelector('[data-testid="demo-state"]')?.textContent.trim()])));
+  const sentLead = leads.find((l) => l.demoId && l.lastContactedAt);
+  check(states[A.instituteName] === "Live, not sent yet" && states[sentLead.instituteName] === "Sent" && states[POSTER_DEMO.instituteName] === "Draft",
+    "Demos: Live, not sent yet for a live demo never sent; Sent once a message carried its link; Draft as before (item 2)",
+    JSON.stringify({ A: states[A.instituteName], sent: states[sentLead.instituteName], poster: states[POSTER_DEMO.instituteName] }));
+  const sub = (await crm.locator("h1").first().locator("xpath=..").innerText().catch(() => "")).replace(/\s+/g, " ");
+  check(/\d+ sent to their lead, \d+ opened by them/.test(sub), "Demos says how many were sent to their lead and opened by them, as the Dashboard's rate does", sub.slice(0, 200));
+}
 
 /* Create lead for the poster demo. */
 await crm.getByRole("tab", { name: /^No lead/ }).click();
@@ -783,9 +868,10 @@ check(Boolean(posterAuto) && posterAuto.instituteName === POSTER_EXTRACT.institu
   "the poster demo auto-creates a CRM lead with the poster's phone", JSON.stringify(posterAuto || null));
 
 /* The CRM tab stayed open on Demos the whole time. Coming back to it re-reads
-   the data (at most every 15 s): the new demos must show without a reload. */
+   the data (at most every 2 minutes since 4 Oct 2026, useCrmData FOCUS_REFRESH_MS):
+   the new demos must show without a reload. */
 await crm.bringToFront();
-await crm.waitForTimeout(Math.max(0, 16_000 - (Date.now() - crmLoadedAt)));
+await crm.waitForTimeout(Math.max(0, 121_000 - (Date.now() - crmLoadedAt)));
 await crm.evaluate(() => window.dispatchEvent(new Event("focus")));
 await settle(crm, 2000);
 dr = await demoRows();
@@ -953,8 +1039,8 @@ const relLinks = {
   edit: await sc.getByTestId("demo-edit").getAttribute("href").catch(() => null),
   card: await crm.getByTestId("lead-demo-open").getAttribute("href").catch(() => null),
 };
-check(relLinks.open === `/admin/preview/site/${seededDental.demoSlug}` && relLinks.card === relLinks.open && relLinks.edit === `/admin/c/demoSites?edit=${seededDental.demoId}`,
-  "on the main site the lead page's links to the admin stay relative (/admin/preview, /admin/c/demoSites)", JSON.stringify(relLinks));
+check(relLinks.open === `/site/${seededDental.demoSlug}?team=1` && relLinks.card === relLinks.open && relLinks.edit === `/admin/c/demoSites?edit=${seededDental.demoId}`,
+  "on the main site the lead page's links stay relative: its live demo opens as a team preview (/site/<slug>?team=1, never counted as an open), Edit demo in the admin", JSON.stringify(relLinks));
 
 /* A NEW dental lead, a d4 demo made on its page, and a dental e-mail through the mail app. */
 const NEW_DENTAL = { name: "Example Implant Dental Centre E2E", city: "Dhanbad", phone: "98765 43281", email: "care@example-implant-e2e.example" };
@@ -1065,9 +1151,9 @@ const abs = {
   card: await sub.getByTestId("lead-demo-open").getAttribute("href").catch(() => null),
 };
 const mainOrigin = /^https?:\/\//.test(abs.open || "") ? new URL(abs.open).origin : "";
-check(Boolean(mainOrigin) && mainOrigin !== new URL(CRM_HOST).origin && abs.open === `${mainOrigin}/admin/preview/site/${seededDental.demoSlug}`
+check(Boolean(mainOrigin) && mainOrigin !== new URL(CRM_HOST).origin && abs.open === `${mainOrigin}/site/${seededDental.demoSlug}?team=1`
   && abs.card === abs.open && abs.edit === `${mainOrigin}/admin/c/demoSites?edit=${seededDental.demoId}`,
-  `CRM host: the lead page's links to the admin are absolute, to the main site (${mainOrigin || "none"})`, JSON.stringify(abs));
+  `CRM host: the lead page's links to the main site are absolute (${mainOrigin || "none"}): the live demo as a team preview, Edit demo in the admin`, JSON.stringify(abs));
 const [editTab] = await Promise.all([context.waitForEvent("page", { timeout: 8000 }).catch(() => null), subCompose.getByTestId("demo-edit").click().catch(() => {})]);
 /* A new tab starts at "" and commits its address a moment later: wait for it to leave the blank page. */
 if (editTab) await editTab.waitForURL((u) => /^https?:/.test(u.href), { timeout: 8000 }).catch(() => {});

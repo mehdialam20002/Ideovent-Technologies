@@ -1,8 +1,8 @@
 import type { DemoSiteOpen } from "@/lib/cms/types";
-import { OBSERVATIONS, checkSend, demoLinkFor, type SendCheck } from "@/lib/outreach/engine";
+import { OBSERVATIONS, checkSend, demoLinkFor, isKnownObservation, type SendCheck } from "@/lib/outreach/engine";
 import { templatesFor, type MessageTemplate, type TemplateChannel, type TemplateStage } from "@/lib/outreach/templates";
 import type { EventInput, OutreachEvent, OutreachLead, OutreachSettings } from "@/lib/outreach/types";
-import { dueFollowUps, hotLeads, isHotOpen, isOpenLead, opensSinceContact } from "./derive";
+import { dueFollowUps, hotLeads, isOpenLead, type OpensCtx } from "./derive";
 import { isRetired, ladderFor, stageFor, type TemplateOffer } from "./stages";
 import { dueLabel } from "./ui";
 
@@ -91,24 +91,104 @@ function langScore(template: string, lead: string): number {
 }
 
 /**
+ * A note in every case, even one that speaks to them: the research tools ("curl
+ * 27 Sep 2026: HTTP 200, 46 KB", a page width in px), the sheet's own verdicts
+ * ("skipped, no new-site pitch"), and a web address written out (a domain in a
+ * message is a link, and a first message carries none of its own).
+ */
+const NOTE_ALWAYS = [
+  /\bcurl\b|\bHTTP \d{3}\b|\b\d+(\.\d+)? ?(KB|MB)\b|\b\d+ ?px\b|\bheadless\b|\(checked|visible-text|\bog[: ]|\bmeta (tag|description)\b|\btitle tag\b|returns only|\bre-?checked\b|\bNXDOMAIN\b/i,
+  /\bskipped\b|\bpitch\b|\bno new[- ]site\b|\bbuying[ _]signal\b|\blead sheet\b|\bnot a fit\b/i,
+  /\b[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.(com|in|org|net|edu|info|biz|io|co|ac\.in|co\.in|org\.in|edu\.in|net\.in)\b/i,
+];
+
+/**
+ * A note unless it speaks to them: the page or the lead in the third person.
+ * "Their only site is a free Blogger blog" and "No website of its own: only
+ * directories come up for the school" read as notes in a message that opens "I
+ * looked at your school's website.". The quoting shape (the X reads / says /
+ * shows) and a copyright line are notes too ("One thing stood out: The footer
+ * reads...").
+ */
+const NOTE_UNLESS_TO_THEM = [
+  /^(their|they|has|have)\b/i,
+  /\btheir(\s+[\w'-]+){0,2}\s+(site|website|web site|homepage|home page|blog|blogs|listing|listings|page|pages|footer|header|domain|course|courses|wix|wordpress|record|profile|profiles|examination)\b/i,
+  /\b(their|its) own\b/i,
+  /\b(for|instead of|about) the (school|clinic|institute|academy|centre|center|classes|coaching|practice)\b/i,
+  /^no (website|working website|web presence|site)\b/i,
+  /^(the|their|its)\s+[\w\s-]{0,40}?\b(reads|says|shows|lists|displays)\b/i,
+  /\bcopyright\b|©/i,
+  /\bgoogle (search )?for\b/i,
+];
+
+/** Speaks to them: "your site", "aapki site". */
+const TO_THEM = /\b(you|your|yours|aap|aapki|aapka|aapke|aapko)\b/i;
+
+/** A quote from their page: it opens after a space or a bracket and closes before one or a stop. */
+const QUOTED = /(^|[\s(])(['‘"“])[^'‘’"“”]+(['’"”])(?=[\s.,;:)!?]|$)/g;
+
+/** The text without what it quotes from their page ('This is a summary of your course...'): a quoted "your" is the page's, not ours. */
+const unquoted = (t: string) => t.replace(QUOTED, "$1");
+
+/** A title before a name ("Dr. Sharma", "Sr. Sec. School"): its stop does not end a sentence. */
+const TITLE_STOP = /\b(Dr|Mr|Mrs|Ms|Smt|Shri|St|Sr|Jr|Sec|Prof|No|Pvt|Ltd)\.$/;
+const STOP_MASK: Record<string, string> = { ".": "\u0001", "!": "\u0002", "?": "\u0003" };
+
+/** The sentences of a text. A stop inside a quote from their page, or after a title, does not end one. */
+function sentences(t: string): string[] {
+  const masked = t.replace(QUOTED, (m) => m.replace(/[.!?]/g, (ch) => STOP_MASK[ch]));
+  const out: string[] = [];
+  for (const part of masked.split(/(?<=[.!?])\s+(?=\S)/)) {
+    if (out.length && TITLE_STOP.test(out[out.length - 1])) out[out.length - 1] += ` ${part}`;
+    else out.push(part);
+  }
+  return out.map((s) => s.replace(/[\u0001\u0002\u0003]/g, (ch) => (ch === "\u0001" ? "." : ch === "\u0002" ? "!" : "?")).trim()).filter(Boolean);
+}
+
+/**
  * True when a lead's observation reads like a research note (the lead sheet's
- * buying_signal column: "curl 27 Sep 2026: HTTP 200, 46 KB") rather than a
- * sentence to say to them. Such a note is shown to Mehdi, never put in a
- * message on its own.
+ * buying_signal column) rather than a sentence to say to them. Such a note is
+ * shown to Mehdi ("Your research note, never sent"), never put in a message or
+ * read out by the call script on its own.
+ *
+ * 4 Oct 2026 (crm-fixes-1004 items 1 and 16), from the live CRM's own saved
+ * observations: "directory" no longer makes a note on its own (Bansal Dental's
+ * "You post on Facebook almost every day, but the clinic has no website of its
+ * own; a search finds only directories and social pages." and Ek Dant's "A
+ * search for Ek Dant in Rajouri Garden finds Practo, Justdial and other
+ * directories, but no website of your own." speak to them, and were the
+ * reason their first WhatsApp stayed blocked), while the sheet's verdicts and
+ * domains ("Has its own modern, maintained site (holyspiritlonikand.com,
+ * Admission 2026-27 live): skipped, no new-site pitch.") and the third person
+ * ("Their only site is a free WordPress.com blog with no fees or admission
+ * details.") now are. An observation from the list, in any of its wordings,
+ * is never a note.
+ *
+ * The third-person test runs sentence by sentence (gate review, 4 Oct 2026): in
+ * "I looked at your website. Their only site is a free Blogger blog with no fees
+ * page." the "your" of the first sentence does not make the second, which talks
+ * about them, speak to them.
  */
 export function looksLikeNote(text: string | undefined): boolean {
   const t = (text || "").trim();
   if (!t) return false;
-  if (OBSERVATIONS.some((o) => o.id === t || o.en === t || o.hinglish === t)) return false;
-  // A sentence meant for them speaks to them ("your site", "aapki site"). A
-  // note ABOUT them describes the page in the third person ("The footer reads
-  // 'Copyright Example Coaching Academy 2022'.") and would go out as "One thing
-  // stood out: The footer reads...", so it counts as a note too. Only the
-  // quoting shape (the X reads / says / shows) and a copyright line are
-  // caught: "The admissions page does not open on a phone" is still a sentence.
-  const toThem = /\b(you|your|yours|aap|aapki|aapka|aapke|aapko)\b/i.test(t);
-  if (!toThem && (/^(the|their|its)\s+[\w\s-]{0,40}?\b(reads|says|shows|lists|displays)\b/i.test(t) || /\bcopyright\b|©/i.test(t))) return true;
-  return /\bcurl\b|\bHTTP \d{3}\b|\b\d+(\.\d+)? ?(KB|MB)\b|\bheadless\b|\bgoogle (search )?for\b|returns only|\bdirector(y|ies)\b|\(checked|visible-text|\bog[: ]|\bmeta tag\b/i.test(t);
+  if (isKnownObservation(t) || OBSERVATIONS.some((o) => o.id === t || o.en === t || o.hinglish === t)) return false;
+  if (NOTE_ALWAYS.some((re) => re.test(t))) return true;
+  return sentences(t).some((s) => !TO_THEM.test(unquoted(s)) && NOTE_UNLESS_TO_THEM.some((re) => re.test(s)));
+}
+
+/** Why a send stops when the sentence typed for {observation} reads like a research note (looksLikeNote). */
+export const NOTE_IN_MESSAGE =
+  "This sentence reads like a research note (it talks about them, not to them, or carries a web address or the lead sheet's own words). Say it to them, as in \"Your site ...\", or pick one from the list.";
+
+/** Why a saved observation is a note, in a few words for Settings > Clean saved observations; null when it is not one. */
+export function noteReason(text: string | undefined): string | null {
+  if (!looksLikeNote(text)) return null;
+  const t = (text || "").trim();
+  if (NOTE_ALWAYS[2].test(t)) return "Has a web address in it";
+  if (NOTE_ALWAYS[1].test(t)) return "The lead sheet's own verdict";
+  if (NOTE_ALWAYS[0].test(t)) return "A research tool's output";
+  return "Talks about them, not to them";
 }
 
 /** The observation a new compose starts with: the lead's own, unless it is a research note. */
@@ -173,13 +253,14 @@ export function canSend(r: RankInput, t: MessageTemplate): SendCheck {
 /**
  * What to do next for this lead, in a few plain words that name the stage
  * (First message, After they say yes, Follow-up, After the call, Proposal).
- * `urgent` colours it.
+ * `urgent` colours it. `hot`: the lead is Hot (derive.ts isHotLead, the one
+ * reading every screen shares), worked out by the caller with its history.
  */
-export function nextStep(lead: OutreachLead, opens: DemoSiteOpen[] | undefined, now = new Date(), opts: { member?: boolean } = {}): { text: string; urgent: boolean } {
+export function nextStep(lead: OutreachLead, hot: boolean, now = new Date(), opts: { member?: boolean } = {}): { text: string; urgent: boolean } {
   // A member hands a yes to Mehdi (spec 10.7): the sample and the call times are his to send.
   if (opts.member && lead.status === "replied") return { text: "They said yes: hand the lead to Mehdi now", urgent: true };
   if (!isOpenLead(lead)) return { text: lead.status === "won" ? "Client" : "Nothing to do", urgent: false };
-  if (lead.lastContactedAt && isHotOpen(opensSinceContact(lead, opens)[0]?.at, now)) return { text: "Demo opened: call or message today", urgent: true };
+  if (hot) return { text: "Demo opened: call or message today", urgent: true };
   const due = lead.nextActionAt ? dueLabel(lead.nextActionAt, now) : "";
   const late = /late/.test(due);
   const isDue = due === "today" || late;
@@ -244,12 +325,12 @@ export function callDoneChanges(lead: OutreachLead, now = new Date(), opts: { me
 }
 
 /**
- * Today's to-do list, in the order it pays: hot leads (demo opened since the
- * last message), follow-ups due today or late, then new leads not contacted.
- * The lead screen walks this list with "Next lead".
+ * Today's to-do list, in the order it pays: hot leads (their own demo opened
+ * since the last message: derive.ts hotLeads), follow-ups due today or late,
+ * then new leads not contacted. The lead screen walks this list with "Next lead".
  */
-export function todayQueue(leads: OutreachLead[], opens: DemoSiteOpen[] | undefined, now = new Date()) {
-  const hot = hotLeads(leads, opens, now);
+export function todayQueue(leads: OutreachLead[], opens: DemoSiteOpen[] | undefined, now: Date, ctx: OpensCtx) {
+  const hot = hotLeads(leads, opens, now, ctx);
   const hotIds = new Set(hot.map((h) => h.lead.id));
   const due = dueFollowUps(leads, now).filter((l) => !hotIds.has(l.id));
   const dueIds = new Set(due.map((l) => l.id));

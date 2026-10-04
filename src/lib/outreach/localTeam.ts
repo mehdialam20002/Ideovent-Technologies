@@ -1086,11 +1086,20 @@ export class LocalCrm {
   /**
    * crm_me's side effects, locally: the first time someone is acted as is
    * their first sign-in (the login links), and "last seen" moves at most once
-   * a minute. Mehdi's row is left alone. Returns true when something changed.
+   * a minute. Mehdi's row keeps its login as it is, and its "last seen" moves
+   * like anyone's, as crm_me does in the database (4 Oct 2026, crm-fixes-1004
+   * item 14: Team > People showed a dash for him), once a team is stored
+   * (`ownerToo`): a store with no team yet is never written by a read.
+   * Returns true when something changed.
    */
-  signIn(): boolean {
+  signIn(opts: { ownerToo?: boolean } = {}): boolean {
     const m = this.actor;
-    if (!m || !m.active || m.role === "owner") return false;
+    if (!m || !m.active) return false;
+    if (m.role === "owner") {
+      if (!opts.ownerToo || (m.lastSeenAt && Date.parse(m.lastSeenAt) >= this.now.getTime() - 60e3)) return false;
+      m.lastSeenAt = this.iso;
+      return true;
+    }
     let changed = false;
     if (!m.userId) {
       m.userId = "local:" + m.id;

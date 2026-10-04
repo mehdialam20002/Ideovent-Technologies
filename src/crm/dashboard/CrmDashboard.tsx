@@ -1,4 +1,4 @@
-import { useMemo, useState, type MouseEvent } from "react";
+import { lazy, Suspense, useMemo, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { Import, Inbox, MapPin, Plus, RefreshCw, UserX, UsersRound } from "lucide-react";
 import { untouchedLeads } from "@/admin/outreach/derive";
@@ -18,6 +18,9 @@ import { ScopeSwitch } from "./ScopeSwitch";
 import { useOwnerId } from "../today/TodayQueue";
 import { teamLeads } from "../performance/teamNumbers";
 
+/* The client tiles (client-process-spec 11.5): Mehdi only, a lazy chunk nobody else downloads. */
+const ClientTiles = lazy(() => import("../clients/ClientTiles"));
+
 /**
  * /crm: how outreach is going, and what to do about it.
  *
@@ -31,11 +34,16 @@ import { teamLeads } from "../performance/teamNumbers";
  * update every number is as before), and narrow the funnel and the
  * breakdowns to one person. A line above the tiles keeps the team in view:
  * the Unassigned pool, leads untouched for a day, and what waits on them.
+ *
+ * THE CLIENT FILES (client-process-spec 11.5, 4 Oct 2026). For Mehdi, once
+ * 0014 is there, four client tiles under the existing ones (active clients,
+ * money due, received this month, renewals in 60 days) and the overdue client
+ * tasks. Every existing tile and number is unchanged.
  */
 
 /** The dashboard's numbers over its scope: the leads in it, their history and their demos' opens. */
 function useScopedMetrics(owner: string): CrmMetrics {
-  const { metrics, scopeFor, leadsIn, events, opens, demos, now, demoForLead, nameOf } = useCrmData();
+  const { metrics, scopeFor, leadsIn, events, opens, demos, now, demoForLead, nameOf, openCtx } = useCrmData();
   const scope = scopeFor("dashboard");
   const scoped = leadsIn(scope);
   return useMemo(() => {
@@ -48,10 +56,11 @@ function useScopedMetrics(owner: string): CrmMetrics {
       opens: scope === "all" ? opens : opens.filter((o) => demoIds.has(o.demoId)),
       demos, now, owner,
       nameOf: (id) => (id ? nameOf(id, "") || undefined : undefined),
+      demoIdOf: openCtx.demoIdOf,
     });
     /* Demos with no lead are about every lead, whatever the scope. */
     return { ...m, demos: metrics.demos, unlinkedDemos: metrics.unlinkedDemos };
-  }, [scope, owner, metrics, scoped, events, opens, demos, now, demoForLead, nameOf]);
+  }, [scope, owner, metrics, scoped, events, opens, demos, now, demoForLead, nameOf, openCtx]);
 }
 
 /** The team in one line: the pool, leads untouched for a day, what waits on you. */
@@ -170,6 +179,11 @@ export default function CrmDashboard() {
         <div className="space-y-4" onClickCapture={keepScope}>
           <CountTiles m={m} leads={scope === "all" ? undefined : leadsIn(scope)} />
           <RateTiles m={m} />
+          {can("clients") && (
+            <Suspense fallback={null}>
+              <ClientTiles />
+            </Suspense>
+          )}
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 space-y-4">
               <ActivityChart points={m.sendsPerDay} />
@@ -178,7 +192,8 @@ export default function CrmDashboard() {
                 <FunnelPanel m={m} />
                 <StatusPanel m={m} />
               </div>
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+              {/* Side by side only from 2xl: at 1366 px the comparison table had 299 px and lost its Change column. */}
+              <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
                 <BreakdownPanel m={m} />
                 <WeekTable m={m} />
               </div>

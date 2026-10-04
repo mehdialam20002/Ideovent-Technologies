@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
 import { nextStep } from "./compose";
+import { isHotLead } from "./derive";
+import { useOpensCtx } from "./useOpensCtx";
 import { StatusPill } from "./ui";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +20,9 @@ export const leadListCls = "divide-y divide-border/60 rounded-2xl border border-
  */
 export function LeadRow({ lead, onOpen, extra, showStatus = true }: { lead: OutreachLead; onOpen: (id: string) => void; extra?: ReactNode; showStatus?: boolean }) {
   const { opens } = useOutreach();
-  const step = nextStep(lead, opens);
+  const openCtx = useOpensCtx();
+  const now = new Date();
+  const step = nextStep(lead, isHotLead(lead, opens, now, openCtx), now);
   return (
     <li className="flex items-center gap-3 py-2.5">
       <button

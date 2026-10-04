@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { KIND_LABEL } from "@/admin/outreach/ui";
 import { campaignOf, isMetaLead } from "@/lib/meta/fields";
+import { cityOf } from "@/lib/outreach/city";
 import { cn } from "@/lib/utils";
 import { useOptionalCrmMe } from "../useCrmMe";
 import { crm, StatusDot } from "../ui";
@@ -93,7 +94,8 @@ export function FilterBar({ leads, filters, setFilters, showStatus = true }: {
   }, [q, filters.q, setFilters]);
 
   const [open, setOpen] = useState(false);
-  const cities = useMemo(() => distinct(leads, (l) => l.city).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
+  // The town, not the whole address the City field may hold (city.ts cityOf): one choice per town.
+  const cities = useMemo(() => distinct(leads, cityOf).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
   const sources = useMemo(() => distinct(leads, (l) => l.source).map((c) => ({ value: c.value, label: `${c.value} (${c.count})` })), [leads]);
   /* Meta Lead Ads (meta-leads-spec 6.2): a Campaign filter, only once a lead came from Meta. */
   const metaLeads = useMemo(() => leads.filter(isMetaLead), [leads]);
