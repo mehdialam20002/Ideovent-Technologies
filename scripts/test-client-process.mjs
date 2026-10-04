@@ -106,7 +106,7 @@ const bundled = await build({
       `export * as SC from "@/lib/clients/scripts";`,
       `export * as NU from "@/lib/clients/numbering";`,
       `export * as RG from "@/lib/clients/register";`,
-      `export { clientFromLead, newProject, mergeClientSettings } from "@/lib/clients/store";`,
+      `export { clientFromLead, newProject, mergeClientSettings, GOOGLE_REVIEW_LINK } from "@/lib/clients/store";`,
       `export { OUTREACH_TEMPLATES } from "@/lib/outreach/templates";`,
       `export { DEFAULT_SIGNATURE } from "@/lib/outreach/engine";`,
       `export { ONE_TIME, CARE, HOURLY_RATE } from "@/lib/pricing";`,
@@ -648,11 +648,20 @@ const words = (s) => s.toLowerCase()
   .replace(/_{2,}/g, " ")
   .replace(/[^a-z0-9]+/g, " ")
   .trim().split(/\s+/).filter(Boolean);
+/*
+  A source as its reader sees it (4 Oct 2026, the docs alignment of that night). An HTML comment is a hidden
+  note ("<!-- HIDDEN 4 Oct 2026 ... ORIGINAL: ... -->"), never part of a message. And the firm's real review
+  link, written into Testimonial-Request-Kit.md in place of [[GOOGLE_REVIEW_LINK]], stands where a template
+  has its {googleReviewLink} field: the CRM's own link (GOOGLE_REVIEW_LINK), so a source that names any other
+  link still fails here.
+*/
+if (typeof M.GOOGLE_REVIEW_LINK !== "string" || !/^https:\/\//.test(M.GOOGLE_REVIEW_LINK)) throw new Error("GOOGLE_REVIEW_LINK is not exported from src/lib/clients/store.ts");
+const asRendered = (s) => s.replace(/<!--[\s\S]*?-->/g, "").split(M.GOOGLE_REVIEW_LINK).join("{googleReviewLink}");
 const fileCache = new Map();
 const readSource = (f) => {
   if (!fileCache.has(f)) {
     const p = join(AGENCY, f);
-    fileCache.set(f, existsSync(p) ? plain(readFileSync(p, "utf8")) : null);
+    fileCache.set(f, existsSync(p) ? plain(asRendered(readFileSync(p, "utf8"))) : null);
   }
   return fileCache.get(f);
 };
