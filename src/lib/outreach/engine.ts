@@ -1041,10 +1041,19 @@ export function unfilledPlaceholders(text: string | undefined | null): string[] 
  * their Google listing) asks the sender to check the line. Google Maps, the Lead Finder's Google results, and a lead with no named
  * source (an import, a demo) pass; the Lead Finder's OpenStreetMap results, a
  * directory, a referral or a walk-in do not.
+ *
+ * A Lead Finder lead is from Google only when its place ID is Google's: an
+ * OpenStreetMap result's ID is "osm:node/123" (4 Oct 2026: before this every
+ * finder lead with a place ID passed, so the free list, now the finder's
+ * default, would have said "Google par dekha" unflagged).
  */
 export function seenOnGoogle(lead: Partial<Pick<OutreachLead, "source" | "placeId" | "notes">>): boolean {
   const s = (lead.source ?? "").trim().toLowerCase();
-  if (s === "lead-finder") return Boolean(lead.placeId) || !/openstreetmap/i.test(lead.notes ?? "");
+  if (s === "lead-finder") {
+    const id = (lead.placeId ?? "").trim();
+    if (id) return !/^osm:/i.test(id);
+    return !/openstreetmap/i.test(lead.notes ?? "");
+  }
   if (!s || /google|gmaps|g-maps|\bmaps\b/.test(s)) return true;
   return /^(csv import|import|demo-created|example|manual)$/.test(s);
 }

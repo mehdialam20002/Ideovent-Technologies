@@ -988,6 +988,12 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   check(warnedBy(M.checkSend(leadOf("dental"), schoolWorded, "whatsapp", SETTINGS, 0, now), /Pick the dental clinic version/) && M.templateNotFor(schoolWorded, "dental"), "notForKinds still warns and filters");
   check(M.render(waFirst, { ...lead, source: "JUSTDIAL" }, { now }).warnings.some((w) => /Google/.test(w)), "'Google par dekha' to a lead found elsewhere is flagged");
   check(M.render(waFirst, { ...lead, placeId: undefined, notes: "From OpenStreetMap (ODbL)" }, { now }).warnings.some((w) => /Google/.test(w)), "an OpenStreetMap lead is flagged too");
+  // 4 Oct 2026: a finder lead from OpenStreetMap HAS a place ID ("osm:node/123"), and is still not a Google find.
+  const osmLead = { ...lead, placeId: "osm:node/123456789", notes: "From OpenStreetMap (© OpenStreetMap contributors, ODbL): https://www.openstreetmap.org/node/123456789" };
+  check(!M.seenOnGoogle(osmLead) && M.render(waFirst, osmLead, { now }).warnings.some((w) => /Google/.test(w)),
+    "an OpenStreetMap lead with its osm: place ID is flagged (seenOnGoogle false)");
+  check(!M.seenOnGoogle({ ...lead, placeId: "osm:way/42", notes: "" }), "an osm: place ID alone is enough to say it was not seen on Google");
+  check(M.seenOnGoogle(lead) && !M.render(waFirst, lead, { now }).warnings.some((w) => /saw them on Google/.test(w)), "a finder lead with Google's place ID still passes");
   check(!M.render(waFirst, { ...lead, source: "GMAPS" }, { now }).warnings.length, "a Google Maps lead is not");
 }
 

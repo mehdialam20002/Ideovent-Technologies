@@ -8,7 +8,7 @@
       "maxDuration": 60
     },
     "api/leads-search.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/meta/webhook.js": {
       "maxDuration": 30

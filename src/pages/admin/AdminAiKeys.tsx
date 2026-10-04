@@ -102,7 +102,7 @@ function LocalNotice() {
           sign in, and add the keys there. The poster reader also runs only on the live site.
         </p>
         <p data-testid="maps-free-usage" className="mt-2 text-muted-foreground">
-          Lead Finder (Google Maps key): {FREE_USAGE.google} {FREE_USAGE.cap} {FREE_USAGE.capCaveat} {FREE_USAGE.card} {FREE_USAGE.osm}
+          Lead Finder: {FREE_USAGE.free} {FREE_USAGE.optional} {FREE_USAGE.google} {FREE_USAGE.cap} {FREE_USAGE.capCaveat} {FREE_USAGE.card} {FREE_USAGE.osm}
         </p>
       </div>
     </div>
@@ -323,11 +323,14 @@ function AiKeysLive() {
             <MapPin className="h-5 w-5 text-primary" aria-hidden="true" /> Lead Finder
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Not an AI key and never used for posters. The Lead Finder searches Google Maps with it. Keys are tried top to bottom.
+            Not an AI key and never used for posters, and not needed: the Lead Finder is free on OpenStreetMap. With a working key it also
+            searches Google Maps, when "Also use Google" is ticked in the finder. Keys are tried top to bottom.
           </p>
           <div data-testid="maps-free-usage" className="mb-3 mt-2 rounded-xl border border-success/40 bg-success/10 p-3 text-sm">
-            <p className="font-medium">Free, if you cap it</p>
+            <p className="font-medium">Free without a key; Google free if you cap it</p>
             <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted-foreground">
+              <li>{FREE_USAGE.free}</li>
+              <li>{FREE_USAGE.optional}</li>
               <li>{FREE_USAGE.google}</li>
               <li>{FREE_USAGE.cap} {FREE_USAGE.capCaveat}</li>
               <li>{FREE_USAGE.card}</li>
