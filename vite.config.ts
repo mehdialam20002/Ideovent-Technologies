@@ -1,6 +1,32 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+
+/*
+  A PRECONNECT TO THE CONTENT DATABASE (3 Oct 2026, perf). Every page reads its
+  content from Supabase with a plain fetch (src/lib/cms/publicRead.ts) as soon as
+  the entry script runs, and a demo (/site/<slug>) cannot show anything until that
+  read is back. On a phone, opening a new HTTPS connection is three round trips
+  (DNS, TCP, TLS) before the request can even leave; this lets the browser do them
+  while the scripts are still downloading. `crossorigin` because the read is a CORS
+  request without credentials, which uses that kind of connection. Nothing is
+  added to a build without a Supabase URL (local mode).
+*/
+function contentPreconnect(supabaseUrl: string | undefined): Plugin {
+  return {
+    name: "ideovent-content-preconnect",
+    transformIndexHtml() {
+      if (!supabaseUrl) return [];
+      let origin = "";
+      try {
+        origin = new URL(supabaseUrl).origin;
+      } catch {
+        return [];
+      }
+      return [{ tag: "link", attrs: { rel: "preconnect", href: origin, crossorigin: "" }, injectTo: "head" }];
+    },
+  };
+}
 
 /*
   index.html writes %VITE_PUBLIC_URL% into its canonical, og and JSON-LD tags.
@@ -37,7 +63,7 @@ export default defineConfig(({ mode }) => {
     host: true,
     port: 8080,
   },
-  plugins: [react()],
+  plugins: [react(), contentPreconnect(process.env.VITE_SUPABASE_URL || loadEnv(mode, process.cwd(), "VITE_").VITE_SUPABASE_URL)],
   /*
     The home hero's 3D layer runs in a module worker
     (src/components/sections/hero/scene/hero3d.worker.ts). Its tiny entry
@@ -104,6 +130,10 @@ export default defineConfig(({ mode }) => {
     // Nothing should be over this once the above lands; leave the warning armed so a
     // regression is noisy rather than silent.
     chunkSizeWarningLimit: 400,
+    // dist/.vite/manifest.json: which file each source module became. Read by
+    // scripts/prerender-heads.mjs (the demo pages' preloads in the SPA shell), which
+    // then deletes it so it is never deployed (3 Oct 2026, perf).
+    manifest: true,
   },
   };
 });

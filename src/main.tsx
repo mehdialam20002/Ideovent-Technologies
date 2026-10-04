@@ -1,17 +1,13 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { createRoot } from "react-dom/client";
-import { HelmetProvider } from "react-helmet-async";
-import { ThemeProvider } from "next-themes";
-import { MotionConfig, MotionGlobalConfig } from "framer-motion";
-import App from "./App.tsx";
-import { ContentProvider, primeContent } from "./lib/cms/context";
-import { TRANSITION } from "./lib/motion";
+import { createRoot, hydrateRoot } from "react-dom/client";
+import App, { preloadPage } from "./App.tsx";
+import { AppProviders } from "./AppProviders";
+import { holdContentForHydration, primeContent, releaseHeldContentAfter } from "./lib/cms/context";
+import { currentPath } from "./lib/cms/scope";
+import { isCrmHost } from "./lib/host";
 import "./index.css";
 import "./styles/system.css";
 import "./styles/hero.css";
 import "./styles/motion.css";
-
-const REDUCE_QUERY = "(prefers-reduced-motion: reduce)";
 
 /*
   WHY THERE IS NO GLOBAL `vite:preloadError` LISTENER HERE.
@@ -40,68 +36,9 @@ const REDUCE_QUERY = "(prefers-reduced-motion: reduce)";
 */
 
 /*
-  MOTION, IN ONE PLACE
-  ════════════════════════════════════════════════════════════════════════════
-  Two things happen here, and the second one is the reason the first is not
-  enough on its own.
-
-  1. <MotionConfig transition={TRANSITION}> makes { duration: 0.22, ease: EASE }
-     the default for every framer-motion animation on the site. Combined with
-     src/lib/motion.ts no longer declaring a transition inside any variant, this
-     is what makes the whole site share one curve and one settle time. A
-     component that genuinely needs a different timing still passes its own
-     `transition` and wins, which is how an override should work.
-
-  2. MotionGlobalConfig.skipAnimations ACTUALLY TURNS MOTION OFF for a visitor
-     who has asked for reduced motion.
-
-     `reducedMotion="user"` alone does not. It is documented to drop TRANSFORM
-     and layout animation and to keep opacity, on the reasoning that a crossfade
-     is the one safe kind of change. That is a defensible default and it is not
-     what this site was asked for: the brief says reduced motion must genuinely
-     disable the motion rather than shorten it. Emulating
-     prefers-reduced-motion in DevTools with only the MotionConfig in place, the
-     home page still faded every section in on scroll, and, worse, a stagger
-     container still applied its staggerChildren delay, so nine service cards
-     still appeared one after another over half a second. Nothing MOVED, but
-     content still arrived late and in sequence, which is the part a
-     motion-sensitive visitor actually notices.
-
-     skipAnimations is framer's own instant-complete path
-     (framer-motion/dist/es/animation/interfaces/motion-value.mjs): it forces
-     duration AND delay to 0 and writes the final keyframe on the next frame, so
-     staggers collapse too. It is a module-level global rather than a React
-     value, which is why it is set in an effect and kept in sync with the media
-     query rather than read once at import time. A visitor who flips the OS
-     setting while the tab is open gets the new behaviour without a reload,
-     which matters because that is exactly how the setting gets tested.
-
-  The CSS half of this (keyframes, the marquee, and every Tailwind `transition-`
-  class) is handled by the prefers-reduced-motion block at the foot of
-  index.css. Between the two, nothing on the site animates for that visitor.
+  The providers (motion, theme, head, content) are in ./AppProviders, shared with
+  the build's server render (src/entry-server.tsx).
 */
-function Motion({ children }: { children: ReactNode }) {
-  const [reduce, setReduce] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(REDUCE_QUERY).matches
-  );
-
-  useEffect(() => {
-    const query = window.matchMedia(REDUCE_QUERY);
-    const apply = () => {
-      MotionGlobalConfig.skipAnimations = query.matches;
-      setReduce(query.matches);
-    };
-    apply();
-    query.addEventListener("change", apply);
-    return () => query.removeEventListener("change", apply);
-  }, []);
-
-  return (
-    <MotionConfig reducedMotion="user" transition={reduce ? { duration: 0 } : TRANSITION}>
-      {children}
-    </MotionConfig>
-  );
-}
 
 /*
   THE CONTENT READ STARTS HERE, BEFORE REACT (2 Oct 2026). With Supabase on, the
@@ -111,21 +48,96 @@ function Motion({ children }: { children: ReactNode }) {
 */
 primeContent();
 
-createRoot(document.getElementById("root")!).render(
-  <HelmetProvider>
-    {/*
-      LIGHT BY DEFAULT, for everyone (Mehdi, 26 Sep 2026: "koi v open kre to light aaye").
-      The storage key is new on purpose: next-themes remembers a visitor's toggle under its
-      key, and a fresh key means every earlier "dark" choice is forgotten once, so the site
-      opens light for all of them. The toggle still works and is remembered from here on.
-      index.html starts <html class="light"> so there is no dark flash before React mounts.
-    */}
-    <ThemeProvider attribute="class" defaultTheme="light" storageKey="ideovent-theme-v2" enableSystem={false} disableTransitionOnChange themes={["light", "dark"]}>
-      <Motion>
-        <ContentProvider>
-          <App />
-        </ContentProvider>
-      </Motion>
-    </ThemeProvider>
-  </HelmetProvider>
+/*
+  PRERENDERED PAGES ARE HYDRATED, NOT REDRAWN (3 Oct 2026, perf).
+
+  Every page in the sitemap now arrives with its React page already in #root
+  (scripts/prerender-heads.mjs renders it at build time, from the seed), so a
+  phone paints the text as soon as the HTML and the stylesheet are in, instead
+  of after ~165 KB of JavaScript has downloaded and run. hydrateRoot adopts that
+  HTML: the same nodes stay on screen, which is what keeps the largest paint at
+  the first frame. createRoot would throw them away and paint new ones at mount
+  (measured: the first paint moved forward, the largest paint did not).
+
+  The first client render must equal the build's render, so it is made from the
+  seed too (ContentLoader.getServerSnapshot), and the stored content arrives as
+  the update right after, exactly as it did before. The page's own chunk
+  (#root's data-page, App.tsx preloadPage) is loaded BEFORE hydrating: React
+  cannot hydrate a lazy page that has not arrived, and an update while it waits
+  would make it redraw the whole page. A failed chunk still hydrates, and the
+  route's error boundary handles it as it always has. For the same reason the
+  stored content is held at the seed until the page has hydrated
+  (holdContentForHydration; ContentLoader explains). Every other address (the
+  SPA shells: demos, pitch pages, the admin, the CRM) has an empty #root and is
+  rendered as before.
+*/
+const container = document.getElementById("root")!;
+const app = (
+  <AppProviders>
+    <App />
+  </AppProviders>
 );
+
+/*
+  After the browser has painted the HTML once. On a fast connection the scripts can
+  arrive before the first frame, and hydrating at once would hold that frame back
+  behind the hydration work. requestAnimationFrame runs just before a paint and the
+  timeout just after it; the second timeout covers a tab where frames do not run.
+*/
+const afterFirstPaint = () =>
+  new Promise<void>((resolve) => {
+    requestAnimationFrame(() => setTimeout(resolve, 0));
+    setTimeout(resolve, 200);
+  });
+
+/*
+  ONLY AT THE ADDRESS IT WAS RENDERED FOR (4 Oct 2026). The build rendered #root for
+  one path (data-path), with no query string, for the site. The same file is served:
+    - on the CRM's host (crm.ideovent.in, this deployment too), which renders the CRM;
+    - at addresses the router reads as another page ("/index.html", "//about");
+    - with a query a page reads in its first render (/pricing?plan=growth-monthly).
+  Hydrating any of those fails (React errors #418, #422, #425) and React draws the
+  page again anyway. They are rendered with createRoot, exactly as before
+  prerendering: another host's or page's HTML is cleared at once (and on the CRM's
+  host it was never shown: prerender-heads.mjs, CRM_HOST_GUARD); the right page with
+  another query stays on screen until the first render replaces it, with its chunk
+  loaded first so that render is the page and not the spinner. A query that only
+  tags the visit (utm_*, gclid, fbclid, ...) still hydrates, and so do ?hero3d=,
+  which HeroScene reconciles itself, and ?for= (pitch pages link /contact?for=...),
+  read only by the contact form's body, which renders after hydration.
+*/
+const HYDRATABLE_QUERY =
+  /^(utm_\w+|gad_\w+|hsa_\w+|mc_\w+|pk_\w+|mtm_\w+|gclid|gbraid|wbraid|dclid|fbclid|msclkid|igshid|igsh|srsltid|ttclid|twclid|li_fat_id|yclid|epik|_gl|ref|hero3d|for)$/i;
+
+function howToStart(): "hydrate" | "render-over" | "clear" | "render" {
+  if (!container.firstElementChild) return "render";
+  let path = currentPath();
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    /* a malformed escape is compared as typed */
+  }
+  if (isCrmHost() || path !== container.dataset.path) return "clear";
+  for (const key of new URLSearchParams(window.location.search).keys()) if (!HYDRATABLE_QUERY.test(key)) return "render-over";
+  return "hydrate";
+}
+
+const start = howToStart();
+if (start === "hydrate") {
+  holdContentForHydration();
+  void Promise.all([preloadPage(container.dataset.page).catch(() => undefined), afterFirstPaint()]).then(() => {
+    // The hold's safety net counts from now, as hydration starts (ContentLoader.holdForHydration).
+    releaseHeldContentAfter(10000);
+    hydrateRoot(container, app);
+  });
+} else if (start === "render-over") {
+  void preloadPage(container.dataset.page)
+    .catch(() => undefined)
+    .then(() => createRoot(container).render(app));
+} else {
+  if (start === "clear") {
+    container.textContent = "";
+    document.documentElement.removeAttribute("data-no-ssr");
+  }
+  createRoot(container).render(app);
+}

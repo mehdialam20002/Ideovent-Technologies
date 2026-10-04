@@ -30,7 +30,7 @@ export default function BlogDetail() {
   // the /blog grid runs entirely off the metadata in the seed. This asks for them.
   const bodiesReady = useDeferredBodies();
   const posts = useCollection("posts");
-  const { loading } = useCms();
+  const { loading, data } = useCms();
 
   const post = useMemo<BlogPost | undefined>(
     () => posts.find((p) => p.slug === slug) ?? posts.find((p) => p.id === slug),
@@ -75,7 +75,11 @@ export default function BlogDetail() {
 );
   }
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href: `/blog/${post.slug}`;
+  /* The post's canonical address (3 Oct 2026). It was window.location.href, and the
+     build's render of this page has no window, so a hydrated page kept the
+     build's relative "/blog/<slug>" in the share link (React 18 does not repair
+     attributes while hydrating). The canonical is also the address to share. */
+  const shareUrl = `${(data.settings?.defaultSeo?.canonicalHost || "").replace(/\/$/, "")}/blog/${post.slug}`;
   const awaitingBody = !post.body && !bodiesReady;
 
   return (

@@ -52,6 +52,13 @@ export function setSessionOff() {
 type Nav = Navigator & { deviceMemory?: number; connection?: { saveData?: boolean; effectiveType?: string } };
 
 export function decide(): Decision {
+  /*
+    The build's render of the home page (no window; scripts/prerender-heads.mjs). It
+    draws the plan, the first paint of the 3D path, which is where most visitors go.
+    A visitor the browser then sends to the still gets it at hydration: HeroScene
+    cross-fades the built drawing in, as it does on every other way to the still.
+  */
+  if (typeof window === "undefined") return { mode: "plan", path: "3d", reason: "server", force: false, freezeAt: null, lose: false };
   let q = "";
   try {
     q = new URLSearchParams(window.location.search).get("hero3d") || "";
@@ -66,7 +73,7 @@ export function decide(): Decision {
 
   if (!HERO_3D_ENABLED) return still("still-off", "disabled");
   if (q === "off") return still("still-off", "param");
-  if (typeof window === "undefined" || typeof matchMedia !== "function") return still("still-gated", "no-window");
+  if (typeof matchMedia !== "function") return still("still-gated", "no-window");
   if (matchMedia(REDUCED).matches) return still("still-reduced", "reduced-motion");
   if (matchMedia("(forced-colors: active)").matches) return still("still-gated", "forced-colors"); // the art is hidden
   if (builtThisPageLoad) return still("still-revisit", "spa-return");

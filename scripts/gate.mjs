@@ -90,8 +90,8 @@ const GATES = [
     why: "the intake functions refuse without the token, and a member never reads a Meta lead that is not theirs" },
   { name: "meta intake", cmd: "node", args: ["scripts/test-meta-intake.mjs"],
     why: "a signed webhook against the real SQL: the lead arrives once, a forged one never" },
-  { name: "build", cmd: "npm", args: ["run", "build"],
-    why: "the deploy runs this, so it fails here or it fails on Vercel" },
+  { name: "build", cmd: "npm", args: ["run", "build"], env: { SSR_REQUIRED: "1" },
+    why: "the deploy runs this, so it fails here or it fails on Vercel; here every page must also be prerendered" },
   { name: "gutters", cmd: "node", args: ["scripts/measure-gutters.mjs", `http://localhost:${PORT}`],
     browser: true, why: "13 routes at 13 widths: the only check that catches a phone layout collapsing" },
   { name: "edit lock", cmd: "node", args: ["scripts/e2e-demo-lock.mjs", `http://localhost:${PORT}`],
@@ -110,7 +110,7 @@ if (OUT_DIR) {
   const build = GATES.find((g) => g.name === "build");
   build.cmd = chain.replace(VITE_BUILD, `$1vite build --outDir "${OUT_DIR}" --emptyOutDir`);
   build.args = [];
-  build.env = { PRERENDER_DIST: OUT_DIR };
+  build.env = { ...(build.env || {}), PRERENDER_DIST: OUT_DIR };
   console.log(`build gate: into ${OUT_DIR}, not dist/`);
 }
 

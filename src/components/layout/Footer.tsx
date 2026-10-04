@@ -283,7 +283,12 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row">
-          <p>© {year} {settings.siteName}. All rights reserved.</p>
+          {/* The year is the visitor's clock; the prerendered HTML has the build's
+              (scripts/prerender-heads.mjs). From 1 January until the next deploy they
+              differ, and a text mismatch would make React redraw the whole page instead
+              of hydrating it: suppressHydrationWarning lets React correct the year in
+              place (it covers this element's own text only). */}
+          <p suppressHydrationWarning>© {year} {settings.siteName}. All rights reserved.</p>
           <p>Built in {contact.address.line1}, {contact.address.city}.</p>
         </div>
       </div>

@@ -86,9 +86,15 @@ const PUBLIC_ROUTES: Array<[RegExp, ContentKey[]]> = [
 /** The router's basename ("/" in production), stripped before matching. Node-safe for the tests. */
 const BASE = ((import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL || "/").replace(/\/$/, "");
 
+/* The address the build is rendering (src/entry-server.tsx), where there is no window. */
+let serverPath = "/";
+export function setServerPath(path: string): void {
+  serverPath = path || "/";
+}
+
 /** The current address as the route table sees it: no basename, no trailing slash. */
 export function currentPath(): string {
-  if (typeof window === "undefined") return "/";
+  if (typeof window === "undefined") return serverPath;
   let p = window.location.pathname || "/";
   if (BASE && p.startsWith(BASE)) p = p.slice(BASE.length) || "/";
   return p.length > 1 ? p.replace(/\/+$/, "") : p;

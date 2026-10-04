@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ComponentType } from "react";
+import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
 import { Mail, Phone, MapPin, Clock, ArrowRight, MessageCircle } from "lucide-react";
 import { useSingleton } from "@/lib/cms/context";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -81,6 +81,16 @@ const linkClass =
 
 export default function ContactForm({ sourcePage = "contact" }: { sourcePage?: string }) {
   const contact = useSingleton("contact");
+  /*
+    The form's body renders in the browser only, after the first render (3 Oct
+    2026). Prerendered pages are hydrated (src/main.tsx), and a lazy body in the
+    build's HTML would sit un-hydrated until its chunk arrives after `load`, where
+    any update (the stored content) makes React throw that part of the page away
+    (error #421). Visitors see what they saw before: the placeholder, then the form.
+  */
+  const [inBrowser, setInBrowser] = useState(false);
+  useEffect(() => setInBrowser(true), []);
+  const placeholder = <div aria-hidden="true" className="min-h-[1060px] sm:min-h-[820px] lg:min-h-[745px]" />;
   const wa = whatsappToUs(contact.whatsappNumber);
   const email = liveEmail(contact);
 
@@ -149,9 +159,13 @@ export default function ContactForm({ sourcePage = "contact" }: { sourcePage?: s
           <div>
             {/* The placeholder holds roughly the form's height, so the page
                 below does not jump when the body arrives. */}
-            <Suspense fallback={<div aria-hidden="true" className="min-h-[1060px] sm:min-h-[820px] lg:min-h-[745px]" />}>
-              <ContactFormBody />
-            </Suspense>
+            {inBrowser ? (
+              <Suspense fallback={placeholder}>
+                <ContactFormBody />
+              </Suspense>
+            ) : (
+              placeholder
+            )}
           </div>
         </div>
       </div>
