@@ -25,7 +25,7 @@ export interface MessagePicture {
  * (1 Oct 2026): `picture`, with Copy image, Share and Download. Under the twin
  * that offers to make a sample, `pictureNote` says why it has none.
  */
-export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSubject, onBody, onFill, now, picture, pictureNote }: {
+export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSubject, onBody, onFill, now, picture, pictureNote, suggest = suggestionsFor }: {
   isEmail: boolean;
   subject: string;
   body: string;
@@ -42,6 +42,11 @@ export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSu
   picture?: MessagePicture | null;
   /** Why this message has no picture, when its kind has one (the twin that offers to make a sample). */
   pictureNote?: string;
+  /**
+   * What a blank's box offers. Default: the lead page's suggestions (placeholders.ts suggestionsFor). The client
+   * file passes its own (compose.ts clientSuggestionsFor): the project's figures, never a price list.
+   */
+  suggest?: (name: string, now: Date) => string[];
 }) {
   const left = blanks.filter((b) => !(fills[b] ?? "").trim());
   return (
@@ -70,7 +75,7 @@ export function MessageBox({ isEmail, subject, body, pieces, blanks, fills, onSu
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {blanks.map((name, i) => {
               const id = `blank-${i}`;
-              const options = suggestionsFor(name, now);
+              const options = suggest(name, now);
               const done = Boolean((fills[name] ?? "").trim());
               return (
                 <div key={name}>

@@ -1,7 +1,7 @@
 import type { DemoSite, DemoSiteSlot } from "@/lib/cms/types";
 import { demoStatus } from "@/lib/demo/record";
 import { LEAD_FINDER_SOURCE, LEAD_KIND_LABELS, type OutreachLead } from "@/lib/outreach/types";
-import type { DemoRow } from "../metrics";
+import { demoCreatedAt, type DemoRow } from "../metrics";
 
 /**
  * Pure helpers behind /crm/demos: where a demo came from, the views, and the
@@ -55,8 +55,30 @@ export interface DemoSort {
 export interface DemoItem extends DemoRow {
   source: DemoSource;
   status: ReturnType<typeof demoStatus>;
+  /**
+   * What the Status column says (4 Oct 2026, crm-fixes-1004 item 2): "Sent" only when the lead's history shows a
+   * message that carried the link (DemoRow sentAt); a live demo without one is "Live, not sent yet". Draft, Free and
+   * Closed as the record says.
+   */
+  state: DemoState;
   created?: string;
   slot?: DemoSiteSlot;
+}
+
+export type DemoState = "sent" | "live" | "draft" | "free" | "closed";
+
+export const DEMO_STATE_TEXT: Record<DemoState, string> = {
+  sent: "Sent",
+  live: "Live, not sent yet",
+  draft: "Draft",
+  free: "Free",
+  closed: "Closed",
+};
+
+/** The Status column's state of a row: its record's status, with "sent" split by the lead's history. */
+export function demoState(status: ReturnType<typeof demoStatus>, sentAt: string | undefined): DemoState {
+  if (status === "sent") return sentAt ? "sent" : "live";
+  return status;
 }
 
 const t = (iso?: string) => {
@@ -68,12 +90,15 @@ export function toItems(rows: DemoRow[], slots: DemoSiteSlot[]): DemoItem[] {
   const slotBy = new Map(slots.map((s) => [s.id, s]));
   return rows.map((r) => {
     const slot = slotBy.get(r.demo.id);
+    const status = demoStatus(r.demo);
     return {
       ...r,
       slot,
       source: demoSource(r.demo, slot, r.lead),
-      status: demoStatus(r.demo),
-      created: r.demo.createdAt || r.demo.updatedAt,
+      status,
+      state: demoState(status, r.sentAt),
+      // The outreach and imported demos carry only preparedOn (crm-fixes-1004 item 9: 167 of 172 showed "-").
+      created: demoCreatedAt(r.demo),
     };
   });
 }
@@ -84,7 +109,7 @@ export function sortItems(items: DemoItem[], s: DemoSort): DemoItem[] {
       case "institute":
         return (i.demo.instituteName || i.demo.slug).toLowerCase();
       case "status":
-        return i.status;
+        return DEMO_STATE_TEXT[i.state];
       case "source":
         return i.source;
       case "kind":

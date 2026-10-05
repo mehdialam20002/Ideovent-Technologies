@@ -5,6 +5,11 @@ import { cn } from "@/lib/utils";
 import { CRM } from "../nav";
 import { crm } from "../ui";
 import { fmtIstDate, fmtIstShort, fmtIstWhen, StateLine, type LineState } from "./metaUi";
+import { stepNumber } from "./MetaChecklist";
+
+/* The checklist below (MetaChecklist) numbers its steps 1 to 14: a line names the step there. */
+const TOKEN_STEP = `step ${stepNumber("token")}`;
+const LEADS_ACCESS_STEP = `step ${stepNumber("leadsaccess")}`;
 
 /** The daily check runs once a day (09:15 India time on Vercel's Hobby plan); later than this, something is wrong. */
 const DAILY_GAP_MS = 26 * 3600e3;
@@ -38,17 +43,17 @@ export function statusLines(s: MetaIntakeStatus, pageMatches: boolean | null, ac
   const tk = s.token;
   const exp = tk.expiresAt ? Date.parse(tk.expiresAt) : NaN;
   out.push(
-    !accessTokenSet ? { row: "token", state: "todo", label: "Token", text: "Not set in Vercel yet (step 9)" }
+    !accessTokenSet ? { row: "token", state: "todo", label: "Token", text: `Not set in Vercel yet (${TOKEN_STEP})` }
     : !tk.set || tk.valid === null ? { row: "token", state: "todo", label: "Token", text: "Set in Vercel: press Check again" }
     : tk.valid === false
-      ? { row: "token", state: "warn", label: "Token", text: `Not valid${tk.error ? ` (${tk.error})` : ""}: make a new one (step 9), put it in Vercel, Redeploy, then press Check again` }
+      ? { row: "token", state: "warn", label: "Token", text: `Not valid${tk.error ? ` (${tk.error})` : ""}: make a new one (${TOKEN_STEP}), put it in Vercel, Redeploy, then press Check again` }
     : tk.missing.length ? { row: "token", state: "warn", label: "Token", text: `Missing permissions: ${tk.missing.join(", ")}` }
     : !Number.isFinite(exp) ? { row: "token", state: "done", label: "Token", text: "Valid, never expires" }
-    : exp - t < 10 * 864e5 ? { row: "token", state: "warn", label: "Token", text: `Valid until ${fmtIstDate(tk.expiresAt)}: make a new one before then (step 18)` }
+    : exp - t < 10 * 864e5 ? { row: "token", state: "warn", label: "Token", text: `Valid until ${fmtIstDate(tk.expiresAt)}: make a new one before then (${TOKEN_STEP})` }
     : { row: "token", state: "done", label: "Token", text: `Valid until ${fmtIstDate(tk.expiresAt)}` },
   );
   if (accessTokenSet && tk.extra.length) {
-    out.push({ row: "reach", state: "warn", label: "Token reach", text: `It can do more than read leads (${tk.extra.join(", ")}): make one without them (step 9)` });
+    out.push({ row: "reach", state: "warn", label: "Token reach", text: `It can do more than read leads (${tk.extra.join(", ")}): make one without them (${TOKEN_STEP})` });
   }
   out.push(
     /* Before Connect the server's pageMatches is false too (no Page is stored yet): that is "not yet", not a changed Page id. */
@@ -67,8 +72,8 @@ export function statusLines(s: MetaIntakeStatus, pageMatches: boolean | null, ac
   out.push({ row: "leads", state: s.lastLeadAt ? "done" : "todo", label: "Leads", text: s.lastLeadAt ? last : `No lead yet · ${last}`, leadId: s.lastLeadId });
   const c = s.counts;
   const waiting = [
-    c.failedToken && `${c.failedToken} ${c.failedToken === 1 ? "lead is" : "leads are"} waiting: the access token stopped working. Make a new one (step 9), Redeploy, then press Check again.`,
-    c.failedPermission && `Meta will not show us ${c.failedPermission} ${c.failedPermission === 1 ? "lead" : "leads"}: check Leads access (step 14) and the token's Page.`,
+    c.failedToken && `${c.failedToken} ${c.failedToken === 1 ? "lead is" : "leads are"} waiting: the access token stopped working. Make a new one (${TOKEN_STEP}), Redeploy, then press Check again.`,
+    c.failedPermission && `Meta will not show us ${c.failedPermission} ${c.failedPermission === 1 ? "lead" : "leads"}: check Leads access (${LEADS_ACCESS_STEP}) and the token's Page.`,
     c.pending && `${c.pending} waiting to be fetched: they come in by themselves, or press Fetch missed leads now.`,
     c.failedOther && `${c.failedOther} could not be read (Meta sent something unusable): see the log.`,
   ].filter(Boolean) as string[];

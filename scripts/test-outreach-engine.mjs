@@ -175,7 +175,10 @@ if (NEGATIVE) {
     const r = real.checkSend(l.metaConsent === "no" ? { ...l, metaConsent: "yes" } : l, t, ch,
       settings && !(settings.whatsappDailyLimit > 0) ? { ...settings, whatsappDailyLimit: 10 } : settings, count, ...rest);
     const blockers = r.blockers.filter((b) => !/^Fill in/.test(b));
-    return { ...r, blockers, ok: blockers.length === 0 };
+    // ...and "contacted before" is read from the status again (any status past New), as before 4 Oct 2026.
+    const warnings = t.stage === "first" && l.status && l.status !== "new" && !r.warnings.some((w) => /contacted before/.test(w))
+      ? [...r.warnings, "This lead has been contacted before; a first message may repeat what they already have."] : r.warnings;
+    return { ...r, blockers, warnings, ok: blockers.length === 0 };
   };
   // ...a call is proposed on a Sunday...
   M.callSlots = (kind, now) => real.callSlots(kind, now).map((s, i) => {
@@ -983,6 +986,13 @@ check(shapes >= 1200, `the shape of every first message was read for every lead 
   const recent = { ...lead, status: "contacted", lastContactedAt: new Date(now.getTime() - 3 * 3600_000).toISOString() };
   check(warnedBy(M.checkSend(recent, M.getTemplate("wa_fu1_hinglish"), "whatsapp", SETTINGS, 0, now), /24 hours/), "a second message within a day warns");
   check(warnedBy(M.checkSend(recent, waFirst, "whatsapp", SETTINGS, 0, now), /contacted before/), "a first message to a contacted lead warns");
+  // crm-fixes-1004 item 7 (4 Oct 2026, Holy Spirit Convent School): "contacted before" is the history, never the status.
+  const lostNever = { ...lead, status: "lost", lastContactedAt: undefined };
+  check(!warnedBy(M.checkSend(lostNever, waFirst, "whatsapp", SETTINGS, 0, now, { contactedBefore: false }), /contacted before/)
+    && !warnedBy(M.checkSend(lostNever, waFirst, "whatsapp", SETTINGS, 0, now), /contacted before/),
+    "a Lost lead never written to is not warned as contacted before (the status is not the history)");
+  check(warnedBy(M.checkSend({ ...lead, status: "new", lastContactedAt: undefined }, waFirst, "whatsapp", SETTINGS, 0, now, { contactedBefore: true }), /contacted before/),
+    "a first message to a lead whose history has a send warns as contacted before, whatever its status");
   check(warnedBy(M.checkSend(leadOf("coaching"), waFirst, "whatsapp", SETTINGS, 0, now), /written for a school/), "a school template to a coaching lead warns");
   const schoolWorded = { ...M.getTemplate("wa_after_reply_any_en"), id: "synthetic", notForKinds: ["dental"] };
   check(warnedBy(M.checkSend(leadOf("dental"), schoolWorded, "whatsapp", SETTINGS, 0, now), /Pick the dental clinic version/) && M.templateNotFor(schoolWorded, "dental"), "notForKinds still warns and filters");
@@ -1413,6 +1423,7 @@ if (NEGATIVE) {
     /wa_first_new_coaching_hinglish: five parts/, /approved sample: coaching, no website/,
     /has exactly one link, its kind's picture page, in its own part just before the ask/,
     /consent: unticked, Mehdi's first WhatsApp is blocked/, /consent: unticked, a member's WhatsApp follow-up is blocked/,
+    /Lost lead never written to is not warned as contacted before/,
   ];
   const missed = expected.filter((re) => !failures.some((f) => re.test(f)));
   console.log(`\nNEGATIVE CONTROL: ${failures.length} failures seen.`);

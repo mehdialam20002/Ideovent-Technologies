@@ -21,13 +21,16 @@ export function WeekTable({ m }: { m: CrmMetrics }) {
   return (
     <section className={cn(crm.panel, "overflow-hidden")} aria-labelledby="week-h" data-testid="week-table">
       <h2 id="week-h" className={cn(crm.label, "px-4 pt-4 sm:px-5")}>Last 7 days vs previous 7 days</h2>
-      <table className={cn(crm.table, "mt-2")}>
+      {/* It fits its card (crm-fixes-1004 item 12: at 1366 px the table was 348 px in a 299 px card and Change was
+          cut off): tighter cells and shorter headings, and should a card still be narrower, it scrolls, never clips. */}
+      <div className="mt-2 overflow-x-auto" data-testid="week-table-scroll">
+      <table className={crm.table}>
         <thead>
           <tr>
-            <th scope="col" className={cn(crm.th, "static pl-4 sm:pl-5")}><span className="sr-only">Measure</span></th>
-            <th scope="col" className={cn(crm.th, "static text-right")}>Last 7</th>
-            <th scope="col" className={cn(crm.th, "static text-right")}>Previous 7</th>
-            <th scope="col" className={cn(crm.th, "static pr-4 text-right sm:pr-5")}>Change</th>
+            <th scope="col" className={cn(crm.th, "static pl-4 pr-2 sm:pl-5")}><span className="sr-only">Measure</span></th>
+            <th scope="col" className={cn(crm.th, "static px-2 text-right")} title="Last 7 days">Last 7</th>
+            <th scope="col" className={cn(crm.th, "static px-2 text-right")} title="Previous 7 days">Prev. 7</th>
+            <th scope="col" className={cn(crm.th, "static pl-2 pr-4 text-right sm:pr-5")}>Change</th>
           </tr>
         </thead>
         <tbody>
@@ -37,10 +40,10 @@ export function WeekTable({ m }: { m: CrmMetrics }) {
             const sub = r.key === "whatsappSends" || r.key === "emailSends";
             return (
               <tr key={r.key}>
-                <th scope="row" className={cn(crm.td, "pl-4 text-left font-normal sm:pl-5", sub && "pl-7 text-muted-foreground sm:pl-8")}>{r.label}</th>
-                <td className={cn(crm.td, crm.num, "text-right font-medium")}>{cur[r.key]}</td>
-                <td className={cn(crm.td, crm.num, "text-right text-muted-foreground")}>{prev[r.key]}</td>
-                <td className={cn(crm.td, crm.num, "pr-4 text-right sm:pr-5")}>
+                <th scope="row" className={cn(crm.td, "pl-4 pr-2 text-left font-normal sm:pl-5", sub && "pl-7 text-muted-foreground sm:pl-8")}>{r.label}</th>
+                <td className={cn(crm.td, crm.num, "px-2 text-right font-medium")}>{cur[r.key]}</td>
+                <td className={cn(crm.td, crm.num, "px-2 text-right text-muted-foreground")}>{prev[r.key]}</td>
+                <td className={cn(crm.td, crm.num, "pl-2 pr-4 text-right sm:pr-5")}>
                   {c.text ? (
                     <span className={cn("inline-flex items-center gap-0.5 text-[12px]", c.dir === "up" && "text-success", c.dir === "down" && "text-destructive", c.dir === "flat" && "text-muted-foreground")}>
                       <Icon className="h-3 w-3" aria-hidden="true" />
@@ -55,6 +58,7 @@ export function WeekTable({ m }: { m: CrmMetrics }) {
           })}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }

@@ -1,6 +1,7 @@
-import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types";
+import type { ContentData, CollectionKey, SingletonKey, BaseDoc, DemoSite } from "./types";
 import { type Store, mergeWithSeed, clone } from "./store";
 import { supabase } from "./client";
+import { DEMO_SUMMARY_SELECT, isDemoSummary, toDemoSummary } from "./demoSummary";
 
 const SINGLETONS: SingletonKey[] = ["settings", "contact", "navigation", "home", "internship", "eduflow", "legal"];
 const TABLE = "content";
@@ -49,8 +50,86 @@ const PAGE = 1000;
 export class SupabaseStore implements Store {
   readonly mode = "supabase" as const;
   private cache: ContentData = mergeWithSeed(null);
+  /** The CRM's own host (./demoSummary.ts): demoSites read as summaries; whole records only by id. */
+  private summaries = false;
+  /** Whole demo records read (loadDemo) or written here this page load, by id: they stand in for their summary. */
+  private fullDemos = new Map<string, DemoSite>();
+
+  useDemoSummaries(): void {
+    this.summaries = true;
+  }
+
+  /**
+   * Every row of `collection` (or every row but it, `but`), paged by the unique (collection, doc_id) pair as load()
+   * pages. `cols` is the select: whole rows, or a summary's columns.
+   */
+  private async rows(cols: string, filter: { eq?: string; neq?: string }): Promise<Record<string, unknown>[]> {
+    const out: Record<string, unknown>[] = [];
+    for (let from = 0; ; from += PAGE) {
+      let q = supabase().from(TABLE).select(cols);
+      if (filter.eq) q = q.eq("collection", filter.eq);
+      if (filter.neq) q = q.neq("collection", filter.neq);
+      const { data: page, error } = await q.order("collection").order("doc_id").range(from, from + PAGE - 1);
+      if (error) throw error;
+      out.push(...((page || []) as unknown as Record<string, unknown>[]));
+      if (!page || page.length < PAGE) break;
+    }
+    return out;
+  }
+
+  /**
+   * The CRM's read (4 Oct 2026, crm-fixes-1004 item 8): every row but the demos, whole, and the demos as
+   * summaries, with the whole records this page has read or written in their place while their summary still
+   * says the same updatedAt (a demo saved since in another tab comes back as its new summary).
+   */
+  private async loadWithSummaries(): Promise<ContentData> {
+    const [rows, demoRows] = await Promise.all([
+      this.rows("collection, doc_id, data", { neq: "demoSites" }),
+      this.rows(DEMO_SUMMARY_SELECT, { eq: "demoSites" }),
+    ]);
+    const partial: Partial<ContentData> = {};
+    const grouped: Record<string, BaseDoc[]> = {};
+    for (const row of rows) {
+      const col = row.collection as string;
+      if (SINGLETONS.includes(col as SingletonKey)) (partial as any)[col] = row.data;
+      else (grouped[col] ||= []).push(row.data as BaseDoc);
+    }
+    for (const [col, list] of Object.entries(grouped)) (partial as any)[col] = list;
+    const demos = demoRows.map((r) => {
+      const s = toDemoSummary(r);
+      const whole = this.fullDemos.get(s.id);
+      if (whole && (whole.updatedAt || "") === (s.updatedAt || "")) return whole;
+      if (whole) this.fullDemos.delete(s.id);
+      return s;
+    });
+    if (demos.length) partial.demoSites = demos;
+    return mergeWithSeed(partial);
+  }
+
+  /** One demo's whole record, read now by its id. On the CRM host the snapshots carry it from then on. */
+  async loadDemo(id: string): Promise<DemoSite | null> {
+    const { data, error } = await supabase().from(TABLE).select("data").eq("collection", "demoSites").eq("doc_id", id).maybeSingle();
+    if (error || !data) return null;
+    const doc = (data as { data: DemoSite }).data;
+    if (!doc || typeof doc !== "object") return null;
+    if (this.summaries) {
+      this.fullDemos.set(id, doc);
+      const list = (this.cache.demoSites as DemoSite[]) || [];
+      this.cache = { ...this.cache, demoSites: list.some((d) => d.id === id) ? list.map((d) => (d.id === id ? doc : d)) : [...list, doc] };
+    }
+    return clone(doc);
+  }
 
   async load(): Promise<ContentData> {
+    if (this.summaries) {
+      try {
+        this.cache = await this.loadWithSummaries();
+      } catch (e) {
+        console.warn("Ideovent CMS: Supabase load failed, using seed.", e);
+        this.cache = mergeWithSeed(null);
+      }
+      return clone(this.cache);
+    }
     try {
       /*
         PAGED, NOT ONE SELECT. A bare select() came back with at most 1000 rows
@@ -93,11 +172,15 @@ export class SupabaseStore implements Store {
   }
 
   async saveDoc(col: CollectionKey, doc: BaseDoc): Promise<ContentData> {
+    // A summary is never written: it would replace the whole demo with a few fields (./demoSummary.ts).
+    if (isDemoSummary(doc)) throw new Error("This demo was read as a summary. Read the whole demo (loadDemo) before saving it.");
     const stamped = {...doc, updatedAt: new Date().toISOString() };
     const { error } = await supabase()
 .from(TABLE)
 .upsert({ collection: col, doc_id: doc.id, data: stamped }, { onConflict: "collection, doc_id" });
     if (error) throw error;
+    // The record just written is whole: on the CRM host it stands in for its summary from now on.
+    if (col === "demoSites" && this.summaries) this.fullDemos.set(doc.id, stamped as DemoSite);
     return this.load();
   }
 
@@ -108,6 +191,8 @@ export class SupabaseStore implements Store {
   }
 
   async reorder(col: CollectionKey, orderedIds: string[]): Promise<ContentData> {
+    // Reordering writes each whole document: never from summaries (the CRM host; the admin reads whole demos).
+    if (col === "demoSites" && this.summaries) throw new Error("Demos are reordered in the admin, which reads them whole.");
     const list = (this.cache[col] as BaseDoc[]) || [];
     const map = new Map(list.map((d) => [d.id, d]));
     const rows = orderedIds

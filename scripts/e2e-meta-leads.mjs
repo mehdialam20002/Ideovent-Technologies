@@ -166,7 +166,7 @@ if (NEGATIVE) {
 
 const errors = [];
 const page = await context.newPage();
-page.on("pageerror", (e) => errors.push(e.message));
+page.on("pageerror", (e) => errors.push(e.stack || e.message));
 page.on("console", (m) => m.type() === "error" && !/Failed to load resource|net::ERR_/.test(m.text()) && errors.push(m.text()));
 
 const goto = (path) => page.goto(BASE + path, { waitUntil: "domcontentloaded" });
@@ -669,6 +669,10 @@ await run(10, "The signed webhook into this CRM: the real api/meta/webhook.js, a
 step = "end";
 check(apiCalls.length === 0, "local mode called no /api/meta function from the browser", apiCalls);
 check(!errors.length, "no page errors or console errors", errors.slice(0, 5));
+/* Each error in full (4 Oct 2026). The check's detail stops at 400 characters, which cut one run's
+   "The above error occurred in the <ProtectedRoute> component" before its component stack and before
+   the error itself, so nobody could read what had thrown. A page error is kept with its stack. */
+for (const e of errors.slice(0, 10)) console.log(`      ${String(e).slice(0, 4000)}`);
 await browser.close();
 const failedIn = [...new Set(failed.map((f) => f.step))];
 console.log(`\n${passes} passed, ${failed.length} failed${failed.length ? ` (steps ${failedIn.join(", ")})` : ""}`);

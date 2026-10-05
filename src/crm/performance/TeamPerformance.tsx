@@ -161,18 +161,19 @@ function Card({ label, value, sub, to, onClick, icon: Icon, testId }: {
 }
 
 export function TeamPerformance({ className, initialPeriod = "today" }: { className?: string; initialPeriod?: PerfPeriod }) {
-  const { me, isStaff, isOwner, leads, events, opens, now, unassignedOpen, waitingOnYou, setScope } = useCrmData();
+  const { me, isStaff, isOwner, leads, events, opens, now, unassignedOpen, waitingOnYou, setScope, openCtx } = useCrmData();
   const ownerId = useOwnerId();
   const on = isStaff && !me.legacy;
   const [period, setPeriod] = useState<PerfPeriod>(initialPeriod);
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
-  const stats = useActivityStats(FETCH);
   const members = useMembers(on);
+  // Counted here from the team's rows and what this browser holds: no crm_activity_stats request (useActivityStats).
+  const stats = useActivityStats(FETCH, { members });
   const access = useAccessDays(on && isOwner, periodStart("7d", now).toISOString());
 
   const cards = useMemo(
-    () => teamCards({ leads, events, opens, ownerId, unassigned: unassignedOpen, waiting: waitingOnYou.length, now }),
-    [leads, events, opens, ownerId, unassignedOpen, waitingOnYou.length, now],
+    () => teamCards({ leads, events, opens, ownerId, unassigned: unassignedOpen, waiting: waitingOnYou.length, now, demoIdOf: openCtx.demoIdOf }),
+    [leads, events, opens, ownerId, unassignedOpen, waitingOnYou.length, now, openCtx],
   );
   const closeBy = useMemo(() => closeTheseBy(leads, events, now), [leads, events, now]);
   const flagged = useMemo(() => flaggedPeople(access), [access]);
@@ -242,8 +243,8 @@ export function TeamPerformance({ className, initialPeriod = "today" }: { classN
           to={CRM.leads} onClick={() => setScope("unassigned", "leads")} />
         <Card testId="card-stale" icon={TriangleAlert} label="Stale" value={cards.stale.length} sub="Team leads with no line for 7 days or more" to={CRM.leads}
           onClick={() => setScope("team", "leads")} />
-        <Card testId="card-hot" icon={Flame} label="Hot, not acted on" value={cards.hotNotActed.length} sub="Demo opened over 2 hours ago, nothing sent since"
-          to={CRM.today} onClick={() => setScope("team", "today")} />
+        <Card testId="card-hot" icon={Flame} label="Hot, not acted on" value={cards.hotNotActed.length} sub="Hot (Today's list) for over 2 hours, nothing sent since"
+          to={CRM.today} onClick={() => setScope("all", "today")} />
         <Card testId="card-waiting" icon={Inbox} label="Waiting on you" value={cards.waiting} sub={isOwner ? "Hand-overs and questions for Mehdi" : "Requests sent to you"} to={CRM.today} />
       </div>
 

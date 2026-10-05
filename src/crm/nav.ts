@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  CalendarCheck, Columns3, House, Import, LayoutDashboard, MapPin, MonitorSmartphone, Settings, UserRound, Users, UsersRound,
+  Briefcase, CalendarCheck, Columns3, House, Import, LayoutDashboard, MapPin, MonitorSmartphone, Settings, UserRound, Users, UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { isCrmHost, mainSiteUrl } from "@/lib/host";
@@ -35,6 +35,12 @@ export const CRM = {
   team: `${CRM_BASE}/team`,
   /** A person's own page: profile, targets, Set up this phone, password, sign out. */
   me: `${CRM_BASE}/me`,
+  /** The client files (client-process-spec 10.1): Board, List, Money, Renewals. Mehdi only. */
+  clients: `${CRM_BASE}/clients`,
+  /** One project's client page (pr_...), or a client without a project (cl_...). */
+  client: (id: string) => `${CRM_BASE}/clients/${encodeURIComponent(id)}`,
+  /** Settings > Client process: the firm's billing details, the policy numbers, the wording to approve. */
+  clientSettings: `${CRM_BASE}/settings/clients`,
   /**
    * The admin is always on the main site: "/admin" there, MAIN_ORIGIN/admin
    * from the CRM's own subdomain. When mainSiteIsCrossOrigin(), render it as
@@ -52,7 +58,7 @@ export interface CrmNavItem {
   /** Shown in the phone bottom bar; the rest go under "More". */
   primary?: boolean;
   /** Which count to show as a badge. */
-  badge?: "due" | "hot" | "unlinkedDemos" | "unassigned";
+  badge?: "due" | "hot" | "unlinkedDemos" | "unassigned" | "clientsDue";
 }
 
 /**
@@ -74,12 +80,21 @@ export const CRM_NAV: CrmNavItem[] = [
 const TEAM_ITEM: CrmNavItem = { to: CRM.team, label: "Team", icon: UsersRound, badge: "unassigned" };
 
 /**
- * An admin's own page (password, Sign out), under the rail's list. Spec 10.1
+ * The client files (client-process-spec 10.1): Mehdi only, so never in CRM_NAV itself (ADMIN_NAV is its
+ * first four and the owner's rail splices at index 4). crmNav puts it after Pipeline in his rail and first
+ * in his phone's More menu. Its badge counts the client tasks due today or late.
+ */
+const CLIENTS_ITEM: CrmNavItem = { to: CRM.clients, label: "Clients", icon: Briefcase, badge: "clientsDue" };
+
+/**
+ * A person's own page (password, Sign out), under the rail's list. Spec 10.1
  * gives admins no Me in the rail and the shell has no Sign out, and /admin
  * (where Mehdi signs out) is not theirs: without this an admin could neither
- * sign out nor change their password.
+ * sign out nor change their password. Mehdi has it there too (4 Oct 2026,
+ * crm-fixes-1004 item 17): on a computer his Sign out was only reachable by
+ * typing /me.
  */
-const ADMIN_ME_ITEM: CrmNavItem = { to: CRM.me, label: "Me", icon: UserRound };
+const ME_ITEM: CrmNavItem = { to: CRM.me, label: "Me", icon: UserRound };
 
 /** An admin (a trusted senior): the daily screens and the Team page, read only. */
 const ADMIN_NAV: CrmNavItem[] = [...CRM_NAV.slice(0, 4), TEAM_ITEM];
@@ -113,7 +128,7 @@ export interface CrmNavSet {
 
 /**
  * Who sees which screens (spec 10.1):
- *   owner   Dashboard, Today, Leads, Pipeline, Team, Demos, Lead finder, Import, Settings
+ *   owner   Dashboard, Today, Leads, Pipeline, Clients, Team, Demos, Lead finder, Import, Settings; Me under the list
  *   admin   Dashboard, Today, Leads, Pipeline, Team (read only); Me under the list
  *   member  My day, Today, My leads, Pipeline, Me
  * Without 0011 (legacy) Mehdi's CRM is exactly as before: no Team, no bell.
@@ -121,7 +136,10 @@ export interface CrmNavSet {
  * Mehdi's Team link is in the rail's list, between Pipeline and Demos (part 2
  * of the team build moved it there from under the list, and e2e-crm-host.mjs
  * from eight links to nine). His phone keeps its four tabs, and Team stays
- * after Back to admin in the More menu.
+ * after Back to admin in the More menu. Clients (client-process-spec 10.1, 4 Oct 2026) sits after
+ * Pipeline in his rail (ten links; nine in legacy, where 0014 needs nothing from 0011) and first in his
+ * phone's More menu. Me sits under his rail's list, as an admin's does, and last in his More menu
+ * (eight links there with Back to admin and Team; seven in legacy).
  */
 export function crmNav(me: Pick<CrmMe, "role" | "legacy">): CrmNavSet {
   const none = { railFooter: [], more: [], moreFooter: [], backToAdmin: false, bell: !me.legacy };
@@ -129,10 +147,11 @@ export function crmNav(me: Pick<CrmMe, "role" | "legacy">): CrmNavSet {
     const team = me.legacy ? [] : [TEAM_ITEM];
     return {
       ...none,
-      rail: [...CRM_NAV.slice(0, 4), ...team, ...CRM_NAV.slice(4)],
+      rail: [...CRM_NAV.slice(0, 4), CLIENTS_ITEM, ...team, ...CRM_NAV.slice(4)],
       tabs: CRM_NAV.filter((i) => i.primary),
-      more: CRM_NAV.filter((i) => !i.primary),
-      moreFooter: team,
+      more: [CLIENTS_ITEM, ...CRM_NAV.filter((i) => !i.primary)],
+      railFooter: [ME_ITEM],
+      moreFooter: [...team, ME_ITEM],
       backToAdmin: true,
     };
   }
@@ -140,10 +159,10 @@ export function crmNav(me: Pick<CrmMe, "role" | "legacy">): CrmNavSet {
     return {
       ...none,
       rail: ADMIN_NAV,
-      railFooter: [ADMIN_ME_ITEM],
+      railFooter: [ME_ITEM],
       tabs: ADMIN_NAV.filter((i) => i.primary),
       more: ADMIN_NAV.filter((i) => !i.primary),
-      moreFooter: [ADMIN_ME_ITEM],
+      moreFooter: [ME_ITEM],
     };
   }
   if (me.role === "member") return { ...none, rail: MEMBER_NAV, tabs: MEMBER_NAV.filter((i) => i.primary) };

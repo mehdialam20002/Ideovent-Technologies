@@ -3,6 +3,7 @@ import { useOutreach } from "./useOutreach";
 import { firstWhatsappToday, sentToday } from "./derive";
 import { dailyWhatsappLimit } from "@/lib/outreach/engine";
 import { todayQueue } from "./compose";
+import { useOpensCtx } from "./useOpensCtx";
 import { LeadRow, leadListCls } from "./LeadRow";
 import { fmtDateTime } from "./ui";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,8 @@ import { cn } from "@/lib/utils";
  */
 export function TodayTab({ onOpen }: { onOpen: (id: string) => void }) {
   const { leads, events, settings, opens } = useOutreach();
-  const { hot, due, fresh } = todayQueue(leads, opens);
+  const openCtx = useOpensCtx();
+  const { hot, due, fresh } = todayQueue(leads, opens, new Date(), openCtx);
   const wa = firstWhatsappToday(events);
   const cap = dailyWhatsappLimit(settings);
   const atCap = cap !== null && wa >= cap;

@@ -407,7 +407,7 @@ for (const status of ["call", "proposal"]) {
     check(!/With link/.test(M.stageHint("first", channel, "dental", true)) && /With link/.test(M.stageHint("first", channel, "dental")),
       `stage hint (${channel}): a team sender's first message names no With link switch, Mehdi's does`);
   }
-  check(/hand the lead to Mehdi/.test(M.nextStep(lead, [], NOW, { member: true }).text) && /send the sample link/.test(M.nextStep(lead, [], NOW).text), "next step on a replied lead: a member hands it over; Mehdi sends the sample link, as before");
+  check(/hand the lead to Mehdi/.test(M.nextStep(lead, false, NOW, { member: true }).text) && /send the sample link/.test(M.nextStep(lead, false, NOW).text), "next step on a replied lead: a member hands it over; Mehdi sends the sample link, as before");
 }
 
 /* ── 6. Settings > Team wording shows exactly what a member sends ─────────── */

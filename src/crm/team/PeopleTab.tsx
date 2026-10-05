@@ -207,7 +207,8 @@ function PersonCard({ m, manage, busy, now, queue, waToday, untouched, onOpen, o
         <Stat label="First WhatsApp today" testId={`team-wa-${m.id}`}>
           {limit === null || limit === undefined ? `${waToday} (no limit)` : limit === 0 ? `${waToday} (off)` : `${waToday}/${limit}`}
         </Stat>
-        <Stat label="Last seen">{owner ? "-" : seenLabel(m.lastSeenAt, now)}</Stat>
+        {/* Mehdi's own row too (crm-fixes-1004 item 14): crm_members.last_seen_at is kept for him like anyone. */}
+        <Stat label="Last seen" testId={`team-seen-${m.id}`}>{seenLabel(m.lastSeenAt, now)}</Stat>
       </dl>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[12px]">

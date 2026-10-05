@@ -1,9 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
-import type { ContentData, CollectionKey, SingletonKey, BaseDoc } from "./types";
+import type { ContentData, CollectionKey, SingletonKey, BaseDoc, DemoSite } from "./types";
 import { getStore, sortByOrder } from "./store";
 import { ContentLoader, covers, getLoader, type ContentSnapshot } from "./loader";
 import { publicReader } from "./publicRead";
 import { ROW_COLLECTIONS, currentPath, needsFor, type ContentKey, type RowCollection } from "./scope";
+import { isCrmHost } from "@/lib/host";
 
 interface CmsActions {
   saveDoc: (col: CollectionKey, doc: BaseDoc & Record<string, any>) => Promise<void>;
@@ -14,6 +15,11 @@ interface CmsActions {
   exportJson: () => string;
   importJson: (json: string) => Promise<void>;
   refresh: () => Promise<void>;
+  /**
+   * One demo's whole record, read now (the CRM's own host reads demos as summaries, ./demoSummary.ts); the
+   * snapshot then carries it. Elsewhere, the snapshot's own record. Null when there is none.
+   */
+  loadDemo: (id: string) => Promise<DemoSite | null>;
 }
 
 interface CmsContextValue {
@@ -36,10 +42,14 @@ interface Internal {
 
 const CmsContext = createContext<Internal | null>(null);
 
-/** The page's loader: the store from ./store, and in Supabase mode the SDK-free reader. */
+/**
+ * The page's loader: the store from ./store, and in Supabase mode the SDK-free reader. On the CRM's own host the
+ * store reads demos as summaries (./demoSummary.ts, crm-fixes-1004 item 8); the admin and local mode read them whole.
+ */
 function pageLoader(): ContentLoader {
   return getLoader(() => {
     const store = getStore();
+    if (store.mode === "supabase" && isCrmHost()) store.useDemoSummaries?.();
     return new ContentLoader(store, store.mode === "supabase" ? publicReader : null);
   });
 }
@@ -107,6 +117,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       exportJson: () => store.exportJson(),
       importJson: async (json) => loader.replaceFull(await store.importJson(json)),
       refresh: () => loader.refresh(needsFor()),
+      loadDemo: (id) => loader.loadDemo(id),
     }),
     [store, loader]
   );

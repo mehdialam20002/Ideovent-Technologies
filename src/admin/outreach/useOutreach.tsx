@@ -139,6 +139,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
   const store = useMemo(() => getOutreachStore(), []);
   const { data, actions } = useCms();
   const cmsOpens = useMemo(() => (data as unknown as { demoSiteOpens?: DemoSiteOpen[] }).demoSiteOpens || [], [data]);
+  const cmsDemos = useMemo(() => (data as unknown as { demoSites?: DemoSite[] }).demoSites || [], [data]);
 
   const [me, setMe] = useState<CrmMe>(PENDING_ME);
   const [leads, setLeads] = useState<OutreachLead[]>([]);
@@ -393,14 +394,24 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     Not after a cold link (2 Oct 2026): when the last link they got went in a
     first message, an open is not a yes, so the lead stays Contacted and only
     the history line is written; it still shows under Hot.
+    "Opened since the last contact" is derive.ts opensSinceContact (4 Oct 2026):
+    the lead's own demo (by id, else by its slug), opened after its demo link
+    went to them and after the last contact. A lead never contacted, or whose
+    link never went to them, gets no line: such an open is not theirs.
   */
   const marking = useRef(new Set<string>());
+  const demoIdBySlug = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const d of [...teamDemos, ...cmsDemos]) if (d.slug && !m.has(d.slug)) m.set(d.slug, d.id);
+    return m;
+  }, [teamDemos, cmsDemos]);
   useEffect(() => {
     if (loading || !me.role) return;
     const now = new Date();
+    const ctx = { events, demoIdOf: (l: OutreachLead) => l.demoId || (l.demoSlug ? demoIdBySlug.get(l.demoSlug) : undefined) };
     for (const lead of leads) {
       if (!canEditLead(me, lead, now)) continue;
-      const fresh = opensSinceContact(lead, opens);
+      const fresh = opensSinceContact(lead, opens, ctx);
       if (!fresh.length) continue;
       const latest = fresh[0];
       const id = demoOpenEventId(latest.id);
@@ -429,7 +440,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
       })();
     }
-  }, [loading, me, leads, opens, events, addEvent, patchLead]);
+  }, [loading, me, leads, opens, events, addEvent, patchLead, demoIdBySlug]);
 
   const value: OutreachValue = {
     mode: store.mode,

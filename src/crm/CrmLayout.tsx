@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Circle, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react";
 import { useCms } from "@/lib/cms/context";
@@ -16,6 +16,13 @@ import { FirstPassword } from "./auth/FirstPassword";
 import { Bell, NotificationsProvider } from "./notifications/Bell";
 import { mainSiteIsCrossOrigin } from "@/lib/host";
 import { cn } from "@/lib/utils";
+import { useOptionalClients } from "./clients/context";
+
+/*
+ * The client files (client-process-spec 10.1, decision 17): Mehdi only. Their provider is a lazy chunk
+ * mounted for him alone, so nobody else's browser downloads the client code or asks for a client row.
+ */
+const ClientsProvider = lazy(() => import("./clients/useClients"));
 
 const RAIL_KEY = "ideovent_crm_rail_collapsed";
 
@@ -84,13 +91,21 @@ function CrmGates() {
 
 /** The data, as this person. A new person (Act as, a changed role or See all) loads it afresh. */
 function CrmApp() {
-  const { me, actingAs } = useCrmMe();
+  const { me, actingAs, can } = useCrmMe();
   const who = [actingAs || "", me.memberId || "", me.role || "", me.viewAll ? "all" : "own", me.legacy ? "legacy" : ""].join("|");
   return (
     <OutreachProvider key={who}>
       <CrmDataProvider>
         <NotificationsProvider>
-          <CrmShell />
+          {can("clients") ? (
+            <Suspense fallback={<FullScreenLoader label="Loading the CRM" />}>
+              <ClientsProvider>
+                <CrmShell />
+              </ClientsProvider>
+            </Suspense>
+          ) : (
+            <CrmShell />
+          )}
         </NotificationsProvider>
       </CrmDataProvider>
     </OutreachProvider>
@@ -99,6 +114,9 @@ function CrmApp() {
 
 function useBadge(item: CrmNavItem): number {
   const { metrics, leads } = useCrmData();
+  /* Mehdi's client tasks due today or late (null for everyone else: no provider). */
+  const clients = useOptionalClients();
+  if (item.badge === "clientsDue") return clients?.due.length ?? 0;
   if (item.badge === "due") return metrics.due.today.length + metrics.due.overdue.length;
   if (item.badge === "hot") return metrics.hot.length;
   if (item.badge === "unlinkedDemos") return metrics.unlinkedDemos;
@@ -266,6 +284,15 @@ function CrmShell() {
   const { mode, loading, error, metrics } = useCrmData();
   const { me, can } = useCrmMe();
   const nav = crmNav(me);
+  /* A new screen starts at its top (crm-fixes-1004 item 13): <main> is the scroll area, and it kept the last
+     screen's position (the Dashboard scrolled to 900 px left Leads at its bottom, Pipeline's heading cut off).
+     Only a new address does it: a filter or a view in the query string keeps the place. */
+  const mainRef = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    const el = mainRef.current;
+    if (el) el.scrollTop = 0;
+  }, [pathname]);
   /* "(3) CRM": the due and overdue follow-ups, in the tab's title (spec 10.8). */
   const due = metrics.due.today.length + metrics.due.overdue.length;
   return (
@@ -315,7 +342,7 @@ function CrmShell() {
         {/* `relative`: main is the containing block of the screens' sr-only labels (position: absolute).
             Without it they escaped this scroll area, and the page itself scrolled behind the shell
             (up to 4,700 px on a lead page on a phone, showing blank space under the tab bar). */}
-        <main id="crm-main" tabIndex={-1} className="relative min-h-0 flex-1 focus:outline-none overflow-y-auto px-3 pb-24 pt-4 md:px-6 md:pb-8 md:pt-5">
+        <main ref={mainRef} id="crm-main" tabIndex={-1} className="relative min-h-0 flex-1 focus:outline-none overflow-y-auto px-3 pb-24 pt-4 md:px-6 md:pb-8 md:pt-5">
           {loading ? (
             <div className="flex justify-center py-20" role="status" aria-label="Loading the CRM">
               <div className="h-7 w-7 animate-spin rounded-full border-2 border-border border-t-primary" />

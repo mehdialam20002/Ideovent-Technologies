@@ -23,12 +23,13 @@ import {
   whatsappWebUrl,
 } from "@/lib/outreach/engine";
 import { isIndianMobile, sameContact } from "@/lib/outreach/store";
+import { isDemoSummary } from "@/lib/cms/demoSummary";
 import { blank, can, crmErrorText, isStaff } from "@/lib/outreach/access";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { useOutreach } from "./useOutreach";
-import { firstWhatsappToday } from "./derive";
+import { contactedBefore, firstWhatsappToday } from "./derive";
 import { DemoPicker, leadDemo, useLeadDemoSites } from "./DemoPicker";
-import { callDoneChanges, looksLikeNote, otherLeadsNamed, rankTemplates, repliedChanges, startingObservation } from "./compose";
+import { NOTE_IN_MESSAGE, callDoneChanges, looksLikeNote, otherLeadsNamed, rankTemplates, repliedChanges, startingObservation } from "./compose";
 import { PLAIN_STAGE_LABELS, offered, plainStageOf, stageName, suggestFor } from "./stages";
 import { blanksIn, fillBlanks, listBlanks, piecesOf } from "./placeholders";
 import { StageStrip, type StageChoice } from "./StageStrip";
@@ -285,6 +286,8 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   const picked = ranked.find((t) => t.id === templateId || t.id === getTemplate(templateId)?.twinOf) || ranked[0];
   const short = ranked.slice(0, 3);
   if (picked && !short.includes(picked)) short.push(picked);
+  // "More templates" lists only the ones not shown above, and counts those (crm-fixes-1004 item 18).
+  const more = ranked.filter((t) => !short.includes(t));
   const hasLinkTwin = Boolean(linkTwinOf(picked));
   // Why With link is off: for a team sender (anyone but Mehdi, once `me` has loaded) the team line, since With link
   // is Mehdi's alone whatever the demo; else the link would not open (so while `me` is still pending Mehdi reads
@@ -358,10 +361,13 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
   // [blank] left in it, or a link typed into a message that must not carry one, blocks the send.
   // Anyone but Mehdi: their own signature is the one left out of the link check; strict timing, their limit, their number.
   const checkSettings = teamCtx ? { ...settings, signature: teamCtx.signature } : settings;
+  // "Contacted before" is the lead's history (a send or a call), never its status: a lead marked Lost without a
+  // word sent to it was not contacted (crm-fixes-1004 item 7).
   const check = template
-    ? checkSend({ ...lead, observation: observation.trim() }, template, channel, checkSettings, waToday, new Date(), { duplicateOf, text: { subject, body }, ...teamCheckExtra(me) })
+    ? checkSend({ ...lead, observation: observation.trim() }, template, channel, checkSettings, waToday, new Date(), { duplicateOf, text: { subject, body }, contactedBefore: contactedBefore(lead, events), ...teamCheckExtra(me) })
     : { ok: false, blockers: [`There is no ${channel === "email" ? "e-mail" : "WhatsApp"} message at this stage. Pick another stage${channel === "whatsapp" ? " or switch to Email" : ""}.`], warnings: [] as string[] };
   const text = `${subject}\n${body}`;
+  const usesObservationNow = Boolean(template && /\{observation\}/.test(`${template.subject || ""}${template.body}`));
   const unfilled = blanksIn(text);
   const blockers = [...check.blockers];
   // A member's WhatsApp waits for the company number Mehdi checked, whether or not a message fits this stage.
@@ -437,6 +443,11 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
     blockers.push(`This message names another lead (${others.map((o) => o.instituteName).join(", ")}). Fix the text or the observation before sending.`);
   }
   if (template && !body.trim()) blockers.push("The message is empty.");
+  // The lead's demo still read as a summary (lib/cms/demoSummary.ts): {offer} and the toppers check need its contents.
+  if (template && demo && isDemoSummary(demo)) blockers.push(DEMO_LOADING);
+  // A research note never reaches a message (crm-fixes-1004 items 1 and 16): a saved one is never the starting
+  // observation (compose.ts startingObservation), and one typed here that reads like a note stops the send too.
+  if (usesObservationNow && looksLikeNote(observation.trim())) blockers.push(NOTE_IN_MESSAGE);
   const blocked = blockers.length > 0;
   const uniqueWarnings = [...new Set(warnings)];
 
@@ -719,11 +730,11 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
               {waiting === 1 ? "1 more message at this stage waits" : `${waiting} more messages at this stage wait`} for Mehdi to approve the team's wording.
             </p>
           )}
-          {ranked.length > short.length && (
+          {more.length > 0 && (
             <details className="mt-1">
-              <summary className={summaryCls}>More templates for this stage ({ranked.length})</summary>
+              <summary className={summaryCls}>More templates for this stage ({more.length})</summary>
               <div className="mt-2 rounded-xl bg-muted/40 p-2">
-                <TemplateList items={ranked} selected={template} suggested={ranked[0]?.id} onPick={setTemplateId} />
+                <TemplateList items={more} selected={template} suggested={ranked[0]?.id} onPick={setTemplateId} />
               </div>
             </details>
           )}
@@ -917,6 +928,9 @@ export function ComposePanel({ lead, next }: { lead: OutreachLead; next?: { name
 
 /** Past this length some mail apps cut a mailto: link (a common limit is about 2,000 characters). */
 const MAILTO_SAFE_LENGTH = 1900;
+
+/** While the lead's demo is read whole (the CRM's own host lists demos as summaries). */
+const DEMO_LOADING = "Reading this lead's demo... the message waits for what it has.";
 
 /** An error's words for a line on screen. */
 const errText = (e: unknown) => (e as Error)?.message || "unknown error";

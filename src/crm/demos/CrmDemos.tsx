@@ -43,6 +43,9 @@ export default function CrmDemos() {
   };
 
   const counts = useMemo(() => Object.fromEntries(DEMO_VIEWS.map((v) => [v.id, all.filter((r) => inView(r, v.id)).length])) as Record<DemoView, number>, [all]);
+  /* The Dashboard's demo open rate, in the same words: sent to their lead (a message carried the link), opened by them. */
+  const sentCount = useMemo(() => all.filter((r) => r.state === "sent").length, [all]);
+  const sentOpened = useMemo(() => all.filter((r) => r.state === "sent" && r.opens > 0).length, [all]);
   const shown = useMemo(() => {
     const n = q.trim().toLowerCase();
     const list = all.filter((r) => inView(r, view) && (!n || `${r.demo.instituteName} ${r.demo.slug} ${r.demo.city || ""} ${r.lead?.instituteName || ""}`.toLowerCase().includes(n)));
@@ -62,7 +65,7 @@ export default function CrmDemos() {
     onMarkSent: async (i) => {
       try {
         await markSent(i.demo, i.lead);
-        say(`${i.demo.instituteName} is marked sent. Its link is live.`);
+        say(`${i.demo.instituteName}: its link is live. It shows as Sent once a message to the lead carries it.`);
       } catch (e) {
         say(`Not marked sent: ${(e as Error).message || "unknown error"}`, true);
       }
@@ -94,7 +97,7 @@ export default function CrmDemos() {
     <div className="mx-auto max-w-[1400px]">
       <PageHeader
         title="Demos"
-        subtitle={`${all.length} ${all.length === 1 ? "demo" : "demos"}, ${unlinked} without a lead. Every demo shows here, however it was made.`}
+        subtitle={`${all.length} ${all.length === 1 ? "demo" : "demos"}, ${unlinked} without a lead. ${sentCount} sent to their lead, ${sentOpened} opened by them. Every demo shows here, however it was made.`}
         actions={
           <button type="button" className={crm.btn} onClick={() => void doRefresh()} disabled={refreshing}>
             <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} aria-hidden="true" /> Refresh

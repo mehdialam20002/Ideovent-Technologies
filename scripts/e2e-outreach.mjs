@@ -291,8 +291,9 @@ check(/\/site\//.test(linkedText), `a demo made from template ${firstTpl} is lin
 check(page.url().includes("/crm/leads/"), "creating the demo stays on the CRM lead page");
 check(/404 until marked sent/i.test(linkedText), "a draft demo says its public link is a 404 until sent");
 await page.getByRole("button", { name: /mark sent to/i }).click();
-await page.waitForFunction(() => /link is live/i.test(document.querySelector('[data-testid="linked-demo"]')?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
-check(/link is live/i.test(await page.getByTestId("linked-demo").innerText()), "Mark sent makes the demo link live");
+/* Live by link, not sent: nothing has carried the link to the lead yet (crm-fixes-1004 item 2). */
+await page.waitForFunction(() => /Live, not sent yet/.test(document.querySelector('[data-testid="linked-demo"]')?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
+check(/Live, not sent yet/.test(await page.getByTestId("linked-demo").innerText()), "Mark sent puts the demo's link live, and it reads Live, not sent yet until a message carries it");
 
 /* ── 3. Compose an email ───────────────────────────────────────────────── */
 await compose.getByRole("tab", { name: /^email/i }).click();
@@ -806,13 +807,13 @@ const dentalDemo = await page.evaluate(([ok, ck, id]) => {
 }, [OUTREACH_KEY, CMS_KEY, dentalId]);
 check(dentalDemo?.kind === "dental" && dentalDemo?.templateId === "d6-kids-dental", "the new demo is a dental demo made from d6", JSON.stringify({ kind: dentalDemo?.kind, templateId: dentalDemo?.templateId }));
 await page.getByRole("button", { name: /mark sent to/i }).click().catch(() => {});
-await page.waitForFunction(() => /link is live/i.test(document.querySelector('[data-testid="linked-demo"]')?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
-check(/link is live/i.test(await page.getByTestId("linked-demo").innerText().catch(() => "")), "Mark sent makes the dental demo's link live");
+await page.waitForFunction(() => /Live, not sent yet/.test(document.querySelector('[data-testid="linked-demo"]')?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
+check(/Live, not sent yet/.test(await page.getByTestId("linked-demo").innerText().catch(() => "")), "Mark sent puts the dental demo's link live (Live, not sent yet)");
 /* Today, on the main site's /crm, the links out to the admin stay relative, exactly as before (only the
    CRM's own subdomain makes them absolute: e2e-crm.mjs checks that on crm.localhost). */
 const openHref = (await dc.getByTestId("demo-open").getAttribute("href").catch(() => "")) || "";
-check(openHref === `/admin/preview/site/${dentalDemo?.slug}` && (await dc.getByTestId("demo-open").getAttribute("target")) === "_blank",
-  "on the main site the demo's Open link is still the relative /admin/preview address, in a new tab", openHref);
+check(openHref === `/site/${dentalDemo?.slug}?team=1` && (await dc.getByTestId("demo-open").getAttribute("target")) === "_blank",
+  "on the main site the live demo's Open link is relative, a team preview (/site/<slug>?team=1: Mehdi's look never counts as an open), in a new tab", openHref);
 
 /* Compose: a dental template, the mail app link, and the long-link copy. */
 await dc.getByRole("tab", { name: /^email/i }).click();

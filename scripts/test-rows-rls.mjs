@@ -493,7 +493,7 @@ console.log("\nC. a new project: all of SETUP_ALL.sql in one paste");
 {
   check(CUT0013 > CUT0011 && SETUP_FULL.includes(lf(SQL0013).trim()), "SETUP_ALL.sql carries 0013 exactly as the migration file, after 0011",
     CUT0013 < 0 ? "no 0013 section" : CUT0013 < CUT0011 ? "0013 before 0011" : "a different 0013 text");
-  check(SETUP_FULL.indexOf("0005_harden_admin_and_reads.sql") < CUT0013 && /^-- It is migrations 0001 to [^\n]*\b0013\b/m.test(SETUP_FULL),
+  check(SETUP_FULL.indexOf("0005_harden_admin_and_reads.sql") < CUT0013 && Number((SETUP_FULL.match(/^-- It is migrations 0001 to (\d{4})\b/m) || [])[1] || 0) >= 13,
     "...after 0005 (which it overrides), and its header says so", SETUP_FULL.slice(0, 400));
   const code = lf(SQL0013).replace(/--[^\n]*/g, "");
   check(!/\bcrm_|\bmeta_|\bprivate\./.test(code), "0013 uses nothing from 0011 or 0012 (no crm_, meta_ or private. object)", code.match(/\bcrm_\w+|\bmeta_\w+|\bprivate\.\w+/g));

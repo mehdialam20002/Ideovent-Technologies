@@ -72,10 +72,12 @@ export function ActivityChart({ points }: { points: DayPoint[] }) {
           </p>
         )}
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={points} margin={{ top: 8, right: 18, bottom: 0, left: -24 }} barCategoryGap="22%">
+          {/* The y axis gets its own room (crm-fixes-1004 item 11): a negative left margin pushed the right-aligned
+              labels past the chart's left edge, so 20, 40, 60 and 80 read as "0". */}
+          <ComposedChart data={points} margin={{ top: 8, right: 18, bottom: 0, left: 0 }} barCategoryGap="22%">
             <CartesianGrid vertical={false} stroke={C.grid} strokeDasharray="3 3" />
             <XAxis dataKey="date" tickFormatter={shortDay} tick={{ fill: C.axis, fontSize: 11 }} tickLine={false} axisLine={{ stroke: C.grid }} interval="preserveStartEnd" minTickGap={24} />
-            <YAxis allowDecimals={false} tick={{ fill: C.axis, fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
+            <YAxis allowDecimals={false} tick={{ fill: C.axis, fontSize: 11 }} tickLine={false} axisLine={false} width={36} />
             <Tooltip content={<ChartTip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }} />
             <Bar dataKey="email" stackId="s" fill={C.email} isAnimationActive={false} />
             <Bar dataKey="whatsapp" stackId="s" fill={C.whatsapp} radius={[3, 3, 0, 0]} isAnimationActive={false} />

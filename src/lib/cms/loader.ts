@@ -27,7 +27,7 @@
  * Plain class, no React: the provider subscribes with useSyncExternalStore, and
  * main.tsx can start the first read before React renders anything.
  */
-import type { BaseDoc, ContentData } from "./types";
+import type { BaseDoc, ContentData, DemoSite } from "./types";
 import { type Store, mergeWithSeed } from "./store";
 import { seed } from "./seed";
 import { fillDeferredBodies, loadDeferredBodies, type DeferredBodies } from "./deferredBodies";
@@ -56,10 +56,21 @@ export function covers(s: ContentSnapshot, needs: Needs): boolean {
   return needs.keys.every((k) => s.keys.has(k)) && (!needs.row || s.rows.has(rowId(needs.row)));
 }
 
+/**
+ * A refresh that comes while the page's own full read is on its way, and that read started at most this long ago,
+ * waits for that read instead of starting a second one (crm-fixes-1004 item 8: the CRM shell's refresh on mount
+ * started an identical 9 MB read 0.1 s after the first). Older reads are not joined: one started before a sign-in
+ * must not answer for the session.
+ */
+export const JOIN_FULL_READ_MS = 2000;
+
 export class ContentLoader {
   private full: ContentData | null = null;
   private fullTried = false;
   private fullPromise: Promise<void> | null = null;
+  /** The full read on its way (the page's first, or a refresh), and when it started. */
+  private fullInFlight: Promise<unknown> | null = null;
+  private fullStartedAt = 0;
   private whole: Partial<Record<ContentKey, unknown>> = {};
   private docs: Record<RowCollection, Map<string, BaseDoc>> = { demoSites: new Map(), pitchPages: new Map() };
   private hasRows: Partial<Record<RowCollection, boolean>> = {};
@@ -155,7 +166,13 @@ export class ContentLoader {
    */
   async refresh(needs: Needs): Promise<void> {
     if (needs.all || this.full || !this.reader) {
-      this.replaceFull(await this.store.load());
+      if (this.fullInFlight && Date.now() - this.fullStartedAt <= JOIN_FULL_READ_MS) {
+        await this.fullInFlight.catch(() => undefined);
+        return;
+      }
+      const read = this.store.load();
+      this.track(read);
+      this.replaceFull(await read);
       return;
     }
     const keys = [...new Set([...this.loadedKeys, ...needs.keys])];
@@ -190,6 +207,35 @@ export class ContentLoader {
     );
   }
 
+  /** A full read on its way: a refresh that comes right after it joins it (JOIN_FULL_READ_MS). */
+  private track(read: Promise<unknown>): void {
+    this.fullInFlight = read;
+    this.fullStartedAt = Date.now();
+    const done = () => {
+      if (this.fullInFlight === read) this.fullInFlight = null;
+    };
+    read.then(done, done);
+  }
+
+  /**
+   * One demo's whole record (the CRM host reads demos as summaries: ./demoSummary.ts), read now and put in the
+   * snapshot in its summary's place. Where the store keeps every record whole (local mode, the admin), the
+   * snapshot's own record. Null when there is none.
+   */
+  async loadDemo(id: string): Promise<DemoSite | null> {
+    const own = () => ((this.snap.data.demoSites as DemoSite[]) || []).find((d) => d.id === id) ?? null;
+    if (!this.store.loadDemo) return own();
+    const doc = await this.store.loadDemo(id);
+    if (!doc) return null;
+    if (this.full) {
+      const list = (this.full.demoSites as DemoSite[]) || [];
+      this.full = { ...this.full, demoSites: list.some((d) => d.id === id) ? list.map((d) => (d.id === id ? doc : d)) : [...list, doc] };
+      this.dirty = true;
+      this.emit();
+    }
+    return doc;
+  }
+
   private loadFull(): Promise<void> {
     if (this.fullPromise) return this.fullPromise;
     this.pending++;
@@ -202,7 +248,9 @@ export class ContentLoader {
       a blank placeholder for ever. On failure the seed stays on screen, the same
       answer the Supabase store gives when its own query fails.
     */
-    this.fullPromise = this.store.load().then(
+    const read = this.store.load();
+    this.track(read);
+    this.fullPromise = read.then(
       (data) => {
         this.full = data;
         this.dirty = true;

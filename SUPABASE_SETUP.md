@@ -106,7 +106,7 @@ tables and columns can stay; the old CRM ignores them.
 [`supabase/migrations/0012_meta_leads.sql`](supabase/migrations/0012_meta_leads.sql) lets leads from the
 Ideovent Facebook and Instagram instant forms arrive in the CRM by themselves. Run it AFTER 0011: without
 0011 it stops at its first statement and changes nothing. A brand-new project gets it inside
-[`supabase/SETUP_ALL.sql`](supabase/SETUP_ALL.sql), which now carries 0001 to 0013 (0013 below).
+[`supabase/SETUP_ALL.sql`](supabase/SETUP_ALL.sql), which now carries 0001 to 0014 (0013 and 0014 below).
 
 What it adds:
 
@@ -200,3 +200,58 @@ To undo (not expected): run 0005's "read public content" block again: in
 [`0005_harden_admin_and_reads.sql`](supabase/migrations/0005_harden_admin_and_reads.sql), the
 `drop policy if exists "read public content"` and the `create policy` after it. That opens the list again, and
 the hole with it. The two functions can stay; the site reads through them either way.
+
+## 0014: the client file
+
+[`supabase/migrations/0014_client_process.sql`](supabase/migrations/0014_client_process.sql) gives the CRM its
+client files: when a lead says yes, the client, its projects, its numbered documents (quotation, proforma,
+invoice, receipt, credit note, and the welcome pack, handover document and closing letter), its payments and its
+timeline. It needs only 0005 and 0007 (it stops with a plain message if they are missing), works with or without
+0011, 0012 and 0013, is safe to run twice, and `SETUP_ALL.sql` carries it after 0013.
+
+What it adds:
+
+- Seven tables only you can read or write: `crm_client_settings` (the firm's bank details, the policy numbers,
+  the first serial of a series), `crm_clients`, `crm_projects`, `crm_documents`, `crm_payments`,
+  `crm_client_events` (the client's timeline) and `crm_doc_counters`. A team member, an admin and a visitor
+  read nothing and write nothing: money stays with you. No table has a column for a password.
+- One function, `crm_issue_document`, which gives a document its number when you press Issue: `IDV/Q/`,
+  `IDV/PI/`, `IDV/`, `IDV/RC/`, `IDV/CN/`, the financial year (`2026-27`, from the India date) and the next
+  serial, consecutive with no gaps. A refused issue uses no number.
+- The rules, enforced by the database: an issued document never changes and is never deleted (a mistake is
+  cancelled with a reason and a new one issued; a document money was received against is corrected with a
+  credit note); a payment is recorded only against an issued proforma or invoice of the same client and
+  project, never moves and is never deleted; a project stays with the client it was opened for; one receipt per
+  payment, for the amount credited; a credit note needs both partners' written yes; the advance is billed once
+  (one issued proforma for the advance, or a split advance's part 1, one for part 2 and one for each change
+  request's advance per project, part 2 only with a split advance, and one refunded in full by credit notes no
+  longer counts); the timeline's time is the server's, and a timeline line belongs to the client of
+  its project.
+
+In this order, once the release with client files is live (until then the Clients screen says "This needs the
+client update (0014)" and nothing else changes):
+
+1. **Apply it.** Supabase > SQL Editor > New query > paste all of `0014_client_process.sql` > **Run**. It ends
+   with "Success. No rows returned" and is safe to run again.
+2. **Prove the rules.** New query > paste all of [`supabase/tests/clients_rls.sql`](supabase/tests/clients_rls.sql)
+   > **Run**. It must end with `ALL CLIENT FILE CHECKS PASSED`. It works in one transaction that rolls back:
+   no number it issues is used up and nothing it writes stays.
+3. **Numbers.** Confirm that no IDV quotation, proforma, invoice, receipt or credit note number was issued
+   outside the CRM (`03-legal-docs/billing/invoice-counter.json` is empty). From the first CRM document on, the
+   CRM is the only thing that numbers them: do not use `invoice-generator.py` for these series again, or two
+   counters collide. If you issued numbers by hand, set the first serial of that series in CRM > Settings >
+   Client process before the first issue.
+
+Testing it locally: `node scripts/test-clients-rls.mjs` runs the SQL on PGlite (as for 0011): on 0001 to 0013
+with a member and an admin, 0014 twice, every rule above, the grants, 0005, 0011 and 0012 left as they were,
+the SQL-editor test (it must pass and leave nothing behind), and the whole `SETUP_ALL.sql` as a new project.
+`CLIENTS_RLS_NEGATIVE=policy` (the owner check taken off the clients policy), `CLIENTS_RLS_NEGATIVE=insert`
+(a document inserted already issued), `CLIENTS_RLS_NEGATIVE=advance` (the advance, part 2 or a change
+request's advance billed twice) or `CLIENTS_RLS_NEGATIVE=events` (a timeline line under another client's
+project) must make it fail.
+
+To undo (not expected, and only before the first real document): drop `public.crm_issue_document`, the seven
+`crm_` tables of this file, the two sequences `crm_client_code_seq` and `crm_project_code_seq`, and the
+`private.crm_*` functions this file made (`crm_fy`, `crm_ist_today`, `crm_touch`, `crm_documents_guard`,
+`crm_payments_guard`, `crm_projects_guard`, `crm_events_stamp`). Issued documents are tax records: once there
+are any, keep the tables.

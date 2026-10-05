@@ -1,9 +1,13 @@
 import type { ReactNode } from "react";
-import { BadgeCheck, CircleAlert } from "lucide-react";
+import { BadgeCheck, CircleAlert, EyeOff } from "lucide-react";
 import type { CrmTargets } from "@/lib/outreach/team";
+import { DEFAULT_SENDER_PHONE, DEFAULT_SIGNATURE } from "@/lib/outreach/engine";
+import { teamDemoUrl } from "@/lib/demo/opens";
+import { demoStatus } from "@/lib/demo/record";
 import { prettyPhone } from "@/admin/outreach/ui";
 import { cn } from "@/lib/utils";
 import { useCrmMe } from "../useCrmMe";
+import { useCrmData } from "../useCrmData";
 import { PageHeader, crm } from "../ui";
 import { PasswordForm } from "../auth/FirstPassword";
 import { SignOutButton } from "../auth/AccessOff";
@@ -42,12 +46,26 @@ function Panel({ title, id, children, className }: { title: string; id: string; 
  * them (read only: he changes it on the Team page), the name, number and
  * signature their messages carry, their targets, Set up this phone (always
  * reachable here), their password, and Sign out.
+ *
+ * MEHDI'S OWN PAGE (4 Oct 2026, crm-fixes-1004 item 17) speaks to him: his
+ * messages carry the phone and signature of Settings (engine.ts: no company
+ * number of his own is needed), his number counts as checked, nothing tells
+ * him to ask himself, and "Your own demo opens" keeps his phone's looks at a
+ * live demo out of the numbers.
  */
 export default function CrmMePage() {
   const { me, mode } = useCrmMe();
+  const { settings, demos } = useCrmData();
   const role = me.role ? ROLE_LABEL[me.role] : "";
   const sender = me.senderName || me.displayName;
   const member = me.role === "member";
+  const owner = me.role === "owner";
+  // What Mehdi's own messages carry (ComposePanel renders his with the signature of Settings and no sender phone,
+  // so {senderPhone} is engine.ts DEFAULT_SENDER_PHONE).
+  const ownerPhone = DEFAULT_SENDER_PHONE;
+  const ownerSignature = me.signature || (settings.signature || "").trim() || DEFAULT_SIGNATURE;
+  // A live demo to open as a team preview (?team=1), which marks the browser it opens in.
+  const liveDemo = demos.find((d) => !(d as { isExample?: boolean }).isExample && demoStatus(d) === "sent");
   const limit = me.waDailyLimit;
   const targets = TARGETS.filter((t) => typeof me.targets?.[t.key] === "number");
   return (
@@ -73,24 +91,40 @@ export default function CrmMePage() {
         </Panel>
 
         <Panel title="Your messages say" id="me-sender">
-          <dl className="divide-y divide-border/60">
-            <Row k="Name">{sender || "-"}</Row>
-            <Row k="Company phone">{me.senderPhone ? prettyPhone(me.senderPhone) : "Not set yet: Mehdi adds it"}</Row>
-            <Row k="Number checked">
-              {me.senderChecked ? (
+          {owner ? (
+            <dl className="divide-y divide-border/60" data-testid="me-sender-owner">
+              <Row k="Name">{sender || "-"}</Row>
+              <Row k="Phone">{prettyPhone(ownerPhone) || ownerPhone}</Row>
+              <Row k="Number checked">
                 <span className="inline-flex items-center gap-1 text-success">
-                  <BadgeCheck className="h-4 w-4" aria-hidden="true" /> Yes
+                  <BadgeCheck className="h-4 w-4" aria-hidden="true" /> Your own number
                 </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-warning">
-                  <CircleAlert className="h-4 w-4" aria-hidden="true" /> Not yet: send Mehdi the test below
-                </span>
-              )}
-            </Row>
-            <Row k="E-mail signature">
-              <span className="whitespace-pre-line">{me.signature || composedSignature(sender || "Your name", me.senderPhone)}</span>
-            </Row>
-          </dl>
+              </Row>
+              <Row k="E-mail signature">
+                <span className="whitespace-pre-line">{ownerSignature}</span>
+              </Row>
+            </dl>
+          ) : (
+            <dl className="divide-y divide-border/60">
+              <Row k="Name">{sender || "-"}</Row>
+              <Row k="Company phone">{me.senderPhone ? prettyPhone(me.senderPhone) : "Not set yet: Mehdi adds it"}</Row>
+              <Row k="Number checked">
+                {me.senderChecked ? (
+                  <span className="inline-flex items-center gap-1 text-success">
+                    <BadgeCheck className="h-4 w-4" aria-hidden="true" /> Yes
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-warning">
+                    <CircleAlert className="h-4 w-4" aria-hidden="true" /> Not yet: send Mehdi the test below
+                  </span>
+                )}
+              </Row>
+              <Row k="E-mail signature">
+                <span className="whitespace-pre-line">{me.signature || composedSignature(sender || "Your name", me.senderPhone)}</span>
+              </Row>
+            </dl>
+          )}
+          {owner && <p className="mt-2 text-[12px] text-muted-foreground">Change the signature in Settings, Sender signature.</p>}
         </Panel>
 
         <Panel title="Targets" id="me-targets">
@@ -116,6 +150,30 @@ export default function CrmMePage() {
           <PasswordForm onSaved={() => undefined} submitLabel="Change password" />
           <div className="mt-4 border-t border-border pt-4">
             <SignOutButton />
+          </div>
+        </Panel>
+
+        <Panel title="Your own demo opens" id="me-own-opens" className="lg:col-span-2">
+          <div className="flex items-start gap-3 text-[13px]" data-testid="me-own-opens">
+            <EyeOff className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <div className="min-w-0 space-y-1.5">
+              <p>
+                A live demo opened from the CRM (its Open and Open live link buttons) is never counted as the prospect's
+                open, and the browser it opens in is marked, so its later opens are never counted either. An open from
+                before a lead's link went to them is never counted anywhere.
+              </p>
+              {liveDemo ? (
+                <p>
+                  On a phone where you only tap links in WhatsApp, open{" "}
+                  <a href={teamDemoUrl(liveDemo.slug)} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline-offset-2 hover:underline" data-testid="me-mark-device">
+                    this link
+                  </a>{" "}
+                  once in that phone's browser: it marks the phone the same way.
+                </p>
+              ) : (
+                <p className="text-muted-foreground">Once a demo is live, a link here marks a phone that only taps links in WhatsApp.</p>
+              )}
+            </div>
           </div>
         </Panel>
 

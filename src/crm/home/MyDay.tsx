@@ -33,10 +33,10 @@ const PERIODS: readonly StatsPeriod[] = ["today", "week", "month"];
  *   8. their hand-overs and requests, with Mehdi's answer.
  */
 export function MyDay() {
-  const { me, mine, opens, now, loading, closeThese } = useCrmData();
+  const { me, mine, opens, now, loading, closeThese, openCtx } = useCrmData();
   const { can } = useCrmMe();
   const marks = useQueueMarks(true);
-  const sections = useMemo(() => buildTodaySections(mine, opens, now, marks), [mine, opens, now, marks]);
+  const sections = useMemo(() => buildTodaySections(mine, opens, now, openCtx, marks), [mine, opens, now, openCtx, marks]);
   const stats = useActivityStats(PERIODS);
   const today = rowOf(stats.today.rows, me.memberId);
   const week = rowOf(stats.week.rows, me.memberId);

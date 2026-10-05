@@ -60,8 +60,9 @@ export function PhoneSetup({ always = false, className }: { always?: boolean; cl
         <div className="min-w-0">
           <h2 id="phone-setup-title" className="text-[15px] font-semibold">Set up this phone</h2>
           <p className="mt-0.5 text-[13px] text-muted-foreground">
-            Once, on the phone with the company SIM, before any WhatsApp message. The steps are for Android: on an iPhone,
-            tell Mehdi before you start.
+            {owner
+              ? "Once, on the phone you send from, before any WhatsApp message. The steps are for Android."
+              : "Once, on the phone with the company SIM, before any WhatsApp message. The steps are for Android: on an iPhone, tell Mehdi before you start."}
           </p>
         </div>
       </div>
@@ -69,24 +70,40 @@ export function PhoneSetup({ always = false, className }: { always?: boolean; cl
         {STEPS.map((step, i) => (
           <li key={i}>{step}</li>
         ))}
-        <li>
-          <b>Send a test to Mehdi.</b> When it reaches him from your company number, he ticks <b>Number checked</b>. Until
-          then WhatsApp sends stay blocked; e-mail works.
-        </li>
-      </ol>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {href ? (
-          <a data-testid="phone-setup-test" href={href} target="_blank" rel="noopener noreferrer" className={crm.btnPrimary}>
-            <MessageCircle className="h-4 w-4" aria-hidden="true" /> Send a test to Mehdi
-          </a>
-        ) : (
-          <button type="button" disabled data-testid="phone-setup-test" className={crm.btnPrimary}>
-            <MessageCircle className="h-4 w-4" aria-hidden="true" /> Send a test to Mehdi
-          </button>
+        {!owner && (
+          <li>
+            <b>Send a test to Mehdi.</b> When it reaches him from your company number, he ticks <b>Number checked</b>. Until
+            then WhatsApp sends stay blocked; e-mail works.
+          </li>
         )}
-        <PhoneState checked={me.senderChecked} phone={phone} owner={owner} />
-      </div>
-      {!href && <p className="mt-2 text-[12px] text-muted-foreground">Mehdi has not added his own number to the CRM yet. Ask him.</p>}
+      </ol>
+      {owner ? (
+        /* Mehdi's own page (crm-fixes-1004 item 17): nothing tells him to test with, or ask, himself. */
+        <div className="mt-4 space-y-1.5" data-testid="phone-setup-owner">
+          <PhoneState checked={me.senderChecked} phone={phone} owner />
+          <p className="text-[12px] text-muted-foreground" data-testid="phone-setup-host">
+            {me.hostWhatsapp
+              ? `Team members send their phone test to ${prettyPhone(me.hostWhatsapp)}, the number on your own row in Team > People.`
+              : "Team members send their phone test to the number on your own row in Team > People. Add your WhatsApp number there before the first person sets up a phone."}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {href ? (
+              <a data-testid="phone-setup-test" href={href} target="_blank" rel="noopener noreferrer" className={crm.btnPrimary}>
+                <MessageCircle className="h-4 w-4" aria-hidden="true" /> Send a test to Mehdi
+              </a>
+            ) : (
+              <button type="button" disabled data-testid="phone-setup-test" className={crm.btnPrimary}>
+                <MessageCircle className="h-4 w-4" aria-hidden="true" /> Send a test to Mehdi
+              </button>
+            )}
+            <PhoneState checked={me.senderChecked} phone={phone} owner={false} />
+          </div>
+          {!href && <p className="mt-2 text-[12px] text-muted-foreground">Mehdi has not added his own number to the CRM yet. Ask him.</p>}
+        </>
+      )}
     </section>
   );
 }

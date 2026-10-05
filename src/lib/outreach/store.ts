@@ -925,10 +925,24 @@ export class LocalOutreachStore implements OutreachStore {
 
   /* ── The team ──────────────────────────────────────────────────────────── */
 
-  /** crm_me, locally. Acting as someone for the first time is their first sign-in (the login links). */
+  /** True when this browser has stored a team (a store before the team has none until something changes it). */
+  private teamStored(): boolean {
+    try {
+      const raw = this.storage.getItem(OUTREACH_LOCAL_KEY);
+      return Boolean(raw && (JSON.parse(raw) as { team?: unknown }).team);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * crm_me, locally. Acting as someone for the first time is their first sign-in (the login links); "last seen"
+   * moves for everyone, Mehdi too once a team is stored.
+   */
   async me(): Promise<CrmMe> {
+    const ownerToo = this.teamStored();
     return this.run(
-      (t) => ({ me: t.me, changed: t.signIn() }),
+      (t) => ({ me: t.me, changed: t.signIn({ ownerToo }) }),
       (r) => r.changed,
     ).me;
   }

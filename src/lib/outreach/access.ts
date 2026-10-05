@@ -332,12 +332,14 @@ export type CrmAction =
   | "lead.delete" | "lead.export" | "lead.import" | "lead.assign" | "lead.add" | "lead.editIdentity"
   | "lead.overwriteContact" | "stage.proposalWon" | "stage.call" | "stage.money" | "dnc.lift" | "finder" | "demos.manage"
   | "demo.publish" | "settings" | "team.manage" | "team.view" | "team.performance" | "team.access" | "team.resetPassword"
-  | "audit" | "review" | "rules.manage" | "requests.resolve" | "call.cold";
+  | "audit" | "review" | "rules.manage" | "requests.resolve" | "call.cold"
+  /* The client files (0014, client-process-spec 10.1): money is Mehdi's, so owner only, and not a team action. */
+  | "clients";
 
 /** Mehdi only. */
 const OWNER_ACTIONS: readonly CrmAction[] = [
   "lead.delete", "lead.export", "lead.import", "stage.proposalWon", "stage.money", "dnc.lift", "finder", "demos.manage",
-  "settings", "team.manage", "team.access", "team.resetPassword", "audit", "rules.manage",
+  "settings", "team.manage", "team.access", "team.resetPassword", "audit", "rules.manage", "clients",
 ];
 /** Mehdi and admins. */
 const STAFF_ACTIONS: readonly CrmAction[] = [

@@ -110,9 +110,10 @@ const LEADS = [
 const SEED = { leads: LEADS, events: [], settings: null };
 
 /* Paths that exist only on the CRM host, never on the main site. Mehdi's rail, in order: since the
-   team (crm-team-spec 10.1 and 13.4) Team sits between Pipeline and Demos, so nine links. Local mode
-   always has the team; on Supabase before 0011 (legacy) the rail is the other eight. */
-const CRM_SCREENS = ["/", "/today", "/leads", "/pipeline", "/team", "/demos", "/finder", "/import", "/settings"];
+   team (crm-team-spec 10.1 and 13.4) Team sits between Pipeline and Demos, and since the client files
+   (client-process-spec 10.1, 14.6) Clients sits between Pipeline and Team, so ten links. Local mode
+   always has the team; on Supabase before 0011 (legacy) the rail is the other nine. */
+const CRM_SCREENS = ["/", "/today", "/leads", "/pipeline", "/clients", "/team", "/demos", "/finder", "/import", "/settings"];
 const PHONE_TABS = ["/", "/today", "/leads", "/pipeline"];
 /* ── Browser ───────────────────────────────────────────────────────────── */
 async function launch() {
@@ -275,14 +276,17 @@ async function crmHostLinks(where) {
 const dash = await crmHostLinks("dashboard");
 const rail = dash.filter((a) => a.where === "rail").map((a) => a.href);
 const railNav = await page.locator('aside[aria-label="CRM"] nav a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-check(JSON.stringify(railNav) === JSON.stringify(CRM_SCREENS), "the rail's nine links are the CRM screens at the root, Team between Pipeline and Demos", JSON.stringify(railNav));
+check(JSON.stringify(railNav) === JSON.stringify(CRM_SCREENS), "the rail's ten links are the CRM screens at the root, Clients then Team between Pipeline and Demos", JSON.stringify(railNav));
 check(rail.every((h) => h.startsWith("/") && !h.startsWith("/crm")), "every rail link is a path on this host", JSON.stringify(rail));
+/* crm-fixes-1004 item 17 (4 Oct 2026): Mehdi's Me (password, Sign out) under the rail's list, as an admin's. */
+const railFooter = await page.locator('aside[aria-label="CRM"] div[role="navigation"] a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+check(JSON.stringify(railFooter) === JSON.stringify(["/me"]), "the owner's Me sits under the rail's list (/me)", JSON.stringify(railFooter));
 const tabs = await page.locator('nav[aria-label="CRM tabs"] a').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
 check(JSON.stringify(tabs) === JSON.stringify(PHONE_TABS), "the phone tab bar links are /, /today, /leads, /pipeline", JSON.stringify(tabs));
 const newLead = await page.getByRole("link", { name: /new lead/i }).first().getAttribute("href").catch(() => null);
 check(newLead === "/leads/new", "New lead is /leads/new", newLead);
 /* Click through every rail link: each screen opens on the CRM host, without /crm, and renders. */
-for (const label of ["Today", "Leads", "Pipeline", "Team", "Demos", "Lead finder", "Import", "Settings", "Dashboard"]) {
+for (const label of ["Today", "Leads", "Pipeline", "Clients", "Team", "Demos", "Lead finder", "Import", "Settings", "Dashboard"]) {
   const link = page.locator('aside[aria-label="CRM"] nav a', { hasText: label }).first();
   const href = await link.getAttribute("href").catch(() => null);
   await link.click().catch(() => {});
@@ -307,9 +311,9 @@ await page.getByTestId("crm-dashboard").waitFor({ timeout: 30000 }).catch(() => 
 await page.getByRole("button", { name: "More" }).click().catch(() => {});
 await page.locator("#crm-more").waitFor({ timeout: 5000 }).catch(() => {});
 const more = await page.locator("#crm-more a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-check(JSON.stringify(more.slice(0, 4)) === JSON.stringify(["/demos", "/finder", "/import", "/settings"]), "the phone More menu links are the other four screens at the root", JSON.stringify(more));
-check(more[4] === `${MAIN_ORIGIN}/admin`, `the phone More menu's Back to admin is ${MAIN_ORIGIN}/admin`, more[4]);
-check(more[5] === "/team" && more.length === 6, "and Team comes after Back to admin, at the root", JSON.stringify(more));
+check(JSON.stringify(more.slice(0, 5)) === JSON.stringify(["/clients", "/demos", "/finder", "/import", "/settings"]), "the phone More menu links are Clients and the other four screens at the root", JSON.stringify(more));
+check(more[5] === `${MAIN_ORIGIN}/admin`, `the phone More menu's Back to admin is ${MAIN_ORIGIN}/admin`, more[5]);
+check(more[6] === "/team" && more[7] === "/me" && more.length === 8, "and Team, then Me, come after Back to admin, at the root (eight links)", JSON.stringify(more));
 await page.locator("#crm-more a", { hasText: "Settings" }).click().catch(() => {});
 await waitPath(page, "/settings", 10000);
 check(url().origin === CRM && url().pathname === "/settings", "More > Settings opens /settings on the CRM host", page.url());

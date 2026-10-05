@@ -57,7 +57,7 @@ export function useDemoActions() {
 
   const markSent = useCallback(
     async (demo: DemoSite, lead?: OutreachLead) => {
-      await markDemoSent(actions.saveDoc, demo, slots, lead ? [lead.contactName, lead.instituteName].filter(Boolean).join(", ") : "");
+      await markDemoSent(actions.saveDoc, demo, slots, lead ? [lead.contactName, lead.instituteName].filter(Boolean).join(", ") : "", new Date(), actions.loadDemo);
       if (lead) await addEvent({ leadId: lead.id, type: "note", detail: `Demo /site/${demo.slug} marked sent` });
     },
     [actions, slots, addEvent],

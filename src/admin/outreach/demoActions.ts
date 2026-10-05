@@ -1,4 +1,5 @@
 import type { DemoSite, DemoSiteSlot } from "@/lib/cms/types";
+import { isDemoSummary } from "@/lib/cms/demoSummary";
 
 /**
  * Demo writes shared by the lead's Demo step (DemoPicker) and the CRM Demos
@@ -13,14 +14,22 @@ type SaveDoc = (collection: "demoSites" | "demoSiteSlots", doc: { id: string } &
  * the same action as turning the link on. Writes the demo's status and the
  * PRIVATE slot beside it (who it went to, and when), as the Demo sites
  * screen does.
+ *
+ * The demo is written whole. On the CRM's own host the lists hold summaries
+ * (lib/cms/demoSummary.ts): `loadDemo` (useCms().actions.loadDemo) reads the
+ * whole record first, and without it a summary is refused here before
+ * anything is written (the store refuses one too).
  */
 export async function markDemoSent(
   saveDoc: SaveDoc,
-  demo: DemoSite,
+  given: DemoSite,
   slots: DemoSiteSlot[],
   sentTo: string,
   now = new Date(),
+  loadDemo?: (id: string) => Promise<DemoSite | null>,
 ): Promise<void> {
+  const demo = isDemoSummary(given) ? (loadDemo ? await loadDemo(given.id) : null) : given;
+  if (!demo || isDemoSummary(demo)) throw new Error("The whole demo could not be read, so nothing was written. Reload the page and try again.");
   const slot = slots.find((s) => s.id === demo.id) || { id: demo.id };
   await saveDoc("demoSites", { ...(demo as unknown as Record<string, unknown>), id: demo.id, status: "sent" });
   await saveDoc("demoSiteSlots", {

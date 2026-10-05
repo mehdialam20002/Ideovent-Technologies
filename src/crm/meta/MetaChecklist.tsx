@@ -31,7 +31,23 @@ function EnvList({ names, env }: { names: readonly MetaEnvName[]; env: Record<Me
   );
 }
 
-/** Every step of section 8, with its state where the system can know it (meta-leads-spec 6.1, section 3). */
+/**
+ * The steps of "Set up, step by step", in the order the page numbers them (1 to 14). The status lines name a step
+ * by its number here (stepNumber), never by the spec's section 8 numbering (crm-fixes-1004 item 15: the token line
+ * said "step 9", which on this page is The daily check ran; the token is step 6).
+ */
+export const CHECKLIST_IDS = [
+  "vercel", "database", "connected", "webhook", "test", "token", "subscribed", "testlead", "daily",
+  "require-secret", "publish", "leadsaccess", "forms", "audience",
+] as const;
+export type ChecklistId = (typeof CHECKLIST_IDS)[number];
+
+/** The number this page shows for a step of the checklist (1-based). */
+export function stepNumber(id: ChecklistId): number {
+  return CHECKLIST_IDS.indexOf(id) + 1;
+}
+
+/** Every step of section 8, with its state where the system can know it (meta-leads-spec 6.1, section 3). In CHECKLIST_IDS order. */
 export function checklistSteps(result: MetaStatusResult | null, now = new Date()): Step[] {
   const env = result && (result.kind === "ok" || result.kind === "missing") ? result.env : null;
   const s = result?.kind === "ok" ? result.status : null;
@@ -44,7 +60,7 @@ export function checklistSteps(result: MetaStatusResult | null, now = new Date()
       state: is(env && CORE_ENV.every((n) => env[n] === "set")),
       how: (
         <>
-          Make the Meta app Ideovent Leads first (steps 2 to 4). Then Vercel &gt; Settings &gt; Environment Variables, Production: each name
+          Make the Meta app Ideovent Leads first (developers.facebook.com/apps/creation). Then Vercel &gt; Settings &gt; Environment Variables, Production: each name
           below, the secrets ticked Sensitive, then Redeploy.
           <EnvList names={CORE_ENV} env={env} />
           <MakeOne name="META_VERIFY_TOKEN" />

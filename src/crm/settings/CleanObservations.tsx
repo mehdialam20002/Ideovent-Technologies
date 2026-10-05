@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Eraser } from "lucide-react";
 import type { OutreachLead } from "@/lib/outreach/types";
 import { outreachStore } from "@/lib/outreach/store";
-import { looksLikeNote, otherLeadsNamed } from "@/admin/outreach/compose";
+import { noteReason, otherLeadsNamed } from "@/admin/outreach/compose";
 import { useCrmData } from "../useCrmData";
 import { crm } from "../ui";
 import { cn } from "@/lib/utils";
@@ -23,8 +23,9 @@ export function dirtyObservations(leads: OutreachLead[]): DirtyObservation[] {
     const o = (lead.observation || "").trim();
     if (!o) continue;
     const others = otherLeadsNamed(o, lead, leads);
+    const note = others.length ? null : noteReason(o);
     if (others.length) out.push({ lead, why: `Names ${others.map((x) => x.instituteName).join(", ")}` });
-    else if (looksLikeNote(o)) out.push({ lead, why: "Reads like a research note" });
+    else if (note) out.push({ lead, why: `Reads like a research note: ${note.charAt(0).toLowerCase()}${note.slice(1)}` });
   }
   return out;
 }

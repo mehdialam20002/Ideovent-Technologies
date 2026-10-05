@@ -2,13 +2,16 @@ import { useMemo, useState } from "react";
 import { ArrowRightLeft, Eye, Mail, MessageCircle, NotebookPen, PhoneCall, Reply, Shuffle, UserCheck } from "lucide-react";
 import type { OutreachEvent, OutreachLead } from "@/lib/outreach/types";
 import { fmtDateTime } from "@/admin/outreach/ui";
+import { allOpens, leadOpens } from "@/admin/outreach/derive";
+import { OPEN_ID_RE, OPEN_NOT_COUNTED } from "@/admin/outreach/historyLines";
 import { useCrmData } from "../useCrmData";
 import { crm } from "../ui";
 import { cn } from "@/lib/utils";
 
 interface Item {
   at: string;
-  kind: "open" | OutreachEvent["type"];
+  /** "open": the lead's own open; "open_uncounted": one from before its demo link went to them. */
+  kind: "open" | "open_uncounted" | OutreachEvent["type"];
   channel?: OutreachEvent["channel"];
   text: string;
   /** Who wrote the line (stamped by the server); none for a demo open. */
@@ -16,7 +19,7 @@ interface Item {
 }
 
 function icon(i: Item) {
-  if (i.kind === "open" || i.kind === "demo_opened") return Eye;
+  if (i.kind === "open" || i.kind === "open_uncounted" || i.kind === "demo_opened") return Eye;
   if (i.kind === "sent") return i.channel === "email" ? Mail : MessageCircle;
   if (i.kind === "replied") return Reply;
   if (i.kind === "call") return PhoneCall;
@@ -32,16 +35,26 @@ function icon(i: Item) {
  * outreach history). The full, editable history stays in the lead page's
  * History fold; this is the glanceable version. Each line names who wrote it
  * ("Asha · 2 Oct, 10:42"), as the database stamped it (spec 10.7).
+ *
+ * As the History (History.tsx historyRows, 4 Oct 2026): a "Demo opened" line's
+ * open id ("[dso_...]") is never shown, an open already written as a line is
+ * listed once, and an open from before the demo's link went to them is marked
+ * as not counted (derive.ts leadOpens).
  */
 export function LeadActivity({ lead }: { lead: OutreachLead }) {
-  const { eventsFor, opens, demoForLead, nameOf } = useCrmData();
-  const demo = demoForLead(lead);
+  const { eventsFor, opens, nameOf, openCtx } = useCrmData();
   const [all, setAll] = useState(false);
   const items = useMemo(() => {
-    const list: Item[] = eventsFor(lead.id).map((e) => ({ at: e.at, kind: e.type, channel: e.channel, text: e.detail || e.type, actorId: e.actorId }));
-    if (demo) for (const o of opens) if (o.demoId === demo.id) list.push({ at: o.at, kind: "open", text: `Demo opened` });
+    const own = eventsFor(lead.id);
+    const logged = new Set(own.filter((e) => e.type === "demo_opened").map((e) => OPEN_ID_RE.exec(e.detail || "")?.[1]).filter(Boolean));
+    const counted = new Set(leadOpens(lead, opens, openCtx).map((o) => o.id));
+    const list: Item[] = own.map((e) => ({ at: e.at, kind: e.type, channel: e.channel, text: (e.detail || e.type).replace(OPEN_ID_RE, ""), actorId: e.actorId }));
+    for (const o of allOpens(lead, opens, openCtx)) {
+      if (logged.has(o.id)) continue;
+      list.push({ at: o.at, kind: counted.has(o.id) ? "open" : "open_uncounted", text: counted.has(o.id) ? "Demo opened" : OPEN_NOT_COUNTED });
+    }
     return list.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
-  }, [eventsFor, lead.id, opens, demo]);
+  }, [eventsFor, lead, opens, openCtx]);
   const shown = all ? items : items.slice(0, 10);
 
   return (

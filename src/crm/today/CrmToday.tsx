@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { OutreachEvent } from "@/lib/outreach/types";
 import { sentToday } from "@/admin/outreach/derive";
@@ -13,19 +13,23 @@ import { CloseThese } from "../home/CloseThese";
 import { buildTodaySections, TodayQueue, useQueueMarks } from "./TodayQueue";
 import { WaitingOnYou } from "./WaitingOnYou";
 
+/* Today > Clients (client-process-spec 11.2): Mehdi's client tasks, a lazy chunk nobody else downloads. */
+const ClientsToday = lazy(() => import("../clients/ClientsToday"));
+
 /**
  * /crm/today, full width. Mehdi and admins: Waiting on you first (the team's
- * hand-overs and questions), then the queue of the scope on show (Mine by
+ * hand-overs and questions), for Mehdi his client tasks due today or late
+ * (client-process-spec 11.2), then the queue of the scope on show (Mine by
  * default: his own leads and the Unassigned pool, so on the day of the team
  * update it is exactly today's queue), then Close these over his own leads. A
  * member: the queue of their own leads (the same one My day shows), and their
  * Close these.
  */
 export default function CrmToday() {
-  const { scopedLeads, scope, events, opens, now, loading, isStaff, isMember } = useCrmData();
+  const { scopedLeads, scope, events, opens, now, loading, isStaff, isMember, openCtx } = useCrmData();
   const { can } = useCrmMe();
   const marks = useQueueMarks(isMember);
-  const sections = useMemo(() => buildTodaySections(scopedLeads, opens, now, marks), [scopedLeads, opens, now, marks]);
+  const sections = useMemo(() => buildTodaySections(scopedLeads, opens, now, openCtx, marks), [scopedLeads, opens, now, openCtx, marks]);
 
   /* "Sent today" counts the sends on the leads on show (every send on All). */
   const sends = useMemo((): OutreachEvent[] => {
@@ -68,6 +72,11 @@ export default function CrmToday() {
         actions={<ScopeSwitch screen="today" />}
       />
       {isStaff && <WaitingOnYou className="mb-4" />}
+      {can("clients") && (
+        <Suspense fallback={null}>
+          <ClientsToday className="mb-4" />
+        </Suspense>
+      )}
       <TodayQueue sections={sections} empty={empty} />
       {mineOnShow && <CloseThese className="mt-4" />}
     </div>

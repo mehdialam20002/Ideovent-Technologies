@@ -98,7 +98,7 @@ const bundled = await build({
       `export { activeFilterCount, cell, EMPTY_FILTERS, matchesFilters, NONE, readFilters, toCsv, writeFilters } from "@/crm/leads/leadQuery";`,
       `export { readEnv, readStatus } from "@/lib/meta/client";`,
       `export { statusLines } from "@/crm/meta/MetaStatus";`,
-      `export { checklistSteps } from "@/crm/meta/MetaChecklist";`,
+      `export { checklistSteps, CHECKLIST_IDS, stepNumber } from "@/crm/meta/MetaChecklist";`,
       `export { cardLine } from "@/crm/meta/MetaSettingsCard";`,
       `export { logText } from "@/crm/meta/MetaLog";`,
       `export { randomWord } from "@/crm/meta/metaUi";`,
@@ -615,7 +615,24 @@ const fresh = lines({ connected: false, current: false, connectedAt: null, pageI
 check(fresh.page.state === "todo" && !/not the Page you connected/.test(fresh.page.text) && fresh.daily.state === "todo" && !/CRON_SECRET/.test(fresh.daily.text),
   "before Connect: the Page and the daily check are not yet (grey), never the amber Page-changed or CRON_SECRET lines", [fresh.page.text, fresh.daily.text]);
 const noToken = lines({ tokenInfo: { set: false, valid: false, subscribed: false } }, true, false);
-check(noToken.token.text === "Not set in Vercel yet (step 9)" && noToken.token.state === "todo" && noToken.page.state === "todo", "no token in Vercel yet: token and Page not yet (grey, not amber)");
+check(noToken.token.text === "Not set in Vercel yet (step 6)" && noToken.token.state === "todo" && noToken.page.state === "todo", "no token in Vercel yet: token and Page not yet (grey, not amber)");
+/* crm-fixes-1004 item 15 (4 Oct 2026): a status line names a step by the number the page's own checklist shows it at. */
+{
+  const order = M.checklistSteps(null, NOW).map((s) => s.id);
+  check(JSON.stringify(order) === JSON.stringify([...M.CHECKLIST_IDS]), "the checklist's steps come in CHECKLIST_IDS order (the numbers the page shows)", order);
+  const tokenNo = order.indexOf("token") + 1;
+  const accessNo = order.indexOf("leadsaccess") + 1;
+  check(tokenNo === 6 && M.stepNumber("token") === tokenNo && noToken.token.text.endsWith(`(step ${tokenNo})`),
+    "the token line names the checklist's token step (6, Token valid, every permission), never the spec's step 9 (The daily check ran on the page)", noToken.token.text);
+  const allTokenTexts = [
+    lines({ tokenInfo: { ...intake().tokenInfo, valid: false, error: "x" } }).token.text,
+    lines({ tokenInfo: { ...intake().tokenInfo, expiresAt: iso(T + 5 * DAY) } }).token.text,
+    lines({ tokenInfo: { ...intake().tokenInfo, extra: ["business_management"] } }).reach?.text || "",
+    lines({ counts: { ...intake().counts, failedToken: 1 } }).waiting.text,
+  ];
+  check(allTokenTexts.every((t) => t.includes(`(step ${tokenNo})`) && !/step (9|18)\b/.test(t)), "every token line points at the checklist's token step", allTokenTexts);
+  check(accessNo === 12 && M.stepNumber("leadsaccess") === accessNo, "Leads access is the checklist's step 12");
+}
 const unchecked = lines({ tokenInfo: { set: false, valid: false, subscribed: false } }, true, true);
 check(unchecked.token.text === "Set in Vercel: press Check again" && unchecked.token.state === "todo", "a token set after the last check: press Check again");
 const soon = lines({ tokenInfo: { ...intake().tokenInfo, expiresAt: iso(T + 5 * DAY) } }).token;
@@ -626,7 +643,7 @@ check(lines({ tokenInfo: { ...intake().tokenInfo, extra: ["business_management"]
 check(lines({}, false).page.state === "warn" && /not the Page you connected/.test(lines({}, false).page.text), "META_PAGE_ID changed: amber, press Connect");
 const waiting = lines({ counts: { ...intake().counts, failedToken: 3, failedPermission: 2, pending: 1 } }).waiting;
 check(waiting.state === "warn" && waiting.testId === "meta-pending" && /3 leads are waiting: the access token stopped working/.test(waiting.text)
-  && /Meta will not show us 2 leads: check Leads access \(step 14\)/.test(waiting.text), "what waits, and the fix", waiting.text);
+  && /Meta will not show us 2 leads: check Leads access \(step 12\)/.test(waiting.text), "what waits, and the fix", waiting.text);
 check(lines({ lastCatchupAt: iso(T - 27 * 3600e3) }).daily.state === "warn" && /CRON_SECRET/.test(lines({ lastCatchupAt: iso(T - 27 * 3600e3) }).daily.text),
   "the daily check older than 26 hours is amber: is CRON_SECRET set?");
 check(lines({ lastCatchupAt: null, connectedAt: iso(T - 3600e3) }).daily.state === "todo", "just connected: the first daily check is tomorrow");
@@ -852,7 +869,7 @@ try {
   const before = await keep(C.loadStatus());
   const lb = linesOf(before);
   check(before.kind === "ok" && before.pageMatches === false && before.status.connected === false, "live: before Connect the status loads (pageMatches false: no Page stored yet)", before);
-  check(lb.connection?.state === "todo" && lb.page?.state === "todo" && lb.daily?.state === "todo" && lb.token?.text === "Not set in Vercel yet (step 9)"
+  check(lb.connection?.state === "todo" && lb.page?.state === "todo" && lb.daily?.state === "todo" && lb.token?.text === "Not set in Vercel yet (step 6)"
     && M.cardLine(before)[1] === "Not connected yet: open to set it up", "live, before Connect: Connection, Page and Daily check are not yet (grey); the token is not set", Object.values(lb).map((l) => `${l.row}:${l.state}:${l.text}`));
   const fNot = await keep(C.fetchNow());
   check(fNot.kind === "ok" && /press Connect first/.test(fNot.text), "live: Fetch before Connect fetches nothing: press Connect first", fNot);

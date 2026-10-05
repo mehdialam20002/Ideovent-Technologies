@@ -3,7 +3,7 @@ import type { DemoSiteOpen } from "@/lib/cms/types";
 import type { EventInput, OutreachLead } from "@/lib/outreach/types";
 import { nextStep, repliedChanges, todayQueue } from "@/admin/outreach/compose";
 import { callRefusal } from "@/admin/outreach/teamCompose";
-import { endOfToday, isUntouched } from "@/admin/outreach/derive";
+import { endOfToday, isUntouched, type OpensCtx } from "@/admin/outreach/derive";
 import { dueLabel } from "@/admin/outreach/ui";
 import { callWindowText, goodTimeToCall } from "./callTime";
 import { useCrmData } from "../useCrmData";
@@ -35,18 +35,23 @@ export interface TodaySections {
   count: number;
 }
 
-/** The queue's parts. `extra` adds per-lead marks (untouched, a good time to call, whose lead). */
+/**
+ * The queue's parts. `extra` adds per-lead marks (untouched, a good time to call, whose lead). `ctx`: the
+ * history and each lead's own demo (useCrmData openCtx), so Hot here is the Hot of every other screen.
+ */
 export function buildTodaySections(
   leads: OutreachLead[],
   opens: DemoSiteOpen[],
   now: Date,
+  ctx: OpensCtx,
   extra?: (lead: OutreachLead) => Partial<TodayItem>,
 ): TodaySections {
-  const q = todayQueue(leads, opens, now);
+  const q = todayQueue(leads, opens, now, ctx);
+  const hotIds = new Set(q.hot.map((h) => h.lead.id));
   const start = startOfDay(now).getTime();
   const endToday = endOfToday(now).getTime();
   const item = (lead: OutreachLead, more: Partial<TodayItem>): TodayItem => {
-    const s = nextStep(lead, opens, now);
+    const s = nextStep(lead, hotIds.has(lead.id), now);
     return {
       lead, step: s.text, urgent: s.urgent, when: dueLabel(lead.nextActionAt, now),
       canSnooze: true, canMarkReplied: CAN_REPLY.has(lead.status), ...(extra ? extra(lead) : {}), ...more,

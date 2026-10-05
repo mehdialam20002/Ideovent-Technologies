@@ -3,6 +3,7 @@ import { Flame, Mail, MessageCircle, Phone } from "lucide-react";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS, type LeadStatus, type OutreachLead } from "@/lib/outreach/types";
 import { maskEmail, maskPhone } from "@/lib/outreach/access";
 import { isMetaLead } from "@/lib/meta/fields";
+import { cityOf } from "@/lib/outreach/city";
 import { SourceBadge } from "../meta/SourceBadge";
 import { dueLabel, fmtDate, KIND_LABEL, prettyPhone } from "@/admin/outreach/ui";
 import { cn } from "@/lib/utils";
@@ -156,7 +157,8 @@ export const COLUMNS: Column[] = [
         blocked={c.statusBlock ? (to) => c.statusBlock(r.lead, to) : undefined} />
     ),
   },
-  { id: "city", label: "City", cell: (r) => r.lead.city || dash },
+  /* The town (city.ts cityOf); the whole address the field holds is in the tooltip and on the lead. */
+  { id: "city", label: "City", cell: (r) => (cityOf(r.lead) ? <span title={r.lead.city !== cityOf(r.lead) ? r.lead.city : undefined}>{cityOf(r.lead)}</span> : dash) },
   { id: "kind", label: "Kind", cell: (r) => KIND_LABEL[r.lead.kind] || r.lead.kind },
   {
     id: "source", label: "Source", defaultHidden: true,

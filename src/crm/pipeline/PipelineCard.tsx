@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { nextStep } from "@/admin/outreach/compose";
 import { dueLabel, KIND_LABEL } from "@/admin/outreach/ui";
 import { cn } from "@/lib/utils";
+import { cityOf } from "@/lib/outreach/city";
 import { crm, StatusDot } from "../ui";
 import { sinceLabel, type LeadRow } from "../leads/leadQuery";
 
@@ -32,7 +33,8 @@ export interface CardProps {
 /** One lead on the board. Click or Enter opens it; drag, "Move to" or [ ] change its status. */
 export function PipelineCard({ row, now, opens, draggable, dragging, onOpen, onMove, onStep, onDragStart, onDragEnd, blockOf, ownerName, untouched }: CardProps) {
   const l = row.lead;
-  const step = nextStep(l, opens, now);
+  // Hot is the row's (leadQuery buildRows: derive.ts hotOf), the same answer as Leads, Today and the Dashboard.
+  const step = nextStep(l, row.hot, now);
   const hasDemo = !!(row.demo || l.demoSlug);
   const blocked = LEAD_STATUSES.map((s) => (s === l.status ? null : blockOf?.(s) || null));
   const why = [...new Set(blocked.filter(Boolean))] as string[];
@@ -79,7 +81,7 @@ export function PipelineCard({ row, now, opens, draggable, dragging, onOpen, onM
         <span className="min-w-0 flex-1 truncate font-medium">{l.instituteName}</span>
         {row.hot && <Flame className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" aria-label="Demo opened since last contact" />}
       </div>
-      <p className="mt-0.5 truncate text-[12px] text-muted-foreground">{[l.city, KIND_LABEL[l.kind], ownerName].filter(Boolean).join(" · ")}</p>
+      <p className="mt-0.5 truncate text-[12px] text-muted-foreground">{[cityOf(l), KIND_LABEL[l.kind], ownerName].filter(Boolean).join(" · ")}</p>
       <p className={cn("mt-1 truncate text-[12px]", step.urgent ? "font-medium text-foreground" : "text-muted-foreground")}>{step.text}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
         {untouched && (
@@ -90,7 +92,7 @@ export function PipelineCard({ row, now, opens, draggable, dragging, onOpen, onM
         )}
         {hasDemo && (
           <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5", crm.num, row.opens ? "bg-amber-500/10 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" : "bg-muted text-muted-foreground")}
-            title={row.opens ? `Demo opened ${row.opens} ${row.opens === 1 ? "time" : "times"}` : "Demo not opened yet"}>
+            title={row.opens ? `Demo opened ${row.opens} ${row.opens === 1 ? "time" : "times"} since its link went to them` : row.sentAt ? "Demo sent, not opened yet" : "Demo not sent yet"}>
             <Eye className="h-3 w-3" aria-hidden="true" /> {row.opens ? `${row.opens} ${row.opens === 1 ? "open" : "opens"}` : "Demo"}
           </span>
         )}

@@ -105,6 +105,10 @@ const CrmImport = lazy(() => import("@/crm/import/CrmImport"));
 const CrmSettings = lazy(() => import("@/crm/settings/CrmSettings"));
 /* Settings > Meta Lead Ads (2 Oct 2026, meta-leads-spec 6.1): Facebook and Instagram form leads coming in by themselves. */
 const MetaLeadsPage = lazy(() => import("@/crm/meta/MetaLeadsPage"));
+/* The client files (4 Oct 2026, client-process-spec 10.1): from a yes to the exit. Mehdi only. */
+const CrmClients = lazy(() => import("@/crm/clients/CrmClients"));
+const ClientPage = lazy(() => import("@/crm/clients/ClientPage"));
+const ClientSettingsPage = lazy(() => import("@/crm/clients/ClientSettings"));
 /* The team (1 Oct 2026, spec 10.1): a person's own page, and the gates by role. */
 const CrmMePage = lazy(() => import("@/crm/me/CrmMePage"));
 const RoleGate = lazy(() => import("@/crm/auth/RoleGate"));
@@ -151,8 +155,9 @@ const ON_CRM_HOST = isCrmHost();
    src/crm/nav.ts builds the links to them from the same host test.
    Who opens which (spec 10.1): the first screen is My day for a member and
    the dashboard for everyone else; RoleGate shows "This screen is Mehdi's" to
-   anyone the screen is not for (admins: Demos, Lead finder, Import, Settings;
-   members: those and Team). The database refuses the same people anyway. */
+   anyone the screen is not for (admins: Clients, Demos, Lead finder, Import,
+   Settings; members: those and Team). The database refuses the same people
+   anyway (the client files: 0014, owner only). */
 const CRM_SCREENS = (
   <>
     <Route index element={<ByRole member={<MyDay />} other={<CrmDashboard />} />} />
@@ -167,6 +172,9 @@ const CRM_SCREENS = (
     <Route path="import" element={<RoleGate action="lead.import"><CrmImport /></RoleGate>} />
     <Route path="settings" element={<RoleGate action="settings"><CrmSettings /></RoleGate>} />
     <Route path="settings/meta" element={<RoleGate action="settings"><MetaLeadsPage /></RoleGate>} />
+    <Route path="settings/clients" element={<RoleGate action="settings"><ClientSettingsPage /></RoleGate>} />
+    <Route path="clients" element={<RoleGate action="clients"><CrmClients /></RoleGate>} />
+    <Route path="clients/:projectId" element={<RoleGate action="clients"><ClientPage /></RoleGate>} />
   </>
 );
 

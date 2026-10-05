@@ -299,6 +299,9 @@ await scene(1, "Owner, Team: the people, Add person, Reset password", async () =
   check(/Can add leads/.test(await card("m_asha")) && /See all/.test(await card("m_bilal")) && !/See all/.test(await card("m_asha")),
     "and their switches: Asha Can add leads, Bilal See all");
   check(/Number checked/.test(await card("m_asha")) && /Mark number checked/.test(await card("m_bilal")), "Asha's number is checked; Bilal's offers Mark number checked");
+  /* crm-fixes-1004 item 14 (4 Oct 2026): Mehdi's own card says when he was last seen; it showed a dash. */
+  const ownerSeen = await textOf("team-seen-m_owner");
+  check(/just now|min ago|h ago/.test(ownerSeen), "Mehdi's own card shows when he was last seen, not a dash", ownerSeen);
   let d = await stored();
   check((await textOf("team-queue-m_asha")) === queueText(d, "m_asha"), `Asha's queue reads ${queueText(d, "m_asha")}`, await textOf("team-queue-m_asha"));
   check((await textOf("team-pool-count")) === String(poolCount(d)), `the pool card counts the ${poolCount(d)} Unassigned leads`, await textOf("team-pool-count"));

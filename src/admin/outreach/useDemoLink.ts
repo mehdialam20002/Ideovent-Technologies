@@ -1,5 +1,6 @@
 import { useCms } from "@/lib/cms/context";
 import { getStore } from "@/lib/cms/store";
+import { isDemoSummary } from "@/lib/cms/demoSummary";
 import type { DemoSite, DemoSiteSlot } from "@/lib/cms/types";
 import { coldLinkReason, demoNamedFor, demoReach, teamReach, type DemoReach } from "@/lib/outreach/linkChoice";
 import type { OutreachLead } from "@/lib/outreach/types";
@@ -44,14 +45,18 @@ export function useDemoLink(lead: OutreachLead): { demo?: DemoSite; reach: DemoR
   const sites = useLeadDemoSites();
   const slots = (data as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || [];
   const demo = leadDemo(lead, sites);
-  const base = demoReach({ lead, demo, loading: cmsLoading || crmLoading || !me.role, canPublish: owner });
+  // A demo read as a summary (the CRM's own host: lib/cms/demoSummary.ts) is "Checking the demo..." until its whole
+  // record is in: the toppers check (coldLinkReason) and the message's {offer} read the demo's contents.
+  const base = demoReach({ lead, demo, loading: cmsLoading || crmLoading || !me.role || isDemoSummary(demo), canPublish: owner });
   // Anyone but Mehdi, once `me` has loaded (while it is pending, Mehdi must never read "ask Mehdi").
   const reach = me.role && !owner ? teamReach(base, { lead, demo }) : base;
   const publish = async () => {
     if (!owner || !demo || !reach.ok || !reach.needsPublish) return;
-    // Read it again: the copy on this screen may be older than what Edit demo saved in another tab.
+    // Read it again: the copy on this screen may be older than what Edit demo saved in another tab. One record, by its
+    // id (4 Oct 2026): the store's load() read the whole content table for it, and on the CRM's own host it holds
+    // demo summaries, which are never written.
+    const fresh = (await actions.loadDemo(demo.id)) || undefined;
     const now = await getStore().load();
-    const fresh = ((now.demoSites as DemoSite[]) || []).find((d) => d.id === demo.id);
     const again = fresh ? demoReach({ lead, demo: fresh, canPublish: true }) : undefined;
     const stop = !fresh || !again ? "it was not found when it was read again, deleted or not loaded"
       : !again.ok ? again.reason
@@ -64,7 +69,7 @@ export function useDemoLink(lead: OutreachLead): { demo?: DemoSite; reach: DemoR
       return; // On the website already (Mark sent in another tab): nothing to write.
     }
     const freshSlots = (now as unknown as { demoSiteSlots?: DemoSiteSlot[] }).demoSiteSlots || slots;
-    await markDemoSent(actions.saveDoc, fresh, freshSlots, [lead.contactName, lead.instituteName].filter(Boolean).join(", "));
+    await markDemoSent(actions.saveDoc, fresh, freshSlots, [lead.contactName, lead.instituteName].filter(Boolean).join(", "), new Date(), actions.loadDemo);
     // The note is history only: a failure here does not undo a demo that is now on the website.
     await addEvent({ leadId: lead.id, type: "note", detail: `Demo /site/${fresh.slug} marked sent` }).catch((e) => console.warn("CRM: the Mark sent note was not written.", e));
   };

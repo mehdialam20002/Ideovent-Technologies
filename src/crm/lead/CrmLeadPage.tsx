@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { LeadPage } from "@/admin/outreach/LeadPage";
 import { NewLeadForm } from "@/admin/outreach/NewLeadForm";
 import { can } from "@/lib/outreach/access";
+import { useCms } from "@/lib/cms/context";
+import { isDemoSummary } from "@/lib/cms/demoSummary";
 import { cn } from "@/lib/utils";
 import { useCrmData } from "../useCrmData";
 import { CRM, useOpenLead } from "../nav";
@@ -15,13 +17,17 @@ import { LeadTeamCard } from "./LeadTeamCard";
 import { ReadOnlyLead } from "./ReadOnlyLead";
 import { handedOverText } from "./tellMehdi";
 
+/* The client file's card (client-process-spec 10.4): Mehdi only, a lazy chunk nobody else downloads. */
+const LeadClientCard = lazy(() => import("../clients/LeadClientCard"));
+
 /**
  * /crm/leads/:id, and /crm/leads/new for the new lead form.
  *
  * Left: the Outreach LeadPage exactly as it is (who, the three steps Demo /
  * Message / Send in ComposePanel, then status, notes and history folded).
  * Keyed by id, so nothing typed for one lead survives into another.
- * Right (lg, sticky): the facts with a quick status and next action, the
+ * Right (lg, sticky): for Mehdi the client file (Open client file at Call,
+ * Proposal or Won; or the file's stage and next action), then the facts with a quick status and next action, the
  * demo in numbers, and the activity (history plus the demo's opens).
  * Phones: one column, the right column's cards come after the steps.
  *
@@ -34,10 +40,22 @@ export default function CrmLeadPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const openLead = useOpenLead();
-  const { leadById, loading, me, overview, logAccess } = useCrmData();
+  const { leadById, loading, me, overview, logAccess, demoForLead } = useCrmData();
+  const { actions } = useCms();
   const back = () => navigate(CRM.leads);
   const lead = id === "new" ? undefined : leadById(id);
   const team = Boolean(me.role) && me.role !== "owner" && !me.legacy;
+
+  /* The lead's demo, whole (crm-fixes-1004 item 8): the CRM's own host lists demos as summaries
+     (lib/cms/demoSummary.ts), and the message and the link checks read what the demo has. Once per demo. */
+  const demo = lead ? demoForLead(lead) : undefined;
+  const summaryId = demo && isDemoSummary(demo) ? demo.id : null;
+  const asked = useRef<string | null>(null);
+  useEffect(() => {
+    if (!summaryId || asked.current === summaryId) return;
+    asked.current = summaryId;
+    void actions.loadDemo(summaryId).catch(() => undefined);
+  }, [summaryId, actions]);
 
   /* Opening a lead is on the access log for anyone but Mehdi (DPDP Rules, r.6(1)(c)): once per lead per visit. */
   const logged = useRef<string | null>(null);
@@ -90,6 +108,11 @@ export default function CrmLeadPage() {
         <LeadPage key={id} leadId={id} onBack={back} onOpen={openLead} />
       </div>
       <aside className="min-w-0 space-y-4 lg:sticky lg:top-0 lg:max-h-[calc(100dvh-5.5rem)] lg:self-start lg:overflow-y-auto lg:pb-2" aria-label="Lead details">
+        {can(me, "clients") && (
+          <Suspense fallback={null}>
+            <LeadClientCard lead={lead} />
+          </Suspense>
+        )}
         <LeadFacts lead={lead} />
         {team && <LeadTeamCard lead={lead} />}
         <LeadDemoCard lead={lead} />

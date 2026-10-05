@@ -234,7 +234,7 @@ const LEGACY = M.legacyMe();
 
 /* can(): the matrix in spec 4.1 */
 const OWNER_ONLY = ["lead.delete", "lead.export", "lead.import", "stage.proposalWon", "stage.money", "dnc.lift", "finder", "demos.manage", "settings",
-  "team.manage", "team.access", "team.resetPassword", "audit", "rules.manage"];
+  "team.manage", "team.access", "team.resetPassword", "audit", "rules.manage", "clients"];
 const STAFF = ["lead.assign", "lead.editIdentity", "lead.overwriteContact", "stage.call", "team.view", "team.performance", "review", "requests.resolve"];
 for (const a of OWNER_ONLY) {
   check(M.can(OWNER, a) && !M.can(ADMIN, a) && !M.can(MEMBER, a) && !M.can(SEE_ALL, a) && !M.can(OFF, a), `can("${a}"): Mehdi only`);
@@ -247,6 +247,7 @@ check(M.can(OWNER, "call.cold") && M.can(ADMIN, "call.cold") && !M.can(MEMBER, "
 check(M.can(MEMBER, "demo.publish") && M.can(OWNER, "demo.publish") && !M.can(OFF, "demo.publish"), `can("demo.publish"): everyone with access (on their own lead)`);
 check(M.can(LEGACY, "lead.delete") && M.can(LEGACY, "settings") && !M.can(LEGACY, "team.view") && !M.can(LEGACY, "lead.assign") && !M.can(LEGACY, "audit"),
   "legacy (0011 not applied): Mehdi keeps everything he has today; the team screens stay hidden");
+check(M.can(LEGACY, "clients") && !M.TEAM_ACTIONS.includes("clients"), "legacy: Mehdi opens client files too (0014 needs nothing from 0011): not a team action");
 check(!M.can(null, "lead.add") && !M.can(undefined, "settings"), "nobody signed in can do nothing");
 check(same(M.memberStages(), ["first", "after_yes", "follow_up", "closing"]), "memberStages: never After the call or Proposal");
 
@@ -656,6 +657,12 @@ for (const [name, role, over] of crew) {
   ID[name] = await store.saveMember({ email: `${name}@example.org`, displayName: name[0].toUpperCase() + name.slice(1), role, newLeadCap: 60, ...over });
 }
 check(Object.values(ID).every(Boolean) && (await store.listMembers()).length === 7, "owner adds six people (members, one admin)");
+/* crm-fixes-1004 item 14 (4 Oct 2026): with a team stored, Mehdi's own "last seen" moves, as crm_me does in the database. */
+as(null);
+await store.me();
+const ownerSeen = raw().team?.members?.find((m) => m.id === "m_owner")?.lastSeenAt;
+check(Boolean(ownerSeen) && Date.now() - Date.parse(ownerSeen) < 60_000 && (await store.listMembers()).find((m) => m.id === "m_owner")?.lastSeenAt === ownerSeen,
+  "local: once a team is stored, Mehdi's sign-in stamps his own last seen (Team > People reads it)", ownerSeen);
 as("asha");
 e = await error(() => store.saveMember({ email: "x@example.org", displayName: "X" }));
 check(e?.code === "42501" && /only Mehdi manages the team/i.test(e.message), "a member cannot add people", e?.message);

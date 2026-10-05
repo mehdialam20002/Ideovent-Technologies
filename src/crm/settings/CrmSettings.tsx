@@ -1,5 +1,6 @@
 import { SettingsTab } from "@/admin/outreach/SettingsTab";
 import { MetaSettingsCard } from "../meta/MetaSettingsCard";
+import { ClientSettingsCard } from "../clients/ClientSettingsCard";
 import { PageHeader } from "../ui";
 import { CleanObservations } from "./CleanObservations";
 import { TeamWording } from "./TeamWording";
@@ -15,6 +16,10 @@ import { TeamWording } from "./TeamWording";
  * settings, only he writes them). Since the team: Team wording, the "we"
  * versions of his sentences that members may send once he approves each
  * (spec 10.7). Before the team update it does not show.
+ *
+ * The client files (client-process-spec 10.5, 4 Oct 2026): a card that opens
+ * Settings > Client process (the firm's billing details, the policy numbers,
+ * the number series and the wording to approve).
  */
 export default function CrmSettings() {
   return (
@@ -22,6 +27,8 @@ export default function CrmSettings() {
       <PageHeader title="Settings" subtitle="Saved with your outreach data, not in the website CMS." />
       {/* Meta Lead Ads (2 Oct 2026): its own page, Settings > Meta Lead Ads. */}
       <MetaSettingsCard />
+      {/* Client process (4 Oct 2026): its own page, Settings > Client process. */}
+      <ClientSettingsCard />
       <SettingsTab />
       <TeamWording />
       <div className="pt-2">
