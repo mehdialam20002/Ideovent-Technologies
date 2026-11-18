@@ -133,7 +133,21 @@ export function useResolvedNav(items: NavItem[]): ResolvedNavItem[] {
       return groups;
     };
 
-    return items.map((item, i) => {
+    // Ensure /careers is always reachable as a top-level item in both desktop
+    // navbar and mobile sidebar even when an older navigation row is stored in CMS.
+    const hasTopCareers = items.some((it) => it.href === "/careers");
+    const effectiveItems = hasTopCareers
+      ? items
+      : (() => {
+          const idx = items.findIndex((it) => it.label === "Company" || it.href === "/about");
+          const next = [...items];
+          const careersItem: NavItem = { label: "Careers", href: "/careers" };
+          if (idx >= 0) next.splice(idx, 0, careersItem);
+          else next.push(careersItem);
+          return next;
+        })();
+
+    return effectiveItems.map((item, i) => {
       const key = `${item.href}-${i}`.replace(/[^a-zA-Z0-9-]/g, "-").replace(/-+/g, "-");
       if (!item.panel) return { item, key };
 

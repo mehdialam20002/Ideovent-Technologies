@@ -399,6 +399,7 @@ export const seed: ContentData = {
         // development, and the page says so above the fold: a nav label is not
         // a claim that it ships. One page, so no panel.
         { label: "EduFlow", href: "/eduflow" },
+        { label: "Careers", href: "/careers" },
         /*
           "About" became "Company". About on its own left LaunchPad, the writing,
           the FAQ and the certificate verifier reachable from the footer only, so
@@ -487,6 +488,7 @@ export const seed: ContentData = {
             // only by typing the URL.
             { label: "Pricing", href: "/pricing" },
             { label: "Our work", href: "/work" },
+            { label: "Careers", href: "/careers" },
             { label: "Writing", href: "/blog" },
             { label: "Questions we get asked", href: "/faq" },
             { label: "Contact", href: "/contact" },

@@ -27,6 +27,14 @@ const isAbsolute = (to: string) => /^https?:\/\//i.test(to);
 const NAV: { title: string; items: NavItem[] }[] = [
   { title: "Overview", items: [{ label: "Dashboard", to: "/admin", icon: "LayoutDashboard", end: true }] },
   {
+    title: "Leads & Careers",
+    items: [
+      { label: "Careers & Applications", to: "/admin/careers", icon: "Briefcase" },
+      { label: "Contact leads", to: "/admin/submissions", icon: "Inbox" },
+      { label: "Internships", to: "/admin/applications", icon: "GraduationCap" },
+    ],
+  },
+  {
     title: "Content",
     items: [
       { label: "Home Hero", to: "/admin/s/home", icon: "Home" },
@@ -65,14 +73,6 @@ const NAV: { title: string; items: NavItem[] }[] = [
     ],
   },
   { title: "Certificates", items: [{ label: "Certificates & QR", to: "/admin/certificates", icon: "Award" }] },
-  {
-    title: "Leads",
-    items: [
-      { label: "Contact leads", to: "/admin/submissions", icon: "Inbox" },
-      { label: "Career applications", to: "/admin/careers", icon: "Briefcase" },
-      { label: "Internships", to: "/admin/applications", icon: "GraduationCap" },
-    ],
-  },
   /* What Razorpay reports to the webhook: monthly plans, the yearly Starter,
      Payment Links. Also where the webhook is connected to the database
      (migration 0010); no secret is ever typed there. */

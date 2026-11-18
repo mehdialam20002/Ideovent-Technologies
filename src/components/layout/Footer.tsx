@@ -228,7 +228,13 @@ export default function Footer() {
             </div>
           )}
 
-          {navigation.footer.columns.map((col) => (
+          {navigation.footer.columns.map((col) => {
+            const hasCareersInFooter = navigation.footer.columns.some((c) => c.links.some((l) => l.href === "/careers"));
+            const colLinks =
+              !hasCareersInFooter && col.heading === "Company"
+                ? [...col.links, { label: "Careers", href: "/careers" }]
+                : col.links;
+            return (
             /* A plain <div>, not a <nav>: the audit measured exactly one nav
                landmark per page and four more in the footer would make a screen
                reader's landmark list four fifths footer. The <h3> already names
@@ -236,7 +242,7 @@ export default function Footer() {
             <div key={col.heading} className="lg:col-span-2">
               <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-foreground">{col.heading}</h3>
               <ul className="mt-4 space-y-1">
-                {col.links.map((l) => (
+                {colLinks.map((l) => (
                   <li key={l.href + l.label}>
                     {/*
                       py-1.5 on the link, not margin on the <li>: WCAG 2.5.8 wants a
@@ -256,10 +262,11 @@ export default function Footer() {
                       />
                     </Link>
                   </li>
-))}
+                ))}
               </ul>
             </div>
-))}
+            );
+          })}
         </div>
 
         {/* THE /websites PAGES (2 Oct 2026), a plain row of links on every page,
