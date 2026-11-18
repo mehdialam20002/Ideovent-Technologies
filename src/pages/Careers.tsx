@@ -96,10 +96,17 @@ export default function Careers() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setPhoneError(null);
+    setResumeError(null);
 
     const p = normalisePhone(formData.phone);
     if (!p.ok) {
       setPhoneError(p.error);
+      return;
+    }
+
+    if (!resumeFile && !formData.resumeUrl.trim()) {
+      setResumeError("CV / Resume is required. Please upload a PDF/DOC/DOCX file or paste a Google Drive resume link.");
+      document.getElementById("career-cv-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -574,11 +581,17 @@ export default function Careers() {
                     </div>
                   </div>
 
-                  {/* CV / Resume Upload Section */}
-                  <div className="space-y-3 rounded-2xl border border-border bg-muted/20 p-4">
+                  {/* CV / Resume Upload Section (Mandatory) */}
+                  <div
+                    id="career-cv-section"
+                    className={cn(
+                      "space-y-3 rounded-2xl border bg-muted/20 p-4 transition-colors",
+                      resumeError ? "border-destructive/60 bg-destructive/5" : "border-border"
+                    )}
+                  >
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                        Upload CV / Resume (PDF, DOC, DOCX — Max 5 MB)
+                        Upload CV / Resume (PDF, DOC, DOCX — Max 5 MB) *
                       </label>
                       <input
                         ref={fileInputRef}
@@ -612,11 +625,14 @@ export default function Careers() {
                       ) : (
                         <label
                           htmlFor="career-cv-upload"
-                          className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-background px-4 py-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                          className={cn(
+                            "flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed bg-background px-4 py-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/5",
+                            resumeError ? "border-destructive/60" : "border-border"
+                          )}
                         >
                           <Upload className="h-5 w-5 text-primary" />
                           <span className="text-sm font-medium text-foreground">
-                            Click to upload your CV / Resume
+                            Click to upload your CV / Resume (Required)
                           </span>
                           <span className="text-xs text-muted-foreground">
                             PDF, DOC, or DOCX (up to 5 MB)
@@ -625,8 +641,8 @@ export default function Careers() {
                       )}
 
                       {resumeError && (
-                        <p className="mt-1.5 text-xs text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3.5 w-3.5" />
+                        <p className="mt-1.5 text-xs font-medium text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
                           {resumeError}
                         </p>
                       )}
@@ -634,13 +650,16 @@ export default function Careers() {
 
                     <div>
                       <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                        Or paste Google Drive / Resume Link (Optional)
+                        Or paste Google Drive / Resume Link (if not uploading a file)
                       </label>
                       <input
                         type="url"
                         placeholder="https://drive.google.com/file/d/..."
                         value={formData.resumeUrl}
-                        onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, resumeUrl: e.target.value });
+                          if (resumeError) setResumeError(null);
+                        }}
                         className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
                       />
                     </div>
