@@ -69,7 +69,8 @@ const NAV: { title: string; items: NavItem[] }[] = [
     title: "Leads",
     items: [
       { label: "Contact leads", to: "/admin/submissions", icon: "Inbox" },
-      { label: "Applications", to: "/admin/applications", icon: "GraduationCap" },
+      { label: "Career applications", to: "/admin/careers", icon: "Briefcase" },
+      { label: "Internships", to: "/admin/applications", icon: "GraduationCap" },
     ],
   },
   /* What Razorpay reports to the webhook: monthly plans, the yearly Starter,

@@ -9,7 +9,7 @@ export const COLLECTION_KEYS: CollectionKey[] = [
   "process", "faqs", "stats", "clients", "posts",
   "pitchPages", "pitchPageNotes",
   "demoSites", "demoSiteSlots", "demoSiteOpens",
-  "certificates", "certificateGrades", "submissions", "applications",
+  "certificates", "certificateGrades", "submissions", "applications", "jobOpenings",
 ];
 
 export interface Store {

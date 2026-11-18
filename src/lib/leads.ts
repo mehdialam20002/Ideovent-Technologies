@@ -543,6 +543,128 @@ function applicationParams(doc: Application, whatsappDigits: string): Record<str
   };
 }
 
+/* ───────────────────────────── Career / Job Application ───────────────────────────── */
+
+export interface CareerApplicationInput {
+  fullName: string;
+  email: string;
+  phone: string;
+  city?: string;
+  jobId: string;
+  jobTitle: string;
+  portfolioUrl?: string;
+  linkedinUrl?: string;
+  resumeUrl?: string;
+  campaignResults?: string;
+  experienceYears?: string;
+  coverNote?: string;
+}
+
+export async function submitCareerApplication(input: CareerApplicationInput, guard: ApplicationGuard): Promise<LeadResult> {
+  const id = appId();
+  const routes: LeadResult["routes"] = { database: "off", email: "failed" };
+
+  if (guard.honeypot && guard.honeypot.trim()) return { delivered: false, id, routes, blocked: "honeypot" };
+  if (Date.now() - guard.startedAt < MIN_FILL_MS) return { delivered: false, id, routes, blocked: "too-fast" };
+
+  const phone = normalisePhone(input.phone);
+  const doc: Application = {
+    id,
+    type: "career",
+    fullName: cap(input.fullName, 80),
+    email: cap(input.email, 254),
+    phone: phone.ok ? phone.display : cap(input.phone, 24),
+    college: input.city ? cap(input.city, 120) : "Remote",
+    stream: cap(input.jobTitle, 80),
+    jobId: input.jobId,
+    jobTitle: input.jobTitle,
+    city: input.city ? cap(input.city, 80) : undefined,
+    portfolioUrl: input.portfolioUrl ? cap(input.portfolioUrl, 500) : undefined,
+    linkedinUrl: input.linkedinUrl ? cap(input.linkedinUrl, 500) : undefined,
+    resumeUrl: input.resumeUrl ? cap(input.resumeUrl, 500) : undefined,
+    campaignResults: input.campaignResults ? cap(input.campaignResults, 3000) : undefined,
+    experienceYears: input.experienceYears ? cap(input.experienceYears, 50) : undefined,
+    notes: cap(input.coverNote || "", 3000),
+    paymentStatus: "verified",
+    status: "new",
+    seatConfirmed: false,
+    submittedAt: new Date().toISOString(),
+  };
+
+  // Route 1: Supabase or Local Storage
+  if (supabaseEnabled) {
+    try {
+      routes.database = (await insertRow("applications", doc)) ? "delivered" : "failed";
+    } catch {
+      routes.database = "failed";
+    }
+  } else if (guard.saveLocal) {
+    try {
+      await guard.saveLocal(doc);
+      routes.database = "local";
+    } catch {
+      /* local save */
+    }
+  }
+
+  // Route 2: EmailJS notification
+  try {
+    await sendEmail(careerApplicationParams(doc, phone.ok ? phone.whatsapp : ""));
+    routes.email = "delivered";
+  } catch {
+    routes.email = "failed";
+  }
+
+  const delivered = routes.database === "delivered" || routes.email === "delivered";
+  return { delivered, id, routes };
+}
+
+function careerApplicationParams(doc: Application, whatsappDigits: string): Record<string, string> {
+  const first = doc.fullName.split(/\s+/)[0];
+  const replyText = `Hello ${first}, this is Mehdi from Ideovent Technologies, regarding your application for the ${doc.jobTitle || "role"} at Ideovent.`;
+  const reply = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(replyText)}` : "";
+  const page = typeof window !== "undefined" ? window.location.pathname : "/careers";
+  
+  const lines: [string, string | undefined][] = [
+    ["Role Applied", doc.jobTitle || "Digital Marketing Partner"],
+    ["Applicant Name", doc.fullName],
+    ["Email", doc.email],
+    ["Phone / WhatsApp", doc.phone],
+    ["Location / City", doc.city || doc.college],
+    ["Experience", doc.experienceYears],
+    ["Portfolio / Link", doc.portfolioUrl],
+    ["LinkedIn", doc.linkedinUrl],
+    ["Campaign Results / Proof", doc.campaignResults],
+    ["Reply on WhatsApp", reply],
+  ];
+  const details = lines.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
+  const body = `${details}\n\nCover Note / Experience:\n${doc.notes || "(No cover note)"}`;
+
+  return {
+    name: doc.fullName,
+    email: doc.email,
+    title: `Job Application: ${doc.jobTitle || "Partner"} - ${doc.fullName}`,
+    from_name: doc.fullName,
+    from_email: doc.email,
+    reply_to: doc.email,
+    phone: doc.phone,
+    message: body,
+    visitor_message: body,
+    need: "Job Application",
+    website: `${doc.fullName} (${doc.jobTitle})`,
+    organisation: doc.city || "Careers",
+    city: doc.city || "",
+    timeline: "",
+    budget: "",
+    source: "Careers page",
+    page,
+    whatsapp_link: reply,
+    received_at: doc.submittedAt,
+    submission_id: doc.id,
+    follow_up_of: "",
+  };
+}
+
 /* ───────────────────────────── Demo-open alert ───────────────────────────── */
 
 /*

@@ -62,7 +62,7 @@ const CHROME: ContentKey[] = [...SEO, "navigation", "services", "projects"];
 export const PUBLIC_KEYS: readonly ContentKey[] = [
   "settings", "contact", "navigation", "home", "internship", "eduflow", "legal",
   "socials", "services", "testimonials", "projects", "team", "milestones",
-  "process", "faqs", "stats", "clients", "posts", "certificates",
+  "process", "faqs", "stats", "clients", "posts", "certificates", "jobOpenings",
 ];
 
 /** [pattern, keys besides CHROME]. First match wins. Paths have no trailing slash. */
@@ -73,6 +73,7 @@ const PUBLIC_ROUTES: Array<[RegExp, ContentKey[]]> = [
   [/^\/(work|projects|portfolio)(\/[^/]+)?$/, []],
   [/^\/blogs?(\/[^/]+)?$/, ["posts"]],
   [/^\/contact$/, ["faqs"]],
+  [/^\/careers$/, ["jobOpenings"]],
   [/^\/(internship|ii|launchpad)$/, ["internship", "certificates", "faqs"]],
   [/^\/eduflow$/, ["eduflow", "faqs"]],
   [/^\/(pricing|checkout)(\/.*)?$/, []],

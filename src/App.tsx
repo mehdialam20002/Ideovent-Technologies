@@ -60,6 +60,7 @@ const CaseStudy = lazyPage("CaseStudy", () => import("./pages/CaseStudy"));
 const Blog = lazyPage("Blog", () => import("./pages/Blog"));
 const BlogDetail = lazyPage("BlogDetail", () => import("./pages/BlogDetail"));
 const Contact = lazyPage("Contact", () => import("./pages/Contact"));
+const Careers = lazyPage("Careers", () => import("./pages/Careers"));
 const Internship = lazyPage("Internship", () => import("./pages/Internship"));
 const EduFlow = lazyPage("EduFlow", () => import("./pages/EduFlow"));
 const Pricing = lazyPage("Pricing", () => import("./pages/Pricing"));
@@ -83,6 +84,7 @@ const AdminSingleton = lazy(() => import("./pages/admin/AdminSingleton"));
 const AdminCertificates = lazy(() => import("./pages/admin/AdminCertificates"));
 const AdminSubmissions = lazy(() => import("./pages/admin/AdminSubmissions"));
 const AdminApplications = lazy(() => import("./pages/admin/AdminApplications"));
+const AdminCareers = lazy(() => import("./pages/admin/AdminCareers"));
 const AdminDemoPreview = lazy(() => import("./pages/admin/AdminDemoPreview"));
 const AdminTemplates = lazy(() => import("./pages/admin/AdminTemplates"));
 const AdminTemplatePreview = lazy(() => import("./pages/admin/AdminTemplatePreview"));
@@ -310,6 +312,7 @@ export function AppBody() {
         <Route path="/blog/:slug" element={<BlogDetail />} />
         <Route path="/blogs/:id" element={<BlogDetail />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/careers" element={<Careers />} />
         <Route path="/internship" element={<Internship />} />
         <Route path="/eduflow" element={<EduFlow />} />
         <Route path="/pricing" element={<Pricing />} />
@@ -362,6 +365,7 @@ export function AppBody() {
             <Route path="certificates" element={<AdminCertificates />} />
             <Route path="submissions" element={<AdminSubmissions />} />
             <Route path="applications" element={<AdminApplications />} />
+            <Route path="careers" element={<AdminCareers />} />
             {/*
               Previewing a demo the public route will not serve.
 

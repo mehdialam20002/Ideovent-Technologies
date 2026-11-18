@@ -9,7 +9,7 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function AdminApplications() {
-  const apps = [...useCollection("applications")].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
+  const apps = [...useCollection("applications")].filter((a) => a.type !== "career").sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
   const { actions } = useCms();
 
   return (

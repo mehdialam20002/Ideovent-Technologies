@@ -956,12 +956,42 @@ export interface Application extends BaseDoc {
   fullName: string;
   email: string;
   phone: string;
-  college: string;
-  stream: string;
-  notes: string;
-  paymentStatus: "pending" | "verified" | "failed";
-  seatConfirmed: boolean;
+  college?: string;
+  stream?: string;
+  notes?: string;
+  paymentStatus?: "pending" | "verified" | "failed";
+  seatConfirmed?: boolean;
   submittedAt: string;
+  type?: "internship" | "career";
+  jobId?: string;
+  jobTitle?: string;
+  city?: string;
+  portfolioUrl?: string;
+  linkedinUrl?: string;
+  resumeUrl?: string;
+  campaignResults?: string;
+  experienceYears?: string;
+  status?: "new" | "reviewing" | "shortlisted" | "interview" | "hired" | "rejected";
+  adminNotes?: string;
+}
+
+export interface JobOpeningDoc extends BaseDoc {
+  title: string;
+  slug: string;
+  department: "marketing" | "engineering" | "design" | "sales" | "operations";
+  location: string;
+  workMode: "Remote" | "Hybrid" | "On-site";
+  engagement: string;
+  compensation: string;
+  featured?: boolean;
+  active: boolean;
+  postedDate: string;
+  summary: string;
+  aboutCompany: string;
+  responsibilities: string[];
+  qualifications: string[];
+  earningsAndPerks: string[];
+  applyInstructions?: string;
 }
 
 /**
@@ -2500,6 +2530,7 @@ export interface ContentData {
   certificateGrades: CertificateGrade[];
   submissions: ContactSubmission[];
   applications: Application[];
+  jobOpenings: JobOpeningDoc[];
 }
 
 /** Collections that are arrays of BaseDoc (CRUD-able). */
@@ -2508,7 +2539,8 @@ export type CollectionKey =
   | "milestones" | "process" | "faqs" | "stats" | "clients"
   | "posts" | "pitchPages" | "pitchPageNotes"
   | "demoSites" | "demoSiteSlots" | "demoSiteOpens"
-  | "certificates" | "certificateGrades" | "submissions" | "applications";
+  | "certificates" | "certificateGrades" | "submissions" | "applications"
+  | "jobOpenings";
 
 /**
  * Collections `anon` must never be able to read.

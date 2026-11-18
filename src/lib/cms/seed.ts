@@ -18,6 +18,7 @@ import rawCerts from "./data/certificates.seed.json";
 // 03-legal-docs/policies/*.md. Do not hand-edit either file, edit the Markdown
 // source and re-run that script, then re-run split-content.mjs.
 import rawLegal from "./data/legal.meta.json";
+import { DEFAULT_JOB_OPENINGS } from "@/lib/careers/jobs";
 // Prices for the service records' search descriptions. A namespace import on
 // purpose, so it can never collide with a named import of the same module.
 import * as ServicePrices from "../pricing";
@@ -434,6 +435,11 @@ export const seed: ContentData = {
             {
               heading: "Programmes",
               links: [
+                {
+                  label: "Careers & Partnerships",
+                  href: "/careers",
+                  description: "Performance digital marketing partner, growth associates, and engineering roles.",
+                },
                 {
                   label: "LaunchPad internship",
                   href: "/internship",
@@ -1973,4 +1979,5 @@ export const seed: ContentData = {
   certificateGrades: [],
   submissions: [],
   applications: [],
+  jobOpenings: DEFAULT_JOB_OPENINGS,
 };
