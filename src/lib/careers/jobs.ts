@@ -1,8 +1,9 @@
-import type { JobOpening } from "./types";
+import type { JobOpeningDoc } from "@/lib/cms/types";
 
-export const DEFAULT_JOB_OPENINGS: JobOpening[] = [
+export const DEFAULT_JOB_OPENINGS: JobOpeningDoc[] = [
   {
     id: "pdm-partner",
+    order: 0,
     title: "Performance Digital Marketing Partner (Commission-Based)",
     slug: "performance-digital-marketing-partner",
     department: "marketing",
@@ -34,5 +35,42 @@ export const DEFAULT_JOB_OPENINGS: JobOpening[] = [
       "100% Remote & Flexible: Work from anywhere with complete creative and strategic ownership.",
     ],
     applyInstructions: "Ready to drive real business growth and earn per conversion? Submit your profile & past campaign results below.",
+  },
+  {
+    id: "bd-partner",
+    order: 1,
+    title: "Business Development Partner (Freelance / Commission-Based)",
+    slug: "business-development-partner",
+    department: "sales",
+    location: "Saket, New Delhi (Work From Home / Field-Based)",
+    workMode: "Hybrid",
+    engagement: "Flexible Hours (Part-time / Full-time)",
+    compensation: "Commission-Based (Flat ₹2,000 per closed project) + Performance Milestones",
+    featured: true,
+    active: true,
+    postedDate: "November 2026",
+    summary: "Identify and connect with prospective B2B clients across local and national markets (hotels, clinics, coaching institutes, salons, gyms, and retail startups) to pitch Ideovent's cost-effective website and software solutions starting from ₹14,999.",
+    aboutCompany: "Ideovent Technologies is a fast-growing web and software development studio based in Saket, New Delhi. We engineer high-performing websites, custom web applications, and digital solutions for businesses across India and abroad. To expand our client outreach, we are onboarding self-driven, results-oriented Business Development & Sales Partners.",
+    responsibilities: [
+      "Lead Generation & Market Outreach: Identify and connect with prospective B2B clients across local and national markets (including hotels, medical clinics, coaching institutes, salons, gyms, and retail startups).",
+      "Consultative Pitching: Approach business owners via calls, WhatsApp, LinkedIn, or in-person visits to understand their digital needs and pitch our cost-effective website and software solutions (starting from ₹14,999).",
+      "Discovery Call Scheduling: Set up qualified meetings between interested prospects and our technical team to finalize requirements and close deals.",
+      "Client Onboarding Coordination: Act as the initial point of contact to ensure a smooth handover from deal closure to project kickoff.",
+    ],
+    qualifications: [
+      "Strong Communication Skills: Fluency and confidence in English and Hindi to converse effectively with business owners and decision-makers.",
+      "Persuasion & Negotiation: Ability to understand client pain points and present our affordable digital packages as high-ROI business investments.",
+      "Digital & Local Networking: Hands-on familiarity with LinkedIn, WhatsApp Business, Instagram, and Google Maps for B2B lead research, or strong local market outreach capabilities.",
+      "Basic Tech & Business Acumen: Foundational understanding of websites, domains, Google Business Profiles, and custom software to explain value clearly to non-technical clients.",
+      "Self-Motivation & Follow-Up Discipline: Target-driven mindset with consistent follow-up habits and resilience in handling rejections.",
+    ],
+    earningsAndPerks: [
+      "Attractive Flat Commission: Earn ₹2,000 per closed project on all website and software packages valued at ₹12,000 and above.",
+      "Uncapped Earning Potential: No ceiling on how much you earn—closing just 5 deals a month easily generates ₹10,000+ in extra income.",
+      "100% Remote & Flexible: Work on your own schedule from anywhere—ideal for freelancers, college students, sales professionals, and networkers.",
+      "Complete Sales Toolkit: Receive official company brochures, live demo links, portfolio case studies, and structured pricing sheets.",
+      "Dedicated Technical Backing: You focus on bringing the client; our engineering and project management team handles technical demos, scoping, and delivery.",
+    ],
+    applyInstructions: "Ready to partner with us and start earning? Submit your details and outreach background below.",
   },
 ];

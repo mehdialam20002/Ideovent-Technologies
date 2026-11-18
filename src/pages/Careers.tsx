@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent, type ChangeEvent } from "react";
 import {
   Briefcase, CheckCircle2, TrendingUp, Sparkles, MapPin, Clock,
   ArrowRight, ShieldCheck, MessageCircle, AlertCircle, Loader2,
-  Send, Target, Award, DollarSign, Lock, HelpCircle
+  Send, Target, Award, DollarSign, Lock, HelpCircle, Upload, FileText, X
 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Seo } from "@/components/seo/Seo";
@@ -43,6 +43,9 @@ export default function Careers() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<LeadResult | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -51,10 +54,40 @@ export default function Careers() {
     city: "",
     portfolioUrl: "",
     linkedinUrl: "",
+    resumeUrl: "",
     campaignResults: "",
     experienceYears: "1-3 years",
     coverNote: "",
   });
+
+  const handleResumeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setResumeError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    const extOk = /\.(pdf|doc|docx)$/i.test(file.name);
+    if (!allowed.includes(file.type) && !extOk) {
+      setResumeError("Please upload a PDF, DOC, or DOCX file.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setResumeError("File size must be under 5 MB. For larger files, paste a Google Drive link below.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setResumeFile(file);
+  };
+
+  const clearResumeFile = () => {
+    setResumeFile(null);
+    setResumeError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const scrollToApply = () => {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -82,6 +115,8 @@ export default function Careers() {
           jobTitle: currentJob?.title || "General Application",
           portfolioUrl: formData.portfolioUrl,
           linkedinUrl: formData.linkedinUrl,
+          resumeUrl: formData.resumeUrl,
+          resumeFile,
           campaignResults: formData.campaignResults,
           experienceYears: formData.experienceYears,
           coverNote: formData.coverNote,
@@ -101,6 +136,7 @@ export default function Careers() {
   };
 
   const isMarketingRole = currentJob?.department === "marketing" || currentJob?.id === "pdm-partner";
+  const isSalesRole = currentJob?.department === "sales" || currentJob?.id === "bd-partner";
 
   return (
     <Layout>
@@ -108,7 +144,7 @@ export default function Careers() {
         title={currentJob ? `${currentJob.title} | Ideovent Technologies Careers` : "Careers | Ideovent Technologies"}
         description={
           currentJob?.summary ||
-          "Join Ideovent Technologies as a Performance Digital Marketing Partner or engineering collaborator."
+          "Join Ideovent Technologies as a Performance Digital Marketing Partner or Business Development Partner."
         }
       />
 
@@ -116,28 +152,42 @@ export default function Careers() {
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
 
         <div className="container-page">
-          {/* Multiple Active Openings Switcher (Only shows when Admin publishes 2+ active listings) */}
+          {/* Multiple Active Openings Switcher (Shows rich role cards when 2+ listings are active) */}
           {activeJobs.length > 1 && (
-            <div className="mx-auto mb-10 max-w-4xl">
-              <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                Select an Open Position ({activeJobs.length} Active)
+            <div className="mx-auto mb-12 max-w-4xl">
+              <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                Open Partner Roles ({activeJobs.length} Active Openings) — Select a Role to View Details
               </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {activeJobs.map((job) => (
-                  <button
-                    key={job.id}
-                    type="button"
-                    onClick={() => setSelectedJobId(job.id)}
-                    className={cn(
-                      "rounded-xl border px-4 py-2 text-xs font-semibold transition-all",
-                      currentJob?.id === job.id
-                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                        : "border-border bg-card text-foreground hover:border-primary/40"
-                    )}
-                  >
-                    {job.title}
-                  </button>
-                ))}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {activeJobs.map((job) => {
+                  const selected = currentJob?.id === job.id;
+                  return (
+                    <button
+                      key={job.id}
+                      type="button"
+                      onClick={() => setSelectedJobId(job.id)}
+                      className={cn(
+                        "text-left rounded-2xl border p-4 transition-all",
+                        selected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-sm"
+                          : "border-border bg-card/60 hover:border-primary/40 hover:bg-card"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                          {job.department}
+                        </span>
+                        <span className="text-[11px] font-medium text-muted-foreground">{job.workMode}</span>
+                      </div>
+                      <h2 className="mt-2 font-display text-sm font-bold text-foreground sm:text-base">
+                        {job.title}
+                      </h2>
+                      <p className="mt-1 text-xs font-semibold text-emerald-600 line-clamp-1">
+                        {job.compensation}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -216,6 +266,41 @@ export default function Careers() {
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
                         Your <strong>₹1,500 – ₹2,000 commission</strong> is released via direct UPI / bank transfer immediately as soon as the client signs off and makes the project advance payment. Zero lock-in.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* BD PARTNER HIGHLIGHTS BANNER (Shown for Business Development Partner role) */}
+              {isSalesRole && (
+                <div className="mt-14 mx-auto max-w-4xl rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8">
+                  <h3 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    How Our Business Development Partner Model Works
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Zero fixed target pressure, full sales collateral provided, and transparent per-project payouts:
+                  </p>
+
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-xl border border-border bg-card p-4">
+                      <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
+                        <TrendingUp className="h-4 w-4" />
+                        1. Flat ₹2,000 Per Closed Project
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                        Earn a flat <strong>₹2,000 commission</strong> on every closed website or software package valued at ₹12,000+. Closing just 5 deals a month earns ₹10,000+ with zero upper cap.
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-border bg-card p-4">
+                      <div className="flex items-center gap-2 text-sm font-bold text-primary">
+                        <Briefcase className="h-4 w-4" />
+                        2. Complete Sales Toolkit &amp; Tech Backing
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                        You get ready-to-share brochures, live demo websites, and structured pricing sheets. Our technical team joins discovery calls to handle scoping, demos, and delivery.
                       </p>
                     </div>
                   </div>
@@ -489,10 +574,84 @@ export default function Careers() {
                     </div>
                   </div>
 
+                  {/* CV / Resume Upload Section */}
+                  <div className="space-y-3 rounded-2xl border border-border bg-muted/20 p-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                        Upload CV / Resume (PDF, DOC, DOCX — Max 5 MB)
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={handleResumeChange}
+                        className="hidden"
+                        id="career-cv-upload"
+                      />
+
+                      {resumeFile ? (
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3.5 py-2.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <FileText className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-foreground">{resumeFile.name}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {(resumeFile.size / 1024).toFixed(0)} KB &bull; Ready to submit
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={clearResumeFile}
+                            aria-label="Remove uploaded CV"
+                            className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor="career-cv-upload"
+                          className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-background px-4 py-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                        >
+                          <Upload className="h-5 w-5 text-primary" />
+                          <span className="text-sm font-medium text-foreground">
+                            Click to upload your CV / Resume
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            PDF, DOC, or DOCX (up to 5 MB)
+                          </span>
+                        </label>
+                      )}
+
+                      {resumeError && (
+                        <p className="mt-1.5 text-xs text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3.5 w-3.5" />
+                          {resumeError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                        Or paste Google Drive / Resume Link (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://drive.google.com/file/d/..."
+                        value={formData.resumeUrl}
+                        onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
+                        className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                       {isMarketingRole
                         ? "Past Campaign Results & Proof (CPL, Monthly Spend, Niches) *"
+                        : isSalesRole
+                        ? "Past Sales / Outreach Experience & Target Markets *"
                         : "Relevant Work, Projects & Proof *"}
                     </label>
                     <textarea
@@ -501,6 +660,8 @@ export default function Careers() {
                       placeholder={
                         isMarketingRole
                           ? "Share your proven results: e.g. Managed ₹50k/mo on Meta Ads with ₹120 CPL for education/school clients, scaled Google Search ads to 4.2x ROAS, or links to Drive/Loom campaign walk-throughs..."
+                          : isSalesRole
+                          ? "Share your sales/outreach background: e.g. Local B2B outreach, cold calling, WhatsApp/LinkedIn pitching, or industries you have connections in (schools, clinics, gyms, hotels, retail)..."
                           : "Share links to your best work, live projects, or past measurable outcomes..."
                       }
                       value={formData.campaignResults}
@@ -582,6 +743,44 @@ export default function Careers() {
                   </h4>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                     Ideovent&apos;s founding partners handle the technical discovery calls, quotation negotiations, and client closing. Your goal is delivering qualified inbound leads.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isSalesRole && (
+            <div className="mt-16 mx-auto max-w-3xl">
+              <h3 className="font-display text-xl font-bold text-center text-foreground mb-6 flex items-center justify-center gap-2">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                Frequently Asked Questions (BD Partner)
+              </h3>
+
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-border bg-card/60 p-4">
+                  <h4 className="text-sm font-bold text-foreground">
+                    1. When is the flat ₹2,000 commission paid?
+                  </h4>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Your ₹2,000 commission is transferred directly via UPI or bank transfer as soon as your referred client signs off on a package valued at ₹12,000+ and pays the project advance.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-card/60 p-4">
+                  <h4 className="text-sm font-bold text-foreground">
+                    2. What sales materials will Ideovent provide?
+                  </h4>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    You receive our full sales toolkit: official company brochures, live industry-specific demo websites (schools, clinics, coaching, retail), portfolio case studies, and pricing sheets starting from ₹14,999.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-card/60 p-4">
+                  <h4 className="text-sm font-bold text-foreground">
+                    3. Do I need technical coding knowledge to pitch?
+                  </h4>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    No coding is needed. You focus on connecting with business owners and scheduling discovery calls — our engineering team handles technical explanations, scoping, and project delivery.
                   </p>
                 </div>
               </div>

@@ -969,6 +969,11 @@ export interface Application extends BaseDoc {
   portfolioUrl?: string;
   linkedinUrl?: string;
   resumeUrl?: string;
+  resumeFileName?: string;
+  resumePath?: string;
+  resumeDataUrl?: string;
+  resumeSize?: number;
+  resumeMimeType?: string;
   campaignResults?: string;
   experienceYears?: string;
   status?: "new" | "reviewing" | "shortlisted" | "interview" | "hired" | "rejected";

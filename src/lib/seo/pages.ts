@@ -88,10 +88,10 @@ export const PAGE_SEO: Record<string, PageSeo> = {
     crumb: "Contact",
   },
   "/careers": {
-    title: "Careers & Digital Marketing Partner | Ideovent New Delhi",
+    title: "Careers & Partner Roles | Ideovent Technologies New Delhi",
     description:
-      "Join Ideovent Technologies as a Performance Digital Marketing Partner (commission-based, remote). Company-funded ad spend, ₹1,500–₹2,000 per closed deal.",
-    h1: "Performance Digital Marketing Partner at Ideovent Technologies",
+      "Join Ideovent Technologies as a Performance Digital Marketing or Business Development Partner (commission-based, remote). Earn ₹1,500–₹2,000 per deal.",
+    h1: "Partner & Career Openings at Ideovent Technologies",
     crumb: "Careers",
   },
   "/faq": {

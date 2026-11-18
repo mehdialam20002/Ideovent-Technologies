@@ -555,9 +555,39 @@ export interface CareerApplicationInput {
   portfolioUrl?: string;
   linkedinUrl?: string;
   resumeUrl?: string;
+  resumeFile?: File | null;
   campaignResults?: string;
   experienceYears?: string;
   coverNote?: string;
+}
+
+const MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_LOCAL_DATAURL_BYTES = 2 * 1024 * 1024; // 2 MB cap for localStorage safety
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadResumeToSupabase(appIdStr: string, file: File): Promise<string | null> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80) || "resume.pdf";
+  const path = `${appIdStr}/${safeName}`;
+  const res = await fetch(`${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/resumes/${encodeURI(path)}`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": file.type || "application/pdf",
+      "x-upsert": "false",
+    },
+    body: file,
+  });
+  return res.ok ? path : null;
 }
 
 export async function submitCareerApplication(input: CareerApplicationInput, guard: ApplicationGuard): Promise<LeadResult> {
@@ -566,6 +596,33 @@ export async function submitCareerApplication(input: CareerApplicationInput, gua
 
   if (guard.honeypot && guard.honeypot.trim()) return { delivered: false, id, routes, blocked: "honeypot" };
   if (Date.now() - guard.startedAt < MIN_FILL_MS) return { delivered: false, id, routes, blocked: "too-fast" };
+
+  let resumeFileName: string | undefined;
+  let resumePath: string | undefined;
+  let resumeDataUrl: string | undefined;
+  let resumeSize: number | undefined;
+  let resumeMimeType: string | undefined;
+
+  if (input.resumeFile && input.resumeFile.size > 0 && input.resumeFile.size <= MAX_RESUME_BYTES) {
+    resumeFileName = cap(input.resumeFile.name, 140);
+    resumeSize = input.resumeFile.size;
+    resumeMimeType = input.resumeFile.type || "application/pdf";
+
+    if (supabaseEnabled) {
+      try {
+        const uploaded = await uploadResumeToSupabase(id, input.resumeFile);
+        if (uploaded) resumePath = uploaded;
+      } catch {
+        /* fallback: keep filename metadata so application still succeeds */
+      }
+    } else if (input.resumeFile.size <= MAX_LOCAL_DATAURL_BYTES) {
+      try {
+        resumeDataUrl = await fileToDataUrl(input.resumeFile);
+      } catch {
+        /* keep filename metadata */
+      }
+    }
+  }
 
   const phone = normalisePhone(input.phone);
   const doc: Application = {
@@ -582,6 +639,11 @@ export async function submitCareerApplication(input: CareerApplicationInput, gua
     portfolioUrl: input.portfolioUrl ? cap(input.portfolioUrl, 500) : undefined,
     linkedinUrl: input.linkedinUrl ? cap(input.linkedinUrl, 500) : undefined,
     resumeUrl: input.resumeUrl ? cap(input.resumeUrl, 500) : undefined,
+    resumeFileName,
+    resumePath,
+    resumeDataUrl,
+    resumeSize,
+    resumeMimeType,
     campaignResults: input.campaignResults ? cap(input.campaignResults, 3000) : undefined,
     experienceYears: input.experienceYears ? cap(input.experienceYears, 50) : undefined,
     notes: cap(input.coverNote || "", 3000),
@@ -594,7 +656,9 @@ export async function submitCareerApplication(input: CareerApplicationInput, gua
   // Route 1: Supabase or Local Storage
   if (supabaseEnabled) {
     try {
-      routes.database = (await insertRow("applications", doc)) ? "delivered" : "failed";
+      // Never send large base64 data into public.content (20 KB RLS check)
+      const { resumeDataUrl: _omit, ...dbDoc } = doc;
+      routes.database = (await insertRow("applications", dbDoc)) ? "delivered" : "failed";
     } catch {
       routes.database = "failed";
     }
@@ -624,6 +688,9 @@ function careerApplicationParams(doc: Application, whatsappDigits: string): Reco
   const replyText = `Hello ${first}, this is Mehdi from Ideovent Technologies, regarding your application for the ${doc.jobTitle || "role"} at Ideovent.`;
   const reply = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(replyText)}` : "";
   const page = typeof window !== "undefined" ? window.location.pathname : "/careers";
+  const cvLine = doc.resumeFileName
+    ? `${doc.resumeFileName}${doc.resumeSize ? ` (${Math.round(doc.resumeSize / 1024)} KB)` : ""}${doc.resumePath ? " — download in /admin/careers" : ""}`
+    : undefined;
   
   const lines: [string, string | undefined][] = [
     ["Role Applied", doc.jobTitle || "Digital Marketing Partner"],
@@ -632,6 +699,8 @@ function careerApplicationParams(doc: Application, whatsappDigits: string): Reco
     ["Phone / WhatsApp", doc.phone],
     ["Location / City", doc.city || doc.college],
     ["Experience", doc.experienceYears],
+    ["Uploaded CV / Resume", cvLine],
+    ["CV / Resume Link", doc.resumeUrl],
     ["Portfolio / Link", doc.portfolioUrl],
     ["LinkedIn", doc.linkedinUrl],
     ["Campaign Results / Proof", doc.campaignResults],

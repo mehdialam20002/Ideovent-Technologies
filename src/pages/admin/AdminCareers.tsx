@@ -2,9 +2,10 @@ import { useState, type FormEvent } from "react";
 import {
   Briefcase, Mail, Phone, MessageCircle, ExternalLink, Trash2,
   Search, Filter, Eye, ChevronDown, TrendingUp, Globe, FileText,
-  Plus, Pencil, PauseCircle, PlayCircle, X, Save, CheckCircle2
+  Plus, Pencil, PauseCircle, PlayCircle, X, Save, CheckCircle2, Download
 } from "lucide-react";
 import { useCollection, useCms } from "@/lib/cms/context";
+import { supabase, supabaseEnabled } from "@/lib/cms/client";
 import type { Application, JobOpeningDoc } from "@/lib/cms/types";
 import { nextId } from "@/lib/cms/store";
 import { normalisePhone } from "@/lib/leads";
@@ -195,6 +196,31 @@ export default function AdminCareers() {
   const handleDelete = async (app: Application) => {
     if (!confirm(`Are you sure you want to delete the application from ${app.fullName}?`)) return;
     await actions.removeDoc("applications", app.id);
+  };
+
+  const handleOpenResume = async (app: Application) => {
+    if (app.resumePath && supabaseEnabled) {
+      const { data, error } = await supabase().storage.from("resumes").createSignedUrl(app.resumePath, 300);
+      if (!error && data?.signedUrl) {
+        window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+    }
+    if (app.resumeDataUrl) {
+      const a = document.createElement("a");
+      a.href = app.resumeDataUrl;
+      a.download = app.resumeFileName || "resume.pdf";
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
+    if (app.resumeUrl) {
+      const url = app.resumeUrl.startsWith("http") ? app.resumeUrl : `https://${app.resumeUrl}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
   };
 
   const getWhatsAppLink = (app: Application) => {
@@ -445,6 +471,17 @@ export default function AdminCareers() {
                                 <ExternalLink className="h-3.5 w-3.5" />
                                 Portfolio / Work
                               </a>
+                            )}
+                            {(app.resumePath || app.resumeDataUrl || app.resumeUrl || app.resumeFileName) && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenResume(app)}
+                                disabled={!app.resumePath && !app.resumeDataUrl && !app.resumeUrl}
+                                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 font-semibold text-primary hover:bg-primary/20 transition-colors disabled:opacity-60"
+                              >
+                                <Download className="h-3 w-3" />
+                                {app.resumeFileName ? `CV: ${app.resumeFileName}` : "View CV / Resume"}
+                              </button>
                             )}
                           </div>
                         </div>
