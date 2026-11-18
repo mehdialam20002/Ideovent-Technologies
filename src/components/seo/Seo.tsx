@@ -129,7 +129,7 @@ export function Seo({
     const orgRef = { "@id": `${host}/${ORG_ID}` };
     for (const node of Array.isArray(schema) ? schema: [schema]) {
       const t = Array.isArray(node["@type"]) ? node["@type"][0]: node["@type"];
-      const key = PROVIDER_TYPES.has(t as string) ? "provider": "publisher";
+      const key = PROVIDER_TYPES.has(t as string) ? "provider" : t === "JobPosting" ? "hiringOrganization" : "publisher";
       const linked = key in node ? node: {...node, [key]: orgRef };
       graph.push(absolutizeUrls(linked, host));
     }

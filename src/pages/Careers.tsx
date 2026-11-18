@@ -145,14 +145,41 @@ export default function Careers() {
   const isMarketingRole = currentJob?.department === "marketing" || currentJob?.id === "pdm-partner";
   const isSalesRole = currentJob?.department === "sales" || currentJob?.id === "bd-partner";
 
+  const jobSchemas = activeJobs.map((job) => ({
+    "@type": "JobPosting",
+    title: job.title,
+    description: [
+      job.summary,
+      job.responsibilities?.length ? `Responsibilities: ${job.responsibilities.join(" ")}` : "",
+      job.qualifications?.length ? `Requirements: ${job.qualifications.join(" ")}` : "",
+      job.earningsAndPerks?.length ? `Compensation & Perks: ${job.earningsAndPerks.join(" ")}` : "",
+    ].filter(Boolean).join("\n\n"),
+    datePosted: "2026-11-18",
+    validThrough: "2027-05-18T23:59:59+05:30",
+    employmentType: "CONTRACTOR",
+    jobLocationType: "TELECOMMUTE",
+    applicantLocationRequirements: { "@type": "Country", name: "India" },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "Saket",
+        addressLocality: "New Delhi",
+        addressRegion: "Delhi",
+        postalCode: "110017",
+        addressCountry: "IN",
+      },
+    },
+    directApply: true,
+    url: `/careers#${job.id}`,
+  }));
+
   return (
     <Layout>
       <Seo
-        title={currentJob ? `${currentJob.title} | Ideovent Technologies Careers` : "Careers | Ideovent Technologies"}
-        description={
-          currentJob?.summary ||
-          "Join Ideovent Technologies as a Performance Digital Marketing Partner or Business Development Partner."
-        }
+        path="/careers"
+        breadcrumbs={[{ name: "Careers", path: "/careers" }]}
+        schema={jobSchemas}
       />
 
       <div className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28">

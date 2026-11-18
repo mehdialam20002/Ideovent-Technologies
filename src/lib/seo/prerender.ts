@@ -26,6 +26,7 @@ import { SEO as SEO_PRICES } from "../pricing";
 import { pricingSchema } from "../../pages/pricing/schema";
 // The /websites pages' trail, Service and FAQPage, as the page passes them to <Seo>.
 import { websitesSchema } from "../../pages/websites/schema";
+import { DEFAULT_JOB_OPENINGS } from "../careers/jobs";
 import { LEGAL_PAGES, PAGE_SEO, legalSeo, postSeo, projectSeo, serviceSeo, type PageSeo } from "./pages";
 import {
   absolute, absolutizeUrls, blogPostingNode, breadcrumbNode, caseStudyNode, faqPageNode,
@@ -79,7 +80,7 @@ function graph(crumbs: Crumb[] | undefined, nodes: (Json | undefined)[]): string
   for (const node of nodes) {
     if (!node) continue;
     const t = Array.isArray(node["@type"]) ? node["@type"][0] : node["@type"];
-    const key = t === "Service" || t === "Course" ? "provider" : "publisher";
+    const key = t === "Service" || t === "Course" ? "provider" : t === "JobPosting" ? "hiringOrganization" : "publisher";
     out.push(absolutizeUrls(key in node ? node : { ...node, [key]: orgRef }, host));
   }
   return JSON.stringify({ "@context": "https://schema.org", "@graph": out });
@@ -139,6 +140,38 @@ export function headFor(path: string): HeadSpec | null {
     // and the SEO add-on, exactly as the page's <Seo schema> emits them, so a
     // crawler that runs no script sees the setup fee and the term as well.
     if (path === "/pricing") nodes.push(...pricingSchema());
+    if (path === "/careers") {
+      for (const job of DEFAULT_JOB_OPENINGS.filter((j) => j.active !== false)) {
+        nodes.push({
+          "@type": "JobPosting",
+          title: job.title,
+          description: [
+            job.summary,
+            job.responsibilities?.length ? `Responsibilities: ${job.responsibilities.join(" ")}` : "",
+            job.qualifications?.length ? `Requirements: ${job.qualifications.join(" ")}` : "",
+            job.earningsAndPerks?.length ? `Compensation & Perks: ${job.earningsAndPerks.join(" ")}` : "",
+          ].filter(Boolean).join("\n\n"),
+          datePosted: "2026-11-18",
+          validThrough: "2027-05-18T23:59:59+05:30",
+          employmentType: "CONTRACTOR",
+          jobLocationType: "TELECOMMUTE",
+          applicantLocationRequirements: { "@type": "Country", name: "India" },
+          jobLocation: {
+            "@type": "Place",
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: seed.contact.address.line1,
+              addressLocality: seed.contact.address.city,
+              addressRegion: seed.contact.address.state,
+              postalCode: seed.contact.address.postalCode || "110017",
+              addressCountry: "IN",
+            },
+          },
+          directApply: true,
+          url: `${host}/careers#${job.id}`,
+        });
+      }
+    }
     return spec(path, reg, { crumbs, nodes });
   }
   const [, section, slug, extra] = path.split("/");
